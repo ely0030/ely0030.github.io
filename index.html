@@ -6,15 +6,25 @@
     <link rel="stylesheet" href="https://edwardtufte.github.io/tufte-css/tufte.min.css">
     <link rel="icon" type="image/png" href="favicon.png">
     <style>
-        @font-face {
-            font-family: 'ETBook';
-            src: url('ETBook-Roman.otf') format('opentype');
-        }
         body {
-            font-family: 'ETBook', serif;
+            font-family: sans-serif;
+        }
+        .categories-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
         .category {
+            width: 48%;
             margin-bottom: 2em;
+            border: 1px solid #ddd;
+            padding: 1em;
+            box-sizing: border-box;
+        }
+        .category h2 {
+            border-bottom: 1px solid #000;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
         }
         .post-list {
             list-style-type: none;
@@ -35,30 +45,31 @@
 
         <p>maybe, but not necessarily</p>
 
-        <section class="category">
-            <h2>Health & Medicine</h2>
-            <ul class="post-list">
-                <li>
-                    <a href="vorinostat.html">Vorinostat</a>
-                    <span class="post-date">October 9, 2024</span>
-                </li>
-                <!-- Add more health & medicine posts here -->
-            </ul>
-        </section>
+        <div class="categories-container">
+            <section class="category">
+                <h2>Health & Medicine</h2>
+                <ul class="post-list">
+                    <li>
+                        <a href="vorinostat.html">Vorinostat</a>
+                        <span class="post-date">October 9, 2024</span>
+                    </li>
+                    <!-- Add more health & medicine posts here -->
+                </ul>
+            </section>
 
-        <section class="category">
-            <h2>Psychology</h2>
-            <ul class="post-list">
-                <li>
-                    <a href="cptsd-and-fear-based-world.html">cPTSD and the Fear-Based World</a>
-                    <span class="post-date">October 9, 2024</span>
-                </li>
-                <!-- Add more psychology posts here -->
-            </ul>
-        </section>
+            <section class="category">
+                <h2>Psychology</h2>
+                <ul class="post-list">
+                    <li>
+                        <a href="cptsd-and-fear-based-world.html">cPTSD and the Fear-Based World</a>
+                        <span class="post-date">October 9, 2024</span>
+                    </li>
+                    <!-- Add more psychology posts here -->
+                </ul>
+            </section>
 
-        <!-- Add more categories as needed -->
-
+            <!-- Add more categories as needed -->
+        </div>
     </article>
 </body>
 </html>
