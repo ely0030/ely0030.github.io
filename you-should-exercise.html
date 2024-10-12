@@ -5,33 +5,27 @@
     <title>The Data-Driven Benefits of Exercise</title>
     <link rel="stylesheet" href="https://edwardtufte.github.io/tufte-css/tufte.min.css">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Merriweather:400,700" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #fffff8;
+            --text-color: #111;
+            --opposite-color: #151515;
+            --summary-bg-color: #ffffd6; /* Slightly darker background for summary box */
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #151515;
+                --text-color: #ddd;
+                --opposite-color: #fffff8;
+                --summary-bg-color: #1c1c1c; /* Slightly darker background for summary box in dark mode */
+            }
+        }
         body {
-            font-family: 'Lato', sans-serif;
-            font-size: 18px;
-            line-height: 1.6;
-            background-color: #fffff8;
-            color: #111;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Merriweather', serif;
-        }
-        .content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        a {
-            color: #111;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
         .home-link {
             display: inline-block;
-            margin-bottom: 1em;
             color: #777;
             text-decoration: none;
         }
@@ -39,158 +33,147 @@
             text-decoration: underline;
         }
         .summary-box {
-            float: right;
-            width: 250px;
-            background-color: #e9e9e9;
-            color: #333;
-            padding: 1.5em;
-            margin-left: 2em;
-            margin-bottom: 2em;
-            font-size: 0.9em;
-            line-height: 1.4;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            width: 100%;
+            max-width: 600px;
+            margin-left: 0;
+            background-color: var(--summary-bg-color); /* Updated background color */
+            color: var(--text-color);
+            border: 1px solid var(--opposite-color);
+            border-radius: 6px;
+            padding: 1em 1.2em; /* Reduced padding */
         }
         .summary-box h3 {
             margin-top: 0;
-            font-size: 1.2em;
-            margin-bottom: 0.8em;
+            font-size: 1.5em;
+            margin-bottom: 0.7em;
         }
         .summary-box ul {
-            list-style-type: disc;
-            padding-left: 1.2em;
-            margin-bottom: 0;
+            padding-left: 1.2em; /* Reduced left padding */
+            margin: 0; /* Removed top and bottom margin */
+            font-size: 1.2em; /* Increased font size */
         }
         .summary-box li {
-            margin-bottom: 0.5em;
+            margin-bottom: 0.5em; /* Spacing between items */
         }
-        .summary-box strong {
-            font-weight: 600;
+        hr {
+            border: none;
+            border-top: 1px solid var(--opposite-color);
+            margin: 2em 0;
         }
-        .main-content {
-            overflow: hidden;
-        }
-        .footnote-ref {
-            text-decoration: none;
-            font-size: 0.7em;
-            vertical-align: super;
-        }
-        .footnote-backref {
-            text-decoration: none;
-        }
-        @media (max-width: 768px) {
-            .content {
-                padding: 10px;
-            }
-            .summary-box {
-                float: none;
-                width: auto;
-                margin-left: 0;
-            }
+        .footnotes {
+            font-size: 0.8em; /* Smaller font size for references */
         }
     </style>
 </head>
 <body>
-    <div class="content">
-        <article>
-            <a href="index.html" class="home-link">← Back to Home</a>
-            <h1>The Data-Driven Benefits of Exercise</h1>
+    <article>
+        <a href="index.html" class="home-link">← Back to Home</a>
+        <h1>The Data-Driven Benefits of Exercise</h1>
 
-            <div class="summary-box">
-                <h3>Summary of Key Stats</h3>
+        <p>Let's dive into the <strong>concrete, data-driven benefits</strong> of regular exercise to keep you motivated and show you just how impactful it can be.</p>
+
+        <div class="summary-box">
+            <ul>
+                <li>Regular exercise <strong>prevents depression</strong> and <strong>anxiety</strong>.</li>
+                <li><strong>Exercise as effective as clomipramine</strong> in reducing panic and agoraphobia symptoms.</li>
+                <li>Exercise attenuates cortisol levels by <strong>50%</strong>.</li>
+                <li>Boosts <strong>endorphins</strong>, <strong>serotonin</strong>, <strong>GABA</strong>; enhances <strong>pain tolerance</strong> in studies.</li>
+                <li>Increases <strong>resilience to social defeat stress</strong>.</li>
+                <li>Intensive exercise restores <strong>circadian rhythms</strong>, improving cognitive performance.</li>
+                <li>Decreases <strong>alcohol withdrawal symptoms</strong> and <strong>anxiety</strong> in animal studies.</li>
+                <li>Acute aerobic exercise boosts serum BDNF by <strong>32.03%</strong> in higher-fit individuals.</li>
+                <li>Reduces amyloid-beta accumulation by <strong>30%</strong>, improving memory in neurodegenerative conditions.</li>
+                <li>Exercise increases BDNF levels by <strong>2.5-fold</strong>.</li>
+            </ul>
+        </div>
+
+        <h2>1. Cognitive Enhancement</h2>
+        <ul>
+            <li><strong>Brain-Derived Neurotrophic Factor (BDNF):</strong> Exercise increases BDNF levels by <strong>2.5-fold</strong>, which is crucial for learning and memory improvements.<sup><a href="#fn-1" id="ref-1">1</a></sup></li>
+            <li><strong>Serum BDNF Levels:</strong> Acute aerobic exercise boosts serum BDNF by <strong>32.03%</strong> in higher-fit individuals, enhancing visuospatial attention.<sup><a href="#fn-2" id="ref-2">2</a></sup></li>
+            <li><strong>Hippocampal Health:</strong> Higher VO<sub>2</sub>max is associated with a <strong>thicker cortex</strong> in the left superior temporal gyrus and <strong>lower grey matter blood flow</strong> in the hippocampus, indicating better brain health in older adults.<sup><a href="#fn-3" id="ref-3">3</a></sup></li>
+            <li><strong>Endogenous Metabolic Molecules:</strong> Exercise increases AMPK by <strong>24%</strong>, uMtCK by <strong>60%</strong>, UCP2 by <strong>50%</strong>, IGF-I by <strong>40%</strong>, and ghrelin by <strong>30%</strong> in the hippocampus.<sup><a href="#fn-4" id="ref-4">4</a></sup></li>
+        </ul>
+
+        <h2>2. Mental Health Benefits</h2>
+        <ul>
+            <li><strong>Panic and Agoraphobia Reduction:</strong> Aerobic exercise is <strong>as effective as clomipramine</strong>, a common medication, in reducing panic and agoraphobia symptoms.<sup><a href="#fn-5" id="ref-5">5</a></sup></li>
+            <li><strong>Mood Disorders:</strong> Regular exercise can <strong>prevent depression and anxiety</strong>, promoting resilience and self-confidence.<sup><a href="#fn-6" id="ref-6">6</a></sup></li>
+            <li><strong>Stress Reduction:</strong> Exercise attenuates cortisol levels by <strong>50%</strong>, significantly reducing stress.<sup><a href="#fn-7" id="ref-7">7</a></sup></li>
+        </ul>
+
+        <h2>3. Physical Health Improvements</h2>
+        <ul>
+            <li><strong>Disease Prevention:</strong> Regular physical activity lowers the risk of:
                 <ul>
-                    <li><strong>BDNF Increase:</strong> 2.5-fold</li>
-                    <li><strong>Serum BDNF Boost:</strong> 32.03% in higher-fit groups</li>
-                    <li><strong>Cortical Thickness:</strong> Enhanced by 20% in older adults with higher VO2max</li>
-                    <li><strong>Cortisol Reduction:</strong> 50%</li>
-                    <li><strong>Panic Symptom Reduction:</strong> Comparable to clomipramine</li>
-                    <li><strong>Glymphatic Clearance:</strong> Significant reduction in amyloid-beta by 30%</li>
+                    <li><strong>Coronary Heart Disease</strong></li>
+                    <li><strong>Type 2 Diabetes</strong></li>
+                    <li><strong>Obesity</strong></li>
+                    <li><strong>Breast and Colon Cancers</strong></li>
                 </ul>
-            </div>
+            </li>
+            <li><strong>VO<sub>2</sub>max and Longevity:</strong> Higher aerobic fitness is linked to <strong>longer life expectancy</strong> and reduced incidence of lifestyle diseases.<sup><a href="#fn-8" id="ref-8">8</a></sup></li>
+        </ul>
 
-            <div class="main-content">
-                <p>Let's dive into the <strong>concrete, data-driven benefits</strong> of regular exercise to keep you motivated and show you just how impactful it can be:</p>
+        <h2>4. Neurological Benefits</h2>
+        <ul>
+            <li><strong>Circadian Rhythm Stabilization:</strong> Intensive exercise can <strong>restore circadian rhythms</strong> in individuals with disrupted biological clocks, improving overall cognitive performance.<sup><a href="#fn-9" id="ref-9">9</a></sup></li>
+            <li><strong>Neurogenesis:</strong> Physical exercise regulates hippocampal neurogenesis, reducing learning deficits and improving memory.<sup><a href="#fn-10" id="ref-10">10</a></sup></li>
+            <li><strong>Glymphatic System Efficiency:</strong> Six weeks of physical exercise accelerates glymphatic clearance by significantly reducing amyloid-beta accumulation and improving memory in neurodegenerative conditions.<sup><a href="#fn-11" id="ref-11">11</a></sup></li>
+        </ul>
 
-                <h2>1. Cognitive Enhancement</h2>
-                <ul>
-                    <li><strong>Brain-Derived Neurotrophic Factor (BDNF):</strong> Exercise increases BDNF levels by <strong>2.5-fold</strong>, which is crucial for learning and memory improvements.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-                    <li><strong>Serum BDNF Levels:</strong> Acute aerobic exercise boosts serum BDNF by <strong>32.03%</strong> in higher-fit individuals, enhancing visuospatial attention.<sup id="fnref2"><a href="#fn2" class="footnote-ref">2</a></sup></li>
-                    <li><strong>Hippocampal Health:</strong> Higher VO2max is associated with a <strong>thicker cortex</strong> in the left superior temporal gyrus and <strong>lower grey matter blood flow</strong> in the hippocampus, indicating better brain health in older adults.<sup id="fnref3"><a href="#fn3" class="footnote-ref">3</a></sup></li>
-                    <li><strong>Endogenous Metabolic Molecules:</strong> Exercise increases AMP-activated protein kinase (AMPK) by <strong>24%</strong>, ubiquitous mitochondrial creatine kinase (uMtCK) by <strong>60%</strong>, uncoupling protein 2 (UCP2) by <strong>50%</strong>, insulin-like growth factor I (IGF-I) by <strong>40%</strong>, and ghrelin by <strong>30%</strong> in the hippocampus.<sup id="fnref4"><a href="#fn4" class="footnote-ref">4</a></sup></li>
-                </ul>
+        <h2>5. Pain Management and Recovery</h2>
+        <ul>
+            <li><strong>Endogenous Opioids Increase:</strong> Exercise boosts levels of <strong>endorphins, serotonin, and GABA</strong>, which help in reducing pain perception.<sup><a href="#fn-12" id="ref-12">12</a></sup></li>
+            <li><strong>Analgesic Effects:</strong> Regular exercise enhances pain tolerance, evidenced by increased tail-flick and hot plate test times by significant margins in studies.<sup><a href="#fn-13" id="ref-13">13</a></sup></li>
+        </ul>
 
-                <h2>2. Mental Health Benefits</h2>
-                <ul>
-                    <li><strong>Panic and Agoraphobia Reduction:</strong> Aerobic exercise is <strong>as effective as clomipramine</strong>, a common medication, in reducing panic and agoraphobia symptoms.<sup id="fnref5"><a href="#fn5" class="footnote-ref">5</a></sup></li>
-                    <li><strong>Mood Disorders:</strong> Regular exercise can <strong>prevent depression and anxiety</strong>, promoting resilience and self-confidence.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-                    <li><strong>Stress Reduction:</strong> Exercise attenuates cortisol levels by <strong>50%</strong>, significantly reducing stress.<sup id="fnref6"><a href="#fn6" class="footnote-ref">6</a></sup></li>
-                </ul>
+        <h2>6. Social and Behavioral Benefits</h2>
+        <ul>
+            <li><strong>Resilience to Stress:</strong> Voluntary exercise increases resilience to social defeat stress, making individuals less anxious and more confident.<sup><a href="#fn-14" id="ref-14">14</a></sup></li>
+            <li><strong>Cognitive Synchronization:</strong> Regular physical activity helps synchronize circadian rhythms with external time cues, improving sleep quality and cognitive functions.<sup><a href="#fn-15" id="ref-15">15</a></sup></li>
+        </ul>
 
-                <h2>3. Physical Health Improvements</h2>
-                <ul>
-                    <li><strong>Disease Prevention:</strong> Regular physical activity lowers the risk of:
-                        <ul>
-                            <li><strong>Coronary Heart Disease</strong></li>
-                            <li><strong>Type 2 Diabetes</strong></li>
-                            <li><strong>Obesity</strong></li>
-                            <li><strong>Breast and Colon Cancers</strong></li>
-                        </ul>
-                    </li>
-                    <li><strong>VO2max and Longevity:</strong> Higher aerobic fitness (VO2max) is linked to <strong>longer life expectancy</strong> and <strong>reduced incidence of lifestyle diseases</strong>.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-                </ul>
+        <h2>7. Long-Term Rewards</h2>
+        <ul>
+            <li><strong>Reward Pathways Activation:</strong> Six weeks of voluntary running alters gene transcription in the brain's reward pathways, making exercise a rewarding activity that encourages long-term adherence.<sup><a href="#fn-16" id="ref-16">16</a></sup></li>
+            <li><strong>Sustained Cognitive Performance:</strong> Individuals with higher physical fitness levels experience fewer language declines and better cognitive functions as they age.<sup><a href="#fn-17" id="ref-17">17</a></sup></li>
+        </ul>
 
-                <h2>4. Neurological Benefits</h2>
-                <ul>
-                    <li><strong>Circadian Rhythm Stabilization:</strong> Intensive exercise can <strong>restore circadian rhythms</strong> in individuals with disrupted biological clocks, improving overall cognitive performance.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-                    <li><strong>Neurogenesis:</strong> Physical exercise regulates hippocampal neurogenesis, reducing learning deficits and improving memory.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-                    <li><strong>Glymphatic System Efficiency:</strong> Six weeks of physical exercise accelerates glymphatic clearance by <strong>significantly reducing amyloid-beta accumulation</strong> and improving memory in neurodegenerative conditions.<sup id="fnref7"><a href="#fn7" class="footnote-ref">7</a></sup></li>
-                </ul>
+        <h2>Real-World Impact</h2>
+        <ul>
+            <li><strong>Memory and Learning:</strong> Exercise reduces escape latency in learning tasks by significant margins, increases time spent in target areas during memory tests by substantial percentages, and enhances overall learning speed.<sup><a href="#fn-18" id="ref-18">18</a></sup></li>
+            <li><strong>Anxiety and Withdrawal:</strong> In animal studies, exercise significantly decreases alcohol withdrawal symptoms and anxiety by notable percentages, showcasing its potential in addiction recovery.<sup><a href="#fn-19" id="ref-19">19</a></sup></li>
+        </ul>
 
-                <h2>5. Pain Management and Recovery</h2>
-                <ul>
-                    <li><strong>Endogenous Opioids Increase:</strong> Exercise boosts levels of <strong>endorphins, serotonin, and GABA</strong>, which help in reducing pain perception.<sup id="fnref8"><a href="#fn8" class="footnote-ref">8</a></sup></li>
-                    <li><strong>Analgesic Effects:</strong> Regular exercise enhances pain tolerance, evidenced by increased tail-flick and hot plate test times by <strong>significant margins</strong> in studies.<sup id="fnref8"><a href="#fn8" class="footnote-ref">8</a></sup></li>
-                </ul>
+        <h2>Conclusion</h2>
+        <p class="triple-space-after">The <strong>cold hard data</strong> clearly demonstrates that regular exercise leads to <strong>significant, measurable improvements</strong> in both mental and physical health. From boosting brain health and cognitive functions to reducing the risk of serious diseases and enhancing emotional well-being, the benefits are <strong>extensive and scientifically validated</strong>. Keep pushing forward with your exercise routine—you're investing in a healthier, sharper, and happier you!</p>
 
-                <h2>6. Social and Behavioral Benefits</h2>
-                <ul>
-                    <li><strong>Resilience to Stress:</strong> Voluntary exercise increases resilience to social defeat stress, making individuals less anxious and more confident.<sup id="fnref9"><a href="#fn9" class="footnote-ref">9</a></sup></li>
-                    <li><strong>Cognitive Synchronization:</strong> Regular physical activity helps synchronize circadian rhythms with external time cues, improving sleep quality by <strong>significant margins</strong> and cognitive functions.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-                </ul>
+        <hr>
 
-                <h2>7. Long-Term Rewards</h2>
-                <ul>
-                    <li><strong>Reward Pathways Activation:</strong> Six weeks of voluntary running alters gene transcription in the brain's reward pathways, making exercise a rewarding activity that encourages long-term adherence.<sup id="fnref10"><a href="#fn10" class="footnote-ref">10</a></sup></li>
-                    <li><strong>Sustained Cognitive Performance:</strong> Individuals with higher physical fitness levels experience <strong>fewer language declines</strong> and <strong>better cognitive functions</strong> as they age.<sup id="fnref11"><a href="#fn11" class="footnote-ref">11</a></sup></li>
-                </ul>
-
-                <h2>Real-World Impact</h2>
-                <ul>
-                    <li><strong>Memory and Learning:</strong> Exercise reduces escape latency in learning tasks by <strong>significant margins</strong>, increases time spent in target areas during memory tests by <strong>substantial percentages</strong>, and enhances overall learning speed.<sup id="fnref4"><a href="#fn4" class="footnote-ref">4</a></sup></li>
-                    <li><strong>Anxiety and Withdrawal:</strong> In animal studies, exercise significantly decreases alcohol withdrawal symptoms and anxiety by <strong>notable percentages</strong>, showcasing its potential in addiction recovery.<sup id="fnref6"><a href="#fn6" class="footnote-ref">6</a></sup></li>
-                </ul>
-
-                <h2>Conclusion</h2>
-                <p class="triple-space-after">The <strong>cold hard data</strong> clearly demonstrates that regular exercise leads to <strong>significant, measurable improvements</strong> in both mental and physical health. From boosting brain health and cognitive functions to reducing the risk of serious diseases and enhancing emotional well-being, the benefits are <strong>extensive and scientifically validated</strong>. Keep pushing forward with your exercise routine—you're investing in a healthier, sharper, and happier you!</p>
-            </div>
-
-            <section class="footnotes">
-                <h2>Footnotes</h2>
-                <ol>
-                    <li id="fn1">The Impact of Physical Activity on the Circadian System Benefits for Health, Performance and Wellbeing <a href="#fnref1" class="footnote-backref">↩</a></li>
-                    <li id="fn2">Impact of acute aerobic exercise and cardiorespiratory fitness on visuospatial attention performance and serum BDNF levels <a href="#fnref2" class="footnote-backref">↩</a></li>
-                    <li id="fn3">Higher VO2max is associated with thicker cortex and lower grey matter blood flow in older adults <a href="#fnref3" class="footnote-backref">↩</a></li>
-                    <li id="fn4">Brain-derived neurotrophic factor functions as a metabotrophin to mediate the effects of exercise on cognition <a href="#fnref4" class="footnote-backref">↩</a></li>
-                    <li id="fn5">Comparison of Aerobic Exercise, Clomipramine, and Placebo in the Treatment of Panic Disorder <a href="#fnref5" class="footnote-backref">↩</a></li>
-                    <li id="fn6">Preventive Effects of Forced Exercise against Alcohol-induced Physical Dependency and Reduction of Pain Perception Threshold <a href="#fnref6" class="footnote-backref">↩</a></li>
-                    <li id="fn7">The Sleeping Brain Harnessing the Power of the Glymphatic System through Lifestyle Choices <a href="#fnref7" class="footnote-backref">↩</a></li>
-                    <li id="fn8">Mechanism of exercise-induced analgesia what we can learn from physically active animals <a href="#fnref8" class="footnote-backref">↩</a></li>
-                    <li id="fn9">Voluntary exercise increases resilience to social defeat stress in Syrian hamsters <a href="#fnref9" class="footnote-backref">↩</a></li>
-                    <li id="fn10">Long-term voluntary wheel running is rewarding and produces plasticity in the mesolimbic reward pathway <a href="#fnref10" class="footnote-backref">↩</a></li>
-                    <li id="fn11">Higher physical fitness levels are associated with less language decline in healthy ageing <a href="#fnref11" class="footnote-backref">↩</a></li>
-                </ol>
-            </section>
-        </article>
-    </div>
+        <section class="footnotes">
+            <ol>
+                <li id="fn-1">The Impact of Physical Activity on the Circadian System: Benefits for Health, Performance, and Wellbeing. <a href="#ref-1" title="Jump back to footnote 1 in the text.">↩</a></li>
+                <li id="fn-2">Impact of acute aerobic exercise and cardiorespiratory fitness on visuospatial attention performance and serum BDNF levels. <a href="#ref-2" title="Jump back to footnote 2 in the text.">↩</a></li>
+                <li id="fn-3">Higher VO2max is associated with thicker cortex and lower grey matter blood flow in older adults. <a href="#ref-3" title="Jump back to footnote 3 in the text.">↩</a></li>
+                <li id="fn-4">Brain-derived neurotrophic factor functions as a metabotrophin to mediate the effects of exercise on cognition. <a href="#ref-4" title="Jump back to footnote 4 in the text.">↩</a></li>
+                <li id="fn-5">Comparison of Aerobic Exercise, Clomipramine, and Placebo in the Treatment of Panic Disorder. <a href="#ref-5" title="Jump back to footnote 5 in the text.">↩</a></li>
+                <li id="fn-6">The Impact of Physical Activity on the Circadian System: Benefits for Health, Performance, and Wellbeing. <a href="#ref-6" title="Jump back to footnote 6 in the text.">↩</a></li>
+                <li id="fn-7">Preventive Effects of Forced Exercise against Alcohol-induced Physical Dependency and Reduction of Pain Perception Threshold. <a href="#ref-7" title="Jump back to footnote 7 in the text.">↩</a></li>
+                <li id="fn-8">The Impact of Physical Activity on the Circadian System: Benefits for Health, Performance, and Wellbeing. <a href="#ref-8" title="Jump back to footnote 8 in the text.">↩</a></li>
+                <li id="fn-9">The Impact of Physical Activity on the Circadian System: Benefits for Health, Performance, and Wellbeing. <a href="#ref-9" title="Jump back to footnote 9 in the text.">↩</a></li>
+                <li id="fn-10">Brain-derived neurotrophic factor functions as a metabotrophin to mediate the effects of exercise on cognition. <a href="#ref-10" title="Jump back to footnote 10 in the text.">↩</a></li>
+                <li id="fn-11">The Sleeping Brain: Harnessing the Power of the Glymphatic System through Lifestyle Choices. <a href="#ref-11" title="Jump back to footnote 11 in the text.">↩</a></li>
+                <li id="fn-12">Mechanism of exercise-induced analgesia: what we can learn from physically active animals. <a href="#ref-12" title="Jump back to footnote 12 in the text.">↩</a></li>
+                <li id="fn-13">Mechanism of exercise-induced analgesia: what we can learn from physically active animals. <a href="#ref-13" title="Jump back to footnote 13 in the text.">↩</a></li>
+                <li id="fn-14">Voluntary exercise increases resilience to social defeat stress in Syrian hamsters. <a href="#ref-14" title="Jump back to footnote 14 in the text.">↩</a></li>
+                <li id="fn-15">The Impact of Physical Activity on the Circadian System: Benefits for Health, Performance, and Wellbeing. <a href="#ref-15" title="Jump back to footnote 15 in the text.">↩</a></li>
+                <li id="fn-16">Long-term voluntary wheel running is rewarding and produces plasticity in the mesolimbic reward pathway. <a href="#ref-16" title="Jump back to footnote 16 in the text.">↩</a></li>
+                <li id="fn-17">Higher physical fitness levels are associated with less language decline in healthy ageing. <a href="#ref-17" title="Jump back to footnote 17 in the text.">↩</a></li>
+                <li id="fn-18">Brain-derived neurotrophic factor functions as a metabotrophin to mediate the effects of exercise on cognition. <a href="#ref-18" title="Jump back to footnote 18 in the text.">↩</a></li>
+                <li id="fn-19">Preventive Effects of Forced Exercise against Alcohol-induced Physical Dependency and Reduction of Pain Perception Threshold. <a href="#ref-19" title="Jump back to footnote 19 in the text.">↩</a></li>
+            </ol>
+        </section>
+    </article>
 </body>
 </html>
