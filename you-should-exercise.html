@@ -28,6 +28,23 @@
         .home-link:hover {
             text-decoration: underline;
         }
+        .sidenote {
+            display: none;
+            position: absolute;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 300px;
+            z-index: 100;
+        }
+        .margin-toggle:checked ~ .sidenote {
+            display: block;
+        }
+        .sidenote-number::after {
+            content: "↩";
+            cursor: pointer;
+            color: #2980b9;
+        }
     </style>
 </head>
 <body>
@@ -106,7 +123,7 @@
         </ul>
 
         <h2>Conclusion</h2>
-        <p class="triple-space-after">The <strong>cold hard data</strong> clearly demonstrates that regular exercise leads to <strong>significant, measurable improvements</strong> in both mental and physical health. From boosting brain health and cognitive functions to reducing the risk of serious diseases and enhancing emotional well-being, the benefits are <strong>extensive and scientifically validated</strong>. Keep pushing forward with your exercise routine—you're investing in a healthier, sharper, and happier you!</p>
+        <p class="triple-space-after">The <strong>cold hard data</strong> clearly demonstrates that regular exercise leads to <strong>significant, measurable improvements</strong> in both mental and physical health. From boosting brain health and cognitive functions to reducing the risk of serious diseases and enhancing emotional well-being, the benefits are <strong>extensive and scientifically validated</strong>. Keep pushing forward with your exercise routine—you’re investing in a healthier, sharper, and happier you!</p>
 
     </article>
 </body>
