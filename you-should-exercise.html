@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Data-Driven Benefits of Exercise</title>
     <link rel="stylesheet" href="https://edwardtufte.github.io/tufte-css/tufte.min.css">
     <link rel="icon" type="image/png" href="favicon.png">
@@ -23,9 +24,14 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
+            font-size: 18px; /* You can adjust this as needed */
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
         }
         .home-link {
-            display: inline-block;
+            display: block; /* Changed from inline-block to block */
+            margin-bottom: 1em;
             color: #777;
             text-decoration: none;
         }
@@ -34,8 +40,9 @@
         }
         .summary-box {
             width: 100%;
-            max-width: 600px;
-            margin-left: 0;
+            max-width: 90%; /* Changed from 600px to 90% */
+            margin-left: auto;
+            margin-right: auto;
             background-color: var(--summary-bg-color);
             color: var(--text-color);
             border: 1px solid var(--opposite-color);
@@ -63,6 +70,38 @@
         .footnotes {
             font-size: 0.8em; /* Smaller font size for references */
         }
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+            .summary-box {
+                padding: 1em;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                font-size: 14px;
+            }
+            .summary-box {
+                padding: 0.8em;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+        }
+        img, video {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -75,7 +114,7 @@
         <div class="summary-box">
             <ul>
                 <li>Regular exercise <strong>prevents depression</strong> and <strong>anxiety</strong>.</li>
-                <li><strong>Exercise as effective as clomipramine</strong> in reducing panic and agoraphobia symptoms.</li>
+                <li>Exercise is <strong>as effective as clomipramine</strong> in reducing panic and agoraphobia symptoms.</li>
                 <li>Exercise attenuates cortisol levels by <strong>50%</strong>.</li>
                 <li>Boosts <strong>endorphins</strong>, <strong>serotonin</strong>, <strong>GABA</strong>; enhances <strong>pain tolerance</strong> in studies.</li>
                 <li>Increases <strong>resilience to social defeat stress</strong>.</li>
