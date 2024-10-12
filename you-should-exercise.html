@@ -30,32 +30,36 @@
         }
         /* Updated styles for the summary box */
         .summary-box {
-            width: 100%;
+            float: right;
+            width: 250px;
             background-color: #1a1a1a;
             color: white;
-            padding: 2em;
+            padding: 1.5em;
+            margin-left: 2em;
             margin-bottom: 2em;
-            font-size: 1em;
-            line-height: 1.6;
+            font-size: 0.8em;
+            line-height: 1.4;
+            border-radius: 5px;
         }
         .summary-box h3 {
             margin-top: 0;
-            font-size: 1.4em;
-            margin-bottom: 1em;
+            font-size: 1.2em;
+            margin-bottom: 0.8em;
         }
         .summary-box ul {
-            list-style-type: none;
-            padding-left: 0;
+            list-style-type: disc;
+            padding-left: 1.2em;
+            margin-bottom: 0;
         }
         .summary-box li {
-            margin-bottom: 0.8em;
+            margin-bottom: 0.5em;
         }
         .summary-box strong {
             font-weight: 600;
         }
-        /* Remove float from main-content */
+        /* Ensure the main content wraps around the summary box */
         .main-content {
-            overflow: visible;
+            overflow: hidden;
         }
         .sidenote {
             display: none;
@@ -147,7 +151,7 @@
                 <li><strong>Cortical Thickness:</strong> Enhanced by 20% in older adults with higher VO2max</li>
                 <li><strong>Cortisol Reduction:</strong> 50%</li>
                 <li><strong>Panic Symptom Reduction:</strong> Comparable to clomipramine</li>
-                <li><strong>Glymphatic Clearance Improvement:</strong> Significant reduction in amyloid-beta by 30%</li>
+                <li><strong>Glymphatic Clearance:</strong> Significant reduction in amyloid-beta by 30%</li>
             </ul>
         </div>
 
