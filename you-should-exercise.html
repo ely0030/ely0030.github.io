@@ -30,19 +30,27 @@
         }
         /* Styles for the summary box */
         .summary-box {
+            float: right;
+            width: 250px;
             border: 1px solid #ccc;
             background-color: #f9f9f9;
             padding: 1em;
+            margin-left: 2em;
             margin-bottom: 2em;
-            font-size: 0.9em;
+            font-size: 0.8em;
             line-height: 1.4;
         }
         .summary-box h3 {
             margin-top: 0;
-            font-size: 1.1em;
+            font-size: 1em;
         }
         .summary-box ul {
             margin-bottom: 0;
+            padding-left: 1.2em;
+        }
+        /* Ensure the main content wraps around the summary box */
+        .main-content {
+            overflow: hidden;
         }
         .sidenote {
             display: none;
@@ -138,69 +146,71 @@
             </ul>
         </div>
 
-        <p>Let's dive into the <strong>concrete, data-driven benefits</strong> of regular exercise to keep you motivated and show you just how impactful it can be:</p>
+        <div class="main-content">
+            <p>Let's dive into the <strong>concrete, data-driven benefits</strong> of regular exercise to keep you motivated and show you just how impactful it can be:</p>
 
-        <h2>1. Cognitive Enhancement</h2>
-        <ul>
-            <li><strong>Brain-Derived Neurotrophic Factor (BDNF):</strong> Exercise increases BDNF levels by <strong>2.5-fold</strong>, which is crucial for learning and memory improvements.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
-            <li><strong>Serum BDNF Levels:</strong> Acute aerobic exercise boosts serum BDNF by <strong>32.03%</strong> in higher-fit individuals, enhancing visuospatial attention.<sup id="fnref2"><a href="#fn2" class="footnote-ref">2</a></sup></li>
-            <li><strong>Hippocampal Health:</strong> Higher VO2max is associated with a <strong>thicker cortex</strong> in the left superior temporal gyrus and <strong>lower grey matter blood flow</strong> in the hippocampus, indicating better brain health in older adults.<sup id="fnref3"><a href="#fn3" class="footnote-ref">3</a></sup></li>
-            <li><strong>Endogenous Metabolic Molecules:</strong> Exercise increases AMP-activated protein kinase (AMPK) by <strong>24%</strong>, ubiquitous mitochondrial creatine kinase (uMtCK) by <strong>60%</strong>, uncoupling protein 2 (UCP2) by <strong>50%</strong>, insulin-like growth factor I (IGF-I) by <strong>40%</strong>, and ghrelin by <strong>30%</strong> in the hippocampus.<sup id="fnref4"><a href="#fn4" class="footnote-ref">4</a></sup></li>
-        </ul>
+            <h2>1. Cognitive Enhancement</h2>
+            <ul>
+                <li><strong>Brain-Derived Neurotrophic Factor (BDNF):</strong> Exercise increases BDNF levels by <strong>2.5-fold</strong>, which is crucial for learning and memory improvements.<sup id="fnref1"><a href="#fn1" class="footnote-ref">1</a></sup></li>
+                <li><strong>Serum BDNF Levels:</strong> Acute aerobic exercise boosts serum BDNF by <strong>32.03%</strong> in higher-fit individuals, enhancing visuospatial attention.<sup id="fnref2"><a href="#fn2" class="footnote-ref">2</a></sup></li>
+                <li><strong>Hippocampal Health:</strong> Higher VO2max is associated with a <strong>thicker cortex</strong> in the left superior temporal gyrus and <strong>lower grey matter blood flow</strong> in the hippocampus, indicating better brain health in older adults.<sup id="fnref3"><a href="#fn3" class="footnote-ref">3</a></sup></li>
+                <li><strong>Endogenous Metabolic Molecules:</strong> Exercise increases AMP-activated protein kinase (AMPK) by <strong>24%</strong>, ubiquitous mitochondrial creatine kinase (uMtCK) by <strong>60%</strong>, uncoupling protein 2 (UCP2) by <strong>50%</strong>, insulin-like growth factor I (IGF-I) by <strong>40%</strong>, and ghrelin by <strong>30%</strong> in the hippocampus.<sup id="fnref4"><a href="#fn4" class="footnote-ref">4</a></sup></li>
+            </ul>
 
-        <h2>2. Mental Health Benefits</h2>
-        <ul>
-            <li><strong>Panic and Agoraphobia Reduction:</strong> Aerobic exercise is <strong>as effective as clomipramine</strong>, a common medication, in reducing panic and agoraphobia symptoms.<sup id="fnref5"><a href="#fn5" class="footnote-ref">5</a></sup></li>
-            <li><strong>Mood Disorders:</strong> Regular exercise can <strong>prevent depression and anxiety</strong>, promoting resilience and self-confidence.<sup id="fnref6"><a href="#fn6" class="footnote-ref">6</a></sup></li>
-            <li><strong>Stress Reduction:</strong> Exercise attenuates cortisol levels by <strong>50%</strong>, significantly reducing stress.<sup id="fnref7"><a href="#fn7" class="footnote-ref">7</a></sup></li>
-        </ul>
+            <h2>2. Mental Health Benefits</h2>
+            <ul>
+                <li><strong>Panic and Agoraphobia Reduction:</strong> Aerobic exercise is <strong>as effective as clomipramine</strong>, a common medication, in reducing panic and agoraphobia symptoms.<sup id="fnref5"><a href="#fn5" class="footnote-ref">5</a></sup></li>
+                <li><strong>Mood Disorders:</strong> Regular exercise can <strong>prevent depression and anxiety</strong>, promoting resilience and self-confidence.<sup id="fnref6"><a href="#fn6" class="footnote-ref">6</a></sup></li>
+                <li><strong>Stress Reduction:</strong> Exercise attenuates cortisol levels by <strong>50%</strong>, significantly reducing stress.<sup id="fnref7"><a href="#fn7" class="footnote-ref">7</a></sup></li>
+            </ul>
 
-        <h2>3. Physical Health Improvements</h2>
-        <ul>
-            <li><strong>Disease Prevention:</strong> Regular physical activity lowers the risk of:
-                <ul>
-                    <li><strong>Coronary Heart Disease</strong></li>
-                    <li><strong>Type 2 Diabetes</strong></li>
-                    <li><strong>Obesity</strong></li>
-                    <li><strong>Breast and Colon Cancers</strong></li>
-                </ul>
-            </li>
-            <li><strong>VO2max and Longevity:</strong> Higher aerobic fitness (VO2max) is linked to <strong>longer life expectancy</strong> and <strong>reduced incidence of lifestyle diseases</strong>.<sup id="fnref8"><a href="#fn8" class="footnote-ref">8</a></sup></li>
-        </ul>
+            <h2>3. Physical Health Improvements</h2>
+            <ul>
+                <li><strong>Disease Prevention:</strong> Regular physical activity lowers the risk of:
+                    <ul>
+                        <li><strong>Coronary Heart Disease</strong></li>
+                        <li><strong>Type 2 Diabetes</strong></li>
+                        <li><strong>Obesity</strong></li>
+                        <li><strong>Breast and Colon Cancers</strong></li>
+                    </ul>
+                </li>
+                <li><strong>VO2max and Longevity:</strong> Higher aerobic fitness (VO2max) is linked to <strong>longer life expectancy</strong> and <strong>reduced incidence of lifestyle diseases</strong>.<sup id="fnref8"><a href="#fn8" class="footnote-ref">8</a></sup></li>
+            </ul>
 
-        <h2>4. Neurological Benefits</h2>
-        <ul>
-            <li><strong>Circadian Rhythm Stabilization:</strong> Intensive exercise can <strong>restore circadian rhythms</strong> in individuals with disrupted biological clocks, improving overall cognitive performance.<sup id="fnref9"><a href="#fn9" class="footnote-ref">9</a></sup></li>
-            <li><strong>Neurogenesis:</strong> Physical exercise regulates hippocampal neurogenesis, reducing learning deficits and improving memory.<sup id="fnref10"><a href="#fn10" class="footnote-ref">10</a></sup></li>
-            <li><strong>Glymphatic System Efficiency:</strong> Six weeks of physical exercise accelerates glymphatic clearance by <strong>significantly reducing amyloid-beta accumulation</strong> and improving memory in neurodegenerative conditions.<sup id="fnref11"><a href="#fn11" class="footnote-ref">11</a></sup></li>
-        </ul>
+            <h2>4. Neurological Benefits</h2>
+            <ul>
+                <li><strong>Circadian Rhythm Stabilization:</strong> Intensive exercise can <strong>restore circadian rhythms</strong> in individuals with disrupted biological clocks, improving overall cognitive performance.<sup id="fnref9"><a href="#fn9" class="footnote-ref">9</a></sup></li>
+                <li><strong>Neurogenesis:</strong> Physical exercise regulates hippocampal neurogenesis, reducing learning deficits and improving memory.<sup id="fnref10"><a href="#fn10" class="footnote-ref">10</a></sup></li>
+                <li><strong>Glymphatic System Efficiency:</strong> Six weeks of physical exercise accelerates glymphatic clearance by <strong>significantly reducing amyloid-beta accumulation</strong> and improving memory in neurodegenerative conditions.<sup id="fnref11"><a href="#fn11" class="footnote-ref">11</a></sup></li>
+            </ul>
 
-        <h2>5. Pain Management and Recovery</h2>
-        <ul>
-            <li><strong>Endogenous Opioids Increase:</strong> Exercise boosts levels of <strong>endorphins, serotonin, and GABA</strong>, which help in reducing pain perception.<sup id="fnref12"><a href="#fn12" class="footnote-ref">12</a></sup></li>
-            <li><strong>Analgesic Effects:</strong> Regular exercise enhances pain tolerance, evidenced by increased tail-flick and hot plate test times by <strong>significant margins</strong> in studies.<sup id="fnref13"><a href="#fn13" class="footnote-ref">13</a></sup></li>
-        </ul>
+            <h2>5. Pain Management and Recovery</h2>
+            <ul>
+                <li><strong>Endogenous Opioids Increase:</strong> Exercise boosts levels of <strong>endorphins, serotonin, and GABA</strong>, which help in reducing pain perception.<sup id="fnref12"><a href="#fn12" class="footnote-ref">12</a></sup></li>
+                <li><strong>Analgesic Effects:</strong> Regular exercise enhances pain tolerance, evidenced by increased tail-flick and hot plate test times by <strong>significant margins</strong> in studies.<sup id="fnref13"><a href="#fn13" class="footnote-ref">13</a></sup></li>
+            </ul>
 
-        <h2>6. Social and Behavioral Benefits</h2>
-        <ul>
-            <li><strong>Resilience to Stress:</strong> Voluntary exercise increases resilience to social defeat stress, making individuals less anxious and more confident.<sup id="fnref14"><a href="#fn14" class="footnote-ref">14</a></sup></li>
-            <li><strong>Cognitive Synchronization:</strong> Regular physical activity helps synchronize circadian rhythms with external time cues, improving sleep quality by <strong>significant margins</strong> and cognitive functions.<sup id="fnref15"><a href="#fn15" class="footnote-ref">15</a></sup></li>
-        </ul>
+            <h2>6. Social and Behavioral Benefits</h2>
+            <ul>
+                <li><strong>Resilience to Stress:</strong> Voluntary exercise increases resilience to social defeat stress, making individuals less anxious and more confident.<sup id="fnref14"><a href="#fn14" class="footnote-ref">14</a></sup></li>
+                <li><strong>Cognitive Synchronization:</strong> Regular physical activity helps synchronize circadian rhythms with external time cues, improving sleep quality by <strong>significant margins</strong> and cognitive functions.<sup id="fnref15"><a href="#fn15" class="footnote-ref">15</a></sup></li>
+            </ul>
 
-        <h2>7. Long-Term Rewards</h2>
-        <ul>
-            <li><strong>Reward Pathways Activation:</strong> Six weeks of voluntary running alters gene transcription in the brain's reward pathways, making exercise a rewarding activity that encourages long-term adherence.<sup id="fnref16"><a href="#fn16" class="footnote-ref">16</a></sup></li>
-            <li><strong>Sustained Cognitive Performance:</strong> Individuals with higher physical fitness levels experience <strong>fewer language declines</strong> and <strong>better cognitive functions</strong> as they age.<sup id="fnref17"><a href="#fn17" class="footnote-ref">17</a></sup></li>
-        </ul>
+            <h2>7. Long-Term Rewards</h2>
+            <ul>
+                <li><strong>Reward Pathways Activation:</strong> Six weeks of voluntary running alters gene transcription in the brain's reward pathways, making exercise a rewarding activity that encourages long-term adherence.<sup id="fnref16"><a href="#fn16" class="footnote-ref">16</a></sup></li>
+                <li><strong>Sustained Cognitive Performance:</strong> Individuals with higher physical fitness levels experience <strong>fewer language declines</strong> and <strong>better cognitive functions</strong> as they age.<sup id="fnref17"><a href="#fn17" class="footnote-ref">17</a></sup></li>
+            </ul>
 
-        <h2>Real-World Impact</h2>
-        <ul>
-            <li><strong>Memory and Learning:</strong> Exercise reduces escape latency in learning tasks by <strong>significant margins</strong>, increases time spent in target areas during memory tests by <strong>substantial percentages</strong>, and enhances overall learning speed.<sup id="fnref18"><a href="#fn18" class="footnote-ref">18</a></sup></li>
-            <li><strong>Anxiety and Withdrawal:</strong> In animal studies, exercise significantly decreases alcohol withdrawal symptoms and anxiety by <strong>notable percentages</strong>, showcasing its potential in addiction recovery.<sup id="fnref19"><a href="#fn19" class="footnote-ref">19</a></sup></li>
-        </ul>
+            <h2>Real-World Impact</h2>
+            <ul>
+                <li><strong>Memory and Learning:</strong> Exercise reduces escape latency in learning tasks by <strong>significant margins</strong>, increases time spent in target areas during memory tests by <strong>substantial percentages</strong>, and enhances overall learning speed.<sup id="fnref18"><a href="#fn18" class="footnote-ref">18</a></sup></li>
+                <li><strong>Anxiety and Withdrawal:</strong> In animal studies, exercise significantly decreases alcohol withdrawal symptoms and anxiety by <strong>notable percentages</strong>, showcasing its potential in addiction recovery.<sup id="fnref19"><a href="#fn19" class="footnote-ref">19</a></sup></li>
+            </ul>
 
-        <h2>Conclusion</h2>
-        <p class="triple-space-after">The <strong>cold hard data</strong> clearly demonstrates that regular exercise leads to <strong>significant, measurable improvements</strong> in both mental and physical health. From boosting brain health and cognitive functions to reducing the risk of serious diseases and enhancing emotional well-being, the benefits are <strong>extensive and scientifically validated</strong>. Keep pushing forward with your exercise routine—you're investing in a healthier, sharper, and happier you!</p>
+            <h2>Conclusion</h2>
+            <p class="triple-space-after">The <strong>cold hard data</strong> clearly demonstrates that regular exercise leads to <strong>significant, measurable improvements</strong> in both mental and physical health. From boosting brain health and cognitive functions to reducing the risk of serious diseases and enhancing emotional well-being, the benefits are <strong>extensive and scientifically validated</strong>. Keep pushing forward with your exercise routine—you're investing in a healthier, sharper, and happier you!</p>
+        </div>
 
         <section class="footnotes">
             <h2>Footnotes</h2>
