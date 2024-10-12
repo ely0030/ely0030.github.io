@@ -24,9 +24,13 @@
         }
         a {
             color: #006699;
+            text-decoration: none;
         }
         a:hover {
-            color: #004466;
+            text-decoration: underline;
+        }
+        .home-link {
+            color: #777;
         }
         p {
             margin-bottom: 1.2em;
@@ -42,7 +46,7 @@
             font-size: 0.9em;
             line-height: 1.4;
             border-radius: 5px;
-            border-left: 3px solid #ccc;
+            border: 1px solid #ccc;
         }
         .summary-box h3 {
             margin-top: 0;
@@ -63,18 +67,13 @@
         .main-content {
             overflow: hidden;
         }
-        .footnote-popup {
-            display: none;
-            position: absolute;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: 200px;
-            font-size: 0.9em;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .footnote-ref {
+            text-decoration: none;
+            font-size: 0.7em;
+            vertical-align: super;
         }
-        .footnote:hover + .footnote-popup {
-            display: block;
+        .footnote-backref {
+            text-decoration: none;
         }
         @media (max-width: 768px) {
             .content {
