@@ -31,21 +31,58 @@
         .sidenote {
             display: none;
             position: absolute;
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: 300px;
-            z-index: 100;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            right: -60%;
+            width: 50%;
+            margin-right: -50%;
+            float: right;
+            clear: right;
+            margin-top: 0;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+            line-height: 1.3;
+            vertical-align: baseline;
+            position: relative;
+            background: transparent;
+            border: none;
+            padding: 0;
+            box-shadow: none;
         }
         .margin-toggle:checked ~ .sidenote {
             display: block;
         }
-        .sidenote-number::after {
-            content: "↩";
-            cursor: pointer;
-            color: #2980b9;
-            margin-left: 5px;
+        .sidenote-number {
+            counter-increment: sidenote-counter;
+        }
+        .sidenote-number:after {
+            content: counter(sidenote-counter);
+            font-size: 0.7rem;
+            top: -0.5rem;
+            left: 0.1rem;
+            position: relative;
+            vertical-align: baseline;
+        }
+        label.sidenote-number {
+            display: inline;
+        }
+        label.margin-toggle:not(.sidenote-number) {
+            display: none;
+        }
+        @media (max-width: 760px) {
+            label.margin-toggle:not(.sidenote-number) {
+                display: inline;
+            }
+            .sidenote {
+                display: none;
+            }
+            .margin-toggle:checked + .sidenote {
+                display: block;
+                float: left;
+                left: 1rem;
+                clear: both;
+                width: 95%;
+                margin: 1rem 2.5%;
+                position: relative;
+            }
         }
         /* Positioning sidenotes */
         li {
