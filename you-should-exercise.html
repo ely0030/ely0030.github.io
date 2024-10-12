@@ -10,7 +10,7 @@
             --bg-color: #fffff8;
             --text-color: #111;
             --opposite-color: #151515;
-            --summary-bg-color: #ffffd6; /* Slightly darker background for summary box */
+            --summary-bg-color: #f5f5e8; /* Slightly darker than #fffff8 for light mode */
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -36,11 +36,11 @@
             width: 100%;
             max-width: 600px;
             margin-left: 0;
-            background-color: var(--summary-bg-color); /* Updated background color */
+            background-color: var(--summary-bg-color);
             color: var(--text-color);
             border: 1px solid var(--opposite-color);
             border-radius: 6px;
-            padding: 1em 1.2em; /* Reduced padding */
+            padding: 1em 1.2em;
         }
         .summary-box h3 {
             margin-top: 0;
