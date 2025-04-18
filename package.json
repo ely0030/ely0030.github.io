@@ -3,11 +3,10 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro dev",
-    "build": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro build",
-    "preview": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro preview",
-    "astro": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro",
-    "deploy": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro build && /Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/gh-pages -d dist"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.2.4",
