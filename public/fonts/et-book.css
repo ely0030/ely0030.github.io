@@ -1,0 +1,43 @@
+@font-face {
+    font-family: "ETBembo";
+    src: url("et-book-roman-old-style-figures.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+		font-display: swap;
+}
+
+@font-face {
+    font-family: "ETBembo";
+    src: url("et-book-display-italic-old-style-figures.woff") format("woff");
+    font-weight: normal;
+    font-style: italic;
+		font-display: swap;
+}
+
+@font-face {
+    font-family: "ETBembo";
+    src: url("et-book-bold-line-figures.woff") format("woff");
+    font-weight: bold;
+    font-style: normal;
+		font-display: swap;
+}
+
+/* If you need the other weights: */
+/*
+@font-face {
+    font-family: "ETBembo";
+    src: url("et-book-roman-line-figures.woff") format("woff");
+    font-weight: normal; // Note: Often the same as regular, may vary by source
+    font-style: normal;
+    font-feature-settings: 'lnum' 1, 'onum' 0; // Explicitly use lining figures if needed
+		font-display: swap;
+}
+
+@font-face {
+    font-family: "ETBembo";
+    src: url("et-book-semi-bold-old-style-figures.woff") format("woff");
+    font-weight: 600; // Semibold weight
+    font-style: normal;
+		font-display: swap;
+}
+*/ 

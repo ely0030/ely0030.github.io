@@ -1,0 +1,1057 @@
+/*
+  The CSS in this style tag is based off of Bear Blog's default CSS.
+  https://github.com/HermanMartinus/bearblog/blob/297026a877bc2ab2b3bdfbd6b9f7961c350917dd/templates/styles/blog/default.css
+  License MIT: https://github.com/HermanMartinus/bearblog/blob/master/LICENSE.md
+ */
+
+/* ---  Tufte & code‑block assets  --- */
+@import "/fonts/et-book.css";         /* 1️⃣ ET Book web font            */
+/* @import "tufte-css/tufte.min.css";  2️⃣ base Tufte stylesheet (disabled) */
+@import "./prism-tufte.css";           /* 3️⃣ pale ink Prism theme        */
+
+/* --- Dark mode override for Astro default code blocks --- */
+pre.astro-code{
+  background:#0b0d12 !important;
+  color:#fff !important;
+  border-left:2px solid var(--color-link);
+  padding:1.2rem 1.5rem;
+  overflow-x:auto;
+  font-size:0.85em;
+  font-family:'Source Code Pro', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+}
+pre.astro-code span{color:var(--color-link) !important;}
+
+:root {
+	/* Remove previous palette */
+	/* --bg-color: 255, 255, 255; */
+	/* --text-color: 20, 20, 20; */
+	/* --primary-color: 30, 100, 200; */
+	/* --subtle-gray: 120, 120, 120; */
+	/* --highlight-bg: 245, 245, 245; */
+
+	/* New palette based on example */
+	--body-background: #fdfdfd;
+	--body-font-color: #000; /* Changed from #24292f to pure black */
+	--color-link: #0055bb; /* Keeping this blue */
+	--gray-200: #f6f8fa; /* Lighter gray for backgrounds */
+	--gray-500: #6e7781; /* Medium gray for subtle text/borders */
+
+	/* Removed unused variables */
+	/* --icon-filter: none; */
+	/* --hint-color-info: #6bf; */
+	/* --hint-color-warning: #fd6; */
+	/* --hint-color-danger: #f66; */
+
+	--box-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.07); /* Simplified shadow */
+}
+
+/* Remove previous font faces */
+/* @font-face { ... } */
+/* Placeholder: Add @font-face rules here if using custom webfonts like Open Sans */
+
+/* Remove Daminga Font Faces */
+/* @font-face {
+  font-family: 'Daminga'; 
+  src: url('/fonts/DamingaMedium_PERSONAL_USE_ONLY.otf') format('opentype'); 
+  font-weight: 400; 
+  font-style: normal;
+  font-display: swap;
+} */
+@font-face {
+  font-family: 'Daminga'; 
+  src: url('/fonts/DamingaBold_PERSONAL_USE_ONLY.otf') format('opentype'); 
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+/* @font-face {
+  font-family: 'Daminga';
+  src: url('/fonts/DamingaLight_PERSONAL_USE_ONLY.otf') format('opentype');
+  font-weight: 300; 
+  font-style: normal;
+  font-display: swap;
+} */
+
+/* Optional: Add Open Sans or similar if desired for body */
+/* @font-face {
+  font-family: 'Open Sans';
+  src: url('/fonts/OpenSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+} */
+
+body {
+	/* font-family: 'Daminga', Georgia, Times, "Times New Roman", serif; */ /* Remove Daminga */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* System font stack */
+  /* font-weight: 300; */ /* Remove Light weight default */
+  font-weight: 500; /* Changed from 400 to make text thicker */
+	margin: 0;
+	padding: 0;
+	text-align: left;
+	background-color: var(--body-background);
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	color: var(--body-font-color);
+	font-size: 14px; /* Adjusted base font size */
+	line-height: 1.5;
+	font-variant-ligatures: common-ligatures;
+	/* Optionally set default link color here if needed */
+	/* a { color: #0000EE; } */
+}
+main {
+	/* Remove fixed width and centering */
+	/* width: 680px; */
+	/* max-width: calc(100% - 2em); */
+	/* margin: auto; */
+	padding: 2em 1em;
+	color: var(--body-font-color); /* Use body font color */
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 1.5em 0 0.5rem 0;
+	color: #000; /* Changed from link color to black */
+	line-height: 1.2;
+  font-family: inherit; /* Inherit body font */
+	font-weight: 600;
+}
+h1 { font-size: 2.2em; margin-top: 0; font-weight: 700; }
+h2 { font-size: 1.8em; font-weight: 700; text-transform: uppercase; }
+h3 { font-size: 1.5em; font-weight: 700; }
+h4 { font-size: 1.25em; font-weight: 600; }
+h5 { font-size: 1.1em; font-weight: 600; }
+h6 { font-size: 1em; color: var(--gray-500); font-style: italic; font-weight: 400; font-family: inherit; }
+
+strong,
+b {
+	font-weight: 700;
+}
+a {
+	color: var(--color-link);
+	text-decoration: underline;
+}
+a:hover {
+	color: var(--color-link);
+	text-decoration: none;
+}
+p {
+	margin-bottom: 1em;
+}
+.prose p {
+	margin-bottom: 1.2em;
+}
+textarea {
+	width: 100%;
+	font-size: 16px;
+}
+input {
+	font-size: 16px;
+}
+table {
+	width: 100%;
+}
+img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 8px;
+}
+code {
+	padding: 0.1em 0.3em;
+  background-color: var(--gray-200); /* Use lighter gray */
+	border-radius: 2px;
+  font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
+  font-weight: 400;
+	font-size: 0.85em;
+}
+pre {
+	padding: 1em;
+	border-radius: 4px;
+  background-color: var(--gray-200); /* Use lighter gray */
+  border: 1px solid var(--gray-500); /* Use medium gray border */
+	overflow-x: auto;
+}
+pre > code {
+	all: unset; /* Reset inline code styles */
+  background-color: transparent !important;
+  font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
+  font-weight: 400;
+	font-size: 0.9em;
+	line-height: 1.6;
+}
+blockquote {
+	border-left: 4px solid var(--color-link); /* Use link color for border */
+	background-color: var(--gray-200); /* Use lighter gray background */
+	padding: 1em 1.5em;
+	margin: 0 0 1em 0;
+	font-style: normal;
+	color: var(--body-font-color);
+}
+hr {
+	border: none;
+	border-top: 1px solid var(--gray-200); /* Use lighter gray */
+}
+@media (max-width: 720px) {
+	body {
+		font-size: 18px;
+	}
+	main {
+		padding: 1em;
+	}
+}
+
+.sr-only {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	position: absolute !important;
+	height: 1px;
+	width: 1px;
+	overflow: hidden;
+	/* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
+	clip: rect(1px 1px 1px 1px);
+	/* maybe deprecated but we need to support legacy browsers */
+	clip: rect(1px, 1px, 1px, 1px);
+	/* modern browsers, clip-path works inwards from each corner */
+	clip-path: inset(50%);
+	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
+	white-space: nowrap;
+}
+
+/* Utility class for small caps (less common with sans-serif body) */
+/* .small-caps { ... } */
+
+/* Basic styling for article/section */
+article {
+  /* Base styling if needed */
+}
+section {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+/* Large Small-Caps Header Style (Keep or Remove? Small caps less common for serif headers) */
+/* .section-header-large { ... } */
+
+/* Intro Box Style (Style like blockquote?) */
+.intro-box {
+  background-color: var(--gray-200);
+  border-left: 4px solid var(--color-link);
+  padding: 1em 1.5em;
+	margin-bottom: 2em;
+	border-radius: 0 4px 4px 0; /* Adjust radius */
+	font-size: 0.95em;
+}
+
+/* Collapsible Section Style */
+details {
+  border: 1px solid var(--gray-200);
+	border-radius: 4px;
+	padding: 0.5em 1em;
+	margin-bottom: 1em;
+}
+
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+details summary > * {
+  display: inline; /* Allow content next to marker */
+}
+
+details[open] {
+  padding-bottom: 1em;
+}
+
+details[open] summary {
+  margin-bottom: 0.5em;
+}
+
+/* Remove Tufte Sidenote Styles */
+/* .sidenote, .marginnote { ... } */
+/* label.sidenote-number { ... } */
+/* input.margin-toggle { ... } */
+/* @media (max-width: 1000px) { ... } */
+
+/* Remove Drop Cap Style */
+/* .dropcap { ... } */
+
+/* Remove Full Width Class */
+/* .fullwidth { ... } */
+
+/* Ensure fullwidth respects main padding on smaller screens */
+/* @media (max-width: 680px) { 
+  .fullwidth {
+    margin-left: -1em; 
+    margin-right: -1em;
+  }
+} */
+/* Fullwidth might not be needed or should be simpler */
+
+/* Layout Styles */
+.layout-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 5fr 2fr; /* Re-establish side columns (Sidebar, Main, Sidenotes) */
+  grid-template-areas:
+    "sidebar main sidenotes";
+  gap: 2em; /* Restore or adjust gap */
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1.5em 0.8em;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  /* Remove explicit width, rely on grid */
+  /* width: 25%; */
+  /* min-width: 200px; */
+  padding-right: 0; /* Remove padding, use grid gap */
+  margin-top: -0.8em; /* Add negative margin to move links higher */
+}
+
+.sidebar nav.site-nav a { 
+  font-size: 28px !important; /* Restore size override */
+  /* Inherit color from global 'a' rule */
+}
+
+/* Adjust selector to be highly specific, remove :global() */
+aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] { 
+  font-size: 36px !important; /* Restore font size */
+  font-weight: bold; /* Restore bold */
+}
+
+.main-content-area {
+  grid-area: main;
+  /* Remove max-width constraint to fill grid area */
+  /* max-width: 800px;  */ 
+  margin: 0;
+  /* border: 2px solid red; -- Remove red border */
+}
+
+/* Add Sidenotes Area Style */
+.sidenotes-area {
+  grid-area: sidenotes;
+  font-size: 0.9em; /* Slightly smaller text for notes */
+  color: var(--gray-500);
+  line-height: 1.5;
+  padding-left: 1em; /* Add some padding */
+}
+
+/* Style blog post titles on index page - Old Directory Look */
+.main-content-area .post-list {
+  list-style: disc; /* Add bullets */
+  padding-left: 1.5em; /* Add padding for bullets */
+  margin: 0 0 1em 0; /* Add bottom margin */
+}
+
+.main-content-area .post-list h2 {
+  margin: 0 0 0.2em 0; /* Keep margin from inline styles */
+  font-size: 1em; /* Reset to base size */
+  font-weight: 400; /* Reset to normal weight */
+  text-transform: none; /* Remove uppercase transform if any */
+  line-height: inherit; /* Use default line height */
+  color: inherit; /* Inherit body text color (won't be visible due to link) */
+  display: inline; /* Make h2 inline to not break the bullet style */
+}
+
+.main-content-area .post-list h2 a {
+  color: #0000EE; /* Classic hyperlink blue */
+  text-decoration: underline; /* Ensure underline */
+  font-family: monospace; /* Use monospace for directory look */
+  font-size: inherit; /* Inherit size from h2 */
+  font-weight: inherit; /* Inherit weight from h2 */
+  text-transform: lowercase; /* Force lowercase */
+}
+
+.main-content-area .post-list h2 a:visited {
+  color: #551A8B; /* Classic visited link purple */
+}
+
+.main-content-area .post-list h2 a:hover {
+  text-decoration: none; /* Optional: remove underline on hover */
+}
+
+.main-content-area .post-list li {
+  margin-bottom: 0.5em; /* Reduce spacing between items */
+}
+
+.main-content-area .post-list time {
+		/* Removed time styles as element is gone */
+}
+
+/* Ensure About link doesn't become bold */
+.sidebar nav.site-nav a[href="/about"] {
+  font-weight: 400 !important; /* Use normal font weight */
+}
+
+/* Responsive adjustments for the layout */
+@media (max-width: 1000px) { 
+  .layout-wrapper {
+    grid-template-columns: 1fr; /* Stack columns on smaller screens */
+    grid-template-areas:
+      "sidebar"
+      "main"
+      "sidenotes"; 
+    gap: 1em; /* Reduce gap for stacked layout */
+    padding: 1em 0.5em; /* Reduce padding for stacked layout */
+  }
+
+  .sidebar,
+  .main-content-area,
+  .sidenotes-area {
+    /* width: 100%; */ /* Not needed with grid */
+    max-width: 100%; /* Allow full width */
+    padding-right: 0;
+    padding-left: 0;
+    margin: 0; /* Reset margin */
+  }
+
+  .sidebar {
+    margin-bottom: 0; /* Remove bottom margin, rely on gap */
+  }
+  .sidenotes-area {
+    margin-top: 1em;
+    padding-left: 0; /* Remove padding when stacked */
+  }
+
+  body {
+    font-size: 18px;
+  }
+  main {
+    padding: 1em 0; 
+  }
+}
+
+/* Drop Cap Styling */
+.prose section > p:first-of-type::first-letter {
+  color: #000; /* Black color for drop cap */
+  float: left;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* Match body/Home link font */
+  font-size: 4.5em; /* Significantly larger size */
+  line-height: 0.8; /* Adjust line height to align */
+  padding-right: 0.1em; /* Space between drop cap and text */
+  padding-bottom: 0.05em; /* Fine-tune vertical alignment */
+  margin-top: 0.05em; /* Adjust top margin */
+  font-weight: bold; /* Make it bolder */
+}
+
+/* Sidenote Styles (Simplified Tufte-inspired) */
+.sidenote,
+.marginnote {
+    float: right;
+    clear: right;
+    /* Adjust margin based on 1fr 5fr 2fr layout + gap */ 
+    /* Pushes the note into the right column */
+    margin-right: -45%; /* Approx. (2fr + gap) / 5fr */
+    width: 40%;       /* Approx. 2fr / 5fr */
+    margin-top: 0.3rem;
+    margin-bottom: 1rem;
+    font-family: et-book, Palatino, "palatino linotype", "palatino lt std", "book antiqua", Georgia, serif; /* Changed font stack */
+    font-size: 0.85em;
+    line-height: 1.4;
+    vertical-align: baseline;
+    position: relative;
+    color: #333; /* Darker grey color for sidenote text */
+}
+
+label.sidenote-number {
+    counter-increment: sidenote-counter;
+}
+
+label.sidenote-number::after,
+.sidenote::before {
+    content: counter(sidenote-counter); /* Removed brackets */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* Match body font */
+    vertical-align: baseline;
+    position: relative;
+    top: -0.3em; /* Adjust vertical alignment */
+    font-size: 0.8em; /* Smaller footnote number */
+    padding-left: 2px;
+    color: #333; /* Match sidenote body color */
+}
+
+.sidenote::before {
+    /* Removed absolute positioning */
+    /* position: absolute; */
+    /* top: 0; */
+    /* left: -2.5em; */ 
+    display: inline; /* Make number inline */
+    margin-right: 0.5em; /* Space between number and text */
+    color: var(--body-font-color); /* Changed from var(--color-link) */
+}
+
+input.margin-toggle {
+    display: none;
+}
+
+/* Reset counter for each article */
+article {
+    counter-reset: sidenote-counter;
+}
+
+/* Responsive handling for sidenotes */
+@media (max-width: 1000px) {
+    .sidenote,
+    .marginnote {
+        display: block; /* Show by default when stacked */
+        float: none;
+        clear: none;
+        margin-right: 0;
+        width: 100%;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.9em;
+        line-height: 1.5;
+        position: relative;
+        left: 0;
+        /* Basic styling for stacked notes */
+        border-left: 3px solid var(--gray-200);
+        padding-left: 1em;
+        background-color: var(--gray-200);
+        border-radius: 2px;
+    }
+
+    label.sidenote-number {
+        /* Ensure number still appears inline */
+    }
+    
+    .sidenote::before {
+      display: none; /* Hide the note's number when stacked */
+    }
+
+    /* Optional: Hide/show toggle using checkbox (uncomment if needed) */
+    /*
+    label.margin-toggle:not(.sidenote-number) {
+      display: inline;
+    }
+    input.margin-toggle {
+        display: none;
+    }
+    input.margin-toggle:checked + .sidenote,
+    input.margin-toggle:checked + .marginnote {
+      display: block;
+    }
+     .sidenote, .marginnote {
+       display: none;
+     }
+    */
+}
+
+/* Target headings specifically within article content */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+	margin: 1.5em 0 0.5rem 0;
+	color: #000; /* Ensure black color */
+	line-height: 1.2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* Match body/Home link font */
+	font-weight: 700; /* Ensure bold weight */
+}
+/* Keep global heading sizes/styles if needed, or adjust */
+/* h1 { font-size: 2.2em; margin-top: 0; font-weight: 700; } */
+/* h2 { font-size: 1.8em; font-weight: 700; text-transform: uppercase; } */
+/* ... etc ... */
+
+/* Reset global heading rule if prose rule handles it */
+/* 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 1.5em 0 0.5rem 0;
+	color: #000; 
+	line-height: 1.2;
+  font-family: inherit; 
+	font-weight: 600;
+}
+*/
+
+/* Disable hover effect for specific nav links */
+nav.site-nav .internal-links a[href="/"]:hover,
+nav.site-nav .internal-links a[href="/about"]:hover {
+  text-decoration: none; /* Keep text decoration as it is */
+  /* You might need to set the color explicitly if it changes on hover */
+  /* color: var(--color-link); /* Or the original color */
+}
+
+/* Tufte-inspired article enhancements */
+.prose {
+  /* Improve text measure for readability (65-75 characters per line) */
+  max-width: 45rem;
+  margin: 0 auto;
+  /* Enhance typography */
+  font-size: 15px; /* Slightly larger base size for readability */
+  line-height: 1.6; /* Improved line height for better readability */
+  /* Add subtle hanging punctuation for quotes */
+  hanging-punctuation: first;
+}
+
+/* Improve paragraph spacing for better rhythm */
+.prose p {
+  margin-bottom: 1.5em;
+  hyphens: auto; /* Add hyphenation for better text flow */
+}
+
+/* Subtle lead-in paragraph style */
+.prose p:first-of-type {
+  font-size: 1.1em;
+  line-height: 1.5;
+  margin-bottom: 1.8em;
+}
+
+/* Enhanced blockquote styling */
+.prose blockquote {
+  border-left: 2px solid var(--color-link); /* Thinner, more elegant border */
+  background-color: transparent; /* Remove background for cleaner look */
+  padding: 0.2em 0 0.2em 1.5em; /* Less padding top/bottom, more left */
+  margin: 2em 0 2em 1em; /* Better margins */
+  font-style: italic; /* Subtle italics for quotes */
+  color: rgba(0, 0, 0, 0.7); /* Slightly muted text */
+}
+
+/* Enhanced sidenote styling */
+.sidenote, .marginnote {
+  font-size: 0.8em;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.65); /* More subtle color */
+  /* Subtle styling */
+  background-color: transparent;
+  border-left: none;
+}
+
+/* Improved headings for better hierarchy */
+.prose h2 {
+  font-size: 1.6em;
+  margin-top: 2.5em;
+  margin-bottom: 0.7em;
+  text-transform: none; /* Remove uppercase for more Tufte-like style */
+  letter-spacing: -0.01em; /* Tighter kerning */
+}
+
+.prose h3 {
+  font-size: 1.3em;
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  letter-spacing: -0.01em;
+}
+
+/* Style figures and captions */
+figure {
+  margin: 2em 0;
+  text-align: center;
+}
+
+figcaption {
+  font-size: 0.85em;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.65);
+  text-align: center;
+  margin-top: 0.7em;
+  font-style: italic;
+}
+
+/* Subtle horizontal rule */
+.prose hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 2.5em auto;
+  width: 40%;
+}
+
+/* Enhance small caps for section breaks or special text */
+.small-caps {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}
+
+/* Enhance links in prose with subtle underline */
+.prose a {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 85, 187, 0.3);
+  transition: border-color 0.2s ease;
+}
+
+.prose a:hover {
+  border-bottom: 1px solid rgba(0, 85, 187, 0.7);
+}
+
+/* Subtle table styling */
+.prose table {
+  border-collapse: collapse;
+  margin: 2em 0;
+  font-size: 0.9em;
+  width: 100%;
+}
+
+.prose table th {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 0.5em;
+  text-align: left;
+  font-weight: 600;
+}
+
+.prose table td {
+  padding: 0.5em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* More sophisticated Tufte-inspired enhancements */
+
+/* Pull quotes for highlighting important text */
+.pull-quote {
+  float: right;
+  width: 45%;
+  padding: 0;
+  margin: 0.5em -48% 1.5em 1em;
+  font-size: 1.1em;
+  line-height: 1.4;
+  text-align: left;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.7);
+  border-left: none;
+  position: relative;
+}
+
+/* Add subtle left border to pull quotes */
+.pull-quote:before {
+  content: "";
+  position: absolute;
+  top: 0.2em;
+  bottom: 0.2em;
+  left: -1.5em;
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced code blocks with syntax highlighting colors */
+.prose pre {
+  background-color: rgba(246, 248, 250, 0.8); /* Even lighter gray */
+  border: none;
+  border-left: 2px solid var(--color-link);
+  border-radius: 0;
+  font-size: 0.85em;
+  padding: 1.2em 1.4em;
+  margin: 1.5em 0;
+}
+
+/* Refine inline code style */
+.prose code:not(pre > code) {
+  color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(246, 248, 250, 0.5);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+/* Refined image treatment */
+.prose img {
+  display: block;
+  margin: 2em auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Full-bleed image option */
+.full-bleed {
+  width: 100vw;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  max-width: none;
+}
+
+/* Add caption styling */
+.caption {
+  font-size: 0.85em;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.65);
+  padding-top: 0.5em;
+  font-style: italic;
+}
+
+/* Enhance footnote styling */
+.footnote {
+  font-size: 0.85em;
+  line-height: 1.5;
+  margin: 2em 0;
+  padding-top: 1em;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.footnote-item {
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+  position: relative;
+}
+
+.footnote-num {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.8em;
+  line-height: 1.8;
+  color: var(--color-link);
+}
+
+/* Refined link styling with subtle animation */
+.prose a {
+  text-decoration: none;
+  background-image: linear-gradient(transparent calc(100% - 1px), rgba(0, 85, 187, 0.3) 1px);
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  border-bottom: 1px solid rgba(0, 85, 187, 0.3);
+  transition: background-size 0.3s ease;
+}
+
+.prose a:hover {
+  border-bottom-color: transparent;
+  background-size: 100% 100%;
+}
+
+/* Refined lists with subtle spacing */
+.prose ul, .prose ol {
+  padding-left: 1.8em;
+  margin: 1em 0 1.5em;
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+  position: relative;
+}
+
+.prose li::marker {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Add optional epigraph styling (quote at beginning of article) */
+.epigraph {
+  margin: 2em 0 3em 2em;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.epigraph footer {
+  text-align: right;
+  font-style: normal;
+  margin-top: 0.5em;
+  font-size: 0.9em;
+}
+
+/* Add margin notes that work with the sidenote system */
+.margin-note {
+  background-color: transparent;
+  padding: 0;
+  border-left: none;
+  font-style: normal;
+}
+
+/* Add elegant drop cap option that can be toggled */
+.has-dropcap:first-letter {
+  float: left;
+  font-size: 5em;
+  line-height: 0.65;
+  margin: 0.1em 0.1em 0 0;
+  color: #000;
+  font-weight: bold;
+}
+
+/* Add subtle scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+a:focus, button:focus, input:focus, textarea:focus {
+  outline: 2px solid rgba(0, 85, 187, 0.5);
+  outline-offset: 2px;
+}
+
+/* Keyline style for visual separation when needed */
+.keyline {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 2em;
+  margin-bottom: 2em;
+}
+
+/* Tufte-inspired section marker */
+.section-mark {
+  text-align: center;
+  margin: 2em 0;
+}
+
+.section-mark:after {
+  content: "* * *";
+  display: inline-block;
+  font-size: 1.5em;
+  letter-spacing: 0.5em;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Tufte-inspired image positioning system */
+
+/* Base figure styling */
+.figure {
+  margin: 1.5em 0;
+  position: relative;
+  max-width: 100%;
+}
+
+/* Caption styling */
+.figure-caption {
+  font-size: 0.85em;
+  color: var(--gray-500);
+  text-align: left;
+  margin-top: 1em;
+  line-height: 1.3;
+}
+
+/* Right-aligned figure with text wrap */
+.figure-right {
+  float: right;
+  margin: 0.3em 0 1em 1.5em;
+  width: 35%; /* Tufte-like proportion */
+  max-width: 300px;
+}
+
+/* Left-aligned figure with text wrap */
+.figure-left {
+  float: left;
+  margin: 0.3em 1.5em 1em 0;
+  width: 35%; /* Tufte-like proportion */
+  max-width: 300px;
+}
+
+/* Center-right figure with text wrap (Tufte-inspired) */
+.figure-mid-right {
+  float: right;
+  margin: 0.3em -10% 1em 1.5em; /* Negative right margin pushes into margin area */
+  width: 50%;
+  max-width: 400px;
+}
+
+/* Center-left figure with text wrap (Tufte-inspired) */
+.figure-mid-left {
+  float: left;
+  margin: 0.3em 1.5em 1em -10%; /* Negative left margin pushes into margin area */
+  width: 50%;
+  max-width: 400px;
+}
+
+/* Centered figure with no wrap */
+.figure-center {
+  display: block;
+  margin: 2em auto;
+  width: 65%;
+  max-width: 500px;
+}
+
+/* Full-width figure (edge to edge) */
+.figure-full {
+  width: 100%;
+  margin: 2em 0;
+}
+
+/* Margin figure (true Tufte style) */
+.figure-margin {
+  float: right;
+  width: 30%;
+  max-width: 250px;
+  margin: 0.3em -45% 1em 1em; /* Pushes into margin area */
+  clear: right;
+}
+
+/* Ensure images fill their container */
+.figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 2px;
+  margin-bottom: 0.2em; /* Added to reduce space below image */
+}
+
+/* Clearfix for floating elements */
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Add subtle border option */
+.figure-bordered img {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Add subtle shadow option */
+.figure-shadow img {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .figure-margin,
+  .figure-mid-right,
+  .figure-mid-left {
+    float: right;
+    width: 40%;
+    margin: 0.3em 0 1em 1em;
+    max-width: 300px;
+  }
+  
+  .figure-center {
+    width: 85%;
+  }
+}
+
+@media (max-width: 500px) {
+  .figure-margin,
+  .figure-right,
+  .figure-left,
+  .figure-mid-right,
+  .figure-mid-left,
+  .figure-center {
+    float: none;
+    width: 100%;
+    margin: 1.5em 0;
+    max-width: none;
+  }
+}
+
+/* Marks before each post title */
+.post-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.post-item .mark {
+  /* Smaller, footnote-like symbol */
+  font-size: 0.9em;
+  margin-right: 0.3rem;
+  vertical-align: super; /* raise like footnote */
+}
+.post-item .mark-grey {
+  color: grey;
+}
+.post-item .mark-orange {
+  color: orange;
+}
+.post-item .mark-blue {
+  color: blue;
+}
+
+/* Restore default bullet marker before each post-item */
+.post-item::before {
+  content: '•';
+  margin-right: 0.5rem;
+  color: var(--body-font-color);
+}

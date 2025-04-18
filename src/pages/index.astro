@@ -1,0 +1,52 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+
+// Fetch all blog posts, sort by date descending
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<div class="layout-wrapper">
+			<aside class="sidebar">
+				<Header />
+			</aside>
+			<div class="main-content-area">
+				<main>
+					<ul class="post-list">
+						{posts.map((post) => {
+							// extract mark fields
+							const { markType, markCount = 0, markColor } = post.data;
+							let markStr = '';
+							if (markType && markCount > 0 && markColor) {
+								const symbol = markType === 'exclamation' ? '!' : '?';
+								markStr = symbol.repeat(markCount);
+							}
+							return (
+								<li class="post-item">
+									{markStr && <span className={`mark mark-${markColor}`}>{markStr}</span>}
+									<h2><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
+								</li>
+							);
+						})}
+					</ul>
+				</main>
+				<Footer />
+			</div>
+			<aside class="sidenotes-area">
+				{/* Sidenotes will go here on relevant pages */}
+			</aside>
+		</div>
+	</body>
+</html>

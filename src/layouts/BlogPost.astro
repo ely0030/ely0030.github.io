@@ -1,0 +1,202 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import { type MarkdownHeading } from 'astro';
+
+type Props = CollectionEntry<'blog'>['data'];
+
+const { title, description, pubDate, updatedDate, heroImage, tags } = Astro.props;
+
+const headings = Astro.locals.headings ?? [];
+
+function buildToc(headings: MarkdownHeading[]) {
+	const toc: any[] = [];
+	const parentHeadings = new Map();
+	headings.forEach((h) => {
+		const heading = { ...h, subheadings: [] };
+		parentHeadings.set(heading.depth, heading);
+		if (heading.depth === 2) {
+			toc.push(heading);
+		} else {
+			const parent = parentHeadings.get(heading.depth - 1);
+			if (parent) {
+				parent.subheadings.push(heading);
+			}
+		}
+	});
+	return toc;
+}
+
+const toc = buildToc(headings);
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={description} />
+		<style>
+			/* Remove main width override */
+			/* main {
+				width: calc(100% - 2em);
+				max-width: 100%;
+				margin: 0;
+			} */
+			.post-header {
+				margin-bottom: 2em;
+			}
+			.post-title {
+				font-size: 2.5em; /* Match h1 */
+				margin: 0 0 0.25em 0;
+				line-height: 1.1;
+				/* color: rgb(var(--title-color)); -- Removed, use default text color */
+			}
+			.post-meta {
+				font-size: 0.9em;
+				color: rgb(var(--subtle-gray)); /* Use subtle gray */
+			}
+			.tags-list {
+				list-style: none;
+				padding: 0;
+				margin: 0.5em 0 0 0;
+				color: rgb(var(--subtle-gray)); /* Use subtle gray for "tags:" */
+			}
+			.tags-list li {
+				display: inline-block;
+				margin-right: 0.5em;
+			}
+			.tags-list a {
+				color: rgb(var(--link-color)); /* Use purple for tag links */
+				text-decoration: underline;
+				font-size: 0.9em;
+			}
+			.tags-list a:hover {
+				color: rgb(var(--link-color)); /* Keep purple on hover */
+				text-decoration: none;
+			}
+			.hero-image {
+				width: 100%;
+				margin-bottom: 2em; /* Add space below image */
+			}
+			.hero-image img {
+				display: block;
+				margin: 0 auto;
+				/* border-radius: 8px; */ /* Removed border-radius */
+				box-shadow: none; /* Remove shadow for flatter look */
+			}
+			/* Remove .prose width/padding/color styles */
+			/* .prose {
+				width: 720px;
+				max-width: calc(100% - 2em);
+				margin: auto;
+				padding: 1em;
+				color: rgb(var(--gray-dark));
+			} */
+			.prose {
+				/* Keep this selector if other styles depend on it, or remove if unused */
+				white-space: pre-line;
+			}
+			/* TOC Styles */
+			.toc-container {
+				margin-top: 2em; /* Add space above TOC */
+				padding-top: 1em;
+				border-top: 1px solid rgba(var(--black), 0.1); /* Separator line */
+				font-size: 0.9em;
+			}
+			.toc-list,
+			.toc-list ul {
+				list-style: none;
+				padding-left: 0;
+				margin: 0;
+			}
+			.toc-list li {
+				margin-bottom: 0.4em;
+			}
+			.toc-list > li > a {
+				font-weight: 600; /* Bolder top-level items */
+				text-transform: uppercase;
+			}
+			.toc-list ul {
+				padding-left: 1em; /* Indent sub-items */
+				margin-top: 0.4em;
+			}
+			.toc-list a {
+				text-decoration: none;
+				color: rgb(var(--subtle-gray)); /* Use subtle gray for TOC links */
+			}
+			.toc-list a:hover {
+				text-decoration: underline;
+				color: rgb(var(--black));
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="layout-wrapper">
+			<aside class="sidebar">
+				<Header />
+				{toc.length > 0 && (
+					<nav class="toc-container" aria-label="Table of Contents">
+						<ul class="toc-list">
+							{toc.map((heading) => (
+								<li>
+									<a href={`#${heading.slug}`}>{heading.text}</a>
+									{heading.subheadings.length > 0 && (
+										<ul>
+											{heading.subheadings.map((subheading) => (
+												<li>
+													<a href={`#${subheading.slug}`}>{subheading.text}</a>
+												</li>
+											))}
+										</ul>
+									)}
+								</li>
+							))}
+						</ul>
+					</nav>
+				)}
+			</aside>
+			<div class="main-content-area">
+				<main>
+					<article>
+						<div class="prose">
+							{/*
+							<div class="post-header">
+								<h1 class="post-title">{title}</h1>
+								<div class="post-meta">
+									<FormattedDate date={pubDate} />
+									{updatedDate && (
+										<span class="last-updated-on">
+											(updated <FormattedDate date={updatedDate} />)
+										</span>
+									)}
+								</div>
+								{tags && tags.length > 0 && (
+									<ul class="tags-list" aria-label="Tags">
+										<li>tags:</li>
+										{tags.map((tag) => (
+											<li>
+												<a href={`/tags/${tag}`}>{tag}</a>
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+							*/}
+							{/* Removed hero image rendering as it was inside post-header */}
+							<section>
+								<slot />
+							</section>
+						</div>
+					</article>
+				</main>
+				<Footer />
+			</div>
+            {/* Add empty sidenotes area */}
+            <aside class="sidenotes-area">
+                {/* TODO: Render actual sidenotes here */}
+            </aside>
+		</div>
+	</body>
+</html>

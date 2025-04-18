@@ -1,0 +1,116 @@
+---
+const { code, lang = 'text', caption = '', full = false } = Astro.props;
+const copy = (el) => {
+  navigator.clipboard.writeText(el.innerText).then(()=>{
+    el.closest('figure').querySelector('.copy-btn').textContent='Copied!';
+    setTimeout(()=>{el.closest('figure').querySelector('.copy-btn').textContent='Copy';},1000);
+  });
+};
+---
+<figure class={`tufte-code${full ? ' fullwidth' : ''}`}>
+  <button class="copy-btn" aria-label="Copy code">Copy</button>
+  {caption && <figcaption>{caption}</figcaption>}
+  <pre class={`language-${lang}`} tabindex="0" on:click={(e)=>copy(e.currentTarget)}><code class={`language-${lang}`}>
+{code}
+  </code></pre>
+</figure>
+
+<style>
+figure.tufte-code{
+  background:#0b0d12; /* dark background */
+  border-left:2px solid var(--color-link); /* Tufte-like left rule */
+  padding:1.2rem 1.5rem;
+  margin:2rem 0;
+  overflow-x:auto;
+  box-shadow:none;
+  border-radius:0; /* square edges for print‑like feel */
+  font-size:0.85em; /* slightly smaller to match body */
+  position:relative;
+}
+figure.tufte-code.fullwidth{margin-left:-33%;width:166%;}
+/* copy button */
+.copy-btn{
+  position:absolute;
+  top:0.6rem;
+  right:0.8rem;
+  background:transparent;
+  border:1px solid var(--color-link);
+  color:var(--color-link);
+  padding:0.2rem 0.5rem;
+  font-size:0.7em;
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.copy-btn:hover{background:var(--color-link);color:#fff;}
+figure.tufte-code figcaption{
+  font-size:0.8em;
+  color:var(--gray-500);
+  font-style:italic;
+  margin-top:0.6rem;
+}
+
+/* --- Begin Scoped Dark Theme --- */
+figure.tufte-code pre,
+figure.tufte-code code {
+  background: transparent !important; /* Ensure dark bg from figure shows */
+  color: #fff !important; /* White base text */
+  font-family: 'Source Code Pro', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.015em;
+  line-height: 1.5;
+  text-shadow: none;
+}
+
+/* Scoped Token Styling */
+figure.tufte-code .token.comment,
+figure.tufte-code .token.prolog,
+figure.tufte-code .token.doctype,
+figure.tufte-code .token.cdata {
+  color: var(--color-link);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+figure.tufte-code .token.punctuation {
+   color: #88aaff; /* Lighter blue for punctuation */
+}
+
+/* All other tokens blue */
+figure.tufte-code .token.property,
+figure.tufte-code .token.tag,
+figure.tufte-code .token.boolean,
+figure.tufte-code .token.number,
+figure.tufte-code .token.constant,
+figure.tufte-code .token.symbol,
+figure.tufte-code .token.deleted,
+figure.tufte-code .token.selector,
+figure.tufte-code .token.attr-name,
+figure.tufte-code .token.string,
+figure.tufte-code .token.char,
+figure.tufte-code .token.builtin,
+figure.tufte-code .token.inserted,
+figure.tufte-code .token.operator,
+figure.tufte-code .token.entity,
+figure.tufte-code .token.url,
+figure.tufte-code .language-css .token.string,
+figure.tufte-code .style .token.string,
+figure.tufte-code .token.atrule,
+figure.tufte-code .token.attr-value,
+figure.tufte-code .token.keyword,
+figure.tufte-code .token.function,
+figure.tufte-code .token.class-name,
+figure.tufte-code .token.regex,
+figure.tufte-code .token.important,
+figure.tufte-code .token.variable {
+  color: var(--color-link);
+}
+
+figure.tufte-code .token.important,
+figure.tufte-code .token.bold {
+  font-weight: bold;
+}
+figure.tufte-code .token.italic {
+  font-style: italic;
+}
+/* --- End Scoped Dark Theme --- */
+
+</style> 

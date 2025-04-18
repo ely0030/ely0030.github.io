@@ -1,0 +1,16 @@
+/* 
+   PrismJS Tufte-inspired "pale-ink" theme 
+   Based on principles: dark text, light background, subtle accents.
+*/
+
+/* Base styles removed - now handled within CodeBlock.astro component */
+
+/* Keep only generic structural rules if needed, otherwise this file might become empty */
+
+/* Example: Minimal rules that might be kept */
+.token.entity {
+	cursor: help;
+}
+
+/* Line numbers styling might be kept here if globally configured */
+/* ... line number styles ... */ 

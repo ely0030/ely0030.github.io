@@ -1,0 +1,25 @@
+{
+  "name": "ely0030-blog",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro dev",
+    "build": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro build",
+    "preview": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro preview",
+    "astro": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro",
+    "deploy": "/Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/astro build && /Users/chris/.nvm/versions/node/v18.17.1/bin/node ./node_modules/.bin/gh-pages -d dist"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.2.4",
+    "@astrojs/rss": "^4.0.11",
+    "@astrojs/sitemap": "^3.3.0",
+    "astro": "^5.7.1",
+    "remark-breaks": "^4.0.0",
+    "tufte-css": "^1.8.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "rehype-prism-plus": "^2.0.1",
+    "unist-util-visit": "^5.0.0"
+  }
+}
