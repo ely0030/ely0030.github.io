@@ -47,6 +47,49 @@ const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
 
 <!-- Primary Meta Tags -->
 <title>{title}</title>
+<script type="module">
+;(() => {
+  // target: October 1, 2027
+  const target = new Date(2027, 9, 1);
+  const now = new Date();
+  
+  // Handle case where target is already passed
+  if (now >= target) {
+    const msg = "0 0 0";
+    document.title = msg;
+    const t = document.querySelector('head > title');
+    if (t) t.textContent = msg;
+    return;
+  }
+
+  // Calculate time remaining
+  const diff = target - now;
+  
+  // Calculate months, days, hours
+  let months = (target.getFullYear() - now.getFullYear()) * 12 + 
+              (target.getMonth() - now.getMonth());
+  
+  // Create a date for next month calculation
+  const nextMonthDate = new Date(now);
+  nextMonthDate.setMonth(now.getMonth() + months);
+  nextMonthDate.setDate(Math.min(target.getDate(), nextMonthDate.getDate()));
+  
+  // Get days between nextMonthDate and target
+  const dayDiff = Math.floor((target - nextMonthDate) / (1000 * 60 * 60 * 24));
+  
+  // Calculate days and hours
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24)) % 30;
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  // Format message in concise format: months, days, hours
+  const msg = `${months} ${days} ${hours}`;
+  
+  // override title
+  document.title = msg;
+  const t = document.querySelector('head > title');
+  if (t) t.textContent = msg;
+})();
+</script>
 <meta name="title" content={title} />
 <meta name="description" content={description} />
 

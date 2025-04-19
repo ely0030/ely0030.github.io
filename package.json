@@ -2,8 +2,11 @@
   "name": "ely0030-blog",
   "type": "module",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=18.17.1"
+  },
   "scripts": {
-    "dev": "astro dev",
+    "dev": "bash run-dev.sh",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

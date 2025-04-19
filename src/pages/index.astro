@@ -36,13 +36,321 @@ const posts = (await getCollection('blog')).sort(
 							return (
 								<li class="post-item">
 									{markStr && <span className={`mark mark-${markColor}`}>{markStr}</span>}
-									<h2><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
+									<h2>
+										<a href={`/${post.id}/`} class={post.data.private ? 'private-link' : ''} data-hash={post.data.private ? post.data.passwordHash : undefined}>{post.data.title}</a>
+										{post.data.private && <span class="lock" aria-label="Private">🔒</span>}
+									</h2>
 								</li>
 							);
 						})}
 					</ul>
 				</main>
 				<Footer />
+				<style>
+					.post-item {
+						position: relative;
+					}
+					.private-link {
+						display: inline-block;
+					}
+					.lock {
+						position: absolute;
+						left: -1.5em;
+						top: 50%;
+						transform: translateY(-50%);
+						font-size: 0.85em;
+						opacity: 0;
+						color: inherit;
+						user-select: none;
+						z-index: 1;
+						transition: opacity 0.2s ease;
+					}
+					.private-link:hover + .lock,
+					.post-item.has-active-form .lock {
+						opacity: 0.9;
+					}
+					@keyframes unlockPop {
+						0% { transform: translateY(-50%) scale(1); }
+						40% { transform: translateY(-50%) scale(1.15); }
+						100% { transform: translateY(-50%) scale(1); }
+					}
+					.lock.unlocking {
+						animation: unlockPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+					}
+					@keyframes unlockSuccess {
+						0% { transform: translateY(-50%) rotate(0deg); filter: brightness(1); }
+						40% { transform: translateY(-50%) rotate(-15deg); filter: brightness(1.5); }
+						70% { transform: translateY(-50%) rotate(10deg); filter: brightness(1.3); }
+						100% { transform: translateY(-50%) rotate(0deg); filter: brightness(1); }
+					}
+					.lock.success {
+						animation: unlockSuccess 0.4s ease-out forwards;
+					}
+					@keyframes shakeError {
+						0% { transform: translateY(-50%) translateX(0); }
+						20% { transform: translateY(-51.5%) translateX(-3px); }
+						40% { transform: translateY(-48.5%) translateX(3px); }
+						60% { transform: translateY(-51.5%) translateX(-3px); }
+						80% { transform: translateY(-48.5%) translateX(3px); }
+						100% { transform: translateY(-50%) translateX(0); }
+					}
+					.lock.error {
+						animation: shakeError 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+					}
+					.inline-pw-form {
+						display: inline-flex;
+						align-items: center;
+						gap: 0.25em;
+						margin: 0;
+						/* Ensure consistent height */
+						height: 1.4em;
+						opacity: 0;
+						transform: translateY(-0.2em);
+						transition: opacity 0.3s ease, transform 0.3s ease;
+					}
+					.post-item.has-active-form .inline-pw-form {
+						opacity: 1;
+						transform: translateY(0);
+					}
+					.inline-pw-form input[type="password"] {
+						font-size: 1em;
+						padding: 2px 4px;
+						border: 1px solid #ccc;
+						margin: 0;
+						/* Fix vertical sizing */
+						height: 1.4em;
+						box-sizing: border-box;
+						line-height: 1;
+						/* Outline handled inline via style attribute */
+					}
+					/* Remove focus outline only from private links */
+					a.private-link:focus {
+						outline: none;
+					}
+				</style>
+				<script type="module" client:load>
+                  import { sha256 } from 'https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/+esm';
+
+                  let active = null; // {link, h2, originalHTML, form}
+
+                  function restore() {
+                    if (!active) return;
+                    const { h2, originalHTML } = active;
+                    const li = h2.closest('.post-item');
+                    
+                    // Get lock element that's directly inside the list item
+                    // This might exist if the form was previously shown
+                    const directLock = li?.querySelector(':scope > .lock');
+                    
+                    // Parse the original HTML to remove any embedded lock element temporarily
+                    // This ensures we don't duplicate the lock when restoring
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = originalHTML;
+                    const lockInOriginal = tempDiv.querySelector('.lock');
+                    
+                    // Put back the original HTML (link text, etc.)
+                    h2.innerHTML = tempDiv.innerHTML;
+                    h2.style.minHeight = ''; // Reset min height
+                    
+                    // If there was a lock moved outside the h2, handle it properly
+                    if (directLock) {
+                      // Remove any animation classes first
+                      directLock.classList.remove('error', 'unlocking');
+                      
+                      // Start fade animation
+                      directLock.style.opacity = '0';
+                      
+                      // Wait for fade transition to complete before cleanup
+                      directLock.addEventListener('transitionend', () => {
+                        // Check if it's still the active lock before removing
+                        if (li?.contains(directLock) && !li.classList.contains('has-active-form')) {
+                          directLock.remove();
+                          
+                          // Ensure the lock is properly placed back in h2 for hover effect
+                          if (!h2.querySelector('.lock')) {
+                            const link = h2.querySelector('.private-link');
+                            if (link) {
+                              const newLock = directLock.cloneNode(true);
+                              newLock.style.opacity = ''; // Reset inline opacity
+                              link.insertAdjacentElement('afterend', newLock);
+                            }
+                          }
+                        }
+                      }, { once: true });
+                    }
+                    
+                    // Remove class immediately so future hovers work correctly
+                    if (li) li.classList.remove('has-active-form');
+                    active = null;
+                  }
+
+                  document.addEventListener('click', (event) => {
+                    const link = event.target.closest('a.private-link');
+                    const formClicked = active && active.form.contains(event.target);
+
+                    // If clicking inside currently active form, keep it
+                    if (formClicked) {
+                      return;
+                    }
+
+                    // If clicking a non-private link OR outside any link when a form is active, restore.
+                    if (!link || !link.dataset.hash) {
+                      if (active && !event.target.closest('a')) {
+                        restore();
+                      }
+                      return; // Not a private link click, nothing more to do here
+                    }
+
+                    // --- Clicked on a private link --- 
+                    event.preventDefault(); // Prevent default navigation
+
+                    const hash = link.dataset.hash;
+                    const slug = new URL(link.href).pathname;
+                    const storedHash = localStorage.getItem('pw:' + slug);
+
+                    // Check if already authorized
+                    if (storedHash === hash) {
+                      const li = link.closest('.post-item');
+                      const lock = li?.querySelector('.lock');
+                      
+                      // Prevent further clicks
+                      link.style.pointerEvents = 'none';
+                      
+                      if (lock) {
+                        // Make lock visible and show open animation
+                        lock.style.opacity = '0.9';
+                        lock.classList.add('success');
+                        
+                        // Quick sequence: Lock > Unlock > Navigate
+                        setTimeout(() => {
+                          // Change to unlocked emoji with a success effect
+                          lock.textContent = '🔓';
+                          
+                          // Navigate shortly after
+                          setTimeout(() => {
+                            window.location.href = link.href;
+                          }, 220);
+                        }, 280);
+                      } else {
+                        // No lock found, just navigate after a tiny delay
+                        setTimeout(() => {
+                          window.location.href = link.href;
+                        }, 100);
+                      }
+                      
+                      if (li) li.classList.add('has-active-form');
+                      return; // Don't show the password form
+                    }
+
+                    // --- Not authorized, proceed with showing the password form ---
+
+                    // If clicking the *same* link that already has the form, do nothing
+                    if (active && active.link === link) return; 
+
+                    // Restore any previously active form before showing the new one
+                    restore();
+                    
+                    const h2 = link.parentElement;
+                    const li = h2.closest('.post-item'); 
+                    const originalHTML = h2.innerHTML; // Store original H2 content
+                    
+                    // Mark the list item to keep the lock visible
+                    li.classList.add('has-active-form');
+
+                    // Build inline form
+                    const form = document.createElement('form');
+                    form.className = 'inline-pw-form';
+                    form.noValidate = true; // Prevent browser validation UI
+                    form.innerHTML = `
+                      <input type="password" size="12" autofocus style="outline: none;" required />
+                    `;
+
+                    // --- Prepare h2 and lock for form insertion ---
+                    const originalHeight = h2.offsetHeight;
+                    
+                    // Find the original lock icon (might be inside h2 initially)
+                    const lockElement = h2.querySelector('.lock');
+                    let lockClone = null;
+                    if (lockElement) {
+                        lockClone = lockElement.cloneNode(true);
+                        lockElement.remove(); // Remove from h2 before clearing
+                    }
+                    
+                    // Clear h2 but maintain height to prevent layout shift
+                    h2.innerHTML = '';
+                    h2.style.minHeight = originalHeight + 'px';
+                    
+                    // Place the cloned lock onto the LI (outside h2) if it's not already there
+                    if (lockClone && !li.querySelector(':scope > .lock')) { 
+                      li.insertBefore(lockClone, li.firstChild);  
+                    }
+                    
+                    // Create container for form to maintain vertical alignment
+                    const container = document.createElement('span');
+                    container.style.display = 'inline-flex';
+                    container.style.alignItems = 'center';
+                    container.style.height = originalHeight + 'px'; // Ensure consistent height
+
+                    container.appendChild(form);
+                    h2.appendChild(container);
+
+                    // Update active state
+                    active = { link, h2, originalHTML, form };
+
+                    // Add form submit listener
+                    form.addEventListener('submit', (e) => {
+                      e.preventDefault();
+                      const pwInput = form.querySelector('input');
+                      const pw = pwInput.value;
+                      if (!pw) return; // Basic check for empty submission
+                      
+                      const digest = sha256(pw);
+                      if (digest === hash) {
+                        localStorage.setItem('pw:' + slug, hash);
+                        
+                        // Find the lock element
+                        const lockElement = li.querySelector(':scope > .lock');
+                        if (lockElement) {
+                          // Make lock visible and show unlock animation
+                          lockElement.style.opacity = '0.9';
+                          lockElement.classList.add('success');
+                          
+                          // Quick sequence: Lock > Unlock > Navigate
+                          setTimeout(() => {
+                            // Change to unlocked emoji with a success effect
+                            lockElement.textContent = '🔓';
+                            
+                            // Navigate shortly after
+                            setTimeout(() => {
+                              window.location.href = link.href;
+                            }, 220);
+                          }, 280);
+                        } else {
+                          // No lock found, just navigate
+                          window.location.href = link.href;
+                        }
+                      } else {
+                        // Find the lock element
+                        const lockElement = li.querySelector(':scope > .lock');
+                        if (lockElement) {
+                          // Remove any existing animation classes
+                          lockElement.classList.remove('error');
+                          // Force reflow to restart animation
+                          void lockElement.offsetWidth;
+                          // Add shake animation class
+                          lockElement.classList.add('error');
+                        }
+                        pwInput.value = '';
+                        pwInput.focus();
+                      }
+                    });
+
+                    // Focus the input field
+                    const pwInput = form.querySelector('input');
+                    if(pwInput) pwInput.focus();
+
+                  });
+                </script>
 			</div>
 			<aside class="sidenotes-area">
 				{/* Sidenotes will go here on relevant pages */}

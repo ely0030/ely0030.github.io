@@ -92,12 +92,12 @@ import HeaderLink from './HeaderLink.astro';
 	nav.site-nav :global(a):focus {
 		outline: none;
 	}
-	nav.site-nav :global(a[href="/about"]) {
+	nav.site-nav :global(a[href="/about"]:not(.active)) {
 		position: relative;
 		overflow: hidden;
 		transition: color 0.3s ease;
 	}
-	nav.site-nav :global(a[href="/about"])::after {
+	nav.site-nav :global(a[href="/about"]:not(.active))::after {
 		content: '';
 		position: absolute;
 		bottom: 0;
@@ -107,8 +107,8 @@ import HeaderLink from './HeaderLink.astro';
 		background: currentColor;
 		transition: width 0.3s ease, left 0.3s ease;
 	}
-	nav.site-nav :global(a[href="/about"]:hover)::after,
-	nav.site-nav :global(a[href="/about"]:focus)::after {
+	nav.site-nav :global(a[href="/about"]:not(.active):hover)::after,
+	nav.site-nav :global(a[href="/about"]:not(.active):focus)::after {
 		width: 100%;
 		left: 0;
 	}

@@ -12,6 +12,9 @@ const blog = defineCollection({
 		pubDate: z.coerce.date(),
 		updatedDate: z.coerce.date().optional(),
 		heroImage: z.string().optional(),
+		// Password-protection fields
+		private: z.boolean().optional(),
+		passwordHash: z.string().optional(),
 		// Optional mark fields for exclamation/question icons
 		markType: z.enum(['exclamation', 'question']).optional(),
 		markCount: z.number().int().min(1).max(3).optional(),
