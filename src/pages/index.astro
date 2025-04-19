@@ -217,20 +217,20 @@ const posts = (await getCollection('blog'))
                       link.style.pointerEvents = 'none';
                       
                       if (lock) {
-                        // Make lock visible and show open animation
+                        // Make lock visible and show unlock animation
                         lock.style.opacity = '0.9';
-                        lock.classList.add('success');
+                        lock.classList.add('unlocking');
                         
                         // Quick sequence: Lock > Unlock > Navigate
                         setTimeout(() => {
-                          // Change to unlocked emoji with a success effect
+                          // Change to unlocked emoji with a pop effect
                           lock.textContent = '🔓';
                           
                           // Navigate shortly after
                           setTimeout(() => {
                             window.location.href = link.href;
-                          }, 220);
-                        }, 280);
+                          }, 400);
+                        }, 180);
                       } else {
                         // No lock found, just navigate after a tiny delay
                         setTimeout(() => {
@@ -313,18 +313,18 @@ const posts = (await getCollection('blog'))
                         if (lockElement) {
                           // Make lock visible and show unlock animation
                           lockElement.style.opacity = '0.9';
-                          lockElement.classList.add('success');
+                          lockElement.classList.add('unlocking');
                           
                           // Quick sequence: Lock > Unlock > Navigate
                           setTimeout(() => {
-                            // Change to unlocked emoji with a success effect
+                            // Change to unlocked emoji with a pop effect
                             lockElement.textContent = '🔓';
                             
                             // Navigate shortly after
                             setTimeout(() => {
                               window.location.href = link.href;
-                            }, 220);
-                          }, 280);
+                            }, 300);
+                          }, 180);
                         } else {
                           // No lock found, just navigate
                           window.location.href = link.href;
