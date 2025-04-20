@@ -1,96 +1,144 @@
-# Astro + Netlify Deployment Guide
+# Astro ➜ Netlify – Definitive Deployment Guide
 
 _Last updated: {{DATE}}_
 
-## 1  Background
-
-* The site was originally a single **static‑HTML GitHub Pages** site.
-* We replaced it with a full **Astro** project (component‑based, Markdown‑first).
-* GitHub Pages rejected workflow pushes because the Personal Access Token (PAT) lacked the `workflow` scope.
-* We decided to drop GitHub Pages entirely and deploy **exclusively through Netlify** for simplicity and richer features.
+> **Goal** → Have a single, friction‑free workflow where every push to `main` automatically builds and publishes the Astro site on Netlify – no manual steps, no workflow‑token surprises.
 
 ---
 
-## 2  Repository Clean‑up
+## 1  Prerequisites
 
-| Action | Why |
-|--------|-----|
-| Disabled **GitHub Pages** in repo settings | Prevent hosting conflict & 404 confusion |
-| Deleted (or never created) a `gh-pages` branch | No longer needed |
-| Removed `.github/workflows/*` | Token lacked `workflow` scope & Netlify handles CI/CD |
-| Added **`netlify.toml`** | Tells Netlify how to build & where to publish |
-| Simplified **npm scripts** in `package.json` | Removed absolute paths & `deploy` script |
-| Removed `gh-pages` npm dependency | Not used with Netlify |
+| Tool | Version | Notes |
+|------|---------|-------|
+| Node | **≥ 20.3.0** | Matches `netlify.toml`; use nvm → `nvm install 20.3 && nvm use 20.3` |
+| npm  | **≥ 9.8** | Ships with Node 20 |
+| Git  | Any recent | SSH key or PAT w/ `repo` scope |
+| Netlify account | Free tier is fine | GitHub integrations enabled |
 
 ---
 
-## 3  `netlify.toml`
+## 2  Repo Structure Recap
 
-```toml
-[build]
-  command = "npm run build"   # Astro build
-  publish = "dist"            # Astro output folder
-  node_version = "18"
+```text
+/docs/…               ← Developer docs (this file)
+/netlify.toml          ← Netlify build instructions
+/package.json          ← Scripts + deps (Astro, MDX, etc.)
+/src/…                 ← Astro components & pages
+/src/content/blog/…    ← Markdown articles
 ```
 
-> Netlify auto‑detects Astro but this file guarantees consistency and lets us add redirects/headers later.
+---
+
+## 3  Configuration Files
+
+### 3.1  `netlify.toml`
+```toml
+[build]
+  command     = "npm run build"   # Astro build
+  publish     = "dist"            # Output folder
+  node_version = "20.3.0"         # Keep in sync with .nvmrc
+```
+**Rules**
+1. **Never** commit a different `node_version` without bumping `.nvmrc`.
+2. Add redirects/headers here (e.g. `[ [redirects] ]`).
+
+### 3.2  `.nvmrc`
+```
+20.3.0
+```
+Keeps dev and CI environments aligned.
 
 ---
 
-## 4  Netlify Setup Steps
+## 4  One‑Time Netlify Setup
 
-1. **Create / Connect Site**  → "Import from Git" → pick `ely0030/ely0030.github.io`.
-2. Build settings (auto‑detected; verify):
+1. Log into Netlify → **Add new site → Import from Git**.
+2. Pick repository `ely0030/ely0030.github.io`.
+3. Verify build settings (auto‑detected):
    * Build command: `npm run build`
    * Publish directory: `dist`
    * Production branch: `main`
-3. Click **Deploy Site**.
-4. (Optional) Add custom domain → Netlify will provision Let's Encrypt TLS automatically.
+4. Click **Deploy site**.
+5. (Optional) Add custom domain – Netlify manages Let's Encrypt certs automatically.
 
-Every push to `main` now triggers:
+That's it. Netlify will create a webhook so every push to `main` triggers:
 ```
-clone → npm ci ⇒ npm run build ⇒ deploy dist/ to CDN
+clone → npm ci → npm run build → deploy dist/ to CDN
 ```
 
 ---
 
-## 5  Secure Git Pushes
+## 5  Daily Developer Workflow
 
-* Never expose PATs in plaintext chats or code.  
-  → **Revoke any leaked token immediately** (`Settings → Developer settings → PATs`).
-* Preferred auth: **SSH keys** (`ssh-keygen` → add public key to GitHub → `git remote set-url origin git@github.com:ely0030/ely0030.github.io.git`).
-* If you must use PAT: scope it to **`repo`** only; no `workflow` permission is required anymore.
+```bash
+# 1. Get latest
+git pull origin main
+
+# 2. Work as usual
+#    – add/edit files in src/ or content/
+
+# 3. Test locally
+npm ci        # first time or when deps change
+npm run dev   # live‑reload preview at http://localhost:4321
+
+# 4. Commit + push
+git add .
+git commit -m "feat: amazing new post"
+git push origin main
+```
+Netlify will build & deploy automatically. Check the Netlify dashboard for a green ✔︎.
 
 ---
 
-## 6  Typical Workflow (Post‑Migration)
+## 6  Git Authentication Cheat‑Sheet
 
-1. `git pull` (stay up‑to‑date)
-2. Add / edit content under `src/` or `content/`.
-3. `git add`, `git commit -m "feat: …"`, `git push`.
-4. Netlify builds → green check ✅
-5. Visit production URL or use Netlify Preview URLs for feature branches.
+| Method | Pros | Cons | Setup |
+|--------|------|------|-------|
+| **SSH key** (recommended) | No PAT scopes to worry about | One‑time key setup | `ssh-keygen`, add public key to GitHub → `git remote set-url origin git@github.com:ely0030/ely0030.github.io.git` |
+| PAT (token) | Works everywhere | Must *not* include `workflow` scope or you'll unintentionally push workflows | Generate PAT w/ **only** `repo` scope, store in Keychain or `.netrc` |
+
+**Never** commit or paste tokens in chats or code. Revoke any leaked token immediately.
 
 ---
 
-## 7  Troubleshooting Checklist
+## 7  Branching & PR Strategy
+
+* **main** – always deployable. Netlify production builds run from here.
+* **feature/*** branches – optional; Netlify will auto‑create **Preview Deploys** so you get a URL per PR.
+* Merge via PR to keep history clean and let Netlify comment with preview links.
+
+---
+
+## 8  Troubleshooting
 
 | Symptom | Likely Cause | Fix |
 |---------|--------------|-----|
-| `git push` hangs | Credential helper waiting for input | Use SSH or store PAT in Keychain |
-| Netlify build fails w/ Node mismatch | Wrong runtime | Set `node_version` in `netlify.toml` or Netlify env var |
-| 404 after deploy | DNS / custom domain mis‑pointing or cached GitHub Pages site | Clear DNS cache; ensure GitHub Pages disabled |
-| Token push error about workflows | Pushing `.github/workflows/*` without `workflow` scope | Delete workflow or add token scope |
+| `git push` rejected with *workflow scope* error | Your PAT includes a commit that modifies `.github/workflows/*` but lacks `workflow` scope | Remove the workflow file from the commit **or** push via SSH **or** add `workflow` scope |
+| Netlify build fails: *Node version mismatch* | `node_version` in `netlify.toml` differs from runtime | Update both `netlify.toml` and `.nvmrc` to match, re‑deploy |
+| 404 after deploy | GitHub Pages still enabled or DNS cached old site | Disable GitHub Pages, clear DNS, wait for propagation |
+| Build succeeds but new blog post missing | Wrong front‑matter date or slug; run `npm run dev` locally & validate |
 
 ---
 
-## 8  Future Enhancements
+## 9  FAQ
 
-* **Preview Deploy Comments**: Enable Netlify's GitHub app to comment PR preview URLs automatically.
-* **Redirects**: Add `[ [redirects] ]` blocks to `netlify.toml`.
-* **Functions / Forms**: Netlify supports serverless functions if dynamic behavior is needed.
-* **Sitemap**: Already handled via `@astrojs/sitemap`.
+**Q • Do we still need `.github/workflows/deploy.yml`?**  
+A • No. Netlify handles CI/CD; keep GitHub Actions out unless you have *other* automation needs.
+
+**Q • Can we trigger a manual redeploy?**  
+A • Yes – Netlify UI → **Deploys → Trigger Deploy → Deploy site**.
+
+**Q • How to roll back?**  
+A • Netlify → **Deploys** → pick an older successful deploy → **Publish deploy**.
 
 ---
 
-### 🎉  You are now running a modern Astro site with hassle‑free Netlify deploys! 
+## 10  Future Enhancements
+
+* **Redirects / Headers** – configure in `netlify.toml`.
+* **Serverless Functions** – add `netlify/functions/*` if dynamic behavior is needed.
+* **Sitemap** – already generated via `@astrojs/sitemap`.
+
+---
+
+### 🎉 You now have a bullet‑proof Astro + Netlify workflow. Push → Ship → Relax. 
