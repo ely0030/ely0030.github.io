@@ -6,6 +6,7 @@ tags: ['design', 'images', 'showcase']
 markType: 'exclamation'
 markCount: 1
 markColor: 'blue'
+pageType: 'magazine'
 ---
 
 # Image Showcase

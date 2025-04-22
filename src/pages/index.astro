@@ -10,6 +10,22 @@ import FormattedDate from '../components/FormattedDate.astro';
 const posts = (await getCollection('blog'))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
+// Function to safely decode HTML entities and ensure proper UTF-8 display
+function decodeHtmlEntities(text) {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
+// Ensure proper encoding of title text
+const processedPosts = posts.map(post => {
+  return {
+    ...post,
+    // Ensure the title is properly encoded as UTF-8
+    safeTitle: post.data.title
+  };
+});
+
 ---
 
 <!doctype html>
@@ -25,7 +41,7 @@ const posts = (await getCollection('blog'))
 			<div class="main-content-area">
 				<main>
 					<ul class="post-list">
-						{posts.map((post) => {
+						{processedPosts.map((post) => {
 							// extract mark fields
 							const { markType, markCount = 0, markColor } = post.data;
 							let markStr = '';

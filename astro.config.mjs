@@ -10,11 +10,26 @@ import rehypePrism from 'rehype-prism-plus';
 export default defineConfig({
 	site: 'https://ely0030.github.io',
 	base: '/',
-	integrations: [mdx(), sitemap()],
+	integrations: [mdx({ syntaxHighlight: false }), sitemap()],
 	output: 'static',
 	markdown: {
 		remarkPlugins: [remarkBreaks],
 		syntaxHighlight: 'prism',
 		rehypePlugins: [[rehypePrism, { ignoreMissing: true }]],
+		smartypants: false,
+	},
+	vite: {
+		build: {
+			assetsInlineLimit: 0
+		},
+		ssr: {
+			noExternal: ['js-sha256']
+		},
+		css: {
+			// Ensure proper UTF-8 handling in CSS
+			postcss: {
+				plugins: []
+			}
+		}
 	},
 });

@@ -19,7 +19,51 @@ pre.astro-code{
   font-size:0.85em;
   font-family:'Source Code Pro', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 }
-pre.astro-code span{color:var(--color-link) !important;}
+/* Override removed: allow individual Prism token colors to apply */
+/* pre.astro-code span{color:var(--color-link) !important;} */
+
+/* Prism token styling for default code blocks (Astro Markdown) */
+pre.astro-code .token.comment,
+pre.astro-code .token.prolog,
+pre.astro-code .token.doctype,
+pre.astro-code .token.cdata {
+  color: var(--color-link);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+pre.astro-code .token.punctuation {
+  color: #88aaff;
+}
+
+pre.astro-code .token.property,
+pre.astro-code .token.tag,
+pre.astro-code .token.boolean,
+pre.astro-code .token.number,
+pre.astro-code .token.constant,
+pre.astro-code .token.symbol,
+pre.astro-code .token.deleted,
+pre.astro-code .token.selector,
+pre.astro-code .token.attr-name,
+pre.astro-code .token.string,
+pre.astro-code .token.char,
+pre.astro-code .token.builtin,
+pre.astro-code .token.inserted,
+pre.astro-code .token.operator,
+pre.astro-code .token.entity,
+pre.astro-code .token.url,
+pre.astro-code .language-css .token.string,
+pre.astro-code .style .token.string,
+pre.astro-code .token.atrule,
+pre.astro-code .token.attr-value,
+pre.astro-code .token.keyword,
+pre.astro-code .token.function,
+pre.astro-code .token.class-name,
+pre.astro-code .token.regex,
+pre.astro-code .token.important,
+pre.astro-code .token.variable {
+  color: var(--color-link);
+}
 
 :root {
 	/* Remove previous palette */
@@ -86,7 +130,7 @@ body {
 	/* font-family: 'Daminga', Georgia, Times, "Times New Roman", serif; */ /* Remove Daminga */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* System font stack */
   /* font-weight: 300; */ /* Remove Light weight default */
-  font-weight: 500; /* Changed from 400 to make text thicker */
+  font-weight: 400; /* Revert to standard weight for better readability */
 	margin: 0;
 	padding: 0;
 	text-align: left;
@@ -427,18 +471,7 @@ aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
   }
 }
 
-/* Drop Cap Styling */
-.prose section > p:first-of-type::first-letter {
-  color: #000; /* Black color for drop cap */
-  float: left;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* Match body/Home link font */
-  font-size: 4.5em; /* Significantly larger size */
-  line-height: 0.8; /* Adjust line height to align */
-  padding-right: 0.1em; /* Space between drop cap and text */
-  padding-bottom: 0.05em; /* Fine-tune vertical alignment */
-  margin-top: 0.05em; /* Adjust top margin */
-  font-weight: bold; /* Make it bolder */
-}
+/* Drop Cap Styling removed to disable automatic drop caps */
 
 /* Sidenote Styles (Simplified Tufte-inspired) */
 .sidenote,
@@ -590,7 +623,7 @@ nav.site-nav .internal-links a[href="/about"]:hover {
   max-width: 45rem;
   margin: 0 auto;
   /* Enhance typography */
-  font-size: 15px; /* Slightly larger base size for readability */
+  font-size: 16px; /* Standard base size for readability */
   line-height: 1.6; /* Improved line height for better readability */
   /* Add subtle hanging punctuation for quotes */
   hanging-punctuation: first;
@@ -598,15 +631,16 @@ nav.site-nav .internal-links a[href="/about"]:hover {
 
 /* Improve paragraph spacing for better rhythm */
 .prose p {
-  margin-bottom: 1.5em;
+  margin-bottom: 1.2em; /* Reduced paragraph spacing */
   hyphens: auto; /* Add hyphenation for better text flow */
 }
 
 /* Subtle lead-in paragraph style */
 .prose p:first-of-type {
-  font-size: 1.1em;
-  line-height: 1.5;
-  margin-bottom: 1.8em;
+  /* Do not upscale the very first paragraph – this felt heavy on posts without headings */
+  font-size: inherit;
+  line-height: 1.6;
+  margin-bottom: 1.5em;
 }
 
 /* Enhanced blockquote styling */
@@ -632,7 +666,7 @@ nav.site-nav .internal-links a[href="/about"]:hover {
 /* Improved headings for better hierarchy */
 .prose h2 {
   font-size: 1.6em;
-  margin-top: 2.5em;
+  margin-top: 1.8em; /* Reduced space before H2 */
   margin-bottom: 0.7em;
   text-transform: none; /* Remove uppercase for more Tufte-like style */
   letter-spacing: -0.01em; /* Tighter kerning */
@@ -640,7 +674,7 @@ nav.site-nav .internal-links a[href="/about"]:hover {
 
 .prose h3 {
   font-size: 1.3em;
-  margin-top: 2em;
+  margin-top: 1.5em; /* Reduced space before H3 */
   margin-bottom: 0.6em;
   letter-spacing: -0.01em;
 }
@@ -1054,4 +1088,83 @@ a:focus, button:focus, input:focus, textarea:focus {
   content: '•';
   margin-right: 0.5rem;
   color: var(--body-font-color);
+}
+
+/* Add layout‑specific overrides */
+body.magazine .prose {
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 45rem; /* Restore original prose width */
+}
+
+body.magazine {
+  font-weight: 500; /* Restore original thicker weight */
+}
+
+body.magazine .prose p {
+  margin-bottom: 1.5em;
+}
+
+/* Restore first paragraph styling for magazine layout */
+body.magazine .prose p:first-of-type {
+  font-size: 1.1em;
+  line-height: 1.5;
+  margin-bottom: 1.8em;
+}
+
+body.magazine .prose h2 {
+  margin-top: 2.5em;
+}
+
+body.magazine .prose h3 {
+  margin-top: 2em;
+}
+
+body.blog .prose {
+  max-width: 42rem;
+  padding-block: 2rem;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga" 1, "kern" 1;
+  color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
+}
+
+/* Compact reading mode (toggle) */
+body.blog.compact .prose p + p {
+  text-indent: 1.25rem;
+  margin-top: 0;
+}
+body.blog.compact .prose p {
+  margin-bottom: 0;
+}
+
+/* Enhanced heading tracker styling */
+.heading-tracker {
+  position: fixed;
+  top: 30%;
+  left: 1rem;
+  transform: translateY(-50%);
+  z-index: 5;
+  margin: 0;
+}
+.heading-tracker ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.heading-tracker a {
+  display: block;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-link);
+  text-decoration: none;
+  margin-bottom: 0.75em;
+  padding-left: 0.5em;
+  border-left: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.heading-tracker a:hover,
+.heading-tracker a.active {
+  font-weight: 600;
+  color: var(--color-link);
+  border-color: var(--color-link);
 }

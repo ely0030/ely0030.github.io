@@ -8,7 +8,7 @@ import { type MarkdownHeading } from 'astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage, tags } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags, pageType = 'blog' } = Astro.props;
 
 const headings = Astro.locals.headings ?? [];
 
@@ -132,7 +132,7 @@ const toc = buildToc(headings);
 		</style>
 	</head>
 
-	<body>
+	<body class={pageType}>
 		<div class="layout-wrapper">
 			<aside class="sidebar">
 				<Header />
@@ -159,6 +159,7 @@ const toc = buildToc(headings);
 			</aside>
 			<div class="main-content-area">
 				<main>
+					<button id="toggle-compact" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 10; font-size: 0.75rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.8); border: 1px solid #eee; border-radius: 4px; color: #666; box-shadow: 0 1px 3px rgba(0,0,0,0.1); opacity: 0.3; transition: opacity 0.2s">Aa</button>
 					<article>
 						<div class="prose">
 							{/*
@@ -198,5 +199,21 @@ const toc = buildToc(headings);
                 {/* TODO: Render actual sidenotes here */}
             </aside>
 		</div>
+		<script type="module" client:load>
+			// Add hover effect for button
+			const btn = document.getElementById('toggle-compact');
+			if (btn) {
+				btn.addEventListener('mouseover', () => btn.style.opacity = '1');
+				btn.addEventListener('mouseout', () => btn.style.opacity = '0.3');
+			}
+			const key = 'reader:compact';
+			const body = document.body;
+			if (localStorage.getItem(key)) body.classList.add('compact');
+			document.getElementById('toggle-compact')?.addEventListener('click', () => {
+				body.classList.toggle('compact');
+				if (body.classList.contains('compact')) localStorage.setItem(key, '1');
+				else localStorage.removeItem(key);
+			});
+		</script>
 	</body>
 </html>
