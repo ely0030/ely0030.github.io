@@ -1,0 +1,211 @@
+/* 
+ * Tufte-inspired CSS with subtle tweaks 
+ * Based on https://edwardtufte.github.io/tufte-css/
+ */
+
+@font-face {
+  font-family: 'ET-Book';
+  src: url('../fonts/et-book/et-book-roman-line-figures.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'ET-Book';
+  src: url('../fonts/et-book/et-book-display-italic-old-style-figures.woff') format('woff');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'ET-Book';
+  src: url('../fonts/et-book/et-book-bold-line-figures.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
+body {
+  font-family: 'ET-Book', Charter, Georgia, serif;
+  background-color: #fdfdfd;
+  color: #111;
+  line-height: 1.6;
+  font-size: 18px;
+  counter-reset: sidenote-counter;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'ET-Book', Charter, Georgia, serif;
+  font-weight: normal;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+h3 {
+  font-size: 1.4rem;
+}
+
+article {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  position: relative;
+}
+
+p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+a {
+  color: #3b5c7e;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: #ddd;
+  margin: 2rem auto;
+  width: 50%;
+}
+
+.double-space-after {
+  margin-bottom: 2em;
+}
+
+.triple-space-after {
+  margin-bottom: 3em;
+}
+
+.home-link {
+  display: inline-block;
+  margin-bottom: 1em;
+  color: #777;
+  text-decoration: none;
+}
+
+.home-link:hover {
+  text-decoration: underline;
+}
+
+.post-date {
+  font-size: 0.9rem;
+  color: #777;
+  display: block;
+  margin-top: 0.2em;
+}
+
+.section-heading {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+/* Sidenote implementation inspired by Tufte CSS */
+.sidenote, .marginnote {
+  float: right;
+  clear: right;
+  margin-right: -60%;
+  width: 50%;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  vertical-align: baseline;
+  position: relative;
+  color: #555;
+}
+
+.sidenote-number {
+  counter-increment: sidenote-counter;
+}
+
+.sidenote-number:after, .sidenote:before {
+  content: counter(sidenote-counter);
+  font-size: 0.7rem;
+  top: -0.5rem;
+  position: relative;
+}
+
+.sidenote-number:after {
+  vertical-align: super;
+}
+
+.sidenote:before {
+  content: counter(sidenote-counter) ". ";
+  position: absolute;
+  left: -1.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 1000px) {
+  article {
+    width: 90%;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .sidenote, .marginnote {
+    display: block;
+    float: none;
+    margin: 1rem 0;
+    width: 100%;
+    border-left: 4px solid #ddd;
+    padding-left: 1rem;
+  }
+  
+  .sidenote:before {
+    position: relative;
+    left: 0;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+.exhibit-id {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.9rem;
+  color: #777;
+  font-style: italic;
+}
+
+.post-list {
+  list-style-type: none;
+  padding: 0;
+  margin-left: 0;
+}
+
+.post-list li {
+  margin-bottom: 1em;
+}
+
+nav {
+  margin: 1rem 0;
+}
+
+nav a {
+  margin-right: 1rem;
+} 
