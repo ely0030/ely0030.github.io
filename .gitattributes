@@ -1,0 +1,27 @@
+# Set default file encoding to UTF-8
+* text=auto eol=lf encoding=utf-8
+
+# Ensure markdown files are always treated as UTF-8 text files
+*.md text eol=lf encoding=utf-8
+*.mdx text eol=lf encoding=utf-8
+
+# Astro files
+*.astro text eol=lf encoding=utf-8
+
+# JavaScript/TypeScript files
+*.js text eol=lf encoding=utf-8
+*.jsx text eol=lf encoding=utf-8
+*.ts text eol=lf encoding=utf-8
+*.tsx text eol=lf encoding=utf-8
+
+# CSS files
+*.css text eol=lf encoding=utf-8
+
+# HTML files
+*.html text eol=lf encoding=utf-8
+
+# JSON files
+*.json text eol=lf encoding=utf-8
+
+# Text files
+*.txt text eol=lf encoding=utf-8 

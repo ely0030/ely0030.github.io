@@ -1,14 +1,43 @@
 ---
 const { code, lang = 'text', caption = '', full = false } = Astro.props;
 const copy = (el) => {
-  navigator.clipboard.writeText(el.innerText).then(()=>{
-    el.closest('figure').querySelector('.copy-btn').textContent='Copied!';
-    setTimeout(()=>{el.closest('figure').querySelector('.copy-btn').textContent='Copy';},1000);
-  });
+  const text = el.innerText;
+  const figure = el.closest('figure');
+  const btn = figure?.querySelector('.copy-btn');
+
+  async function write(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        /* Fallback for older browsers */
+        const tmp = document.createElement('textarea');
+        tmp.value = text;
+        tmp.style.position = 'fixed';
+        tmp.style.opacity = '0';
+        document.body.appendChild(tmp);
+        tmp.focus();
+        tmp.select();
+        try {
+          document.execCommand('copy');
+        } finally {
+          tmp.remove();
+        }
+      }
+      if (btn) {
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = 'Copy'), 1000);
+      }
+    } catch (err) {
+      console.error('Clipboard copy failed', err);
+    }
+  }
+
+  write(text);
 };
 ---
 <figure class={`tufte-code${full ? ' fullwidth' : ''}`}>
-  <button class="copy-btn" aria-label="Copy code">Copy</button>
+  <button class="copy-btn" aria-label="Copy code" on:click={(e)=>copy(e.currentTarget.closest('figure').querySelector('pre'))}>Copy</button>
   {caption && <figcaption>{caption}</figcaption>}
   <pre class={`language-${lang}`} tabindex="0" on:click={(e)=>copy(e.currentTarget)}><code class={`language-${lang}`}>
 {code}

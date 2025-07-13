@@ -1,0 +1,4205 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+const pageTitle = 'Notepad';
+const pageDescription = 'A minimalist notepad for capturing thoughts';
+
+// Fetch all blog posts, sort by date descending
+let posts = [];
+try {
+	const allPosts = await getCollection('blog');
+	console.log('Found blog posts:', allPosts.length);
+	posts = allPosts
+		.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+		.map(post => ({
+			id: post.id,
+			title: post.data.title,
+			pubDate: post.data.pubDate.toISOString(),
+			category: post.data.category || 'uncategorized',
+			description: post.data.description || '',
+			content: post.body || '',
+			pageType: post.data.pageType || 'blog',
+			// Add other metadata that might be missing
+			private: post.data.private || false,
+			markType: post.data.markType || '',
+			markCount: post.data.markCount || 1,
+			markColor: post.data.markColor || ''
+		}));
+	console.log('Processed posts:', posts.length);
+} catch (error) {
+	console.error('Error loading blog posts:', error);
+}
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={pageTitle} description={pageDescription} />
+		<style>
+			/* Apache-style minimalist notepad layout */
+			.apache-header {
+				margin-bottom: 1em;
+			}
+
+			.apache-header h1 {
+				font-family: monospace;
+				font-size: 1.5em;
+				font-weight: bold;
+				margin: 0 0 0.5em 0;
+			}
+
+			.apache-header hr {
+				border: none;
+				border-top: 1px solid #000;
+				margin: 0.5em 0;
+			}
+			
+			.apache-header p {
+				margin: 0.5em 0;
+				font-family: monospace;
+			}
+			
+			.apache-header a {
+				color: var(--color-link);
+				text-decoration: underline;
+			}
+			
+			.apache-header a:hover {
+				text-decoration: none;
+			}
+
+			.notepad-container {
+				display: grid;
+				grid-template-columns: 300px 1fr;
+				gap: 2em;
+				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+			}
+
+			.note-sidebar {
+				border-right: 1px solid #000;
+				padding-right: 1em;
+			}
+
+			.note-sidebar h2 {
+				font-size: 1em;
+				font-weight: normal;
+				margin: 0 0 0.8em 0;
+				padding-bottom: 0.4em;
+				border-bottom: 1px solid #000;
+			}
+
+			.note-actions, .blog-actions {
+				margin-bottom: 0.5em;
+			}
+			
+			.note-hint {
+				font-size: 0.8em;
+				color: #888;
+				margin-bottom: 1em;
+				font-style: italic;
+			}
+
+			.btn {
+				font-family: monospace;
+				font-size: 1em;
+				padding: 0;
+				margin: 0 1em 0 0;
+				background: none;
+				border: none;
+				cursor: pointer;
+				color: var(--color-link);
+				text-decoration: underline;
+			}
+
+			.btn:hover {
+				text-decoration: none;
+			}
+
+			.btn-primary {
+				color: var(--notepad-accent, #ff8c00);
+			}
+
+			.note-list {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				font-family: monospace;
+			}
+
+			.note-item {
+				display: flex;
+				align-items: baseline;
+				padding: 0.3em 0;
+				margin: 0;
+				cursor: pointer;
+				transition: background-color 0.1s;
+				font-family: monospace;
+			}
+			
+			.note-item:hover {
+				background-color: #f5f5f5;
+			}
+			
+			.note-item.active {
+				background-color: #e8e8e8;
+			}
+
+			.note-item.untitled .note-title {
+				color: var(--notepad-accent, #ff8c00);
+			}
+
+			.note-title-wrapper {
+				flex: 1 1 auto;
+				min-width: 0; /* Allow shrinking */
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+				padding-right: 2.5em; /* Increased spacing before meta section */
+			}
+			
+			.note-title {
+				color: var(--color-link, #0000ee);
+				text-decoration: none;
+			}
+			
+			.note-title:hover {
+				text-decoration: underline;
+			}
+
+			.note-meta {
+				display: flex;
+				align-items: baseline;
+				gap: 2em; /* Increased gap between date and delete button */
+				white-space: nowrap;
+				margin-left: auto; /* Push to right */
+			}
+			
+			.note-date {
+				color: #666;
+				font-size: 0.9em;
+				white-space: nowrap;
+			}
+			
+			.note-delete.btn {
+				font-size: 0.85em;
+				padding: 0 0.3em;
+				color: #666;
+				transition: color 0.1s;
+				outline: none;
+				text-decoration: none !important;
+			}
+			
+			.note-delete.btn:focus {
+				outline: none;
+			}
+			
+			.note-delete.btn:hover {
+				text-decoration: underline !important;
+				color: #c00;
+			}
+			
+			.note-delete.confirm {
+				color: #fff;
+				background-color: #c00;
+				border-radius: 2px;
+			}
+			
+			/* Blog post list styling - moved to global styles */
+
+			.editor-container {
+				padding-left: 1em;
+			}
+
+			.editor-header {
+				margin-bottom: 1em;
+			}
+			
+			/* Frontmatter editor styles */
+			.frontmatter-editor {
+				margin-top: 1em;
+				padding: 1em;
+				border: 1px solid #ccc;
+				background: #f9f9f9;
+				font-family: monospace;
+			}
+			
+			.frontmatter-editor h3 {
+				margin: 0 0 1em 0;
+				font-size: 1.1em;
+				font-weight: bold;
+			}
+			
+			.metadata-grid {
+				display: flex;
+				flex-direction: column;
+				gap: 1em;
+			}
+			
+			.metadata-row {
+				display: flex;
+				gap: 1em;
+			}
+			
+			.metadata-field {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+			}
+			
+			.metadata-field label {
+				font-size: 0.9em;
+				margin-bottom: 0.3em;
+				font-weight: bold;
+			}
+			
+			.metadata-field input[type="text"],
+			.metadata-field input[type="date"],
+			.metadata-field input[type="password"],
+			.metadata-field input[type="number"],
+			.metadata-field select,
+			.metadata-field textarea {
+				font-family: monospace;
+				padding: 0.3em;
+				border: 1px solid #000;
+				background: white;
+			}
+			
+			.metadata-field textarea {
+				resize: vertical;
+			}
+			
+			.metadata-field input[type="checkbox"] {
+				margin-right: 0.5em;
+			}
+
+			.note-title-input {
+				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+				font-size: 1.2em;
+				font-weight: bold;
+				border: none;
+				background: none;
+				width: 100%;
+				padding: 0;
+				margin-bottom: 0.2em;
+			}
+
+			.note-title-input:focus {
+				outline: none;
+				border-bottom: 1px solid #000;
+			}
+
+			.note-meta {
+				font-size: 0.9em;
+				color: #666;
+				margin-bottom: 1em;
+			}
+
+			.editor-area {
+				min-height: 400px;
+			}
+
+
+
+			/* Remove contenteditable outline */
+			.editor-content:focus {
+				outline: none;
+				border-color: #000;
+			}
+			
+			/* Placeholder styling */
+			.editor-content.placeholder {
+				color: #999;
+			}
+			
+			/* Better editor styling */
+			.editor-content[contenteditable] {
+				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+				font-size: 1em;
+				line-height: 1.6;
+				padding: 1em;
+				background: white;
+				border: 1px solid #000;
+				min-height: 400px;
+				max-height: 600px;
+				overflow-y: auto;
+				white-space: pre-wrap;
+				word-break: break-word;
+			}
+			
+			.editor-content.focused {
+				border-color: #000;
+				background: #fff;
+			}
+			
+			.hint-link {
+				color: #666;
+				text-decoration: underline;
+				cursor: pointer;
+			}
+			
+			.hint-link:hover {
+				color: #333;
+			}
+			
+			.persist-edit-mode {
+				display: inline-block;
+				margin-left: 0.5em;
+				cursor: pointer;
+				font-size: inherit;
+				color: #666;
+			}
+			
+			.persist-edit-mode:hover {
+				color: #333;
+			}
+			
+			.persist-edit-mode input[type="checkbox"] {
+				margin: 0 0.3em 0 0;
+				vertical-align: middle;
+				cursor: pointer;
+			}
+			
+			/* Visual indicator for edit mode */
+			.editor-content[data-edit-mode="true"] {
+				background-color: #fff;
+				border-color: #000; /* Same as focused state */
+			}
+
+			.editor-actions {
+				margin-top: 2em;
+				padding-top: 1em;
+				border-top: 1px solid #000;
+				display: flex;
+				align-items: center;
+				gap: 1em;
+			}
+			
+			.shortcuts-hint {
+				margin-left: auto;
+				font-size: 0.9em;
+				color: #666;
+				font-family: monospace;
+			}
+
+			.no-notes {
+				color: #666;
+				font-style: italic;
+			}
+
+			/* Apache-style links */
+			.editor-content a {
+				color: var(--color-link);
+				text-decoration: underline;
+			}
+
+			.editor-content a:hover {
+				text-decoration: none;
+			}
+
+			/* Headers in content */
+			.editor-content h1,
+			.editor-content h2,
+			.editor-content h3 {
+				font-size: 1em;
+				font-weight: bold;
+				margin: 0 0 0.5em 0;
+			}
+
+			/* Mobile styles */
+			@media (max-width: 768px) {
+				.notepad-container {
+					grid-template-columns: 1fr;
+				}
+
+				.note-sidebar {
+					border-right: none;
+					border-bottom: 1px solid #000;
+					padding-right: 0;
+					padding-bottom: 1em;
+					margin-right: 0;
+					margin-bottom: 1em;
+				}
+
+				.editor-container {
+					padding-left: 0;
+				}
+			}
+		</style>
+		<style is:global>
+			/* Markdown syntax highlighting - needs to be global for dynamic content */
+			.editor-content .md-syntax {
+				color: #999;
+				font-weight: normal;
+				font-style: normal;
+			}
+			
+			.editor-content .md-bold strong,
+			.editor-content .md-italic em,
+			.editor-content .md-h1 strong,
+			.editor-content .md-h2 strong,
+			.editor-content .md-h3 strong {
+				color: inherit;
+			}
+			
+			.editor-content .md-bold strong {
+				font-weight: bold;
+			}
+			
+			.editor-content .md-italic em {
+				font-style: italic;
+			}
+			
+			.editor-content .md-h1 strong,
+			.editor-content .md-h2 strong,
+			.editor-content .md-h3 strong {
+				font-weight: bold;
+			}
+			
+			/* Make headings visually distinct with different sizes */
+			.editor-content .md-h1 {
+				font-size: 1.5em;
+				line-height: 1.3;
+			}
+			
+			.editor-content .md-h2 {
+				font-size: 1.3em;
+				line-height: 1.4;
+			}
+			
+			.editor-content .md-h3 {
+				font-size: 1.1em;
+				line-height: 1.5;
+			}
+			
+			.editor-content .md-code code {
+				background: #f0f0f0;
+				padding: 0 0.2em;
+				border-radius: 2px;
+				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+			}
+			
+			.editor-content .md-link {
+				position: relative;
+			}
+			
+			/* Image styling in editor */
+			.editor-content img {
+				max-width: 100%;
+				height: auto;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+				cursor: pointer;
+				/* Default display and margin - will be overridden by position classes */
+				display: block;
+				margin: 1em auto;
+			}
+			
+			.editor-content img:hover {
+				border-color: #999;
+				box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+			}
+			
+			/* Drag and drop styles */
+			.editor-content img[draggable="true"] {
+				cursor: move;
+			}
+			
+			.editor-content img[draggable="true"]:active {
+				cursor: grabbing;
+			}
+			
+			.editor-content .drop-zone {
+				position: relative;
+			}
+			
+			.editor-content .drop-zone.drag-over {
+				background-color: #e8f0ff;
+				outline: 2px dashed #0055bb;
+				outline-offset: -2px;
+			}
+			
+			.editor-content .drop-zone.drag-over::before {
+				content: '← Drop image here';
+				position: absolute;
+				left: 10px;
+				top: 50%;
+				transform: translateY(-50%);
+				color: #0055bb;
+				font-size: 0.9em;
+				pointer-events: none;
+			}
+			
+			.editor-content .md-image {
+				display: inline-block;
+				color: #999;
+				font-style: italic;
+			}
+			
+			/* Image size menu */
+			.image-size-menu {
+				background: white;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+				padding: 0;
+				z-index: 1000;
+				font-family: Menlo, Monaco, 'Courier New', monospace;
+				min-width: 180px;
+			}
+			
+			.image-size-menu .menu-section {
+				padding: 0.5em 0;
+			}
+			
+			.image-size-menu .menu-header {
+				padding: 0.3em 1em;
+				font-size: 0.8em;
+				color: #666;
+				font-weight: bold;
+				text-transform: uppercase;
+			}
+			
+			.image-size-menu .menu-divider {
+				border: none;
+				border-top: 1px solid #e0e0e0;
+				margin: 0;
+			}
+			
+			.image-size-menu .size-option {
+				display: block;
+				width: 100%;
+				padding: 0.5em 1em;
+				border: none;
+				background: none;
+				text-align: left;
+				cursor: pointer;
+				font-family: inherit;
+				font-size: 0.9em;
+			}
+			
+			.image-size-menu .size-option:hover {
+				background: #f0f0f0;
+			}
+			
+			/* Image positioning classes - higher specificity */
+			.editor-content .text-line img.align-left,
+			.editor-content img.align-left {
+				display: block !important;
+				margin-left: 0 !important;
+				margin-right: auto !important;
+				margin-top: 1em !important;
+				margin-bottom: 1em !important;
+				float: none !important;
+			}
+			
+			.editor-content .text-line img.align-center,
+			.editor-content img.align-center {
+				display: block !important;
+				margin-left: auto !important;
+				margin-right: auto !important;
+				margin-top: 1em !important;
+				margin-bottom: 1em !important;
+				float: none !important;
+			}
+			
+			.editor-content .text-line img.align-right,
+			.editor-content img.align-right {
+				display: block !important;
+				margin-left: auto !important;
+				margin-right: 0 !important;
+				margin-top: 1em !important;
+				margin-bottom: 1em !important;
+				float: none !important;
+			}
+			
+			.editor-content .text-line img.float-left,
+			.editor-content img.float-left {
+				display: inline-block !important;
+				float: left !important;
+				margin: 0.5em 1em 0.5em 0 !important;
+				clear: left !important;
+			}
+			
+			.editor-content .text-line img.float-right,
+			.editor-content img.float-right {
+				display: inline-block !important;
+				float: right !important;
+				margin: 0.5em 0 0.5em 1em !important;
+				clear: right !important;
+			}
+			
+			/* Clear floats for lines after floated images */
+			.editor-content .text-line::after {
+				content: '';
+				display: table;
+				clear: both;
+			}
+			
+			.editor-content .md-link a {
+				color: var(--color-link, #0000ee);
+				text-decoration: underline;
+				cursor: pointer;
+			}
+			
+			.editor-content .md-link a:hover {
+				text-decoration: none;
+			}
+			
+			.editor-content .md-link .md-url {
+				display: none;
+			}
+			
+			.editor-content .md-link.expanded .md-url {
+				display: inline;
+			}
+			
+			/* Edit mode image syntax */
+			.editor-content .md-image-syntax {
+				background: #f0f0f0;
+				color: #333;
+				padding: 2px 4px;
+				border: 1px solid #ddd;
+				border-radius: 3px;
+				font-family: monospace;
+				font-size: 0.9em;
+				display: inline-block;
+				margin: 2px 0;
+			}
+			
+			/* Blog post list styling - needs to be global for dynamic content */
+			.blog-post-list {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				font-family: monospace;
+				max-height: 400px;
+				overflow-y: auto;
+			}
+			
+			/* Blog category styles */
+			.blog-category {
+				margin-bottom: 0.8em;
+			}
+			
+			.blog-category-header {
+				margin-bottom: 0.2em;
+			}
+			
+			.blog-category-toggle {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.3em;
+				background: none;
+				border: none;
+				padding: 0.2em 0;
+				cursor: pointer;
+				font-family: monospace;
+				font-size: 1em;
+				color: var(--color-link);
+				text-align: left;
+				width: auto;
+				transition: opacity 0.2s ease;
+			}
+			
+			.blog-category-toggle:hover .category-name {
+				text-decoration: underline;
+			}
+			
+			.blog-category-toggle[aria-expanded="true"] .category-name {
+				text-decoration: underline;
+			}
+			
+			.category-icon {
+				font-size: 1.1em;
+				line-height: 1;
+			}
+			
+			.category-name {
+				font-weight: 500;
+			}
+			
+			.blog-category-toggle .post-count {
+				color: #666;
+				font-size: 0.9em;
+				margin-left: 0.2em;
+			}
+			
+			.category-posts {
+				list-style: none;
+				padding: 0;
+				padding-left: 1.8em;
+				margin: 0;
+				border-left: 1px solid #eee;
+				margin-left: 0.5em;
+			}
+			
+			.blog-post-item {
+				padding: 0.6em 0.3em;
+				cursor: pointer;
+				transition: background-color 0.1s;
+				border-bottom: 1px solid #e0e0e0;
+			}
+			
+			.blog-post-item:last-child {
+				border-bottom: none;
+			}
+			
+			.blog-post-item:hover {
+				background-color: rgba(255, 140, 0, 0.05);
+			}
+			
+			.blog-post-item.active {
+				background-color: rgba(255, 140, 0, 0.1);
+			}
+			
+			.blog-post-item .post-category {
+				display: inline-block;
+				font-size: 0.8em;
+				color: #666;
+				margin-right: 0.5em;
+			}
+			
+			.blog-post-item .post-title {
+				color: var(--color-link);
+				text-decoration: underline;
+				cursor: pointer;
+				display: block;
+				margin-bottom: 0.2em;
+			}
+			
+			.blog-post-item .post-title:hover {
+				text-decoration: none;
+			}
+			
+			.blog-post-item .post-meta {
+				display: flex;
+				align-items: baseline;
+				gap: 0.5em;
+				font-size: 0.85em;
+			}
+			
+			.blog-post-item .post-date {
+				font-size: 0.8em;
+				color: #888;
+			}
+			
+			/* Fade out animation for deleted items */
+			@keyframes fadeOutAndCollapse {
+				0% {
+					opacity: 1;
+					transform: translateX(0);
+					max-height: 100px;
+				}
+				50% {
+					opacity: 0;
+					transform: translateX(-20px);
+				}
+				100% {
+					opacity: 0;
+					transform: translateX(-20px);
+					max-height: 0;
+					padding: 0;
+					margin: 0;
+					border: none;
+				}
+			}
+			
+			.blog-post-item.deleting,
+			.note-item.deleting {
+				animation: fadeOutAndCollapse 0.3s ease-out forwards;
+				overflow: hidden;
+			}
+			
+			/* Fade in animation for new items */
+			@keyframes fadeInAndExpand {
+				0% {
+					opacity: 0;
+					transform: translateX(-20px);
+					max-height: 0;
+				}
+				50% {
+					max-height: 100px;
+				}
+				100% {
+					opacity: 1;
+					transform: translateX(0);
+				}
+			}
+			
+			.blog-post-item.new-item {
+				animation: fadeInAndExpand 0.3s ease-out forwards;
+			}
+		</style>
+	</head>
+	<body class="notepad">
+		<div class="layout-wrapper">
+			<aside class="sidebar">
+				<Header />
+			</aside>
+			<div class="main-content-area">
+				<main>
+					<div class="apache-header">
+						<h1>Index of /notepad</h1>
+						<hr>
+						<p><a href="/">Parent Directory</a></p>
+					</div>
+					<div class="notepad-container">
+						<aside class="note-sidebar">
+							<h2>Notes/</h2>
+							<div class="note-actions">
+								<a href="#" class="btn btn-primary" id="new-note-btn">[new]</a>
+								<a href="#" class="btn" id="export-btn">[export]</a>
+							</div>
+							<div class="note-hint">Press Delete to remove selected note</div>
+							<ul class="note-list" id="note-list">
+								<!-- Notes will be populated here -->
+							</ul>
+							
+							<h2 style="margin-top: 2em;">Blog Posts/</h2>
+							<div class="blog-actions">
+								<a href="#" class="btn btn-primary" id="new-blog-post-btn">[new blog post]</a>
+							</div>
+							<div class="note-hint">Select a post to edit</div>
+							<ul class="blog-post-list" id="blog-post-list">
+								<!-- Blog posts will be populated here -->
+							</ul>
+						</aside>
+						<div class="editor-container">
+							<div class="editor-header">
+								<input type="text" class="note-title-input" id="note-title" placeholder="untitled" value="untitled">
+								<div class="note-meta" id="note-meta">
+									Last modified: never
+								</div>
+								
+								<!-- Frontmatter editor for blog posts -->
+								<div class="frontmatter-editor" id="frontmatter-editor" style="display: none;">
+									<h3>Post Metadata</h3>
+									<div class="metadata-grid">
+										<div class="metadata-field">
+											<label for="meta-description">Description</label>
+											<textarea id="meta-description" rows="2" placeholder="Brief description of the post"></textarea>
+										</div>
+										<div class="metadata-row">
+											<div class="metadata-field">
+												<label for="meta-date">Date</label>
+												<input type="date" id="meta-date">
+											</div>
+											<div class="metadata-field">
+												<label for="meta-pagetype">Page Type</label>
+												<select id="meta-pagetype">
+													<option value="blog">blog</option>
+													<option value="magazine">magazine</option>
+													<option value="stanza">stanza</option>
+													<option value="literature">literature</option>
+													<option value="literature2">literature2</option>
+													<option value="literature3">literature3</option>
+													<option value="book">book</option>
+												</select>
+											</div>
+											<div class="metadata-field">
+												<label for="meta-category">Category</label>
+												<input type="text" id="meta-category" placeholder="lowercase only">
+											</div>
+										</div>
+										<div class="metadata-row">
+											<div class="metadata-field">
+												<label>
+													<input type="checkbox" id="meta-private">
+													Private Post
+												</label>
+											</div>
+											<div class="metadata-field" id="password-field" style="display: none;">
+												<label for="meta-password">Password</label>
+												<input type="password" id="meta-password" placeholder="Enter password">
+											</div>
+										</div>
+										<div class="metadata-row">
+											<div class="metadata-field">
+												<label for="meta-marktype">Visual Marker</label>
+												<select id="meta-marktype">
+													<option value="">None</option>
+													<option value="exclamation">! (Exclamation)</option>
+													<option value="question">? (Question)</option>
+												</select>
+											</div>
+											<div class="metadata-field">
+												<label for="meta-markcount">Count</label>
+												<input type="number" id="meta-markcount" min="1" max="3" value="1">
+											</div>
+											<div class="metadata-field">
+												<label for="meta-markcolor">Color</label>
+												<select id="meta-markcolor">
+													<option value="">Default</option>
+													<option value="red">Red</option>
+													<option value="orange">Orange</option>
+													<option value="yellow">Yellow</option>
+													<option value="green">Green</option>
+													<option value="blue">Blue</option>
+													<option value="purple">Purple</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="editor-wrapper">
+								<div class="editor-area" id="editor-area">
+									<div class="editor-content" id="editor-content">Click here to start writing...</div>
+								</div>
+							</div>
+							<div class="editor-actions">
+								<a href="#" class="btn" id="save-btn" title="Cmd/Ctrl+S">[save]</a>
+								<a href="#" class="btn btn-primary" id="save-blog-post-btn" style="display: none;">[queue save]</a>
+								<a href="#" class="btn" id="push-changes-btn" style="display: none;">[push changes to disk]</a>
+								<a href="#" class="btn" id="export-post-btn" style="display: none;">[export post]</a>
+								<a href="#" class="btn" id="save-to-folder-btn" style="display: none;">[save to folder]</a>
+								<span class="shortcuts-hint">Tab: indent | Enter: auto-indent lists | <a href="#" id="toggle-edit-mode" class="hint-link">Cmd/Ctrl+M: edit mode</a> <label class="persist-edit-mode"><input type="checkbox" id="persist-edit-mode"> manual mode</label></span>
+							</div>
+						</div>
+					</div>
+				</main>
+				<Footer />
+			</div>
+		</div>
+
+		<script define:vars={{ posts }}>
+			// Blog posts data from Astro
+			console.log('Setting up BLOG_POSTS...');
+			window.BLOG_POSTS = posts;
+			console.log('BLOG_POSTS set with', window.BLOG_POSTS.length, 'posts');
+		</script>
+		
+		<script>
+			// Constants for configuration and defaults
+			const NOTEPAD_CONFIG = {
+				storage: {
+					prefix: 'notepad:',
+					indexKey: 'notepad:index',
+					notePrefix: 'notepad:note-',
+					maxNoteSize: 100000, // 100KB per note
+					maxTotalSize: 5000000, // 5MB total
+				},
+				defaults: {
+					untitledId: 'untitled',
+					untitledTitle: 'untitled',
+					untitledContent: 'Click here to start writing...',
+					newNoteTitle: 'new note',
+					saveInterval: 30000, // 30 seconds
+					debounceDelay: 500, // 500ms
+				},
+				ui: {
+					maxTitleLength: 100,
+					maxBlockLength: 50000,
+					dateFormat: { year: 'numeric', month: 'short', day: 'numeric' },
+					timeFormat: { hour: '2-digit', minute: '2-digit' },
+				},
+				markdown: {
+					enableHtml: false,
+					enableLinkify: true,
+					enableTypographer: true,
+				}
+			};
+
+			// Storage abstraction for robustness and future-proofing
+			class NoteStorage {
+				constructor(config) {
+					this.config = config;
+					this.available = this.checkAvailability();
+				}
+
+				checkAvailability() {
+					try {
+						const test = '__notepad_test__';
+						localStorage.setItem(test, test);
+						localStorage.removeItem(test);
+						return true;
+					} catch (e) {
+						console.warn('localStorage not available:', e);
+						return false;
+					}
+				}
+
+				safeJsonParse(str, fallback = null) {
+					try {
+						return JSON.parse(str) || fallback;
+					} catch (e) {
+						console.warn('JSON parse error:', e);
+						return fallback;
+					}
+				}
+
+				safeJsonStringify(obj) {
+					try {
+						return JSON.stringify(obj);
+					} catch (e) {
+						console.error('JSON stringify error:', e);
+						return null;
+					}
+				}
+
+				getStorageSize() {
+					if (!this.available) return 0;
+					let size = 0;
+					for (let key in localStorage) {
+						if (key.startsWith(this.config.prefix)) {
+							size += localStorage[key].length + key.length;
+						}
+					}
+					return size;
+				}
+
+				get(key) {
+					if (!this.available) return null;
+					try {
+						const value = localStorage.getItem(key);
+						return value;
+					} catch (e) {
+						console.error('Storage get error:', e);
+						return null;
+					}
+				}
+
+				set(key, value) {
+					if (!this.available) return false;
+					try {
+						// Check size limits
+						const size = value.length + key.length;
+						if (size > this.config.maxNoteSize) {
+							console.warn('Note too large:', size);
+							return false;
+						}
+						if (this.getStorageSize() + size > this.config.maxTotalSize) {
+							console.warn('Storage limit reached');
+							return false;
+						}
+						localStorage.setItem(key, value);
+						return true;
+					} catch (e) {
+						console.error('Storage set error:', e);
+						return false;
+					}
+				}
+
+				remove(key) {
+					if (!this.available) return false;
+					try {
+						localStorage.removeItem(key);
+						return true;
+					} catch (e) {
+						console.error('Storage remove error:', e);
+						return false;
+					}
+				}
+
+				getAllNoteIds() {
+					const index = this.get(this.config.indexKey);
+					return this.safeJsonParse(index, ['untitled']);
+				}
+
+				saveNoteIndex(ids) {
+					const json = this.safeJsonStringify(ids);
+					return json && this.set(this.config.indexKey, json);
+				}
+
+				getNote(noteId) {
+					const key = this.config.notePrefix + noteId;
+					const data = this.get(key);
+					return this.safeJsonParse(data, null);
+				}
+
+				saveNote(noteId, noteData) {
+					const key = this.config.notePrefix + noteId;
+					const json = this.safeJsonStringify(noteData);
+					return json && this.set(key, json);
+				}
+
+				deleteNote(noteId) {
+					const key = this.config.notePrefix + noteId;
+					return this.remove(key);
+				}
+			}
+
+			// Image storage using IndexedDB for binary data
+			class ImageStorage {
+				constructor() {
+					this.dbName = 'NotepadImages';
+					this.dbVersion = 1;
+					this.storeName = 'images';
+					this.db = null;
+					this.maxImageSize = 5 * 1024 * 1024; // 5MB per image
+					this.maxTotalSize = 50 * 1024 * 1024; // 50MB total
+				}
+
+				async init() {
+					return new Promise((resolve, reject) => {
+						const request = indexedDB.open(this.dbName, this.dbVersion);
+						
+						request.onerror = () => reject(request.error);
+						request.onsuccess = () => {
+							this.db = request.result;
+							resolve();
+						};
+						
+						request.onupgradeneeded = (event) => {
+							const db = event.target.result;
+							if (!db.objectStoreNames.contains(this.storeName)) {
+								const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+								store.createIndex('noteId', 'noteId', { unique: false });
+							}
+						};
+					});
+				}
+
+				generateImageId() {
+					return 'img-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+				}
+
+				async saveImage(noteId, blob) {
+					if (!this.db) await this.init();
+					
+					if (blob.size > this.maxImageSize) {
+						throw new Error(`Image too large. Maximum size is ${this.maxImageSize / 1024 / 1024}MB`);
+					}
+
+					const imageId = this.generateImageId();
+					const arrayBuffer = await blob.arrayBuffer();
+					
+					return new Promise((resolve, reject) => {
+						const transaction = this.db.transaction([this.storeName], 'readwrite');
+						const store = transaction.objectStore(this.storeName);
+						
+						const imageData = {
+							id: imageId,
+							noteId: noteId,
+							type: blob.type,
+							data: arrayBuffer,
+							created: new Date().toISOString()
+						};
+						
+						const request = store.add(imageData);
+						request.onsuccess = () => resolve(imageId);
+						request.onerror = () => reject(request.error);
+					});
+				}
+
+				async getImage(imageId) {
+					if (!this.db) await this.init();
+					
+					return new Promise((resolve, reject) => {
+						const transaction = this.db.transaction([this.storeName], 'readonly');
+						const store = transaction.objectStore(this.storeName);
+						const request = store.get(imageId);
+						
+						request.onsuccess = () => {
+							const result = request.result;
+							if (result) {
+								const blob = new Blob([result.data], { type: result.type });
+								resolve(blob);
+							} else {
+								resolve(null);
+							}
+						};
+						request.onerror = () => reject(request.error);
+					});
+				}
+
+				async getImagesByNoteId(noteId) {
+					if (!this.db) await this.init();
+					
+					return new Promise((resolve, reject) => {
+						const transaction = this.db.transaction([this.storeName], 'readonly');
+						const store = transaction.objectStore(this.storeName);
+						const index = store.index('noteId');
+						const request = index.getAll(noteId);
+						
+						request.onsuccess = () => resolve(request.result || []);
+						request.onerror = () => reject(request.error);
+					});
+				}
+
+				async deleteImage(imageId) {
+					if (!this.db) await this.init();
+					
+					return new Promise((resolve, reject) => {
+						const transaction = this.db.transaction([this.storeName], 'readwrite');
+						const store = transaction.objectStore(this.storeName);
+						const request = store.delete(imageId);
+						
+						request.onsuccess = () => resolve();
+						request.onerror = () => reject(request.error);
+					});
+				}
+
+				async deleteImagesByNoteId(noteId) {
+					const images = await this.getImagesByNoteId(noteId);
+					const deletePromises = images.map(img => this.deleteImage(img.id));
+					return Promise.all(deletePromises);
+				}
+			}
+
+			// Note model for data integrity
+			class Note {
+				constructor(data = {}) {
+					this.id = data.id || this.generateId();
+					this.title = this.sanitizeTitle(data.title || NOTEPAD_CONFIG.defaults.untitledTitle);
+					this.content = data.content || '';
+					this.created = data.created || new Date().toISOString();
+					this.modified = data.modified || new Date().toISOString();
+					this.protected = data.protected || false;
+				}
+
+				generateId() {
+					return 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+				}
+
+				sanitizeTitle(title) {
+					return title.substring(0, NOTEPAD_CONFIG.ui.maxTitleLength).trim() || NOTEPAD_CONFIG.defaults.untitledTitle;
+				}
+
+				sanitizeContent(content) {
+					return content.substring(0, NOTEPAD_CONFIG.ui.maxBlockLength);
+				}
+
+				updateTitle(title) {
+					this.title = this.sanitizeTitle(title);
+					this.modified = new Date().toISOString();
+				}
+
+				updateContent(content) {
+					this.content = this.sanitizeContent(content);
+					this.modified = new Date().toISOString();
+				}
+
+				toJSON() {
+					return {
+						id: this.id,
+						title: this.title,
+						content: this.content,
+						created: this.created,
+						modified: this.modified,
+						protected: this.protected
+					};
+				}
+			}
+
+			// Markdown renderer abstraction
+			class MarkdownRenderer {
+				constructor(config) {
+					this.config = config;
+				}
+
+				// Basic markdown rendering - can be enhanced later
+				render(text) {
+					if (!text) return '';
+					
+					// Escape HTML first
+					let html = text
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')
+						.replace(/"/g, '&quot;')
+						.replace(/'/g, '&#39;');
+
+					// Apply markdown transformations
+					html = html
+						// Headers
+						.replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+						.replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+						.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+						// Bold and italic
+						.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+						.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+						.replace(/\*(.*?)\*/g, '<em>$1</em>')
+						// Links
+						.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+						// Line breaks
+						.replace(/\n/g, '<br>');
+
+					return html || 'Click to edit...';
+				}
+
+				// Extract plain text for preview
+				extractText(markdown, maxLength = 100) {
+					const text = markdown
+						.replace(/^#+ /gm, '')
+						.replace(/\*+/g, '')
+						.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+						.trim();
+					
+					return text.length > maxLength ? 
+						text.substring(0, maxLength) + '...' : 
+						text;
+				}
+			}
+
+			// Main application class
+			class NotepadApp {
+				constructor() {
+					this.storage = new NoteStorage(NOTEPAD_CONFIG.storage);
+					this.imageStorage = new ImageStorage();
+					this.renderer = new MarkdownRenderer(NOTEPAD_CONFIG.markdown);
+					this.notes = new Map();
+					this.currentNoteId = NOTEPAD_CONFIG.defaults.untitledId;
+					this.autoSaveTimer = null;
+					this.isInitialized = false;
+					this.activatedDeletes = new Set(); // Track which notes have been clicked for deletion
+					this.activatedBlogDeletes = new Set(); // Track which blog posts have been clicked for deletion
+					this.imageUrlCache = new Map(); // Cache blob URLs to prevent recreating
+					this.pendingBlogSave = null; // Queue for blog post saves to avoid reloads
+					this.currentBlogPostId = null; // Track which blog post is being edited
+					
+					// Debounced save function
+					this.debouncedSave = this.debounce(
+						() => this.saveCurrentNote(),
+						NOTEPAD_CONFIG.defaults.debounceDelay
+					);
+				}
+
+				// Utility: debounce function
+				debounce(func, wait) {
+					let timeout;
+					return function executedFunction(...args) {
+						const later = () => {
+							clearTimeout(timeout);
+							func(...args);
+						};
+						clearTimeout(timeout);
+						timeout = setTimeout(later, wait);
+					};
+				}
+
+				// Initialize the app
+				async init() {
+					try {
+						// Check storage availability
+						if (!this.storage.available) {
+							this.showError('Local storage is not available. Notes cannot be saved.');
+							return;
+						}
+
+						// Load notes
+						await this.loadNotes();
+						
+						// Populate blog posts list
+						this.populateBlogPosts();
+						
+						// Check File System API availability
+						this.fileSystemAvailable = await this.initFileSystemAccess();
+						
+						// Set up UI
+						this.bindEvents();
+						
+						// Check for pending reload state (from blog post push)
+						const pendingReload = sessionStorage.getItem('notepad:pendingReload');
+						if (pendingReload) {
+							try {
+								const state = JSON.parse(pendingReload);
+								// Only restore if recent (within 5 seconds)
+								if (Date.now() - state.timestamp < 5000) {
+									console.log('Restoring state after blog push:', state);
+									
+									// Need to handle the case where it might be a new post
+									let blogPostId = state.blogPostId;
+									if (blogPostId.startsWith('new-post-')) {
+										// For new posts, we need to find the actual saved post
+										// This is tricky - let's just load the first post for now
+										console.log('New post was saved, finding actual ID...');
+									}
+									
+									// Load the blog post
+									const blogPost = window.BLOG_POSTS.find(p => p.id === blogPostId);
+									if (blogPost) {
+										// Load the post
+										await this.loadBlogPost(blogPostId);
+										
+										// Restore scroll positions immediately
+										window.scrollTo(0, state.scrollPosition);
+										const editor = document.getElementById('editor-content');
+										if (editor) {
+											editor.scrollTop = state.editorScrollPosition;
+										}
+										
+										// Show success message
+										const meta = document.getElementById('note-meta');
+										meta.textContent = `Blog post saved and reloaded!`;
+										meta.style.color = 'green';
+										setTimeout(() => {
+											meta.textContent = `Editing blog post: ${blogPostId}`;
+											meta.style.color = '';
+										}, 2000);
+									} else {
+										// Couldn't find the post, just load normally
+										this.loadNote(this.currentNoteId);
+									}
+								} else {
+									// Too old, load normally
+									this.loadNote(this.currentNoteId);
+								}
+							} catch (error) {
+								console.error('Error restoring state:', error);
+								this.loadNote(this.currentNoteId);
+							} finally {
+								// Clear the pending state
+								sessionStorage.removeItem('notepad:pendingReload');
+							}
+						} else {
+							// Normal load - load initial note
+							this.loadNote(this.currentNoteId);
+						}
+						
+						// Set up the editor
+						const editor = document.getElementById('editor-content');
+						if (editor && !editor.dataset.initialized) {
+							this.setupEditor(editor);
+						}
+						
+						// Start auto-save
+						this.startAutoSave();
+						
+						this.isInitialized = true;
+					} catch (error) {
+						console.error('Initialization error:', error);
+						this.showError('Failed to initialize notepad. Please refresh the page.');
+					}
+				}
+				
+				// Populate blog posts list from BLOG_POSTS global
+				populateBlogPosts(highlightNewId = null) {
+					const blogPostList = document.getElementById('blog-post-list');
+					if (!blogPostList) {
+						console.log('Blog post list element not found');
+						return;
+					}
+					
+					if (typeof window.BLOG_POSTS === 'undefined') {
+						console.log('BLOG_POSTS not defined');
+						return;
+					}
+					
+					console.log('Loading blog posts:', window.BLOG_POSTS.length);
+					blogPostList.innerHTML = '';
+					
+					// Group posts by category
+					const postsByCategory = {};
+					window.BLOG_POSTS.forEach(post => {
+						const category = post.category || 'uncategorized';
+						if (!postsByCategory[category]) {
+							postsByCategory[category] = [];
+						}
+						postsByCategory[category].push(post);
+					});
+					
+					// Sort categories (uncategorized first, then alphabetically)
+					const sortedCategories = Object.keys(postsByCategory).sort((a, b) => {
+						if (a === 'uncategorized') return -1;
+						if (b === 'uncategorized') return 1;
+						return a.localeCompare(b);
+					});
+					
+					// Track expanded state in localStorage
+					const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
+					
+					// Create category folders
+					sortedCategories.forEach(category => {
+						const posts = postsByCategory[category];
+						
+						// Sort posts by date (newest first)
+						posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+						
+						// Create category container
+						const categoryDiv = document.createElement('div');
+						categoryDiv.className = 'blog-category';
+						categoryDiv.dataset.category = category;
+						
+						// Create category header
+						const categoryHeader = document.createElement('div');
+						categoryHeader.className = 'blog-category-header';
+						
+						const categoryToggle = document.createElement('button');
+						categoryToggle.className = 'blog-category-toggle';
+						categoryToggle.dataset.category = category;
+						const isExpanded = expandedCategories.includes(category);
+						categoryToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+						
+						const categoryIcon = document.createElement('span');
+						categoryIcon.className = 'category-icon';
+						categoryIcon.textContent = isExpanded ? '📂' : '📁';
+						categoryToggle.appendChild(categoryIcon);
+						
+						const categoryName = document.createElement('span');
+						categoryName.className = 'category-name';
+						categoryName.textContent = `${category}/`;
+						categoryToggle.appendChild(categoryName);
+						
+						const postCount = document.createElement('span');
+						postCount.className = 'post-count';
+						postCount.textContent = `(${posts.length})`;
+						categoryToggle.appendChild(postCount);
+						
+						categoryHeader.appendChild(categoryToggle);
+						categoryDiv.appendChild(categoryHeader);
+						
+						// Create posts container
+						const postsContainer = document.createElement('ul');
+						postsContainer.className = 'category-posts';
+						postsContainer.style.display = isExpanded ? 'block' : 'none';
+						
+						// Add posts to category
+						posts.forEach(post => {
+							const li = document.createElement('li');
+							li.className = 'blog-post-item';
+							li.dataset.postId = post.id;
+							
+							// Add new-item class for animation if this is the highlighted item
+							if (highlightNewId && post.id === highlightNewId) {
+								li.classList.add('new-item');
+							}
+							
+							// Mark as active if it's the current post
+							if (this.currentBlogPostId === post.id) {
+								li.classList.add('active');
+							}
+							
+							// Title (main clickable element)
+							const titleSpan = document.createElement('span');
+							titleSpan.className = 'post-title';
+							titleSpan.textContent = post.title;
+							li.appendChild(titleSpan);
+							
+							// Meta container (just date now, category shown in folder)
+							const metaDiv = document.createElement('div');
+							metaDiv.className = 'post-meta';
+							
+							// Date
+							const dateSpan = document.createElement('span');
+							dateSpan.className = 'post-date';
+							const date = new Date(post.pubDate);
+							dateSpan.textContent = date.toLocaleDateString('en-US', {
+								year: 'numeric',
+								month: 'short',
+								day: '2-digit'
+							});
+							metaDiv.appendChild(dateSpan);
+							
+							// Add spacing
+							metaDiv.appendChild(document.createTextNode('  '));
+							
+							// Add delete button
+							const deleteBtn = document.createElement('a');
+							deleteBtn.href = '#';
+							deleteBtn.className = 'blog-post-delete btn';
+							deleteBtn.dataset.postId = post.id;
+							deleteBtn.textContent = '[del]';
+							deleteBtn.title = 'Delete blog post';
+							
+							// Apply inline styles to match note delete buttons
+							deleteBtn.style.textDecoration = 'none';
+							deleteBtn.style.color = this.activatedBlogDeletes?.has(post.id) ? '#c00' : '#666';
+							deleteBtn.style.outline = 'none';
+							deleteBtn.style.fontSize = '0.8em';
+							
+							// Add hover effect
+							deleteBtn.addEventListener('mouseenter', () => {
+								if (!deleteBtn.classList.contains('confirm')) {
+									deleteBtn.style.textDecoration = 'underline';
+									deleteBtn.style.color = '#c00';
+								}
+							});
+							
+							deleteBtn.addEventListener('mouseleave', () => {
+								if (!deleteBtn.classList.contains('confirm')) {
+									deleteBtn.style.textDecoration = 'none';
+									deleteBtn.style.color = '#666';
+								}
+							});
+							
+							metaDiv.appendChild(deleteBtn);
+							
+							li.appendChild(metaDiv);
+							postsContainer.appendChild(li);
+						});
+						
+						categoryDiv.appendChild(postsContainer);
+						blogPostList.appendChild(categoryDiv);
+					});
+				}
+				
+				// Load a blog post for editing
+				async loadBlogPost(postId) {
+					// Execute any pending blog save before switching
+					await this.executePendingSave();
+					
+					const post = window.BLOG_POSTS.find(p => p.id === postId);
+					if (!post) {
+						this.showError('Blog post not found');
+						return;
+					}
+					
+					// Clear active states
+					document.querySelectorAll('.note-item').forEach(item => {
+						item.classList.remove('active');
+					});
+					document.querySelectorAll('.blog-post-item').forEach(item => {
+						item.classList.toggle('active', item.dataset.postId === postId);
+					});
+					
+					// Update editor
+					document.getElementById('note-title').value = post.title;
+					document.getElementById('note-meta').textContent = `Editing blog post: ${post.id}`;
+					
+					// Show and populate frontmatter editor
+					const frontmatterEditor = document.getElementById('frontmatter-editor');
+					frontmatterEditor.style.display = 'block';
+					
+					// Show export post button and save buttons
+					document.getElementById('export-post-btn').style.display = 'inline';
+					document.getElementById('save-to-folder-btn').style.display = 'inline';
+					document.getElementById('save-blog-post-btn').style.display = 'inline';
+					
+					// Show push changes button if there's a pending save
+					if (this.pendingBlogSave && this.pendingBlogSave.blogPostId === postId) {
+						document.getElementById('push-changes-btn').style.display = 'inline';
+					}
+					
+					// Populate metadata fields
+					document.getElementById('meta-description').value = post.description || '';
+					document.getElementById('meta-date').value = post.pubDate ? post.pubDate.split('T')[0] : '';
+					document.getElementById('meta-pagetype').value = post.pageType || 'blog';
+					document.getElementById('meta-category').value = post.category || '';
+					
+					// Handle private post fields
+					const isPrivate = post.private || false;
+					document.getElementById('meta-private').checked = isPrivate;
+					const passwordField = document.getElementById('password-field');
+					passwordField.style.display = isPrivate ? 'block' : 'none';
+					
+					// Handle visual markers
+					if (post.markType) {
+						document.getElementById('meta-marktype').value = post.markType;
+						document.getElementById('meta-markcount').value = post.markCount || 1;
+						document.getElementById('meta-markcolor').value = post.markColor || '';
+					} else {
+						document.getElementById('meta-marktype').value = '';
+						document.getElementById('meta-markcount').value = 1;
+						document.getElementById('meta-markcolor').value = '';
+					}
+					
+					// Load content
+					const editor = document.getElementById('editor-content');
+					editor.textContent = post.content;
+					editor.classList.remove('placeholder');
+					
+					// Apply formatting after load
+					setTimeout(() => this.applyMarkdownFormatting(editor), 10);
+					
+					// Set a flag to indicate we're editing a blog post
+					this.currentBlogPostId = postId;
+					this.currentNoteId = null;
+				}
+
+				// Load all notes from storage
+				async loadNotes() {
+					const noteIds = this.storage.getAllNoteIds();
+					
+					// Ensure untitled note exists
+					if (!noteIds.includes(NOTEPAD_CONFIG.defaults.untitledId)) {
+						noteIds.unshift(NOTEPAD_CONFIG.defaults.untitledId);
+					}
+
+					// Load each note
+					for (const noteId of noteIds) {
+						const noteData = this.storage.getNote(noteId);
+						if (noteData) {
+							this.notes.set(noteId, new Note(noteData));
+						} else if (noteId === NOTEPAD_CONFIG.defaults.untitledId) {
+							// Create default untitled note
+							const untitled = new Note({
+								id: NOTEPAD_CONFIG.defaults.untitledId,
+								title: NOTEPAD_CONFIG.defaults.untitledTitle,
+								content: NOTEPAD_CONFIG.defaults.untitledContent
+							});
+							this.notes.set(noteId, untitled);
+							this.storage.saveNote(noteId, untitled.toJSON());
+						}
+					}
+
+					this.updateNoteList();
+				}
+
+				updateNoteList() {
+					const noteList = document.getElementById('note-list');
+					const noteIds = Array.from(this.notes.keys());
+					
+					// Sort to ensure untitled comes first
+					noteIds.sort((a, b) => {
+						if (a === NOTEPAD_CONFIG.defaults.untitledId) return -1;
+						if (b === NOTEPAD_CONFIG.defaults.untitledId) return 1;
+						// Sort others by modified date (newest first)
+						const noteA = this.notes.get(a);
+						const noteB = this.notes.get(b);
+						return new Date(noteB.modified) - new Date(noteA.modified);
+					});
+
+					// Clear existing list
+					noteList.innerHTML = '';
+
+					// Add all notes including untitled
+					noteIds.forEach(noteId => {
+						const note = this.notes.get(noteId);
+						const li = document.createElement('li');
+						li.className = 'note-item';
+						li.dataset.noteId = noteId;
+						
+						// Special styling for untitled
+						if (noteId === NOTEPAD_CONFIG.defaults.untitledId) {
+							li.classList.add('untitled');
+						}
+						
+						if (noteId === this.currentNoteId) {
+							li.classList.add('active');
+						}
+
+						// Create title wrapper
+						const titleWrapper = document.createElement('div');
+						titleWrapper.className = 'note-title-wrapper';
+						
+						const title = note.title || 'untitled';
+						const titleLink = document.createElement('a');
+						titleLink.href = '#';
+						titleLink.className = 'note-title';
+						titleLink.textContent = title.toLowerCase();
+						titleWrapper.appendChild(titleLink);
+						
+						li.appendChild(titleWrapper);
+
+						// Create a meta container for date and actions
+						const metaSpan = document.createElement('span');
+						metaSpan.className = 'note-meta';
+						
+						// Show date for all notes
+						const modified = new Date(note.modified);
+						const dateSpan = document.createElement('span');
+						dateSpan.className = 'note-date';
+						
+						// Format like "Jan 04 14:23" - file browser style
+						const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+						const month = monthNames[modified.getMonth()];
+						const day = String(modified.getDate()).padStart(2, '0');
+						const hours = String(modified.getHours()).padStart(2, '0');
+						const mins = String(modified.getMinutes()).padStart(2, '0');
+						
+						// Show year if not current year
+						const now = new Date();
+						if (modified.getFullYear() !== now.getFullYear()) {
+							dateSpan.textContent = `${month} ${day}  ${modified.getFullYear()}`;
+						} else {
+							dateSpan.textContent = `${month} ${day} ${hours}:${mins}`;
+						}
+						
+						metaSpan.appendChild(dateSpan);
+						
+						// Add spacing between date and delete button
+						metaSpan.appendChild(document.createTextNode('  '));
+						
+						// Add delete button for all notes
+						const deleteBtn = document.createElement('a');
+						deleteBtn.href = '#';
+						deleteBtn.className = 'note-delete btn';
+						deleteBtn.dataset.noteId = noteId;
+						deleteBtn.textContent = '[del]';
+						deleteBtn.title = 'Delete note (or press Delete key)';
+						
+						// Apply inline styles to override global CSS
+						deleteBtn.style.textDecoration = 'none';
+						deleteBtn.style.color = this.activatedDeletes.has(noteId) ? '#c00' : '#666';
+						deleteBtn.style.outline = 'none';
+						deleteBtn.style.fontSize = '0.8em';
+						
+						// Add hover effect
+						deleteBtn.addEventListener('mouseenter', () => {
+							if (!deleteBtn.classList.contains('confirm')) {
+								deleteBtn.style.textDecoration = 'underline';
+								deleteBtn.style.color = '#c00';
+							}
+						});
+						
+						deleteBtn.addEventListener('mouseleave', () => {
+							if (!deleteBtn.classList.contains('confirm')) {
+								deleteBtn.style.textDecoration = 'none';
+								deleteBtn.style.color = '#666';
+							}
+						});
+						
+						metaSpan.appendChild(deleteBtn);
+						
+						li.appendChild(metaSpan);
+
+						noteList.appendChild(li);
+					});
+				}
+
+				async loadNote(noteId) {
+					// Execute any pending blog save before switching
+					await this.executePendingSave();
+					
+					const note = this.notes.get(noteId);
+					if (!note) return;
+
+					// Clean up previous image URLs when switching notes
+					this.cleanupImageUrls();
+					
+					this.currentNoteId = noteId;
+					this.currentBlogPostId = null; // Clear blog post editing state
+					
+					// Hide frontmatter editor
+					const frontmatterEditor = document.getElementById('frontmatter-editor');
+					frontmatterEditor.style.display = 'none';
+					
+					// Hide export post button and save buttons
+					document.getElementById('export-post-btn').style.display = 'none';
+					document.getElementById('save-to-folder-btn').style.display = 'none';
+					document.getElementById('save-blog-post-btn').style.display = 'none';
+					document.getElementById('push-changes-btn').style.display = 'none';
+					
+					// Update UI
+					document.getElementById('note-title').value = note.title || 'untitled';
+					document.getElementById('note-meta').textContent = `Last modified: ${new Date(note.modified).toLocaleString()}`;
+					
+					// Update editor content
+					const editor = document.getElementById('editor-content');
+					
+					// Set content and format after load
+					if (note.content) {
+						editor.textContent = note.content;
+						editor.classList.remove('placeholder');
+						// Format after a brief delay to ensure DOM is ready
+						setTimeout(() => this.applyMarkdownFormatting(editor), 10);
+					} else {
+						editor.textContent = 'Click here to start writing...';
+						editor.classList.add('placeholder');
+					}
+					
+					// Set up editing if not already done
+					if (!editor.dataset.initialized) {
+						this.setupEditor(editor);
+					}
+
+					// Update active state in lists
+					document.querySelectorAll('.note-item').forEach(item => {
+						item.classList.toggle('active', item.dataset.noteId === noteId);
+					});
+					document.querySelectorAll('.blog-post-item').forEach(item => {
+						item.classList.remove('active');
+					});
+				}
+
+				setupEditor(editor) {
+					// Use regular contentEditable for rich formatting
+					editor.contentEditable = true;
+					
+					// Initialize edit mode to false (images will be shown as images)
+					editor.dataset.editMode = 'false';
+					
+					// Essential styles
+					editor.style.whiteSpace = 'pre-wrap';
+					editor.style.wordBreak = 'break-word';
+					editor.style.outline = 'none';
+					
+					// Handle placeholder
+					const placeholder = 'Click here to start writing...';
+					
+					editor.addEventListener('focus', () => {
+						if (editor.textContent === placeholder) {
+							editor.textContent = '';
+						}
+						editor.classList.add('focused');
+						
+						// Auto-enter edit mode on focus if checkbox is not checked
+						const persistCheckbox = document.getElementById('persist-edit-mode');
+						if (!persistCheckbox?.checked && editor.dataset.editMode === 'false' && editor.dataset.skipAutoEdit === 'false') {
+							console.log('Auto-entering edit mode on focus');
+							this.toggleEditMode(editor);
+						}
+					});
+					
+					editor.addEventListener('blur', (e) => {
+						console.log('Editor blur event triggered');
+						// Use setTimeout to ensure this runs after any click events
+						setTimeout(() => {
+							console.log('Blur timeout executing, activeElement:', document.activeElement);
+							editor.classList.remove('focused');
+							
+							// Check if editor still has focus (in case user clicked back)
+							if (document.activeElement === editor) {
+								console.log('Editor still has focus, skipping blur handling');
+								return;
+							}
+							
+							// Check if we clicked on the persist checkbox
+							const persistCheckbox = document.getElementById('persist-edit-mode');
+							if (document.activeElement === persistCheckbox) {
+								console.log('Clicked on persist checkbox, skipping mode change');
+								return;
+							}
+							
+							// Check if we should exit edit mode
+							const isInEditMode = editor.dataset.editMode === 'true';
+							const isChecked = persistCheckbox?.checked;
+							console.log('Edit mode check - isInEditMode:', isInEditMode, 'checkbox checked:', isChecked);
+							
+							if (isInEditMode && !isChecked) {
+								console.log('Auto-exiting edit mode');
+								// Exit edit mode
+								editor.dataset.editMode = 'false';
+								// Apply formatting to show images
+								this.applyMarkdownFormatting(editor);
+								// No indicator needed - visual content change is enough
+								
+								// Save the note after formatting
+								this.saveCurrentNote();
+								
+								// Skip the second formatting below since we just did it
+								return;
+							}
+							
+							// First extract the current text (before any reformatting)
+							const currentText = this.getPlainTextFromEditor(editor);
+							
+							// Apply formatting on blur to render markdown
+							// This will reset all expanded states
+							this.applyMarkdownFormatting(editor);
+							
+							// Save on blur
+							this.saveCurrentNote();
+							
+							// Restore placeholder if empty
+							if (!currentText || !currentText.trim()) {
+								editor.textContent = placeholder;
+								editor.classList.add('placeholder');
+							} else {
+								editor.classList.remove('placeholder');
+							}
+						}, 100);
+					});
+					
+					// Handle input - save but don't format while typing
+					editor.addEventListener('input', () => {
+						editor.classList.remove('placeholder');
+						this.debouncedSave();
+					});
+
+					editor.addEventListener('keydown', (e) => {
+						this.handleKeydown(e, editor);
+					});
+
+					editor.addEventListener('paste', (e) => {
+						this.handlePaste(e, editor);
+					});
+					
+					// Add a flag to the editor to track if we should skip auto-edit mode
+					editor.dataset.skipAutoEdit = 'false';
+					
+					// Capture image clicks in capture phase to set flag
+					editor.addEventListener('mousedown', (e) => {
+						if (e.target.tagName === 'IMG') {
+							editor.dataset.skipAutoEdit = 'true';
+							// Reset flag after a short delay
+							setTimeout(() => {
+								editor.dataset.skipAutoEdit = 'false';
+							}, 500);
+						}
+					}, true); // true = capture phase
+					
+					// Handle clicks on links and link syntax
+					editor.addEventListener('click', (e) => {
+						
+						// Ensure editor has focus when clicking anywhere inside it
+						if (!editor.contains(document.activeElement)) {
+							editor.focus();
+						}
+						
+						// Check if clicked on a link or its syntax
+						const linkSpan = e.target.closest('.md-link');
+						if (linkSpan) {
+							// Check if we clicked inside the URL part
+							const urlPart = e.target.closest('.md-url');
+							
+							// If clicking the actual link (not syntax), prevent navigation and toggle
+							if (e.target.tagName === 'A') {
+								// Only prevent default for left clicks (button 0)
+								// Allow middle click (button 1) and right click (button 2) to work normally
+								if (e.button === 0) {
+									e.preventDefault();
+									// Make sure editor is focused
+									editor.focus();
+									// Toggle between expanded and collapsed
+									if (linkSpan.classList.contains('expanded')) {
+										linkSpan.classList.remove('expanded');
+									} else {
+										linkSpan.classList.add('expanded');
+									}
+								}
+							}
+							// If clicking syntax brackets (but NOT inside URL part), toggle visibility
+							else if (e.target.classList && e.target.classList.contains('md-syntax') && !urlPart) {
+								e.preventDefault();
+								e.stopPropagation();
+								// Only toggle if we're clicking the [ or ] brackets, not the URL syntax
+								const syntaxText = e.target.textContent;
+								if (syntaxText === '[' || syntaxText === ']') {
+									linkSpan.classList.toggle('expanded');
+								}
+							}
+						}
+					});
+					
+					// Handle middle clicks (auxclick) on links
+					editor.addEventListener('auxclick', (e) => {
+						if (e.target.tagName === 'A' && e.button === 1) {
+							// Allow middle click to open in new tab naturally
+							// The browser will handle this with target="_blank"
+						}
+					});
+					
+					// Mark as initialized
+					editor.dataset.initialized = 'true';
+				}
+
+
+				getPlainTextFromEditor(editor) {
+					// If content is not formatted, just return the text content
+					if (!editor.querySelector('.md-syntax') && !editor.querySelector('.text-line')) {
+						console.log('getPlainTextFromEditor: returning raw textContent:', editor.textContent);
+						return editor.textContent;
+					}
+					
+					// Handle div-based formatting
+					const divs = editor.querySelectorAll('div.text-line, div.empty-line');
+					if (divs.length > 0) {
+						const lines = [];
+						divs.forEach(div => {
+							if (div.classList.contains('empty-line')) {
+								lines.push('');
+							} else {
+								// Check if this line contains an image
+								const img = div.querySelector('img[data-image-id]');
+								if (img) {
+									const imageId = img.getAttribute('data-image-id');
+									const alt = img.alt || 'image';
+									const position = img.getAttribute('data-position') || '';
+									const size = img.getAttribute('data-size') || '';
+									
+									// Create markdown with attributes
+									let markdown = `![${alt}](notepad-image:${imageId}`;
+									if (position || size) {
+										markdown += `?`;
+										const params = [];
+										if (position) params.push(`position=${position}`);
+										if (size) params.push(`size=${size}`);
+										markdown += params.join('&');
+									}
+									markdown += ')';
+									
+									lines.push(markdown);
+								} else {
+									// Extract text from the line, including hidden URL parts
+									const walker = document.createTreeWalker(
+										div,
+										NodeFilter.SHOW_TEXT,
+										null,
+										false
+									);
+									let lineText = '';
+									let node;
+									while (node = walker.nextNode()) {
+										lineText += node.textContent;
+									}
+									lines.push(lineText);
+								}
+							}
+						});
+						return lines.join('\n');
+					}
+					
+					// Fallback for old BR-based formatting
+					const walker = document.createTreeWalker(
+						editor,
+						NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+						null,
+						false
+					);
+					
+					let text = '';
+					let node;
+					while (node = walker.nextNode()) {
+						if (node.nodeType === Node.TEXT_NODE) {
+							text += node.textContent;
+						} else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'BR') {
+							text += '\n';
+						}
+					}
+					
+					return text;
+				}
+				
+				applyMarkdownFormatting(editor, forceFormat = false) {
+					if (!editor || editor.classList.contains('placeholder')) {
+						return;
+					}
+					
+					// Skip formatting if flag is set
+					if (editor.dataset.skipFormat === 'true') {
+						return;
+					}
+					
+					// Skip formatting if in edit mode - we show plain text
+					if (editor.dataset.editMode === 'true') {
+						return;
+					}
+					
+					// Only format if editor is not focused (to avoid cursor jumps while typing)
+					// Unless forceFormat is true
+					const isFocused = document.activeElement === editor;
+					if (isFocused && !forceFormat) {
+						return;
+					}
+					
+					// Always reformat to catch new markdown syntax
+					
+					try {
+						// Get current plain text
+						const text = this.getPlainTextFromEditor(editor);
+						if (!text || text === 'Click here to start writing...') return;
+						
+						// Apply formatting line by line
+						const lines = text.split('\n');
+						const formattedLines = lines.map(line => {
+							// For truly empty lines, return a special marker
+							if (line === '') {
+								return '<div class="empty-line">&nbsp;</div>';
+							}
+							return `<div class="text-line">${this.formatMarkdownLine(line, editor)}</div>`;
+						});
+						const newHtml = formattedLines.join('');
+						
+						// Only update if content actually changed
+						if (editor.innerHTML !== newHtml) {
+							// Preserve dataset properties before replacing innerHTML
+							const editMode = editor.dataset.editMode;
+							const initialized = editor.dataset.initialized;
+							const skipFormat = editor.dataset.skipFormat;
+							
+							editor.innerHTML = newHtml;
+							
+							// Restore dataset properties
+							if (editMode !== undefined) editor.dataset.editMode = editMode;
+							if (initialized !== undefined) editor.dataset.initialized = initialized;
+							if (skipFormat !== undefined) editor.dataset.skipFormat = skipFormat;
+							
+							// Load any notepad images
+							this.loadImagesInEditor(editor);
+						}
+					} catch (e) {
+						console.error('Formatting error:', e);
+					}
+				}
+				
+				formatMarkdownLine(line, editor) {
+					// Empty lines are handled separately in applyMarkdownFormatting
+					if (line === '') {
+						return '';
+					}
+					
+					const isEditMode = editor && editor.dataset.editMode === 'true';
+					let formatted = line;
+					
+					// Process images BEFORE HTML escaping to preserve URL parameters
+					formatted = formatted.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+						// In edit mode, we don't format at all - just show plain text
+						if (isEditMode) {
+							return match; // Return the original markdown
+						}
+						// Check if this is a notepad-stored image
+						if (url.startsWith('notepad-image:')) {
+							// Parse URL with potential query params
+							const urlParts = url.split('?');
+							const imageIdPart = urlParts[0];
+							const imageId = imageIdPart.substring('notepad-image:'.length);
+							
+							let position = '';
+							let size = '';
+							
+							// Parse query parameters if present
+							if (urlParts[1]) {
+								const params = new URLSearchParams(urlParts[1]);
+								position = params.get('position') || '';
+								size = params.get('size') || '';
+							}
+							
+							// If not in URL, check existing image as fallback
+							if (!position && !size) {
+								const existingImg = editor.querySelector(`img[data-image-id="${imageId}"]`);
+								if (existingImg) {
+									position = existingImg.getAttribute('data-position') || '';
+									size = existingImg.getAttribute('data-size') || '';
+								}
+							}
+							
+							// Escape the alt text for HTML
+							const safeAlt = alt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+							
+							// Return a placeholder that will be replaced with actual image after formatting
+							return `<span class="md-image-placeholder" data-image-id="${imageId}" data-alt="${safeAlt}" data-position="${position}" data-size="${size}">[IMAGE-PLACEHOLDER-${imageId}]</span>`;
+						} else {
+							// Regular external image
+							const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+							const safeAlt = alt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+							return `<img src="${safeUrl}" alt="${safeAlt}" style="max-width: 100%; height: auto;" contenteditable="false" />`;
+						}
+					});
+					
+					// Now escape HTML for the rest of the content
+					formatted = formatted
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')
+						// But preserve our image placeholders
+						.replace(/&lt;span class="md-image-placeholder"([^>]+)&gt;\[IMAGE-PLACEHOLDER-([^\]]+)\]&lt;\/span&gt;/g, '<span class="md-image-placeholder"$1>[IMAGE-PLACEHOLDER-$2]</span>');
+					
+					// Headers (only at start of line)
+					if (formatted.match(/^###\s/)) {
+						return formatted.replace(/^###\s(.*)$/, '<span class="md-h3"><span class="md-syntax">### </span><strong>$1</strong></span>');
+					} else if (formatted.match(/^##\s/)) {
+						return formatted.replace(/^##\s(.*)$/, '<span class="md-h2"><span class="md-syntax">## </span><strong>$1</strong></span>');
+					} else if (formatted.match(/^#\s/)) {
+						return formatted.replace(/^#\s(.*)$/, '<span class="md-h1"><span class="md-syntax"># </span><strong>$1</strong></span>');
+					}
+					
+					// Links - [text](url) - must be after images
+					formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+						// Sanitize URL
+						const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+						// Never include 'expanded' class - links should be collapsed by default
+						return `<span class="md-link"><span class="md-syntax">[</span><a href="${safeUrl}" target="_blank" rel="noopener" contenteditable="false">${text}</a><span class="md-syntax">]</span><span class="md-url"><span class="md-syntax">(${url})</span></span></span>`;
+					});
+					
+					// Bold - only complete patterns
+					formatted = formatted.replace(/\*\*([^\*]+)\*\*/g, '<span class="md-bold"><span class="md-syntax">**</span><strong>$1</strong><span class="md-syntax">**</span></span>');
+					
+					// Italic - only complete patterns, avoid matching bold
+					formatted = formatted.replace(/(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)/g, '<span class="md-italic"><span class="md-syntax">*</span><em>$1</em><span class="md-syntax">*</span></span>');
+					
+					// Code - only complete patterns
+					formatted = formatted.replace(/`([^`]+)`/g, '<span class="md-code"><span class="md-syntax">`</span><code>$1</code><span class="md-syntax">`</span></span>');
+					
+					return formatted;
+				}
+				
+				async loadImagesInEditor(editor) {
+					// Find all image placeholders
+					const imagePlaceholders = editor.querySelectorAll('.md-image-placeholder[data-image-id]');
+					console.log('Loading images, found placeholders:', imagePlaceholders.length);
+					
+					for (const placeholder of imagePlaceholders) {
+						const imageId = placeholder.getAttribute('data-image-id');
+						console.log('Loading image with ID:', imageId);
+						const alt = placeholder.getAttribute('data-alt') || 'image';
+						
+						// Check if we already have a blob URL cached
+						let blobUrl = this.imageUrlCache.get(imageId);
+						
+						if (!blobUrl) {
+							// Load image from storage
+							try {
+								const blob = await this.imageStorage.getImage(imageId);
+								if (blob) {
+									blobUrl = URL.createObjectURL(blob);
+									this.imageUrlCache.set(imageId, blobUrl);
+								}
+							} catch (error) {
+								console.error(`Failed to load image ${imageId}:`, error);
+								continue;
+							}
+						}
+						
+						if (blobUrl) {
+							// Create img element directly (no wrapper)
+							const img = document.createElement('img');
+							img.src = blobUrl;
+							img.alt = alt;
+							img.setAttribute('data-image-id', imageId);
+							img.setAttribute('contenteditable', 'false');
+							
+							// Restore size if stored
+							const storedSize = placeholder.getAttribute('data-size');
+							if (storedSize) {
+								if (storedSize === 'auto') {
+									img.style.setProperty('width', 'auto', 'important');
+									img.style.setProperty('max-width', '100%', 'important');
+								} else if (storedSize === '100%') {
+									img.style.setProperty('width', '100%', 'important');
+									img.style.setProperty('max-width', '100%', 'important');
+								} else if (storedSize) {
+									img.style.setProperty('width', storedSize + 'px', 'important');
+									img.style.setProperty('max-width', storedSize + 'px', 'important');
+								}
+								img.setAttribute('data-size', storedSize);
+							}
+							
+							// Restore position if stored
+							const storedPosition = placeholder.getAttribute('data-position');
+							if (storedPosition) {
+								if (storedPosition === 'left') {
+									img.classList.add('align-left');
+								} else if (storedPosition === 'center') {
+									img.classList.add('align-center');
+								} else if (storedPosition === 'right') {
+									img.classList.add('align-right');
+								} else if (storedPosition === 'float-left') {
+									img.classList.add('float-left');
+								} else if (storedPosition === 'float-right') {
+									img.classList.add('float-right');
+								}
+								img.setAttribute('data-position', storedPosition);
+							}
+							
+							// Add click handler for resizing
+							img.addEventListener('click', (e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								this.showImageSizeMenu(img, e);
+							});
+							
+							// Add hover handler to show resize handle
+							img.addEventListener('mouseenter', () => {
+								this.showResizeHandle(img);
+							});
+							
+							// Make image draggable for moving between lines
+							img.draggable = true;
+							img.style.cursor = 'move';
+							
+							// Add drag handlers
+							img.addEventListener('dragstart', (e) => {
+								this.handleImageDragStart(e, img);
+							});
+							
+							img.addEventListener('dragend', (e) => {
+								this.handleImageDragEnd(e, img);
+							});
+							
+							// Replace placeholder with image
+							placeholder.parentNode.replaceChild(img, placeholder);
+						}
+					}
+				}
+				
+				showImageSizeMenu(img, event) {
+					// Remove any existing menu
+					const existingMenu = document.querySelector('.image-size-menu');
+					if (existingMenu) {
+						existingMenu.remove();
+					}
+					
+					// Create size menu
+					const menu = document.createElement('div');
+					menu.className = 'image-size-menu';
+					menu.style.position = 'absolute';
+					menu.style.left = event.pageX + 'px';
+					menu.style.top = event.pageY + 'px';
+					
+					// Create sections in menu
+					const sizeSection = document.createElement('div');
+					sizeSection.className = 'menu-section';
+					const sizeHeader = document.createElement('div');
+					sizeHeader.className = 'menu-header';
+					sizeHeader.textContent = 'Size';
+					sizeSection.appendChild(sizeHeader);
+					
+					// Size options - added smaller sizes
+					const sizes = [
+						{ label: 'Tiny (200px)', width: 200 },
+						{ label: 'Small (300px)', width: 300 },
+						{ label: 'Medium (500px)', width: 500 },
+						{ label: 'Large (700px)', width: 700 },
+						{ label: 'Full Width', width: '100%' },
+						{ label: 'Original', width: 'auto' }
+					];
+					
+					sizes.forEach(size => {
+						const option = document.createElement('button');
+						option.textContent = size.label;
+						option.className = 'size-option';
+						option.addEventListener('click', (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							
+							// Remove menu first
+							menu.remove();
+							
+							// Apply new size using setAttribute to ensure it sticks
+							if (size.width === 'auto') {
+								// Original size
+								img.removeAttribute('width');
+								img.style.setProperty('width', 'auto', 'important');
+								img.style.setProperty('max-width', '100%', 'important');
+							} else if (size.width === '100%') {
+								// Full width
+								img.removeAttribute('width');
+								img.style.setProperty('width', '100%', 'important');
+								img.style.setProperty('max-width', '100%', 'important');
+							} else {
+								// Fixed pixel size
+								img.setAttribute('width', size.width);
+								img.style.setProperty('width', size.width + 'px', 'important');
+								img.style.setProperty('max-width', size.width + 'px', 'important');
+							}
+							
+							// Store the size in a data attribute
+							img.setAttribute('data-size', size.width.toString());
+							
+							// Prevent any reformatting for a moment
+							const editor = document.getElementById('editor-content');
+							editor.dataset.skipFormat = 'true';
+							setTimeout(() => {
+								delete editor.dataset.skipFormat;
+							}, 100);
+							
+							// Don't trigger save/reformat - the size is applied visually
+							// and will persist in the DOM until the note is reloaded
+						});
+						sizeSection.appendChild(option);
+					});
+					
+					menu.appendChild(sizeSection);
+					
+					// Add divider
+					const divider = document.createElement('hr');
+					divider.className = 'menu-divider';
+					menu.appendChild(divider);
+					
+					// Position section
+					const positionSection = document.createElement('div');
+					positionSection.className = 'menu-section';
+					const positionHeader = document.createElement('div');
+					positionHeader.className = 'menu-header';
+					positionHeader.textContent = 'Position';
+					positionSection.appendChild(positionHeader);
+					
+					// Position options
+					const positions = [
+						{ label: '← Left', position: 'left' },
+						{ label: '↔ Center', position: 'center' },
+						{ label: '→ Right', position: 'right' },
+						{ label: '◧ Float Left', position: 'float-left' },
+						{ label: '◨ Float Right', position: 'float-right' }
+					];
+					
+					positions.forEach(pos => {
+						const option = document.createElement('button');
+						option.textContent = pos.label;
+						option.className = 'size-option';
+						option.addEventListener('click', (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							
+							// Remove menu
+							menu.remove();
+							
+							// Store current size before changing position
+							const currentWidth = img.style.width;
+							const currentMaxWidth = img.style.maxWidth;
+							
+							// Remove all position classes
+							img.classList.remove('align-left', 'align-center', 'align-right', 'float-left', 'float-right');
+							
+							// Apply new position
+							if (pos.position === 'left') {
+								img.classList.add('align-left');
+							} else if (pos.position === 'center') {
+								img.classList.add('align-center');
+							} else if (pos.position === 'right') {
+								img.classList.add('align-right');
+							} else if (pos.position === 'float-left') {
+								img.classList.add('float-left');
+							} else if (pos.position === 'float-right') {
+								img.classList.add('float-right');
+							}
+							
+							// Restore size after position change
+							if (currentWidth) img.style.setProperty('width', currentWidth, 'important');
+							if (currentMaxWidth) img.style.setProperty('max-width', currentMaxWidth, 'important');
+							
+							// Debug log
+							console.log('Applied position:', pos.position, 'Classes:', img.className, 'Width:', img.style.width);
+							
+							// Store position
+							img.setAttribute('data-position', pos.position);
+							
+							// Prevent reformatting
+							const editor = document.getElementById('editor-content');
+							editor.dataset.skipFormat = 'true';
+							setTimeout(() => {
+								delete editor.dataset.skipFormat;
+							}, 100);
+						});
+						positionSection.appendChild(option);
+					});
+					
+					menu.appendChild(positionSection);
+					
+					// Add close handler
+					const closeMenu = (e) => {
+						if (!menu.contains(e.target)) {
+							menu.remove();
+							document.removeEventListener('click', closeMenu);
+						}
+					};
+					
+					setTimeout(() => {
+						document.addEventListener('click', closeMenu);
+					}, 0);
+					
+					document.body.appendChild(menu);
+				}
+				
+				showResizeHandle(img) {
+					// Remove any existing resize handle
+					const existingHandle = document.querySelector('.image-resize-handle');
+					if (existingHandle) {
+						existingHandle.remove();
+					}
+					
+					// Create resize handle
+					const handle = document.createElement('div');
+					handle.className = 'image-resize-handle';
+					handle.style.position = 'absolute';
+					handle.style.width = '20px';
+					handle.style.height = '20px';
+					handle.style.background = '#0055bb';
+					handle.style.border = '2px solid white';
+					handle.style.borderRadius = '50%';
+					handle.style.cursor = 'nwse-resize';
+					handle.style.zIndex = '1001';
+					
+					// Position at bottom-right corner of image
+					const rect = img.getBoundingClientRect();
+					handle.style.left = (rect.right - 10) + 'px';
+					handle.style.top = (rect.bottom - 10) + 'px';
+					
+					// Add drag functionality
+					let startX, startY, startWidth;
+					
+					handle.addEventListener('mousedown', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						
+						startX = e.clientX;
+						startY = e.clientY;
+						startWidth = img.offsetWidth;
+						
+						const handleDrag = (e) => {
+							e.preventDefault();
+							const deltaX = e.clientX - startX;
+							const newWidth = Math.max(100, startWidth + deltaX); // Min 100px
+							
+							img.style.setProperty('width', newWidth + 'px', 'important');
+							img.style.setProperty('max-width', newWidth + 'px', 'important');
+							img.setAttribute('width', newWidth);
+							img.setAttribute('data-size', newWidth);
+							
+							// Update handle position
+							const newRect = img.getBoundingClientRect();
+							handle.style.left = (newRect.right - 10) + 'px';
+							handle.style.top = (newRect.bottom - 10) + 'px';
+						};
+						
+						const handleMouseUp = () => {
+							document.removeEventListener('mousemove', handleDrag);
+							document.removeEventListener('mouseup', handleMouseUp);
+						};
+						
+						document.addEventListener('mousemove', handleDrag);
+						document.addEventListener('mouseup', handleMouseUp);
+					});
+					
+					// Remove handle when mouse leaves image area
+					const removeHandle = (e) => {
+						const rect = img.getBoundingClientRect();
+						const buffer = 30; // Buffer area around image
+						
+						if (e.clientX < rect.left - buffer || 
+						    e.clientX > rect.right + buffer || 
+						    e.clientY < rect.top - buffer || 
+						    e.clientY > rect.bottom + buffer) {
+							handle.remove();
+							document.removeEventListener('mousemove', removeHandle);
+						}
+					};
+					
+					setTimeout(() => {
+						document.addEventListener('mousemove', removeHandle);
+					}, 100);
+					
+					document.body.appendChild(handle);
+				}
+				
+				handleImageDragStart(e, img) {
+					// Store the image being dragged
+					e.dataTransfer.effectAllowed = 'move';
+					e.dataTransfer.setData('text/html', img.outerHTML);
+					
+					// Store image data for recreation
+					const imageData = {
+						imageId: img.getAttribute('data-image-id'),
+						alt: img.alt,
+						width: img.style.width,
+						maxWidth: img.style.maxWidth,
+						dataSize: img.getAttribute('data-size'),
+						position: img.getAttribute('data-position')
+					};
+					e.dataTransfer.setData('application/json', JSON.stringify(imageData));
+					
+					// Make the image semi-transparent while dragging
+					img.style.opacity = '0.5';
+					
+					// Store reference to dragged image
+					this.draggedImage = img;
+					
+					// Add drop zones for moving between lines
+					this.addDropZones();
+				}
+				
+				handleImageDragEnd(e, img) {
+					// Reset opacity
+					img.style.opacity = '';
+					
+					// Remove drop zones
+					this.removeDropZones();
+					
+					// Clear dragged image reference
+					this.draggedImage = null;
+				}
+				
+				addDropZones() {
+					const editor = document.getElementById('editor-content');
+					const lines = editor.querySelectorAll('.text-line, .empty-line');
+					
+					lines.forEach(line => {
+						// Skip if line already contains the dragged image
+						if (this.draggedImage && line.contains(this.draggedImage)) return;
+						
+						// Add visual drop indicator
+						line.classList.add('drop-zone');
+						
+						// Add drag over handler
+						line.addEventListener('dragover', this.handleDragOver);
+						line.addEventListener('drop', this.handleDrop.bind(this));
+						line.addEventListener('dragenter', this.handleDragEnter);
+						line.addEventListener('dragleave', this.handleDragLeave);
+					});
+				}
+				
+				removeDropZones() {
+					const editor = document.getElementById('editor-content');
+					const lines = editor.querySelectorAll('.text-line, .empty-line');
+					
+					lines.forEach(line => {
+						line.classList.remove('drop-zone', 'drag-over');
+						line.removeEventListener('dragover', this.handleDragOver);
+						line.removeEventListener('drop', this.handleDrop);
+						line.removeEventListener('dragenter', this.handleDragEnter);
+						line.removeEventListener('dragleave', this.handleDragLeave);
+					});
+				}
+				
+				handleDragOver(e) {
+					e.preventDefault();
+					e.dataTransfer.dropEffect = 'move';
+				}
+				
+				handleDragEnter(e) {
+					e.currentTarget.classList.add('drag-over');
+				}
+				
+				handleDragLeave(e) {
+					e.currentTarget.classList.remove('drag-over');
+				}
+				
+				async handleDrop(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					
+					const line = e.currentTarget;
+					line.classList.remove('drag-over');
+					
+					// Get image data
+					const imageDataStr = e.dataTransfer.getData('application/json');
+					if (!imageDataStr) return;
+					
+					const imageData = JSON.parse(imageDataStr);
+					
+					// Remove the original image
+					if (this.draggedImage && this.draggedImage.parentNode) {
+						// Get the line containing the image
+						const originalLine = this.draggedImage.closest('.text-line, .empty-line');
+						if (originalLine) {
+							// Remove the image
+							this.draggedImage.remove();
+							
+							// If the line is now empty, keep it as an empty line
+							if (!originalLine.textContent.trim() && !originalLine.querySelector('img')) {
+								originalLine.className = 'empty-line';
+								originalLine.innerHTML = '&nbsp;';
+							}
+						}
+					}
+					
+					// Insert image markdown at the drop location with attributes
+					let imageMarkdown = `![${imageData.alt}](notepad-image:${imageData.imageId}`;
+					
+					// Add position and size attributes if they exist
+					const params = [];
+					if (imageData.position) params.push(`position=${imageData.position}`);
+					if (imageData.dataSize) params.push(`size=${imageData.dataSize}`);
+					if (params.length > 0) {
+						imageMarkdown += '?' + params.join('&');
+					}
+					imageMarkdown += ')';
+					
+					// If dropping on an empty line, replace its content
+					if (line.classList.contains('empty-line')) {
+						line.className = 'text-line';
+						line.textContent = imageMarkdown;
+					} else {
+						// Otherwise, append to the line
+						line.textContent += ' ' + imageMarkdown;
+					}
+					
+					// Trigger reformatting to render the image
+					const editor = document.getElementById('editor-content');
+					setTimeout(() => {
+						this.applyMarkdownFormatting(editor);
+					}, 10);
+					
+					// Save the note
+					this.debouncedSave();
+				}
+				
+				cleanupImageUrls() {
+					// Clean up blob URLs to prevent memory leaks
+					for (const [imageId, blobUrl] of this.imageUrlCache) {
+						URL.revokeObjectURL(blobUrl);
+					}
+					this.imageUrlCache.clear();
+				}
+				
+				toggleEditMode(editor) {
+					console.log('toggleEditMode called');
+					const isInEditMode = editor.dataset.editMode === 'true';
+					console.log('Current edit mode:', isInEditMode);
+					
+					if (isInEditMode) {
+						// Switch back to normal mode - render images
+						// First save any current edits
+						this.saveCurrentNote();
+						
+						editor.dataset.editMode = 'false';
+						
+						// Apply formatting to show images - force it
+						this.applyMarkdownFormatting(editor, true);
+						
+						// No indicator needed - visual content change is enough
+					} else {
+						// Switch to edit mode - show raw markdown text
+						// First save the current state BEFORE changing mode
+						this.saveCurrentNote();
+						
+						editor.dataset.editMode = 'true';
+						
+						// Get plain text and set it directly (no HTML formatting in edit mode)
+						const plainText = this.getPlainTextFromEditor(editor);
+						
+						// Convert newlines to divs for proper display in contentEditable
+						const lines = plainText.split('\n');
+						editor.innerHTML = lines.map(line => {
+							if (line === '') {
+								return '<div class="empty-line">&nbsp;</div>';
+							} else {
+								return `<div class="text-line">${this.escapeHtml(line)}</div>`;
+							}
+						}).join('');
+						
+						// No indicator needed - visual content change is enough
+					}
+				}
+				
+				showEditModeIndicator(mode) {
+					// Remove any existing indicator
+					const existingIndicator = document.querySelector('.edit-mode-indicator');
+					if (existingIndicator) {
+						existingIndicator.remove();
+					}
+					
+					// Create and show new indicator
+					const indicator = document.createElement('div');
+					indicator.className = 'edit-mode-indicator';
+					indicator.textContent = mode;
+					indicator.style.cssText = `
+						position: fixed;
+						bottom: 20px;
+						right: 20px;
+						background: rgba(0, 0, 0, 0.05);
+						color: #666;
+						padding: 6px 12px;
+						border: 1px solid #ddd;
+						font-family: monospace;
+						font-size: 12px;
+						z-index: 10000;
+						opacity: 0;
+						transition: opacity 0.2s;
+						pointer-events: none;
+					`;
+					
+					document.body.appendChild(indicator);
+					
+					// Fade in
+					requestAnimationFrame(() => {
+						indicator.style.opacity = '1';
+					});
+					
+					// Remove after 1 second
+					setTimeout(() => {
+						indicator.style.opacity = '0';
+						setTimeout(() => indicator.remove(), 200);
+					}, 1000);
+				}
+
+
+
+				handleKeydown(e, editor) {
+					console.log('Key pressed:', e.key, 'Meta:', e.metaKey, 'Ctrl:', e.ctrlKey);
+					
+					// Tab key - insert 2 spaces or un-indent with Shift
+					if (e.key === 'Tab') {
+						e.preventDefault();
+						if (e.shiftKey) {
+							// Shift+Tab - remove 2 spaces from start of line
+							const selection = window.getSelection();
+							const range = selection.getRangeAt(0);
+							const textBefore = editor.textContent.substring(0, range.startOffset);
+							const lines = textBefore.split('\n');
+							const currentLineStart = textBefore.lastIndexOf('\n') + 1;
+							const currentLine = editor.textContent.substring(currentLineStart);
+							
+							// Check if line starts with at least 2 spaces
+							if (currentLine.startsWith('  ')) {
+								// Create a range for the first 2 spaces
+								const removeRange = document.createRange();
+								const textNode = [...editor.childNodes].find(node => 
+									node.nodeType === Node.TEXT_NODE && node.textContent.includes(currentLine.substring(0, 2))
+								);
+								if (textNode) {
+									const startPos = textNode.textContent.indexOf(currentLine.substring(0, 2));
+									removeRange.setStart(textNode, startPos);
+									removeRange.setEnd(textNode, startPos + 2);
+									removeRange.deleteContents();
+								}
+							}
+						} else {
+							// Regular Tab - insert 2 spaces
+							document.execCommand('insertText', false, '  ');
+						}
+						return;
+					}
+					
+					// Cmd/Ctrl + S - save
+					if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+						e.preventDefault();
+						this.saveCurrentNote();
+						return;
+					}
+					
+					// Cmd/Ctrl + Shift + F - format markdown
+					if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
+						e.preventDefault();
+						this.applyMarkdownFormatting(editor);
+						return;
+					}
+					
+					// Cmd/Ctrl + M - toggle edit mode (show images as text)
+					if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+						e.preventDefault();
+						this.toggleEditMode(editor);
+						return;
+					}
+					
+					// Auto-indent on Enter after certain patterns
+					if (e.key === 'Enter') {
+						const selection = window.getSelection();
+						const range = selection.getRangeAt(0);
+						const textBefore = editor.textContent.substring(0, range.startOffset);
+						const lines = textBefore.split('\n');
+						const lastLine = lines[lines.length - 1];
+						
+						// Check for list items or indented lines
+						const listMatch = lastLine.match(/^(\s*)([-*+]|\d+\.)\s/);
+						const indentMatch = lastLine.match(/^(\s+)/);
+						
+						if (listMatch) {
+							// Continue list with same indent
+							e.preventDefault();
+							const indent = listMatch[1];
+							const marker = listMatch[2].match(/\d+/) ? '1. ' : listMatch[2] + ' ';
+							document.execCommand('insertText', false, '\n' + indent + marker);
+						} else if (indentMatch && lastLine.trim()) {
+							// Maintain indent level
+							e.preventDefault();
+							document.execCommand('insertText', false, '\n' + indentMatch[1]);
+						}
+					}
+				}
+
+				async resizeImageIfNeeded(blob, maxWidth = 800) {
+					return new Promise((resolve) => {
+						const img = new Image();
+						const url = URL.createObjectURL(blob);
+						
+						img.onload = () => {
+							URL.revokeObjectURL(url);
+							
+							// If image is smaller than max width, return original
+							if (img.width <= maxWidth) {
+								resolve(blob);
+								return;
+							}
+							
+							// Calculate new dimensions maintaining aspect ratio
+							const aspectRatio = img.height / img.width;
+							const newWidth = maxWidth;
+							const newHeight = Math.round(newWidth * aspectRatio);
+							
+							// Create canvas for resizing
+							const canvas = document.createElement('canvas');
+							canvas.width = newWidth;
+							canvas.height = newHeight;
+							
+							const ctx = canvas.getContext('2d');
+							
+							// Use better image smoothing
+							ctx.imageSmoothingEnabled = true;
+							ctx.imageSmoothingQuality = 'high';
+							
+							// Draw resized image
+							ctx.drawImage(img, 0, 0, newWidth, newHeight);
+							
+							// Convert to blob
+							canvas.toBlob((resizedBlob) => {
+								resolve(resizedBlob || blob);
+							}, blob.type || 'image/png', 0.92); // 92% quality for good balance
+						};
+						
+						img.onerror = () => {
+							URL.revokeObjectURL(url);
+							resolve(blob); // Return original on error
+						};
+						
+						img.src = url;
+					});
+				}
+
+				async handlePaste(e, editor) {
+					e.preventDefault();
+					
+					const clipboardData = e.clipboardData || window.clipboardData;
+					const items = clipboardData.items;
+					
+					// Check for images in clipboard
+					let hasImage = false;
+					for (let i = 0; i < items.length; i++) {
+						const item = items[i];
+						
+						if (item.type.indexOf('image') !== -1) {
+							hasImage = true;
+							const blob = item.getAsFile();
+							
+							if (blob) {
+								try {
+									// Resize image if needed
+									const resizedBlob = await this.resizeImageIfNeeded(blob);
+									
+									// Save image to IndexedDB
+									const imageId = await this.imageStorage.saveImage(this.currentNoteId, resizedBlob);
+									console.log('Image saved with ID:', imageId);
+									
+									// Insert markdown image syntax at cursor position
+									const imageMarkdown = `![image](notepad-image:${imageId})`;
+									document.execCommand('insertText', false, imageMarkdown);
+									
+									// Log what's in the editor after paste
+									console.log('After paste - editor content:', editor.textContent);
+									console.log('After paste - edit mode:', editor.dataset.editMode);
+									
+									// Force save to ensure the image markdown is persisted
+									this.saveCurrentNote();
+									
+									// Show success feedback
+									const meta = document.getElementById('note-meta');
+									meta.textContent = 'Image pasted successfully';
+									meta.style.color = 'green';
+									setTimeout(() => {
+										meta.textContent = `Last modified: ${new Date().toLocaleString()}`;
+										meta.style.color = '';
+									}, 2000);
+									
+									// Save the note to persist the image reference
+									this.debouncedSave();
+									
+								} catch (error) {
+									console.error('Failed to save image:', error);
+									this.showError(error.message || 'Failed to save image');
+								}
+							}
+							break;
+						}
+					}
+					
+					// If no image, paste as plain text
+					if (!hasImage) {
+						const text = clipboardData.getData('text');
+						document.execCommand('insertText', false, text);
+					}
+				}
+
+				saveCurrentNote() {
+					const note = this.notes.get(this.currentNoteId);
+					if (!note) return;
+
+					// Update note data
+					note.updateTitle(document.getElementById('note-title').value || 'untitled');
+					
+					// Get content from editor
+					const editor = document.getElementById('editor-content');
+					const content = this.getPlainTextFromEditor(editor);
+					
+					// Don't save placeholder text
+					if (content === 'Click here to start writing...') {
+						note.updateContent('');
+					} else {
+						note.updateContent(content);
+					}
+
+					// Save to storage
+					this.storage.saveNote(this.currentNoteId, note.toJSON());
+					
+					// Update index
+					const noteIds = Array.from(this.notes.keys());
+					this.storage.saveNoteIndex(noteIds);
+
+					// Update UI
+					this.updateNoteList();
+					const meta = document.getElementById('note-meta');
+					meta.textContent = `Last modified: ${new Date(note.modified).toLocaleString()}`;
+					meta.style.color = ''; // Reset color
+					
+					// Flash save indicator
+					const saveBtn = document.getElementById('save-btn');
+					const originalText = saveBtn.textContent;
+					saveBtn.textContent = '[saved ✓]';
+					saveBtn.style.color = 'green';
+					setTimeout(() => {
+						saveBtn.textContent = originalText;
+						saveBtn.style.color = '';
+					}, 1000);
+				}
+
+				createNewNote() {
+					const newNote = new Note({
+						title: NOTEPAD_CONFIG.defaults.newNoteTitle,
+						content: ''
+					});
+					
+					this.notes.set(newNote.id, newNote);
+
+					this.saveCurrentNote();
+					this.updateNoteList();
+					this.loadNote(newNote.id);
+					
+					// Focus title for editing
+					const titleInput = document.getElementById('note-title');
+					titleInput.select();
+					titleInput.focus();
+				}
+
+				async deleteNote(noteId) {
+					// Animate the note item first
+					const noteItem = document.querySelector(`.note-item[data-note-id="${noteId}"]`);
+					if (noteItem) {
+						noteItem.classList.add('deleting');
+					}
+					
+					// Wait for animation then proceed with deletion
+					setTimeout(async () => {
+						this.notes.delete(noteId);
+						this.storage.deleteNote(noteId);
+						this.activatedDeletes.delete(noteId); // Clear activated state
+						
+						// Delete all images associated with this note
+						try {
+							await this.imageStorage.deleteImagesByNoteId(noteId);
+						} catch (error) {
+							console.error('Failed to delete images:', error);
+						}
+						
+						// Ensure we always have at least one note
+						if (this.notes.size === 0) {
+							// Create a new untitled note if all notes are deleted
+							const untitled = new Note({
+								id: NOTEPAD_CONFIG.defaults.untitledId,
+								title: NOTEPAD_CONFIG.defaults.untitledTitle,
+								content: ''
+							});
+							this.notes.set(untitled.id, untitled);
+							this.storage.saveNote(untitled.id, untitled.toJSON());
+						}
+						
+						// Update index
+						const noteIds = Array.from(this.notes.keys());
+						this.storage.saveNoteIndex(noteIds);
+
+						// Load another note if we deleted current note
+						if (noteId === this.currentNoteId) {
+							// Load first available note
+							const firstNoteId = noteIds[0] || NOTEPAD_CONFIG.defaults.untitledId;
+							this.loadNote(firstNoteId);
+						}
+
+						this.updateNoteList();
+					}, 300); // Match animation duration
+				}
+
+				// Delete a blog post
+				async deleteBlogPost(postId) {
+					try {
+						// Send delete request to API
+						const response = await fetch('http://localhost:4322/api/delete-blog-post', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								filename: postId.endsWith('.md') ? postId : `${postId}.md`
+							})
+						});
+						
+						const result = await response.json();
+						
+						if (result.success) {
+							// Clear activated state
+							this.activatedBlogDeletes.delete(postId);
+							
+							// Find and animate the blog post item
+							const blogItem = document.querySelector(`.blog-post-item[data-post-id="${postId}"]`);
+							if (blogItem) {
+								// Add deleting class for animation
+								blogItem.classList.add('deleting');
+								
+								// Remove from DOM after animation completes
+								setTimeout(() => {
+									blogItem.remove();
+									
+									// Remove from window.BLOG_POSTS array
+									const index = window.BLOG_POSTS.findIndex(p => p.id === postId);
+									if (index > -1) {
+										window.BLOG_POSTS.splice(index, 1);
+									}
+								}, 300); // Match animation duration
+							}
+							
+							// Show success message
+							const meta = document.getElementById('note-meta');
+							meta.textContent = `Blog post deleted successfully!`;
+							meta.style.color = 'green';
+							
+							// Clear the message after 3 seconds
+							setTimeout(() => {
+								if (meta.textContent === 'Blog post deleted successfully!') {
+									meta.textContent = this.currentBlogPostId ? 
+										`Editing blog post: ${this.currentBlogPostId}` : 
+										'Last modified: ' + new Date().toLocaleString();
+									meta.style.color = '';
+								}
+							}, 3000);
+							
+							// If we're currently editing this post, clear the editor
+							if (this.currentBlogPostId === postId) {
+								this.currentBlogPostId = null;
+								document.getElementById('note-title').value = 'untitled';
+								document.getElementById('editor-content').textContent = '';
+								document.getElementById('frontmatter-editor').style.display = 'none';
+								
+								// Hide blog-specific buttons
+								document.getElementById('export-post-btn').style.display = 'none';
+								document.getElementById('save-to-folder-btn').style.display = 'none';
+								document.getElementById('save-blog-post-btn').style.display = 'none';
+								document.getElementById('push-changes-btn').style.display = 'none';
+							}
+						} else {
+							throw new Error(result.error || 'Failed to delete');
+						}
+					} catch (err) {
+						this.showError('Failed to delete blog post: ' + err.message);
+					}
+				}
+				
+				// Generate slug from title
+				generateSlug(title) {
+					return title
+						.toLowerCase()
+						.replace(/[^a-z0-9]+/g, '-')
+						.replace(/^-|-$/g, '');
+				}
+				
+				// Queue blog save to avoid Astro reloads
+				queueBlogSave() {
+					if (!this.currentBlogPostId) {
+						return;
+					}
+					
+					// Generate the save data
+					const title = document.getElementById('note-title').value;
+					const editor = document.getElementById('editor-content');
+					const content = this.getPlainTextFromEditor(editor);
+					
+					// Collect metadata
+					const metadata = {
+						title: title || 'Untitled',
+						description: document.getElementById('meta-description').value || title || 'No description provided',
+						pubDate: document.getElementById('meta-date').value || new Date().toISOString().split('T')[0],
+						pageType: document.getElementById('meta-pagetype').value || 'blog',
+						category: document.getElementById('meta-category').value.toLowerCase() || 'uncategorized',
+						private: document.getElementById('meta-private').checked
+					};
+					
+					// Add password hash if private
+					if (metadata.private) {
+						const password = document.getElementById('meta-password').value;
+						if (password) {
+							// Note: This would need to be async, but we'll handle it in executePendingSave
+							metadata.password = password;
+						}
+					}
+					
+					// Add visual markers if set
+					const markType = document.getElementById('meta-marktype').value;
+					if (markType) {
+						metadata.markType = markType;
+						metadata.markCount = parseInt(document.getElementById('meta-markcount').value) || 1;
+						metadata.markColor = document.getElementById('meta-markcolor').value;
+					}
+					
+					// Store the pending save
+					this.pendingBlogSave = {
+						blogPostId: this.currentBlogPostId,
+						title: title,
+						content: content,
+						metadata: metadata,
+						timestamp: Date.now()
+					};
+					
+					// Update UI to show pending save
+					const meta = document.getElementById('note-meta');
+					meta.textContent = `Blog post changes queued (will save when you navigate away)`;
+					meta.style.color = 'orange';
+					
+					// Show push changes button
+					document.getElementById('push-changes-btn').style.display = 'inline';
+				}
+				
+				// Execute pending blog save
+				async executePendingSave() {
+					if (!this.pendingBlogSave) {
+						return;
+					}
+					
+					const pending = this.pendingBlogSave;
+					this.pendingBlogSave = null; // Clear it immediately
+					
+					try {
+						// Handle password hashing if needed
+						if (pending.metadata.password) {
+							const msgBuffer = new TextEncoder().encode(pending.metadata.password);
+							const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+							const hashArray = Array.from(new Uint8Array(hashBuffer));
+							const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+							pending.metadata.passwordHash = hashHex;
+							delete pending.metadata.password;
+						}
+						
+						// Generate frontmatter
+						let frontmatter = '---\n';
+						for (const [key, value] of Object.entries(pending.metadata)) {
+							if (value !== '' && value !== false && value !== undefined) {
+								if (typeof value === 'boolean') {
+									frontmatter += `${key}: ${value}\n`;
+								} else if (key === 'pubDate') {
+									const date = new Date(value);
+									frontmatter += `${key}: ${date.toISOString()}\n`;
+								} else {
+									frontmatter += `${key}: "${value}"\n`;
+								}
+							}
+						}
+						frontmatter += '---\n\n';
+						
+						// Combine frontmatter and content
+						const fullContent = frontmatter + pending.content;
+						
+						// Generate filename
+						let filename;
+						if (pending.blogPostId && !pending.blogPostId.startsWith('new-post-')) {
+							filename = pending.blogPostId.endsWith('.md') ? pending.blogPostId : `${pending.blogPostId}.md`;
+						} else {
+							const slug = this.generateSlug(pending.title);
+							filename = `${slug}.md`;
+						}
+						
+						// Send to API
+						const response = await fetch('http://localhost:4322/api/save-blog-post', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								filename: filename,
+								content: fullContent
+							})
+						});
+						
+						const result = await response.json();
+						
+						if (result.success) {
+							console.log('Pending blog save executed successfully:', result);
+							
+							// Update blog post list if it was a new post
+							if (pending.blogPostId && pending.blogPostId.startsWith('new-post-')) {
+								const newPostId = result.filename.replace('.md', '');
+								const newPost = {
+									id: newPostId,
+									title: pending.metadata.title,
+									pubDate: new Date(pending.metadata.pubDate).toISOString(),
+									category: pending.metadata.category,
+									description: pending.metadata.description,
+									content: pending.content,
+									pageType: pending.metadata.pageType,
+									private: pending.metadata.private || false,
+									markType: pending.metadata.markType || '',
+									markCount: pending.metadata.markCount || 1,
+									markColor: pending.metadata.markColor || ''
+								};
+								window.BLOG_POSTS.unshift(newPost);
+								
+								// Update the pending reload state with the real ID
+								const pendingReload = sessionStorage.getItem('notepad:pendingReload');
+								if (pendingReload) {
+									try {
+										const state = JSON.parse(pendingReload);
+										state.blogPostId = newPostId;
+										sessionStorage.setItem('notepad:pendingReload', JSON.stringify(state));
+									} catch (e) {
+										console.error('Error updating pending reload state:', e);
+									}
+								}
+							} else {
+								// Update existing post
+								const existingIndex = window.BLOG_POSTS.findIndex(p => p.id === pending.blogPostId);
+								if (existingIndex !== -1) {
+									window.BLOG_POSTS[existingIndex] = {
+										...window.BLOG_POSTS[existingIndex],
+										...pending.metadata,
+										content: pending.content
+									};
+								}
+							}
+							
+							// Hide push button after successful save
+							document.getElementById('push-changes-btn').style.display = 'none';
+						} else {
+							console.error('Failed to execute pending save:', result.error);
+						}
+					} catch (err) {
+						console.error('Error executing pending save:', err);
+					}
+				}
+				
+				// Initialize File System Access
+				async initFileSystemAccess() {
+					// Check if File System API is supported
+					if (!('showDirectoryPicker' in window)) {
+						console.log('File System Access API not supported');
+						return false;
+					}
+					
+					// Try to get stored directory handle
+					const handles = await navigator.storage.getDirectory();
+					// Note: Persistent permissions require more setup, for now we'll ask each time
+					
+					return true;
+				}
+				
+				// Save blog post via API (dev mode only)
+				async saveBlogPostToAPI() {
+					if (!this.currentBlogPostId) {
+						this.showError('No blog post loaded to save');
+						return;
+					}
+					
+					console.log('Queueing blog post save:', this.currentBlogPostId);
+					
+					// Just queue the save instead of executing immediately
+					this.queueBlogSave();
+					
+					// Provide immediate feedback
+					const meta = document.getElementById('note-meta');
+					meta.textContent = `Blog post changes saved locally (no reload needed!)`;
+					meta.style.color = 'green';
+					
+					// Clear the success message after a few seconds
+					setTimeout(() => {
+						if (meta.textContent.includes('saved locally')) {
+							meta.textContent = `Editing blog post: ${this.currentBlogPostId}`;
+							meta.style.color = '';
+						}
+					}, 3000);
+				}
+				
+				// Save blog post directly to folder
+				async saveBlogPostToFolder() {
+					if (!this.currentBlogPostId) {
+						this.showError('No blog post loaded to save');
+						return;
+					}
+					
+					try {
+						// Request directory access
+						const dirHandle = await window.showDirectoryPicker({
+							startIn: 'documents',
+							mode: 'readwrite'
+						});
+						
+						// Generate content
+						const title = document.getElementById('note-title').value;
+						const content = this.getPlainTextFromEditor(document.getElementById('editor-content'));
+						
+						// Collect metadata - ensure required fields have defaults
+						const metadata = {
+							title: title || 'Untitled',
+							description: document.getElementById('meta-description').value || title || 'No description provided',
+							pubDate: document.getElementById('meta-date').value || new Date().toISOString().split('T')[0],
+							pageType: document.getElementById('meta-pagetype').value || 'blog',
+							category: document.getElementById('meta-category').value.toLowerCase() || 'uncategorized',
+							private: document.getElementById('meta-private').checked
+						};
+						
+						// Add password hash if private
+						if (metadata.private) {
+							const password = document.getElementById('meta-password').value;
+							if (password) {
+								// Simple SHA-256 hash (in production, use proper crypto)
+								const msgBuffer = new TextEncoder().encode(password);
+								const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+								const hashArray = Array.from(new Uint8Array(hashBuffer));
+								const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+								metadata.passwordHash = hashHex;
+							}
+						}
+						
+						// Add visual markers if set
+						const markType = document.getElementById('meta-marktype').value;
+						if (markType) {
+							metadata.markType = markType;
+							metadata.markCount = parseInt(document.getElementById('meta-markcount').value) || 1;
+							metadata.markColor = document.getElementById('meta-markcolor').value;
+						}
+						
+						// Generate frontmatter
+						let frontmatter = '---\n';
+						for (const [key, value] of Object.entries(metadata)) {
+							if (value !== '' && value !== false && value !== undefined) {
+								if (typeof value === 'boolean') {
+									frontmatter += `${key}: ${value}\n`;
+								} else if (key === 'pubDate') {
+									const date = new Date(value);
+									frontmatter += `${key}: ${date.toISOString()}\n`;
+								} else {
+									frontmatter += `${key}: "${value}"\n`;
+								}
+							}
+						}
+						frontmatter += '---\n\n';
+						
+						// Combine frontmatter and content
+						const fullContent = frontmatter + content;
+						
+						// Generate filename - use existing ID for updates, generate new for new posts
+						let filename;
+						if (this.currentBlogPostId && !this.currentBlogPostId.startsWith('new-post-')) {
+							// Editing existing post - use the original filename
+							filename = this.currentBlogPostId.endsWith('.md') ? this.currentBlogPostId : `${this.currentBlogPostId}.md`;
+						} else {
+							// New post - generate filename from title
+							const slug = this.generateSlug(title);
+							filename = `${slug}.md`;
+						}
+						
+						// Create and write file
+						const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+						const writable = await fileHandle.createWritable();
+						await writable.write(fullContent);
+						await writable.close();
+						
+						// Show success message
+						const meta = document.getElementById('note-meta');
+						meta.textContent = `Blog post saved as ${filename} in selected folder`;
+						meta.style.color = 'green';
+						setTimeout(() => {
+							meta.textContent = this.currentBlogPostId.startsWith('new-post-') 
+								? 'Creating new blog post' 
+								: `Editing blog post: ${this.currentBlogPostId}`;
+							meta.style.color = '';
+						}, 3000);
+						
+					} catch (err) {
+						if (err.name === 'AbortError') {
+							// User cancelled the file picker
+							return;
+						}
+						this.showError('Failed to save file: ' + err.message);
+					}
+				}
+				
+				// Get existing categories from blog posts
+				getExistingCategories() {
+					if (typeof window.BLOG_POSTS === 'undefined') {
+						return ['uncategorized'];
+					}
+					
+					const categories = new Set(['uncategorized']); // Always include uncategorized
+					window.BLOG_POSTS.forEach(post => {
+						const category = post.category || 'uncategorized';
+						categories.add(category);
+					});
+					
+					// Sort categories (uncategorized first, then alphabetically)
+					return Array.from(categories).sort((a, b) => {
+						if (a === 'uncategorized') return -1;
+						if (b === 'uncategorized') return 1;
+						return a.localeCompare(b);
+					});
+				}
+				
+				// Create a new blog post
+				async createNewBlogPost() {
+					// Execute any pending blog save before creating new
+					await this.executePendingSave();
+					
+					// Prompt for category selection
+					const existingCategories = this.getExistingCategories();
+					let selectedCategory = 'uncategorized';
+					
+					// Build prompt message with existing categories
+					let promptMessage = '📁 Select a category for your new blog post\n\n';
+					promptMessage += 'Existing categories:\n';
+					existingCategories.forEach((cat, index) => {
+						const emoji = cat === 'uncategorized' ? '📂' : '📁';
+						promptMessage += `  ${emoji} ${index + 1}. ${cat}\n`;
+					});
+					promptMessage += '\n💡 Tip: Enter a number (1-' + existingCategories.length + ') or type a new category name\n';
+					promptMessage += '(Press Cancel for "uncategorized")';
+					
+					const userInput = prompt(promptMessage);
+					
+					if (userInput) {
+						// Check if user entered a number (selecting existing category)
+						const selectedIndex = parseInt(userInput) - 1;
+						if (!isNaN(selectedIndex) && selectedIndex >= 0 && selectedIndex < existingCategories.length) {
+							selectedCategory = existingCategories[selectedIndex];
+						} else if (userInput.trim()) {
+							// User entered a new category name
+							selectedCategory = userInput.trim().toLowerCase();
+						}
+					}
+					
+					// Clear any active states
+					document.querySelectorAll('.note-item').forEach(item => {
+						item.classList.remove('active');
+					});
+					document.querySelectorAll('.blog-post-item').forEach(item => {
+						item.classList.remove('active');
+					});
+					
+					// Set up for new blog post
+					this.currentBlogPostId = 'new-post-' + Date.now();
+					this.currentNoteId = null;
+					
+					// Clear and set up editor
+					document.getElementById('note-title').value = 'New Blog Post';
+					document.getElementById('note-meta').textContent = `Creating new blog post in category: ${selectedCategory}`;
+					
+					// Show and clear frontmatter editor
+					const frontmatterEditor = document.getElementById('frontmatter-editor');
+					frontmatterEditor.style.display = 'block';
+					
+					// Show export post button and save buttons
+					document.getElementById('export-post-btn').style.display = 'inline';
+					document.getElementById('save-to-folder-btn').style.display = 'inline';
+					document.getElementById('save-blog-post-btn').style.display = 'inline';
+					
+					// Show push changes button if there's a pending save
+					if (this.pendingBlogSave && this.pendingBlogSave.blogPostId === postId) {
+						document.getElementById('push-changes-btn').style.display = 'inline';
+					}
+					
+					// Clear metadata fields with defaults
+					document.getElementById('meta-description').value = '';
+					document.getElementById('meta-date').value = new Date().toISOString().split('T')[0];
+					document.getElementById('meta-pagetype').value = 'blog';
+					document.getElementById('meta-category').value = selectedCategory;
+					document.getElementById('meta-private').checked = false;
+					document.getElementById('password-field').style.display = 'none';
+					document.getElementById('meta-password').value = '';
+					document.getElementById('meta-marktype').value = '';
+					document.getElementById('meta-markcount').value = '1';
+					document.getElementById('meta-markcolor').value = '';
+					
+					// Clear editor content
+					const editor = document.getElementById('editor-content');
+					editor.textContent = '';
+					editor.classList.remove('placeholder');
+					
+					// Set up editor if not already done
+					if (!editor.dataset.initialized) {
+						this.setupEditor(editor);
+					}
+					
+					// Focus on title
+					const titleInput = document.getElementById('note-title');
+					titleInput.select();
+					titleInput.focus();
+				}
+				
+				// Export current blog post with frontmatter
+				async exportBlogPost() {
+					if (!this.currentBlogPostId) {
+						this.showError('No blog post loaded for export');
+						return;
+					}
+					
+					// Get current content and metadata
+					const title = document.getElementById('note-title').value;
+					const content = this.getPlainTextFromEditor(document.getElementById('editor-content'));
+					
+					// Collect metadata - ensure required fields have defaults
+					const metadata = {
+						title: title || 'Untitled',
+						description: document.getElementById('meta-description').value || title || 'No description provided',
+						pubDate: document.getElementById('meta-date').value || new Date().toISOString().split('T')[0],
+						pageType: document.getElementById('meta-pagetype').value || 'blog',
+						category: document.getElementById('meta-category').value.toLowerCase() || 'uncategorized',
+						private: document.getElementById('meta-private').checked
+					};
+					
+					// Add password hash if private
+					if (metadata.private) {
+						const password = document.getElementById('meta-password').value;
+						if (password) {
+							// In a real implementation, you'd hash this on the server
+							// For now, we'll just note it needs to be hashed
+							metadata.passwordHash = 'SHA256_HASH_OF_' + password;
+						}
+					}
+					
+					// Add visual markers if set
+					const markType = document.getElementById('meta-marktype').value;
+					if (markType) {
+						metadata.markType = markType;
+						metadata.markCount = parseInt(document.getElementById('meta-markcount').value) || 1;
+						metadata.markColor = document.getElementById('meta-markcolor').value;
+					}
+					
+					// Generate frontmatter
+					let frontmatter = '---\n';
+					for (const [key, value] of Object.entries(metadata)) {
+						if (value !== '' && value !== false && value !== undefined) {
+							if (typeof value === 'boolean') {
+								frontmatter += `${key}: ${value}\n`;
+							} else if (key === 'pubDate') {
+								// Format date properly
+								const date = new Date(value);
+								frontmatter += `${key}: ${date.toISOString()}\n`;
+							} else {
+								frontmatter += `${key}: "${value}"\n`;
+							}
+						}
+					}
+					frontmatter += '---\n\n';
+					
+					// Combine frontmatter and content
+					const fullContent = frontmatter + content;
+					
+					// Generate filename - use existing ID for updates, generate new for new posts
+					let filename;
+					if (this.currentBlogPostId && !this.currentBlogPostId.startsWith('new-post-')) {
+						// Editing existing post - use the original filename
+						filename = this.currentBlogPostId.endsWith('.md') ? this.currentBlogPostId : `${this.currentBlogPostId}.md`;
+					} else {
+						// New post - generate filename from title
+						const slug = this.generateSlug(title);
+						filename = `${slug}.md`;
+					}
+					
+					// Download the file
+					const blob = new Blob([fullContent], { type: 'text/markdown' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = filename;
+					a.click();
+					URL.revokeObjectURL(url);
+					
+					// Show success message
+					const meta = document.getElementById('note-meta');
+					meta.textContent = `Blog post exported as ${filename}`;
+					meta.style.color = 'green';
+					setTimeout(() => {
+						meta.textContent = `Editing blog post: ${this.currentBlogPostId}`;
+						meta.style.color = '';
+					}, 3000);
+				}
+				
+				async exportNotes() {
+					const notesArray = Array.from(this.notes.values());
+					const exportPromises = notesArray.map(async (note) => {
+						let content = note.content;
+						
+						// Replace notepad-image references with base64 data URLs
+						const imageMatches = content.match(/!\[([^\]]*)\]\(notepad-image:([^)]+)\)/g);
+						if (imageMatches) {
+							for (const match of imageMatches) {
+								const imageIdMatch = match.match(/notepad-image:([^)]+)/);
+								if (imageIdMatch) {
+									const imageId = imageIdMatch[1];
+									try {
+										const blob = await this.imageStorage.getImage(imageId);
+										if (blob) {
+											// Convert to base64 data URL
+											const reader = new FileReader();
+											const dataUrl = await new Promise((resolve) => {
+												reader.onloadend = () => resolve(reader.result);
+												reader.readAsDataURL(blob);
+											});
+											content = content.replace(`notepad-image:${imageId}`, dataUrl);
+										}
+									} catch (error) {
+										console.error(`Failed to export image ${imageId}:`, error);
+									}
+								}
+							}
+						}
+						
+						return `# ${note.title}\n\nCreated: ${note.created}\nModified: ${note.modified}\n\n${content}`;
+					});
+					
+					const exportedNotes = await Promise.all(exportPromises);
+					const exportData = exportedNotes.join('\n\n---\n\n');
+
+					// Download as file
+					const blob = new Blob([exportData], { type: 'text/markdown' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = `notepad-export-${new Date().toISOString().split('T')[0]}.md`;
+					a.click();
+					URL.revokeObjectURL(url);
+					
+					// Show export success
+					const meta = document.getElementById('note-meta');
+					meta.textContent = 'Notes exported successfully (images included as base64)';
+					meta.style.color = 'green';
+					setTimeout(() => {
+						meta.textContent = `Last modified: ${new Date().toLocaleString()}`;
+						meta.style.color = '';
+					}, 3000);
+				}
+				
+
+				showError(message) {
+					const meta = document.getElementById('note-meta');
+					if (meta) {
+						meta.textContent = `Error: ${message}`;
+						meta.style.color = 'red';
+					}
+					console.error(message);
+				}
+
+				startAutoSave() {
+					this.autoSaveTimer = setInterval(() => {
+						this.debouncedSave();
+					}, NOTEPAD_CONFIG.defaults.saveInterval);
+				}
+
+				bindEvents() {
+					// Handle page unload - save pending blog changes
+					window.addEventListener('beforeunload', async (e) => {
+						if (this.pendingBlogSave) {
+							// We can't reliably do async operations in beforeunload
+							// So we'll just warn the user
+							e.preventDefault();
+							e.returnValue = 'You have unsaved blog changes. Are you sure you want to leave?';
+							return e.returnValue;
+						}
+					});
+					
+					// TEMPORARY DEBUG: Document-level click handler
+					document.addEventListener('click', (e) => {
+						console.log('=== Document Click Debug ===');
+						console.log('Target:', e.target);
+						console.log('Target tagName:', e.target.tagName);
+						console.log('Target className:', e.target.className);
+						console.log('Target id:', e.target.id);
+						console.log('Current activeElement:', document.activeElement);
+						const editor = document.getElementById('editor-content');
+						console.log('Editor edit mode:', editor?.dataset.editMode);
+						console.log('Editor focused?', document.activeElement === editor);
+						console.log('Event phase:', e.eventPhase);
+						console.log('===========================');
+					}, true); // Use capture phase
+					
+					// New note button
+					document.getElementById('new-note-btn').addEventListener('click', (e) => {
+						e.preventDefault();
+						this.createNewNote();
+					});
+
+					// Export button
+					document.getElementById('export-btn').addEventListener('click', async (e) => {
+						e.preventDefault();
+						await this.exportNotes();
+					});
+
+					// Save button
+					document.getElementById('save-btn').addEventListener('click', (e) => {
+						e.preventDefault();
+						this.saveCurrentNote();
+					});
+					
+					// Export post button
+					document.getElementById('export-post-btn').addEventListener('click', async (e) => {
+						e.preventDefault();
+						await this.exportBlogPost();
+					});
+					
+					// Save to folder button
+					document.getElementById('save-to-folder-btn').addEventListener('click', async (e) => {
+						e.preventDefault();
+						await this.saveBlogPostToFolder();
+					});
+					
+					// Save to blog button (API) - now just queues
+					document.getElementById('save-blog-post-btn').addEventListener('click', async (e) => {
+						e.preventDefault();
+						await this.saveBlogPostToAPI();
+					});
+					
+					// Push changes button - actually saves to disk
+					document.getElementById('push-changes-btn').addEventListener('click', async (e) => {
+						e.preventDefault();
+						
+						// Store state before push for restoration after reload
+						if (this.pendingBlogSave) {
+							const editor = document.getElementById('editor-content');
+							const stateToRestore = {
+								blogPostId: this.pendingBlogSave.blogPostId,
+								scrollPosition: window.scrollY,
+								editorScrollPosition: editor.scrollTop,
+								timestamp: Date.now()
+							};
+							sessionStorage.setItem('notepad:pendingReload', JSON.stringify(stateToRestore));
+						}
+						
+						await this.executePendingSave();
+						
+						// Hide the button after pushing
+						document.getElementById('push-changes-btn').style.display = 'none';
+						
+						// Show success message
+						const meta = document.getElementById('note-meta');
+						meta.textContent = `Blog post pushed to disk! Page will reload...`;
+						meta.style.color = 'green';
+					});
+					
+					// Toggle edit mode button
+					const toggleButton = document.getElementById('toggle-edit-mode');
+					console.log('Toggle button found:', toggleButton);
+					if (toggleButton) {
+						toggleButton.addEventListener('click', (e) => {
+							console.log('Toggle button clicked');
+							e.preventDefault();
+							const editor = document.getElementById('editor-content');
+							this.toggleEditMode(editor);
+						});
+					}
+					
+					// Persist edit mode checkbox
+					const persistCheckbox = document.getElementById('persist-edit-mode');
+					
+					// Load saved state
+					const savedPersistState = localStorage.getItem('notepad:persist-edit-mode');
+					if (savedPersistState === 'true') {
+						persistCheckbox.checked = true;
+					}
+					
+					// Save state on change
+					persistCheckbox.addEventListener('change', (e) => {
+						localStorage.setItem('notepad:persist-edit-mode', persistCheckbox.checked);
+					});
+
+
+					// Note list clicks
+					document.getElementById('note-list').addEventListener('click', async (e) => {
+						// Handle note title link clicks
+						if (e.target.classList.contains('note-title')) {
+							e.preventDefault();
+							const noteItem = e.target.closest('.note-item');
+							if (noteItem) {
+								this.saveCurrentNote();
+								this.loadNote(noteItem.dataset.noteId);
+							}
+						}
+						
+						// Handle delete button clicks
+						if (e.target.classList.contains('note-delete')) {
+							e.preventDefault();
+							const deleteBtn = e.target;
+							const noteId = deleteBtn.dataset.noteId;
+							
+							// Two-stage confirmation
+							if (deleteBtn.classList.contains('confirm')) {
+								// Second click - actually delete
+								await this.deleteNote(noteId);
+							} else {
+								// First click - show confirmation
+								deleteBtn.classList.add('confirm');
+								deleteBtn.textContent = '[sure?]';
+								this.activatedDeletes.add(noteId); // Mark as activated
+								
+								// Reset after 3 seconds or on click elsewhere
+								const resetBtn = () => {
+									deleteBtn.classList.remove('confirm');
+									deleteBtn.textContent = '[del]';
+								};
+								
+								// Reset on click elsewhere
+								const clickHandler = (event) => {
+									if (!deleteBtn.contains(event.target)) {
+										resetBtn();
+										this.activatedDeletes.delete(noteId); // Clear activated state
+										deleteBtn.style.color = '#666'; // Reset to gray
+										document.removeEventListener('click', clickHandler);
+									}
+								};
+								
+								setTimeout(() => {
+									document.addEventListener('click', clickHandler);
+								}, 10);
+								
+								// Auto-reset after 3 seconds
+								setTimeout(() => {
+									resetBtn();
+									this.activatedDeletes.delete(noteId); // Clear activated state
+									deleteBtn.style.color = '#666'; // Reset to gray
+									document.removeEventListener('click', clickHandler);
+								}, 3000);
+							}
+						}
+					});
+					
+					// Keyboard shortcuts for note list
+					document.addEventListener('keydown', (e) => {
+						// Delete key - delete active note
+						if (e.key === 'Delete' || e.key === 'Backspace') {
+							// Only if not in an input field
+							if (document.activeElement.tagName !== 'INPUT' && 
+								document.activeElement.tagName !== 'TEXTAREA' &&
+								!document.activeElement.isContentEditable) {
+								e.preventDefault();
+								const activeNote = document.querySelector('.note-item.active');
+								if (activeNote) {
+									// Find the delete button and trigger click for consistency
+									const deleteBtn = activeNote.querySelector('.note-delete');
+									if (deleteBtn) {
+										deleteBtn.click();
+									}
+								}
+							}
+						}
+					});
+
+					// Title changes - use debounced save
+					document.getElementById('note-title').addEventListener('input', () => {
+						this.debouncedSave();
+					});
+					
+					// Save on title blur for reliability
+					document.getElementById('note-title').addEventListener('blur', () => {
+						this.saveCurrentNote();
+					});
+					
+					// Handle hash navigation from homepage
+					window.addEventListener('hashchange', () => {
+						const hash = window.location.hash.slice(1); // Remove #
+						if (hash && this.notes.has(hash)) {
+							this.saveCurrentNote();
+							this.loadNote(hash);
+						}
+					});
+					
+					// Check initial hash on load
+					const initialHash = window.location.hash.slice(1);
+					if (initialHash && this.notes.has(initialHash)) {
+						this.loadNote(initialHash);
+					}
+
+					// New blog post button
+					document.getElementById('new-blog-post-btn').addEventListener('click', (e) => {
+						e.preventDefault();
+						// Save current note if editing one
+						if (this.currentNoteId) {
+							this.saveCurrentNote();
+						}
+						this.createNewBlogPost();
+					});
+					
+					// Blog post list clicks
+					document.getElementById('blog-post-list').addEventListener('click', async (e) => {
+						// Handle category toggle clicks
+						if (e.target.closest('.blog-category-toggle')) {
+							e.preventDefault();
+							const button = e.target.closest('.blog-category-toggle');
+							const category = button.dataset.category;
+							
+							// Get current expanded state
+							const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
+							const isExpanded = expandedCategories.includes(category);
+							
+							// Toggle state
+							if (isExpanded) {
+								const index = expandedCategories.indexOf(category);
+								expandedCategories.splice(index, 1);
+							} else {
+								expandedCategories.push(category);
+							}
+							
+							// Save state
+							localStorage.setItem('notepad:expandedBlogCategories', JSON.stringify(expandedCategories));
+							
+							// Update UI
+							button.setAttribute('aria-expanded', !isExpanded ? 'true' : 'false');
+							
+							// Update icon
+							const icon = button.querySelector('.category-icon');
+							if (icon) {
+								icon.textContent = !isExpanded ? '📂' : '📁';
+							}
+							
+							// Toggle posts visibility
+							const categoryDiv = button.closest('.blog-category');
+							const postsContainer = categoryDiv.querySelector('.category-posts');
+							if (postsContainer) {
+								postsContainer.style.display = !isExpanded ? 'block' : 'none';
+							}
+							return;
+						}
+						
+						// Handle delete button clicks
+						if (e.target.classList.contains('blog-post-delete')) {
+							e.preventDefault();
+							e.stopPropagation();
+							
+							const deleteBtn = e.target;
+							const postId = deleteBtn.dataset.postId;
+							
+							// Two-stage confirmation
+							if (deleteBtn.classList.contains('confirm')) {
+								// Second click - actually delete
+								await this.deleteBlogPost(postId);
+							} else {
+								// First click - show confirmation
+								deleteBtn.classList.add('confirm');
+								deleteBtn.textContent = '[sure?]';
+								this.activatedBlogDeletes.add(postId); // Mark as activated
+								
+								// Reset after 3 seconds or on click elsewhere
+								const resetBtn = () => {
+									deleteBtn.classList.remove('confirm');
+									deleteBtn.textContent = '[del]';
+								};
+								
+								// Reset on click elsewhere
+								const clickHandler = (event) => {
+									if (!deleteBtn.contains(event.target)) {
+										resetBtn();
+										this.activatedBlogDeletes.delete(postId); // Clear activated state
+										deleteBtn.style.color = '#666'; // Reset to gray
+										document.removeEventListener('click', clickHandler);
+									}
+								};
+								
+								setTimeout(() => {
+									document.addEventListener('click', clickHandler);
+								}, 10);
+								
+								// Auto-reset after 3 seconds
+								setTimeout(() => {
+									resetBtn();
+									this.activatedBlogDeletes.delete(postId); // Clear activated state
+									deleteBtn.style.color = '#666'; // Reset to gray
+									document.removeEventListener('click', clickHandler);
+								}, 3000);
+							}
+							return;
+						}
+						
+						// Handle blog post item clicks
+						const blogItem = e.target.closest('.blog-post-item');
+						if (blogItem && !e.target.classList.contains('blog-post-delete')) {
+							e.preventDefault();
+							// Save current note if editing one
+							if (this.currentNoteId) {
+								this.saveCurrentNote();
+							}
+							this.loadBlogPost(blogItem.dataset.postId);
+						}
+					});
+					
+					// Private checkbox toggle
+					document.getElementById('meta-private').addEventListener('change', (e) => {
+						const passwordField = document.getElementById('password-field');
+						passwordField.style.display = e.target.checked ? 'block' : 'none';
+					});
+					
+					// Auto-save periodically
+					this.startAutoSave();
+				}
+			}
+
+			// Initialize app
+			const app = new NotepadApp();
+			app.init();
+		</script>
+	</body>
+</html>

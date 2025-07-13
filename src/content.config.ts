@@ -19,6 +19,8 @@ const blog = defineCollection({
 		markType: z.enum(['exclamation', 'question']).optional(),
 		markCount: z.number().int().min(1).max(3).optional(),
 		markColor: z.enum(['grey', 'orange', 'blue']).optional(),
+		// New optional page type for selecting alternate layouts
+		pageType: z.enum(['blog', 'magazine']).optional(),
 	}),
 });
 
