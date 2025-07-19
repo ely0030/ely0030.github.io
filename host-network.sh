@@ -27,6 +27,7 @@ fi
 # Export environment variables for the servers
 export HOST="0.0.0.0"  # Listen on all interfaces
 export LOCAL_IP="$LOCAL_IP"
+export ASTRO_TELEMETRY_DISABLED=1  # Disable Astro telemetry
 
 # Function to cleanup on exit
 cleanup() {
@@ -63,8 +64,8 @@ fi
 echo -e "\n🌟 Starting Astro Development Server..."
 echo "This will take a moment to build..."
 
-# Run Astro with network host binding
-npx astro dev --host 0.0.0.0 &
+# Run Astro with network host binding and telemetry disabled
+ASTRO_TELEMETRY_DISABLED=1 npx astro dev --host 0.0.0.0 &
 ASTRO_PID=$!
 
 # Wait for Astro to start

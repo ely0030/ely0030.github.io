@@ -1,0 +1,1 @@
+@claude.md @CLAUDE_INIT_PROMPT.md @docs/_START_HERE.md

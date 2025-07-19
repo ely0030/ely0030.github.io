@@ -18,6 +18,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# Backup files
+*.backup*
+*.backup-*
+
 # Content files to exclude from git
 src/content/blog/
 src/content/drafts/
@@ -95,3 +99,10 @@ temp/
 
 # Git workflow with sensitive data
 git_workflow.md
+
+# SSL/TLS certificates
+certs/
+*.pem
+*.key
+*.crt
+*.csr

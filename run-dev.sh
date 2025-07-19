@@ -23,5 +23,5 @@ cleanup() {
 # Set up cleanup on script exit
 trap cleanup EXIT INT TERM
 
-# Start the dev server
-astro dev 
+# Start the dev server with telemetry disabled
+ASTRO_TELEMETRY_DISABLED=1 astro dev 

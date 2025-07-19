@@ -19,6 +19,7 @@ if (-not $LocalIP) {
 # Set environment variables for the servers
 $env:HOST = "0.0.0.0"  # Listen on all interfaces
 $env:LOCAL_IP = $LocalIP
+$env:ASTRO_TELEMETRY_DISABLED = "1"  # Disable Astro telemetry
 
 # Function to cleanup on exit
 function Cleanup {
