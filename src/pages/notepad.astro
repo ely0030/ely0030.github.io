@@ -1129,6 +1129,106 @@ try {
 		</script>
 		
 		<script>
+			// Authentication Manager
+			class AuthManager {
+			  constructor() {
+			    this.token = localStorage.getItem('blog_auth_token');
+			    this.isAuthenticated = !!this.token;
+			  }
+
+			  async login(password) {
+			    try {
+			      const response = await fetch('/api/login', {
+			        method: 'POST',
+			        headers: { 'Content-Type': 'application/json' },
+			        body: JSON.stringify({ password })
+			      });
+
+			      const data = await response.json();
+
+			      if (response.ok && data.token) {
+			        this.token = data.token;
+			        this.isAuthenticated = true;
+			        localStorage.setItem('blog_auth_token', this.token);
+			        return { success: true };
+			      } else {
+			        return { success: false, error: data.error || 'Login failed' };
+			      }
+			    } catch (error) {
+			      console.error('Login error:', error);
+			      return { success: false, error: 'Network error' };
+			    }
+			  }
+
+			  logout() {
+			    this.token = null;
+			    this.isAuthenticated = false;
+			    localStorage.removeItem('blog_auth_token');
+			  }
+
+			  getAuthHeaders() {
+			    if (!this.token) {
+			      throw new Error('Not authenticated');
+			    }
+			    return {
+			      'Authorization': `Bearer ${this.token}`
+			    };
+			  }
+			}
+
+			// Create global auth manager
+			const authManager = new AuthManager();
+
+			// Show login modal
+			function showLoginModal() {
+			  const modal = document.getElementById('auth-modal');
+			  if (modal) {
+			    modal.style.display = 'flex';
+			    document.getElementById('auth-password').focus();
+			  }
+			}
+
+			// Hide login modal
+			function hideLoginModal() {
+			  const modal = document.getElementById('auth-modal');
+			  if (modal) {
+			    modal.style.display = 'none';
+			    document.getElementById('auth-password').value = '';
+			    document.getElementById('auth-error').textContent = '';
+			  }
+			}
+
+			// Handle login
+			async function handleLogin() {
+			  const password = document.getElementById('auth-password').value;
+			  const errorEl = document.getElementById('auth-error');
+			  const loginBtn = document.getElementById('auth-login-btn');
+
+			  if (!password) {
+			    errorEl.textContent = 'Please enter a password';
+			    return;
+			  }
+
+			  loginBtn.disabled = true;
+			  loginBtn.textContent = 'Logging in...';
+			  errorEl.textContent = '';
+
+			  const result = await authManager.login(password);
+
+			  if (result.success) {
+			    hideLoginModal();
+			    // Retry any pending operations
+			    if (window.pendingAuthOperation) {
+			      window.pendingAuthOperation();
+			      window.pendingAuthOperation = null;
+			    }
+			  } else {
+			    errorEl.textContent = result.error || 'Login failed';
+			    loginBtn.disabled = false;
+			    loginBtn.textContent = 'Login';
+			  }
+			}
+
 			// Constants for configuration and defaults
 			const NOTEPAD_CONFIG = {
 				storage: {
@@ -1645,9 +1745,18 @@ try {
 						filename = `${slug}.md`;
 					}
 					
+					// Check if authenticated
+					if (!authManager.isAuthenticated) {
+						showLoginModal();
+						throw new Error('Authentication required');
+					}
+
 					const response = await fetch(apiEndpoint, {
 						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
+						headers: { 
+							'Content-Type': 'application/json',
+							...authManager.getAuthHeaders()
+						},
 						body: JSON.stringify({
 							filename: filename,
 							content: fullContent
@@ -1663,9 +1772,18 @@ try {
 
 				// Execute a delete operation
 				async executeDelete(operation, apiEndpoint) {
+					// Check if authenticated
+					if (!authManager.isAuthenticated) {
+						showLoginModal();
+						throw new Error('Authentication required');
+					}
+
 					const response = await fetch('/api/delete-blog-post', {
 						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
+						headers: { 
+							'Content-Type': 'application/json',
+							...authManager.getAuthHeaders()
+						},
 						body: JSON.stringify({
 							filename: operation.resourceId.endsWith('.md') ? operation.resourceId : `${operation.resourceId}.md`
 						})
@@ -4789,6 +4907,24 @@ try {
 					this.startAutoSave();
 				}
 			}
+
+			// Initialize authentication
+			document.getElementById('auth-login-btn').addEventListener('click', handleLogin);
+			document.getElementById('auth-password').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') handleLogin();
+			});
+
+			// Close modal on escape
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape' && document.getElementById('auth-modal').style.display !== 'none') {
+					hideLoginModal();
+				}
+			});
+
+			// Export auth functions for global use
+			window.authManager = authManager;
+			window.showLoginModal = showLoginModal;
+			window.handleLogout = handleLogout;
 
 			// Initialize app
 			const app = new NotepadApp();

@@ -10,7 +10,7 @@ echo ""
 
 # Start the blog save server in background
 echo "📝 Starting blog save server..."
-node blog-save-server.js &
+node blog-save-server-secure.js &
 SAVE_SERVER_PID=$!
 
 # Function to cleanup on exit
