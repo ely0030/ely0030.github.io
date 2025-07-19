@@ -92,3 +92,6 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Git workflow with sensitive data
+git_workflow.md

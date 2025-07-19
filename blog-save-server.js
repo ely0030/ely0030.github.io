@@ -14,7 +14,11 @@ app.use(express.json());
 
 // Enable CORS for development
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:4321');
+  // Allow requests from any origin on port 4321 (Astro dev server)
+  const origin = req.headers.origin;
+  if (origin && (origin.includes(':4321') || origin === 'http://localhost:4321')) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
@@ -171,7 +175,13 @@ app.post('/api/delete-blog-post', async (req, res) => {
 
 // Start the server
 const PORT = 4322;
-app.listen(PORT, () => {
-  console.log(`📝 Blog save API running on http://localhost:${PORT}`);
+const HOST = '0.0.0.0'; // Listen on all network interfaces
+
+app.listen(PORT, HOST, () => {
+  console.log(`📝 Blog save API running on http://${HOST}:${PORT}`);
+  console.log(`🌐 Also accessible at http://localhost:${PORT}`);
+  if (process.env.LOCAL_IP) {
+    console.log(`📱 Network access: http://${process.env.LOCAL_IP}:${PORT}`);
+  }
   console.log('✨ Ready to save blog posts!');
 });

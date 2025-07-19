@@ -1,0 +1,35 @@
+[Unit]
+Description=ely0030's Blog Server
+After=network.target
+
+[Service]
+Type=simple
+# CHANGE THIS to your actual username
+User=YOUR_USERNAME
+
+# CHANGE THIS to the actual path to your blog directory
+WorkingDirectory=/home/YOUR_USERNAME/ely0030.github.io
+
+# Path to the hosting script
+ExecStart=/home/YOUR_USERNAME/ely0030.github.io/host-network.sh
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Environment variables
+Environment="PATH=/usr/bin:/usr/local/bin:/home/YOUR_USERNAME/.nvm/versions/node/v20.18.0/bin"
+Environment="NODE_ENV=development"
+Environment="HOME=/home/YOUR_USERNAME"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ely-blog
+
+# Security hardening (optional)
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
