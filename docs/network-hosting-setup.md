@@ -1,19 +1,26 @@
 # Network Hosting Setup
 
-This guide explains how to host your blog on your Minisforum PC for network-wide access.
+This guide explains how to host your blog on your local network for network-wide access.
 
 ## Quick Start
 
-```bash
-./host-network.sh
-```
+*   **On Windows**:
+    ```powershell
+    # This provides a secure, HTTPS server
+    powershell -ExecutionPolicy Bypass -File host-network-https.ps1
+    ```
 
-This starts both the Astro dev server and blog save API, accessible from any device on your WiFi.
+*   **On Linux/macOS**:
+    ```bash
+    ./host-network.sh
+    ```
+
+This starts both the Astro dev server and blog save API, accessible from any device on your WiFi. For a more secure setup, see `https-setup.md`.
 
 ## What It Does
 
-The `host-network.sh` script:
-1. Detects your local network IP address
+The hosting scripts (`host-network.sh` for Linux/macOS, `host-network-https.ps1` for Windows):
+1. Detect your local network IP address
 2. Starts the blog save API server (port 4322)
 3. Starts Astro dev server with network binding (port 4321)
 4. Displays URLs for accessing from other devices

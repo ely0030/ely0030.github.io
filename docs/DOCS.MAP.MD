@@ -74,7 +74,7 @@
 
 ### <a id="development-workflow"></a>development_workflow.md
 **Purpose**: Development setup guide  
-**Contains**: Scripts (npm run dev, host.sh), auto-conversion, Node setup  
+**Contains**: Scripts (`npm run dev`, `host-network.sh`, `host-network-https.ps1`), auto-conversion, Node setup
 **When to use**: Setting up local development
 
 ### <a id="build-configuration"></a>build_configuration.md
@@ -94,8 +94,8 @@
 
 ### <a id="network-hosting"></a>network-hosting-setup.md
 **Purpose**: HTTP-only local network hosting
-**Contains**: Details for `host-network.sh`, firewall rules, basic setup
-**When to use**: For simple, non-encrypted local hosting
+**Contains**: Details for `host-network.sh` (Linux/macOS), firewall rules, basic setup
+**When to use**: For simple, non-encrypted local hosting on non-Windows systems.
 
 ### <a id="https-setup"></a>https-setup.md
 **Purpose**: HTTPS local network hosting
