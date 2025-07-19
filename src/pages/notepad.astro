@@ -1573,7 +1573,7 @@ try {
 
 				// Execute a delete operation
 				async executeDelete(operation, apiEndpoint) {
-					const response = await fetch('http://localhost:4322/api/delete-blog-post', {
+					const response = await fetch('/api/delete-blog-post', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
@@ -3874,7 +3874,7 @@ try {
 						sessionStorage.setItem('notepad:pendingReload', JSON.stringify(state));
 						
 						// Execute all operations
-						const results = await this.operationQueue.flush('http://localhost:4322/api/save-blog-post');
+						const results = await this.operationQueue.flush('/api/save-blog-post');
 						
 						// Check for failures
 						const failures = results.filter(r => !r.success);
