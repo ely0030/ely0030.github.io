@@ -11,7 +11,7 @@ This guide helps you set up HTTPS for your blog when hosting on your local netwo
 
 ## Option 1: Self-Signed Certificate (Recommended for Home Use)
 
-### Step 1: Generate Certificate
+### Step 1: Generate Certificate (Linux/macOS)
 
 Create a self-signed certificate valid for 365 days:
 
@@ -26,9 +26,22 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -node
   -addext "subjectAltName=IP:192.168.0.160,IP:127.0.0.1,DNS:localhost"
 ```
 
-**Important**: Replace `192.168.0.160` with your Minisforum's actual IP address.
+**Important**: Replace `192.168.0.160` with your computer's actual IP address.
 
-### Step 2: Create HTTPS Hosting Script
+### Step 1b: Generate Certificate (Windows)
+
+On Windows, PowerShell can have issues with `openssl`. It's recommended to use the `openssl.exe` that comes bundled with Git for Windows.
+
+1.  **Open PowerShell or `cmd.exe`** in your project root.
+2.  **Run the following command** in one single line. This will create the `key.pem` and `cert.pem` files inside a `certs` directory.
+
+```powershell
+# Note: You may need to create the 'certs' directory first: mkdir certs
+& "C:\Program Files\Git\usr\bin\openssl.exe" req -x509 -newkey rsa:4096 -keyout certs\key.pem -out certs\cert.pem -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Home/CN=192.168.0.160" -addext "subjectAltName=IP:192.168.0.160,IP:127.0.0.1,DNS:localhost"
+```
+*If you encounter issues, see the **PowerShell Script Failures** section in `troubleshooting.md`.*
+
+### Step 2: Create HTTPS Hosting Script (Linux/macOS)
 
 Create `host-network-https.sh`:
 
@@ -144,7 +157,90 @@ Make it executable:
 chmod +x host-network-https.sh
 ```
 
-### Step 3: Trust the Certificate
+### Step 2b: Create HTTPS Hosting Scripts (Windows)
+
+The PowerShell environment can be sensitive to complex scripts. The most reliable method is to separate the Node.js proxy from the PowerShell launcher.
+
+**1. Create `https-proxy.js`:**
+This file contains the logic for the HTTPS proxy server.
+```javascript
+const https = require("https");
+const http = require("http");
+const fs = require("fs");
+
+const options = {
+  key: fs.readFileSync("certs/key.pem"),
+  cert: fs.readFileSync("certs/cert.pem")
+};
+
+https.createServer(options, (req, res) => {
+  const targetPort = req.url.startsWith("/api") ? 4322 : 4320;
+  
+  const proxy = http.request({
+    hostname: "127.0.0.1",
+    port: targetPort,
+    path: req.url,
+    method: req.method,
+    headers: req.headers
+  }, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+  
+  req.pipe(proxy);
+}).listen(4321, "0.0.0.0", () => {
+  console.log("HTTPS proxy running on https://0.0.0.0:4321");
+});
+```
+
+**2. Create `host-network-https.ps1`:**
+This script launches all the necessary servers.
+```powershell
+# HTTPS hosting script for Windows
+Write-Host "Starting HTTPS Blog Server" -ForegroundColor Green
+
+# Check certificates
+if (-not (Test-Path "certs/cert.pem") -or -not (Test-Path "certs/key.pem")) {
+    Write-Host "❌ Certificates not found! Run certificate generation first." -ForegroundColor Red
+    exit
+}
+
+# Set environment
+$env:ASTRO_TELEMETRY_DISABLED = "1"
+
+# Start blog save API
+Write-Host "Starting Blog Save API..." -ForegroundColor Cyan
+$blogApi = Start-Process -FilePath "node" -ArgumentList "blog-save-server.js" -PassThru -WindowStyle Minimized
+
+# Start Astro on different port
+Write-Host "Starting Astro Dev Server..." -ForegroundColor Cyan
+$astro = Start-Process -FilePath "npx" -ArgumentList "astro dev --host 0.0.0.0 --port 4320" -PassThru -WindowStyle Minimized
+
+Start-Sleep -Seconds 5
+
+# Start the dedicated HTTPS proxy
+Write-Host "Starting HTTPS Proxy..." -ForegroundColor Cyan
+$proxy = Start-Process -FilePath "node" -ArgumentList "https-proxy.js" -PassThru
+
+Write-Host "`n✅ HTTPS Blog Server Running!" -ForegroundColor Green
+Write-Host "Access at: https://192.168.0.160:4321" -ForegroundColor Yellow
+Write-Host "Note: Accept the certificate warning in your browser" -ForegroundColor Yellow
+Write-Host "`nPress any key to stop all servers..."
+
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+
+# Cleanup
+Stop-Process -Id $blogApi.Id -Force
+Stop-Process -Id $astro.Id -Force  
+Stop-Process -Id $proxy.Id -Force
+```
+
+### Step 3: Run the Server
+
+*   **On Linux/macOS**: `./host-network-https.sh`
+*   **On Windows**: `powershell -ExecutionPolicy Bypass -File host-network-https.ps1`
+
+### Step 4: Trust the Certificate
 
 #### On your devices:
 

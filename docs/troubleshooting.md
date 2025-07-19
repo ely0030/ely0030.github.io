@@ -56,6 +56,24 @@ more content
    npx astro dev
    ```
 
+### PowerShell Script Failures on Windows
+
+**Problem**: Running a `.ps1` script fails with parser errors, "missing terminator" errors, or appears to garble long commands.
+
+**Cause 1: PowerShell Execution Policy**: By default, PowerShell can't run scripts.
+**Solution 1**: Bypass the policy for a single run.
+```powershell
+powershell -ExecutionPolicy Bypass -File your-script.ps1
+```
+
+**Cause 2: PSReadLine Module Bug**: The line-editing module in PowerShell can crash when handling very long, single-line commands or complex, multi-line strings.
+**Solution 2**: The most robust solution is to simplify the script.
+*   **Separate Languages**: Instead of embedding JavaScript inside a PowerShell here-string, move the JS code to its own `.js` file and have the PowerShell script execute it with `node your-script.js`.
+*   **Use Full Paths**: For commands not on the system `PATH` (like `openssl`), use the full, absolute path in your script (e.g., `"C:\Program Files\Git\usr\bin\openssl.exe"`).
+
+**Cause 3: Character Encoding Issues**: PowerShell can misinterpret special characters or emojis in script files if the encoding is not standard.
+**Solution 3**: Remove any non-standard characters (like 🔒, ✅) from your script files and save them with standard UTF-8 encoding.
+
 ### Node Version Errors
 
 **Problem**: "Error: Node version X does not satisfy >=18.17.1"

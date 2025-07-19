@@ -12,6 +12,9 @@
 [build_configuration.md](#build-configuration)           Build system, TypeScript, dependencies
 [astro-netlify-deployment.md](#deployment)               Netlify deployment guide
 [troubleshooting.md](#troubleshooting)                   Common issues and solutions
+[network-hosting-setup.md](#network-hosting)             HTTP-only local network setup
+[https-setup.md](#https-setup)                           HTTPS local network setup for all platforms
+[minipc-https-setup-log-2025-07-19.md](#minipc-log)      Case study of a difficult Windows HTTPS setup
 
 ### Content Features
 [page_types.md](#page-types)                             All page styles (blog, magazine, stanza, literature)
@@ -88,6 +91,21 @@
 **Purpose**: Common problem solutions  
 **Contains**: Port conflicts, build failures, markdown issues  
 **When to use**: Something's broken
+
+### <a id="network-hosting"></a>network-hosting-setup.md
+**Purpose**: HTTP-only local network hosting
+**Contains**: Details for `host-network.sh`, firewall rules, basic setup
+**When to use**: For simple, non-encrypted local hosting
+
+### <a id="https-setup"></a>https-setup.md
+**Purpose**: HTTPS local network hosting
+**Contains**: Certificate generation and server scripts for Linux, macOS, and **Windows**.
+**When to use**: For secure, encrypted local hosting
+
+### <a id="minipc-log"></a>minipc-https-setup-log-2025-07-19.md
+**Purpose**: Detailed log of a Windows HTTPS setup session
+**Contains**: A real-world example of troubleshooting PowerShell, PSReadLine, and OpenSSL issues.
+**When to use**: When the main `https-setup.md` guide isn't working on Windows.
 
 ### <a id="page-types"></a>page_types.md
 **Purpose**: Visual style documentation  
