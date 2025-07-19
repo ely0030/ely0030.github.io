@@ -16,6 +16,12 @@
 [https-setup.md](#https-setup)                           HTTPS local network setup for all platforms
 [minipc-https-setup-log-2025-07-19.md](#minipc-log)      Case study of a difficult Windows HTTPS setup
 
+### Security (2025-01-19)
+[SECURITY-SETUP.md](#security-setup)                     Quick auth setup guide (ROOT DIR)
+[blog-save-server-secure.js](#secure-server)             Authenticated blog save API (ROOT DIR)
+[notepad-auth-patch.js](#auth-patch)                     Client auth code for notepad (ROOT DIR)
+[_OPS/BLUEPRINTS/security-enhancement/](#security-blueprints) Future security implementation plans
+
 ### Content Features
 [page_types.md](#page-types)                             All page styles (blog, magazine, stanza, literature)
 [literature-type-implementation.md](#literature-type)    Critical notes for literature pages
@@ -106,6 +112,29 @@
 **Purpose**: Detailed log of a Windows HTTPS setup session
 **Contains**: A real-world example of troubleshooting PowerShell, PSReadLine, and OpenSSL issues.
 **When to use**: When the main `https-setup.md` guide isn't working on Windows.
+
+### <a id="security-setup"></a>SECURITY-SETUP.md
+**Purpose**: Quick authentication setup guide  
+**Contains**: Step-by-step auth implementation, .env setup, script modifications  
+**Critical**: Protects against IoT devices on network editing your blog  
+**When to use**: Initial security setup or troubleshooting auth issues
+
+### <a id="secure-server"></a>blog-save-server-secure.js
+**Purpose**: Authenticated blog save API server  
+**Contains**: Password auth, rate limiting, path traversal protection  
+**Key lines**: 21-27 (password), 30-47 (rate limit), 94-101 (path validation)  
+**When to use**: Replace `blog-save-server.js` for secure editing
+
+### <a id="auth-patch"></a>notepad-auth-patch.js
+**Purpose**: Client-side authentication for notepad  
+**Contains**: Login modal, token management, auth headers  
+**When to use**: Adding auth to notepad.astro
+
+### <a id="security-blueprints"></a>_OPS/BLUEPRINTS/security-enhancement/
+**Purpose**: Comprehensive security enhancement plans  
+**Contains**: 6 blueprints for future security implementation  
+**Topics**: Auth, access control, encryption, validation, network hardening, private mode  
+**When to use**: Planning enhanced security beyond basic auth
 
 ### <a id="page-types"></a>page_types.md
 **Purpose**: Visual style documentation  

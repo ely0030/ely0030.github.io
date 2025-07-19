@@ -362,6 +362,41 @@ npm run build
 
 **Fix**: Ensure layouts export component as default
 
+## Authentication Issues (2025-01-19)
+
+### "Authentication required" when saving
+
+**Problem**: Can't save posts in notepad, getting auth error
+**Cause**: Using `blog-save-server-secure.js` without password setup
+
+**Solutions**:
+1. **Set password in .env**:
+   ```bash
+   BLOG_AUTH_PASSWORD=your-password-here
+   ```
+
+2. **Check token in browser**: Open DevTools > Application > Local Storage
+   - Look for `blog_auth_token`
+   - Delete if corrupted and login again
+
+### "Too many login attempts"
+
+**Problem**: Rate limited after failed logins
+**Cause**: 5 failed attempts triggers 15-minute lockout
+
+**Solutions**:
+1. Wait 15 minutes, OR
+2. Restart the blog save server
+3. Check password in `.env` file
+
+### Auth not working after setup
+
+**Critical locations to check**:
+- Server using secure version? `blog-save-server-secure.js` not `blog-save-server.js`
+- Password env loaded? Check line 20-26 in secure server
+- Notepad has auth patch? See `notepad-auth-patch.js`
+- CORS headers include Authorization? Line 77 in secure server
+
 ## Getting Help
 
 If these solutions don't resolve your issue:

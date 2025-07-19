@@ -53,10 +53,21 @@ From any device on your WiFi:
 - Do NOT use on public/unsecured networks
 - Consider your router's guest network isolation
 
-🔒 **No Authentication**
-- Anyone on your network can edit posts
-- Password-protected posts still require passwords to view
-- But editing is unrestricted
+🔒 **Authentication (NEW 2025-01-19)**
+- **Default setup has NO authentication** - anyone on network can edit
+- **For secure setup**: Use `blog-save-server-secure.js` instead
+- See `SECURITY-SETUP.md` for auth implementation
+- Protects against compromised IoT devices on your network
+
+**Quick security fix**:
+```bash
+# 1. Create .env file
+echo "BLOG_AUTH_PASSWORD=strong-password-here" > .env
+
+# 2. Edit host-network.sh to use secure server:
+# Change: node blog-save-server.js &
+# To: node blog-save-server-secure.js &
+```
 
 ## Firewall Configuration
 

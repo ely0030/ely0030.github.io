@@ -1,6 +1,44 @@
 # Changelog
 
-_Last updated: 2025‑01‑07_
+_Last updated: 2025‑01‑19_
+
+## 2025-01-19: Security Hardening & Authentication
+
+### Added
+- **Authentication System for Blog Editing**
+  - Password-based auth protects all edit/delete operations
+  - Rate limiting: 5 login attempts per 15 minutes
+  - SHA-256 token-based sessions
+  - Protects against compromised IoT devices on network
+- **Secure Blog Save Server** (`blog-save-server-secure.js`)
+  - Replaces unprotected `blog-save-server.js`
+  - Path traversal protection prevents escaping blog directory
+  - Input validation on all API endpoints
+  - Environment-based password configuration
+- **Client-Side Auth Manager** (`notepad-auth-patch.js`)
+  - Login modal UI for notepad
+  - Token persistence in localStorage
+  - Auto-retry on auth failures
+  - Session management with logout
+- **Security Documentation**
+  - `SECURITY-SETUP.md` - Quick setup guide
+  - `_OPS/BLUEPRINTS/security-enhancement/` - Comprehensive future security plans
+  - 6 detailed blueprints for enhanced security implementation
+
+### Changed
+- Updated all hosting scripts to support secure server
+- Modified CORS to accept Authorization headers
+- Enhanced error messages for auth failures
+
+### Fixed
+- Path traversal vulnerability in file operations
+- Missing input validation on API endpoints
+
+### Removed
+- 10 test files from root directory (cleanup)
+  - 6 test documentation files
+  - 4 test image files
+  - All functionality preserved in proper documentation
 
 ## 2025-01-07: Notepad Edit Mode & Image Persistence
 

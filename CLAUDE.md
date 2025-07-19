@@ -224,6 +224,13 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - Root cause: `white-space: pre-line` (not margin/padding)
 - Solution: Remove the property entirely
 
+## Security Setup (2025-01-19)
+- **Authentication added** to protect against IoT devices on network
+- **Quick setup**: Create `.env` with `BLOG_AUTH_PASSWORD=your-password`
+- **Use secure server**: Change `blog-save-server.js` → `blog-save-server-secure.js` in scripts
+- **Features**: Rate limiting (5 attempts/15min), path traversal protection
+- **See**: `SECURITY-SETUP.md` for full instructions
+
 ## Image Organization
 - **Pattern**: Per-post folders `/public/post-name/` + shared `/public/shared/`
 - **Reference**: Absolute paths `/shared/image.webp`
