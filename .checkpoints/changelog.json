@@ -1,0 +1,182 @@
+[
+  {
+    "timestamp": "2025-07-19T11:11:03.025Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: july_17th_1_planner_v3_2025-07-19T11-11-01",
+    "details": "July 17th 1 PLANNER v3"
+  },
+  {
+    "timestamp": "2025-07-17T18:03:57.308Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: july_17th_1_planner_v2_2025-07-17T18-03-56",
+    "details": "July 17th 1 PLANNER v2"
+  },
+  {
+    "timestamp": "2025-07-17T17:50:03.853Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: july_17th_1_planner_v1_2025-07-17T17-50-02",
+    "details": "July 17th 1 PLANNER v1"
+  },
+  {
+    "timestamp": "2025-07-17T10:00:03.692Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: july_17th_1_2025-07-17T10-00-00",
+    "details": "July 17th 1"
+  },
+  {
+    "timestamp": "2025-07-15T12:29:12.982Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v6b_2025-07-15T12-29-12",
+    "details": "V6b"
+  },
+  {
+    "timestamp": "2025-07-13T14:19:37.528Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v6a_2025-07-13T14-19-36",
+    "details": "V6a"
+  },
+  {
+    "timestamp": "2025-07-05T16:59:52.564Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_h_tweaks1_2025-07-05T16-59-51",
+    "details": "V5 H tweaks1"
+  },
+  {
+    "timestamp": "2025-07-05T03:30:16.060Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_g_notepad_2025-07-05T03-30-15",
+    "details": "V5 G notepad"
+  },
+  {
+    "timestamp": "2025-07-04T22:44:16.066Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_f_notepad_2025-07-04T22-44-14",
+    "details": "V5 F notepad"
+  },
+  {
+    "timestamp": "2025-07-04T20:01:19.561Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_e_fixed_spacing_2025-07-04T20-01-18",
+    "details": "V5 E fixed spacing"
+  },
+  {
+    "timestamp": "2025-07-04T18:49:45.910Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_d_2025-07-04T18-49-44",
+    "details": "V5 D"
+  },
+  {
+    "timestamp": "2025-07-04T16:23:10.616Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_c_2025-07-04T16-23-09",
+    "details": "V5 C"
+  },
+  {
+    "timestamp": "2025-07-04T04:45:40.315Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5b_2025-07-04T04-45-39",
+    "details": "V5b"
+  },
+  {
+    "timestamp": "2025-07-04T04:12:27.461Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5a_2025-07-04T04-12-26",
+    "details": "V5a"
+  },
+  {
+    "timestamp": "2025-07-04T03:53:23.200Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v5_2025-07-04T03-53-22",
+    "details": "V5"
+  },
+  {
+    "timestamp": "2025-07-04T00:01:48.896Z",
+    "action": "RESTORE_CHECKPOINT",
+    "description": "Restored checkpoint: v4b_2025-07-03T23-08-59",
+    "details": "Emergency backup: emergency_backup_2025-07-04T00-01-46"
+  },
+  {
+    "timestamp": "2025-07-04T00:01:47.328Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: emergency_backup_2025-07-04T00-01-46_2025-07-04T00-01-46",
+    "details": "Auto-backup before restore"
+  },
+  {
+    "timestamp": "2025-07-04T00:00:59.029Z",
+    "action": "RESTORE_CHECKPOINT",
+    "description": "Restored checkpoint: emergency_backup_2025-07-03T23-58-31_2025-07-03T23-58-51",
+    "details": "Emergency backup: emergency_backup_2025-07-04T00-00-55"
+  },
+  {
+    "timestamp": "2025-07-04T00:00:57.230Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: emergency_backup_2025-07-04T00-00-55_2025-07-04T00-00-56",
+    "details": "Auto-backup before restore"
+  },
+  {
+    "timestamp": "2025-07-03T23:59:25.490Z",
+    "action": "RESTORE_CHECKPOINT",
+    "description": "Restored checkpoint: v4b_2025-07-03T23-08-59",
+    "details": "Emergency backup: emergency_backup_2025-07-03T23-58-31"
+  },
+  {
+    "timestamp": "2025-07-03T23:59:11.790Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: emergency_backup_2025-07-03T23-58-31_2025-07-03T23-58-51",
+    "details": "Auto-backup before restore"
+  },
+  {
+    "timestamp": "2025-07-03T23:09:00.934Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v4b_2025-07-03T23-08-59",
+    "details": "V4B"
+  },
+  {
+    "timestamp": "2025-07-03T22:42:25.202Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v4a_2025-07-03T22-42-22",
+    "details": "V4a"
+  },
+  {
+    "timestamp": "2025-07-03T22:08:57.278Z",
+    "action": "RESTORE_CHECKPOINT",
+    "description": "Restored checkpoint: v3_2025-07-03T21-59-35",
+    "details": "Emergency backup: emergency_backup_2025-07-03T22-08-55"
+  },
+  {
+    "timestamp": "2025-07-03T22:08:56.413Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: emergency_backup_2025-07-03T22-08-55_2025-07-03T22-08-55",
+    "details": "Auto-backup before restore"
+  },
+  {
+    "timestamp": "2025-07-03T21:59:36.652Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: v3_2025-07-03T21-59-35",
+    "details": "V3"
+  },
+  {
+    "timestamp": "2025-07-03T02:31:05.357Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: 3_2025-07-03T02-31-01",
+    "details": "3"
+  },
+  {
+    "timestamp": "2025-07-03T02:24:50.961Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: 2_2025-07-03T02-24-48",
+    "details": "2"
+  },
+  {
+    "timestamp": "2025-07-02T17:55:34.614Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: a1_2025-07-02T17-55-33",
+    "details": "A1"
+  },
+  {
+    "timestamp": "2025-07-02T17:11:42.770Z",
+    "action": "CREATE_CHECKPOINT",
+    "description": "Created checkpoint: initial_2025-07-02T17-11-41",
+    "details": "Initial ClaudPoint setup"
+  }
+]

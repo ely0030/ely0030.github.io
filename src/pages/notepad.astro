@@ -121,6 +121,42 @@ try {
 			.btn-primary {
 				color: var(--notepad-accent, #ff8c00);
 			}
+			
+			.folder-toggle-container {
+				margin-bottom: 1em;
+			}
+			
+			.folder-toggle-all {
+				color: #bbb;
+				font-size: 0.75em;
+				text-decoration: none;
+				opacity: 0.6;
+				font-style: italic;
+				outline: none;
+			}
+			
+			.folder-toggle-all:hover {
+				color: #888;
+				opacity: 1;
+				text-decoration: underline;
+			}
+			
+			/* Queue-related UI styles */
+			#push-changes-btn {
+				transition: background-color 0.3s ease, color 0.3s ease;
+			}
+			
+			#push-changes-btn:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+			
+			.pending-indicator {
+				display: inline-block;
+				font-size: 1.2em;
+				line-height: 1;
+				vertical-align: middle;
+			}
 
 			.note-list {
 				list-style: none;
@@ -458,6 +494,28 @@ try {
 				font-weight: bold;
 			}
 			
+			/* Style for empty lines to ensure proper height without visible content */
+			.editor-content .empty-line {
+				height: 1.6em; /* Match line-height */
+				min-height: 1.6em;
+			}
+			
+			/* Ensure text lines have consistent formatting */
+			.editor-content .text-line {
+				min-height: 1.6em;
+			}
+			
+			/* List item styling */
+			.editor-content .md-list-item {
+				display: block;
+				position: relative;
+			}
+			
+			/* Style the list markers like other syntax */
+			.editor-content .md-list-item .md-syntax {
+				color: #999;
+			}
+			
 			/* Make headings visually distinct with different sizes */
 			.editor-content .md-h1 {
 				font-size: 1.5em;
@@ -705,6 +763,10 @@ try {
 				transition: opacity 0.2s ease;
 			}
 			
+			.blog-category-toggle:focus {
+				outline: none;
+			}
+			
 			.blog-category-toggle:hover .category-name {
 				text-decoration: underline;
 			}
@@ -864,6 +926,9 @@ try {
 								<a href="#" class="btn btn-primary" id="new-blog-post-btn">[new blog post]</a>
 							</div>
 							<div class="note-hint">Select a post to edit</div>
+							<div class="folder-toggle-container">
+								<a href="#" class="folder-toggle-all" id="toggle-all-folders">collapse all</a>
+							</div>
 							<ul class="blog-post-list" id="blog-post-list">
 								<!-- Blog posts will be populated here -->
 							</ul>
@@ -1286,6 +1351,244 @@ try {
 				}
 			}
 
+			// Operation Queue for batching blog post changes
+			class OperationQueue {
+				constructor() {
+					this.operations = new Map(); // Key: resourceId, Value: latest operation
+					this.tempIdMapping = new Map(); // Maps temp IDs to real IDs after save
+					this.loadFromSession();
+				}
+
+				// Load any pending operations from sessionStorage
+				loadFromSession() {
+					try {
+						const stored = sessionStorage.getItem('notepad:operationQueue');
+						if (stored) {
+							const data = JSON.parse(stored);
+							this.operations = new Map(data.operations);
+							this.tempIdMapping = new Map(data.tempIdMapping);
+							return true;
+						}
+					} catch (e) {
+						console.error('Failed to load operation queue:', e);
+					}
+					return false;
+				}
+
+				// Save queue to sessionStorage
+				saveToSession() {
+					try {
+						const data = {
+							operations: Array.from(this.operations.entries()),
+							tempIdMapping: Array.from(this.tempIdMapping.entries()),
+							timestamp: Date.now()
+						};
+						sessionStorage.setItem('notepad:operationQueue', JSON.stringify(data));
+					} catch (e) {
+						console.error('Failed to save operation queue:', e);
+					}
+				}
+
+				// Add an operation to the queue
+				add(operation) {
+					const { type, resourceId, data } = operation;
+					
+					// Get existing operation for this resource
+					const existing = this.operations.get(resourceId);
+					
+					// Intelligent operation merging
+					if (existing) {
+						// Save after save = keep latest
+						if (existing.type === 'save' && type === 'save') {
+							this.operations.set(resourceId, {
+								...operation,
+								originalData: existing.originalData || existing.data
+							});
+						}
+						// Save then delete = just delete
+						else if (existing.type === 'save' && type === 'delete') {
+							this.operations.set(resourceId, { type: 'delete', resourceId, timestamp: Date.now() });
+						}
+						// Delete then save = convert to save (undelete)
+						else if (existing.type === 'delete' && type === 'save') {
+							this.operations.set(resourceId, operation);
+						}
+						// Create then delete = remove from queue entirely
+						else if (existing.type === 'create' && type === 'delete') {
+							this.operations.delete(resourceId);
+						}
+					} else {
+						// No existing operation, just add it
+						this.operations.set(resourceId, operation);
+					}
+					
+					this.saveToSession();
+				}
+
+				// Get count of pending operations
+				getCount() {
+					return this.operations.size;
+				}
+
+				// Get summary of operations
+				getSummary() {
+					let saves = 0, deletes = 0, creates = 0;
+					
+					for (const op of this.operations.values()) {
+						if (op.type === 'save') saves++;
+						else if (op.type === 'delete') deletes++;
+						else if (op.type === 'create') creates++;
+					}
+					
+					const parts = [];
+					if (creates > 0) parts.push(`${creates} new`);
+					if (saves > 0) parts.push(`${saves} save${saves > 1 ? 's' : ''}`);
+					if (deletes > 0) parts.push(`${deletes} delete${deletes > 1 ? 's' : ''}`);
+					
+					return parts.join(', ');
+				}
+
+				// Check if a resource has pending operations
+				hasPendingOperation(resourceId) {
+					return this.operations.has(resourceId);
+				}
+
+				// Get all operations in execution order
+				getOrderedOperations() {
+					const ops = Array.from(this.operations.values());
+					
+					// Sort: deletes first, then creates/saves by timestamp
+					return ops.sort((a, b) => {
+						if (a.type === 'delete' && b.type !== 'delete') return -1;
+						if (a.type !== 'delete' && b.type === 'delete') return 1;
+						return a.timestamp - b.timestamp;
+					});
+				}
+
+				// Clear the queue
+				clear() {
+					this.operations.clear();
+					this.tempIdMapping.clear();
+					sessionStorage.removeItem('notepad:operationQueue');
+				}
+
+				// Execute all operations
+				async flush(apiEndpoint) {
+					const operations = this.getOrderedOperations();
+					const results = [];
+					
+					for (const op of operations) {
+						try {
+							let result;
+							
+							if (op.type === 'delete') {
+								result = await this.executeDelete(op, apiEndpoint);
+							} else if (op.type === 'save' || op.type === 'create') {
+								result = await this.executeSave(op, apiEndpoint);
+							}
+							
+							results.push({ success: true, operation: op, result });
+							
+							// Update temp ID mapping if this was a create
+							if (op.type === 'create' && result.filename) {
+								const realId = result.filename.replace('.md', '');
+								this.tempIdMapping.set(op.resourceId, realId);
+							}
+						} catch (error) {
+							results.push({ success: false, operation: op, error });
+						}
+					}
+					
+					// Clear successful operations
+					for (const res of results) {
+						if (res.success) {
+							this.operations.delete(res.operation.resourceId);
+						}
+					}
+					
+					this.saveToSession();
+					return results;
+				}
+
+				// Execute a save operation
+				async executeSave(operation, apiEndpoint) {
+					// Handle password hashing if needed
+					const metadata = { ...operation.data.metadata };
+					if (metadata.password) {
+						const msgBuffer = new TextEncoder().encode(metadata.password);
+						const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+						const hashArray = Array.from(new Uint8Array(hashBuffer));
+						const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+						metadata.passwordHash = hashHex;
+						delete metadata.password;
+					}
+					
+					// Generate frontmatter
+					let frontmatter = '---\n';
+					for (const [key, value] of Object.entries(metadata)) {
+						if (value !== '' && value !== false && value !== undefined) {
+							if (typeof value === 'boolean') {
+								frontmatter += `${key}: ${value}\n`;
+							} else if (key === 'pubDate') {
+								const date = new Date(value);
+								frontmatter += `${key}: ${date.toISOString()}\n`;
+							} else {
+								frontmatter += `${key}: "${value}"\n`;
+							}
+						}
+					}
+					frontmatter += '---\n\n';
+					
+					// Combine frontmatter and content
+					const fullContent = frontmatter + operation.data.content;
+					
+					// Generate filename if needed
+					let filename = operation.data.filename;
+					if (!filename && operation.type === 'create') {
+						// Generate slug from title
+						const slug = operation.data.title
+							.toLowerCase()
+							.trim()
+							.replace(/[^\w\s-]/g, '')
+							.replace(/[\s_-]+/g, '-')
+							.replace(/^-+|-+$/g, '');
+						filename = `${slug}.md`;
+					}
+					
+					const response = await fetch(apiEndpoint, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							filename: filename,
+							content: fullContent
+						})
+					});
+					
+					if (!response.ok) {
+						throw new Error(`Save failed: ${response.statusText}`);
+					}
+					
+					return await response.json();
+				}
+
+				// Execute a delete operation
+				async executeDelete(operation, apiEndpoint) {
+					const response = await fetch('http://localhost:4322/api/delete-blog-post', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							filename: operation.resourceId.endsWith('.md') ? operation.resourceId : `${operation.resourceId}.md`
+						})
+					});
+					
+					if (!response.ok) {
+						throw new Error(`Delete failed: ${response.statusText}`);
+					}
+					
+					return await response.json();
+				}
+			}
+
 			// Markdown renderer abstraction
 			class MarkdownRenderer {
 				constructor(config) {
@@ -1349,7 +1652,7 @@ try {
 					this.activatedDeletes = new Set(); // Track which notes have been clicked for deletion
 					this.activatedBlogDeletes = new Set(); // Track which blog posts have been clicked for deletion
 					this.imageUrlCache = new Map(); // Cache blob URLs to prevent recreating
-					this.pendingBlogSave = null; // Queue for blog post saves to avoid reloads
+					this.operationQueue = new OperationQueue(); // New queue system for blog operations
 					this.currentBlogPostId = null; // Track which blog post is being edited
 					
 					// Debounced save function
@@ -1386,6 +1689,21 @@ try {
 						
 						// Populate blog posts list
 						this.populateBlogPosts();
+						
+						// Check for pending operations in queue
+						if (this.operationQueue.getCount() > 0) {
+							const count = this.operationQueue.getCount();
+							const summary = this.operationQueue.getSummary();
+							console.log(`Found ${count} pending operations: ${summary}`);
+							
+							// Show warning to user
+							const meta = document.getElementById('note-meta');
+							meta.textContent = `${count} unsaved operation${count > 1 ? 's' : ''} from previous session`;
+							meta.style.color = 'orange';
+							
+							// Update UI
+							this.updateQueueUI();
+						}
 						
 						// Check File System API availability
 						this.fileSystemAvailable = await this.initFileSystemAccess();
@@ -1570,6 +1888,16 @@ try {
 							titleSpan.textContent = post.title;
 							li.appendChild(titleSpan);
 							
+							// Add pending indicator if this post has operations in queue
+							if (this.operationQueue.hasPendingOperation(post.id)) {
+								const pendingIndicator = document.createElement('span');
+								pendingIndicator.className = 'pending-indicator';
+								pendingIndicator.textContent = ' •';
+								pendingIndicator.style.color = '#f60';
+								pendingIndicator.title = 'Changes pending';
+								li.appendChild(pendingIndicator);
+							}
+							
 							// Meta container (just date now, category shown in folder)
 							const metaDiv = document.createElement('div');
 							metaDiv.className = 'post-meta';
@@ -1626,12 +1954,29 @@ try {
 						categoryDiv.appendChild(postsContainer);
 						blogPostList.appendChild(categoryDiv);
 					});
+					
+					// Update toggle all button text based on current state
+					this.updateToggleAllButtonText();
+				}
+				
+				// Update the toggle all button text based on folder states
+				updateToggleAllButtonText() {
+					const toggleBtn = document.getElementById('toggle-all-folders');
+					if (!toggleBtn) return;
+					
+					const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
+					
+					// If ANY folders are expanded, show "collapse all"
+					if (expandedCategories.length > 0) {
+						toggleBtn.textContent = 'collapse all';
+					} else {
+						toggleBtn.textContent = 'expand all';
+					}
 				}
 				
 				// Load a blog post for editing
 				async loadBlogPost(postId) {
-					// Execute any pending blog save before switching
-					await this.executePendingSave();
+					// Note: We no longer auto-save when switching posts - user must push changes manually
 					
 					const post = window.BLOG_POSTS.find(p => p.id === postId);
 					if (!post) {
@@ -1690,7 +2035,24 @@ try {
 					
 					// Load content
 					const editor = document.getElementById('editor-content');
-					editor.textContent = post.content;
+					// Don't use textContent as it doesn't preserve newlines in contentEditable
+					// Instead, set the content as HTML with proper line structure
+					const lines = post.content.split('\n');
+					const formattedLines = lines.map(line => {
+						if (line === '') {
+							return '<div class="empty-line">&nbsp;</div>';
+						} else {
+							// Escape HTML in the line
+							const escaped = line
+								.replace(/&/g, '&amp;')
+								.replace(/</g, '&lt;')
+								.replace(/>/g, '&gt;')
+								.replace(/"/g, '&quot;')
+								.replace(/'/g, '&#39;');
+							return `<div class="text-line">${escaped}</div>`;
+						}
+					});
+					editor.innerHTML = formattedLines.join('');
 					editor.classList.remove('placeholder');
 					
 					// Apply formatting after load
@@ -1843,8 +2205,7 @@ try {
 				}
 
 				async loadNote(noteId) {
-					// Execute any pending blog save before switching
-					await this.executePendingSave();
+					// Note: We no longer auto-save when switching - user must push changes manually
 					
 					const note = this.notes.get(noteId);
 					if (!note) return;
@@ -1873,9 +2234,39 @@ try {
 					const editor = document.getElementById('editor-content');
 					
 					// Set content and format after load
-					if (note.content) {
-						editor.textContent = note.content;
-						editor.classList.remove('placeholder');
+					// Check if note has content (including empty string which is valid content)
+					if (note.content !== undefined && note.content !== null) {
+						// Handle empty content specially to avoid creating an empty line
+						if (note.content === '') {
+							// For truly empty content, don't create any divs
+							editor.innerHTML = '';
+							editor.classList.remove('placeholder');
+							// ContentEditable might add a BR tag, remove it
+							if (editor.innerHTML === '<br>' || editor.innerHTML === '<br/>') {
+								editor.innerHTML = '';
+							}
+							// Don't focus here - let user click to focus
+						} else {
+							// Don't use textContent as it doesn't preserve newlines in contentEditable
+							// Instead, set the content as HTML with proper line structure
+							const lines = note.content.split('\n');
+							const formattedLines = lines.map(line => {
+								if (line === '') {
+									return '<div class="empty-line">&nbsp;</div>';
+								} else {
+									// Escape HTML in the line
+									const escaped = line
+										.replace(/&/g, '&amp;')
+										.replace(/</g, '&lt;')
+										.replace(/>/g, '&gt;')
+										.replace(/"/g, '&quot;')
+										.replace(/'/g, '&#39;');
+									return `<div class="text-line">${escaped}</div>`;
+								}
+							});
+							editor.innerHTML = formattedLines.join('');
+							editor.classList.remove('placeholder');
+						}
 						// Format after a brief delay to ensure DOM is ready
 						setTimeout(() => this.applyMarkdownFormatting(editor), 10);
 					} else {
@@ -1904,6 +2295,9 @@ try {
 					// Initialize edit mode to false (images will be shown as images)
 					editor.dataset.editMode = 'false';
 					
+					// Mark editor as not yet formatted to handle first blur properly
+					editor.dataset.firstFormat = 'true';
+					
 					// Essential styles
 					editor.style.whiteSpace = 'pre-wrap';
 					editor.style.wordBreak = 'break-word';
@@ -1921,7 +2315,6 @@ try {
 						// Auto-enter edit mode on focus if checkbox is not checked
 						const persistCheckbox = document.getElementById('persist-edit-mode');
 						if (!persistCheckbox?.checked && editor.dataset.editMode === 'false' && editor.dataset.skipAutoEdit === 'false') {
-							console.log('Auto-entering edit mode on focus');
 							this.toggleEditMode(editor);
 						}
 					});
@@ -2071,9 +2464,14 @@ try {
 
 
 				getPlainTextFromEditor(editor) {
+					// If editor only contains a BR tag and nothing else, it's empty
+					if (editor.innerHTML === '<br>' || editor.innerHTML === '<br/>') {
+						return '';
+					}
+					
 					// If content is not formatted, just return the text content
 					if (!editor.querySelector('.md-syntax') && !editor.querySelector('.text-line')) {
-						console.log('getPlainTextFromEditor: returning raw textContent:', editor.textContent);
+						console.log('getPlainTextFromEditor: returning raw textContent:', JSON.stringify(editor.textContent));
 						return editor.textContent;
 					}
 					
@@ -2135,12 +2533,24 @@ try {
 					
 					let text = '';
 					let node;
+					let brCount = 0;
+					let hasNonBrContent = false;
+					
 					while (node = walker.nextNode()) {
 						if (node.nodeType === Node.TEXT_NODE) {
 							text += node.textContent;
+							if (node.textContent.trim()) {
+								hasNonBrContent = true;
+							}
 						} else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'BR') {
+							brCount++;
 							text += '\n';
 						}
+					}
+					
+					// If the editor only contains BR tags and no actual content, return empty string
+					if (!hasNonBrContent && brCount > 0 && text.trim() === '') {
+						return '';
 					}
 					
 					return text;
@@ -2176,14 +2586,38 @@ try {
 						if (!text || text === 'Click here to start writing...') return;
 						
 						// Apply formatting line by line
-						const lines = text.split('\n');
-						const formattedLines = lines.map(line => {
-							// For truly empty lines, return a special marker
-							if (line === '') {
-								return '<div class="empty-line">&nbsp;</div>';
+						// Fix for newline rendering: properly count consecutive newlines
+						const formattedLines = [];
+						let i = 0;
+						
+						// Handle completely empty text
+						if (text === '') {
+							// Don't create any lines for empty content
+							editor.innerHTML = '';
+							return;
+						}
+						
+						// Handle empty text (all newlines)
+						if (text.match(/^\n+$/)) {
+							// For text that's only newlines, create one div per newline
+							for (let j = 0; j < text.length; j++) {
+								formattedLines.push('<div class="empty-line">&nbsp;</div>');
 							}
-							return `<div class="text-line">${this.formatMarkdownLine(line, editor)}</div>`;
-						});
+						} else {
+							// Process text with mixed content and newlines
+							const lines = text.split('\n');
+							
+							for (let idx = 0; idx < lines.length; idx++) {
+								const line = lines[idx];
+								
+								if (line === '') {
+									formattedLines.push('<div class="empty-line">&nbsp;</div>');
+								} else {
+									formattedLines.push(`<div class="text-line">${this.formatMarkdownLine(line, editor)}</div>`);
+								}
+							}
+						}
+						
 						const newHtml = formattedLines.join('');
 						
 						// Only update if content actually changed
@@ -2206,6 +2640,37 @@ try {
 					} catch (e) {
 						console.error('Formatting error:', e);
 					}
+				}
+				
+				escapeHtml(text) {
+					return text
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')
+						.replace(/"/g, '&quot;')
+						.replace(/'/g, '&#39;');
+				}
+				
+				// Helper function to format inline markdown (bold, italic, code, links)
+				formatInlineMarkdown(text) {
+					let formatted = text;
+					
+					// Links - [text](url)
+					formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+						const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+						return `<span class="md-link"><span class="md-syntax">[</span><a href="${safeUrl}" target="_blank" rel="noopener" contenteditable="false">${linkText}</a><span class="md-syntax">]</span><span class="md-url"><span class="md-syntax">(${url})</span></span></span>`;
+					});
+					
+					// Bold
+					formatted = formatted.replace(/\*\*([^\*]+)\*\*/g, '<span class="md-bold"><span class="md-syntax">**</span><strong>$1</strong><span class="md-syntax">**</span></span>');
+					
+					// Italic
+					formatted = formatted.replace(/(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)/g, '<span class="md-italic"><span class="md-syntax">*</span><em>$1</em><span class="md-syntax">*</span></span>');
+					
+					// Code
+					formatted = formatted.replace(/`([^`]+)`/g, '<span class="md-code"><span class="md-syntax">`</span><code>$1</code><span class="md-syntax">`</span></span>');
+					
+					return formatted;
 				}
 				
 				formatMarkdownLine(line, editor) {
@@ -2279,24 +2744,26 @@ try {
 						return formatted.replace(/^#\s(.*)$/, '<span class="md-h1"><span class="md-syntax"># </span><strong>$1</strong></span>');
 					}
 					
-					// Links - [text](url) - must be after images
-					formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-						// Sanitize URL
-						const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-						// Never include 'expanded' class - links should be collapsed by default
-						return `<span class="md-link"><span class="md-syntax">[</span><a href="${safeUrl}" target="_blank" rel="noopener" contenteditable="false">${text}</a><span class="md-syntax">]</span><span class="md-url"><span class="md-syntax">(${url})</span></span></span>`;
-					});
+					// Bullet lists (-, *, +) with optional indentation
+					const bulletMatch = formatted.match(/^(\s*)([-*+])\s(.*)$/);
+					if (bulletMatch) {
+						const [, indent, marker, content] = bulletMatch;
+						const indentLevel = Math.floor(indent.length / 2); // 2 spaces per indent level
+						const paddingLeft = indentLevel * 1.5 + 'em';
+						return `<span class="md-list-item" style="padding-left: ${paddingLeft}"><span class="md-syntax">${indent}${marker} </span>${this.formatInlineMarkdown(content)}</span>`;
+					}
 					
-					// Bold - only complete patterns
-					formatted = formatted.replace(/\*\*([^\*]+)\*\*/g, '<span class="md-bold"><span class="md-syntax">**</span><strong>$1</strong><span class="md-syntax">**</span></span>');
+					// Numbered lists with optional indentation
+					const numberedMatch = formatted.match(/^(\s*)(\d+)\.\s(.*)$/);
+					if (numberedMatch) {
+						const [, indent, number, content] = numberedMatch;
+						const indentLevel = Math.floor(indent.length / 2); // 2 spaces per indent level
+						const paddingLeft = indentLevel * 1.5 + 'em';
+						return `<span class="md-list-item md-numbered" style="padding-left: ${paddingLeft}"><span class="md-syntax">${indent}${number}. </span>${this.formatInlineMarkdown(content)}</span>`;
+					}
 					
-					// Italic - only complete patterns, avoid matching bold
-					formatted = formatted.replace(/(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)/g, '<span class="md-italic"><span class="md-syntax">*</span><em>$1</em><span class="md-syntax">*</span></span>');
-					
-					// Code - only complete patterns
-					formatted = formatted.replace(/`([^`]+)`/g, '<span class="md-code"><span class="md-syntax">`</span><code>$1</code><span class="md-syntax">`</span></span>');
-					
-					return formatted;
+					// For regular text, apply inline formatting
+					return this.formatInlineMarkdown(formatted);
 				}
 				
 				async loadImagesInEditor(editor) {
@@ -2825,14 +3292,31 @@ try {
 						const plainText = this.getPlainTextFromEditor(editor);
 						
 						// Convert newlines to divs for proper display in contentEditable
-						const lines = plainText.split('\n');
-						editor.innerHTML = lines.map(line => {
-							if (line === '') {
-								return '<div class="empty-line">&nbsp;</div>';
-							} else {
-								return `<div class="text-line">${this.escapeHtml(line)}</div>`;
+						// Use same logic as applyMarkdownFormatting to ensure consistent newline handling
+						const formattedLines = [];
+						
+						// Handle completely empty text
+						if (plainText === '') {
+							// Don't create any lines for empty content
+							editor.innerHTML = '';
+						} else if (plainText.match(/^\n+$/)) {
+							// For text that's only newlines, create one div per newline
+							for (let j = 0; j < plainText.length; j++) {
+								formattedLines.push('<div class="empty-line">&nbsp;</div>');
 							}
-						}).join('');
+							editor.innerHTML = formattedLines.join('');
+						} else {
+							const lines = plainText.split('\n');
+							for (let idx = 0; idx < lines.length; idx++) {
+								const line = lines[idx];
+								if (line === '') {
+									formattedLines.push('<div class="empty-line">&nbsp;</div>');
+								} else {
+									formattedLines.push(`<div class="text-line">${this.escapeHtml(line)}</div>`);
+								}
+							}
+							editor.innerHTML = formattedLines.join('');
+						}
 						
 						// No indicator needed - visual content change is enough
 					}
@@ -3184,76 +3668,58 @@ try {
 
 				// Delete a blog post
 				async deleteBlogPost(postId) {
-					try {
-						// Send delete request to API
-						const response = await fetch('http://localhost:4322/api/delete-blog-post', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify({
-								filename: postId.endsWith('.md') ? postId : `${postId}.md`
-							})
-						});
+					// Clear activated state
+					this.activatedBlogDeletes.delete(postId);
+					
+					// Add to operation queue
+					this.operationQueue.add({
+						type: 'delete',
+						resourceId: postId,
+						timestamp: Date.now()
+					});
+					
+					// Update UI to show pending operations
+					this.updateQueueUI();
+					
+					// Immediate visual feedback - animate and update DOM
+					const blogItem = document.querySelector(`.blog-post-item[data-post-id="${postId}"]`);
+					if (blogItem) {
+						// Add deleting class for animation
+						blogItem.classList.add('deleting');
 						
-						const result = await response.json();
-						
-						if (result.success) {
-							// Clear activated state
-							this.activatedBlogDeletes.delete(postId);
+						// Remove from DOM after animation completes
+						setTimeout(() => {
+							blogItem.remove();
 							
-							// Find and animate the blog post item
-							const blogItem = document.querySelector(`.blog-post-item[data-post-id="${postId}"]`);
-							if (blogItem) {
-								// Add deleting class for animation
-								blogItem.classList.add('deleting');
-								
-								// Remove from DOM after animation completes
-								setTimeout(() => {
-									blogItem.remove();
-									
-									// Remove from window.BLOG_POSTS array
-									const index = window.BLOG_POSTS.findIndex(p => p.id === postId);
-									if (index > -1) {
-										window.BLOG_POSTS.splice(index, 1);
-									}
-								}, 300); // Match animation duration
+							// Remove from window.BLOG_POSTS array
+							const index = window.BLOG_POSTS.findIndex(p => p.id === postId);
+							if (index > -1) {
+								window.BLOG_POSTS.splice(index, 1);
 							}
 							
-							// Show success message
-							const meta = document.getElementById('note-meta');
-							meta.textContent = `Blog post deleted successfully!`;
-							meta.style.color = 'green';
-							
-							// Clear the message after 3 seconds
-							setTimeout(() => {
-								if (meta.textContent === 'Blog post deleted successfully!') {
-									meta.textContent = this.currentBlogPostId ? 
-										`Editing blog post: ${this.currentBlogPostId}` : 
-										'Last modified: ' + new Date().toLocaleString();
-									meta.style.color = '';
-								}
-							}, 3000);
-							
-							// If we're currently editing this post, clear the editor
-							if (this.currentBlogPostId === postId) {
-								this.currentBlogPostId = null;
-								document.getElementById('note-title').value = 'untitled';
-								document.getElementById('editor-content').textContent = '';
-								document.getElementById('frontmatter-editor').style.display = 'none';
-								
-								// Hide blog-specific buttons
-								document.getElementById('export-post-btn').style.display = 'none';
-								document.getElementById('save-to-folder-btn').style.display = 'none';
-								document.getElementById('save-blog-post-btn').style.display = 'none';
-								document.getElementById('push-changes-btn').style.display = 'none';
-							}
-						} else {
-							throw new Error(result.error || 'Failed to delete');
-						}
-					} catch (err) {
-						this.showError('Failed to delete blog post: ' + err.message);
+							// Re-populate the blog post list to maintain category organization
+							this.populateBlogPosts();
+						}, 300); // Match animation duration
 					}
+					
+					// If we're currently editing this post, clear the editor
+					if (this.currentBlogPostId === postId) {
+						this.currentBlogPostId = null;
+						document.getElementById('note-title').value = 'untitled';
+						document.getElementById('editor-content').textContent = '';
+						document.getElementById('frontmatter-editor').style.display = 'none';
+						
+						// Hide blog-specific buttons
+						document.getElementById('export-post-btn').style.display = 'none';
+						document.getElementById('save-to-folder-btn').style.display = 'none';
+						document.getElementById('save-blog-post-btn').style.display = 'none';
+					}
+					
+					// Show success message
+					const meta = document.getElementById('note-meta');
+					const queueCount = this.operationQueue.getCount();
+					meta.textContent = `Blog post queued for deletion (${queueCount} operation${queueCount > 1 ? 's' : ''} pending)`;
+					meta.style.color = 'orange';
 				}
 				
 				// Generate slug from title
@@ -3289,7 +3755,6 @@ try {
 					if (metadata.private) {
 						const password = document.getElementById('meta-password').value;
 						if (password) {
-							// Note: This would need to be async, but we'll handle it in executePendingSave
 							metadata.password = password;
 						}
 					}
@@ -3302,138 +3767,157 @@ try {
 						metadata.markColor = document.getElementById('meta-markcolor').value;
 					}
 					
-					// Store the pending save
-					this.pendingBlogSave = {
-						blogPostId: this.currentBlogPostId,
-						title: title,
-						content: content,
-						metadata: metadata,
+					// Determine if this is a create or save operation
+					const isNewPost = this.currentBlogPostId.startsWith('new-post-');
+					const filename = isNewPost ? null : `${this.currentBlogPostId}.md`;
+					
+					// Add to operation queue
+					this.operationQueue.add({
+						type: isNewPost ? 'create' : 'save',
+						resourceId: this.currentBlogPostId,
+						data: {
+							filename: filename,
+							title: title,
+							content: content,
+							metadata: metadata
+						},
 						timestamp: Date.now()
-					};
+					});
 					
-					// Update UI to show pending save
-					const meta = document.getElementById('note-meta');
-					meta.textContent = `Blog post changes queued (will save when you navigate away)`;
-					meta.style.color = 'orange';
+					// Update UI to show pending operations
+					this.updateQueueUI();
 					
-					// Show push changes button
-					document.getElementById('push-changes-btn').style.display = 'inline';
+					// Update in-memory blog posts for immediate visual feedback
+					if (window.BLOG_POSTS) {
+						const existingIndex = window.BLOG_POSTS.findIndex(p => p.id === this.currentBlogPostId);
+						const blogPost = {
+							id: this.currentBlogPostId,
+							title: title,
+							pubDate: metadata.pubDate,
+							category: metadata.category,
+							description: metadata.description,
+							content: content,
+							pageType: metadata.pageType,
+							private: metadata.private,
+							markType: metadata.markType || '',
+							markCount: metadata.markCount || 1,
+							markColor: metadata.markColor || ''
+						};
+						
+						if (existingIndex >= 0) {
+							// Update existing
+							window.BLOG_POSTS[existingIndex] = blogPost;
+						} else {
+							// Add new
+							window.BLOG_POSTS.unshift(blogPost);
+						}
+						
+						// Refresh the blog post list
+						this.populateBlogPosts();
+					}
 				}
 				
-				// Execute pending blog save
-				async executePendingSave() {
-					if (!this.pendingBlogSave) {
-						return;
-					}
+				// Update UI to show queue status
+				updateQueueUI() {
+					const count = this.operationQueue.getCount();
+					const pushBtn = document.getElementById('push-changes-btn');
 					
-					const pending = this.pendingBlogSave;
-					this.pendingBlogSave = null; // Clear it immediately
+					if (count > 0) {
+						// Show button with count
+						pushBtn.style.display = 'inline';
+						pushBtn.textContent = `Push Changes (${count})`;
+						pushBtn.title = this.operationQueue.getSummary();
+						
+						// Update color based on queue size
+						if (count >= 5) {
+							pushBtn.style.backgroundColor = '#c00';
+							pushBtn.style.color = '#fff';
+						} else if (count >= 3) {
+							pushBtn.style.backgroundColor = '#f60';
+							pushBtn.style.color = '#fff';
+						} else {
+							pushBtn.style.backgroundColor = '';
+							pushBtn.style.color = '';
+						}
+						
+						// Update meta text
+						const meta = document.getElementById('note-meta');
+						meta.textContent = `${count} operation${count > 1 ? 's' : ''} pending`;
+						meta.style.color = 'orange';
+					} else {
+						// Hide button when queue is empty
+						pushBtn.style.display = 'none';
+						pushBtn.style.backgroundColor = '';
+						pushBtn.style.color = '';
+					}
+				}
+				
+				// Execute all pending operations from queue
+				async executeQueueFlush() {
+					const count = this.operationQueue.getCount();
+					if (count === 0) return;
+					
+					// Update UI to show processing
+					const pushBtn = document.getElementById('push-changes-btn');
+					const originalText = pushBtn.textContent;
+					pushBtn.textContent = 'Pushing changes...';
+					pushBtn.disabled = true;
 					
 					try {
-						// Handle password hashing if needed
-						if (pending.metadata.password) {
-							const msgBuffer = new TextEncoder().encode(pending.metadata.password);
-							const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-							const hashArray = Array.from(new Uint8Array(hashBuffer));
-							const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-							pending.metadata.passwordHash = hashHex;
-							delete pending.metadata.password;
+						// Store state for restoration after refresh
+						const state = {
+							blogPostId: this.currentBlogPostId,
+							scrollPosition: window.scrollY,
+							editorScrollPosition: document.getElementById('editor-content').scrollTop,
+							timestamp: Date.now()
+						};
+						sessionStorage.setItem('notepad:pendingReload', JSON.stringify(state));
+						
+						// Execute all operations
+						const results = await this.operationQueue.flush('http://localhost:4322/api/save-blog-post');
+						
+						// Check for failures
+						const failures = results.filter(r => !r.success);
+						if (failures.length > 0) {
+							console.error('Some operations failed:', failures);
+							alert(`${failures.length} operation(s) failed. Check console for details.`);
 						}
 						
-						// Generate frontmatter
-						let frontmatter = '---\n';
-						for (const [key, value] of Object.entries(pending.metadata)) {
-							if (value !== '' && value !== false && value !== undefined) {
-								if (typeof value === 'boolean') {
-									frontmatter += `${key}: ${value}\n`;
-								} else if (key === 'pubDate') {
-									const date = new Date(value);
-									frontmatter += `${key}: ${date.toISOString()}\n`;
-								} else {
-									frontmatter += `${key}: "${value}"\n`;
+						// Update temp ID mappings for successful creates
+						for (const result of results) {
+							if (result.success && result.operation.type === 'create' && result.result.filename) {
+								const newId = result.result.filename.replace('.md', '');
+								// Update current blog post ID if it was the one we created
+								if (this.currentBlogPostId === result.operation.resourceId) {
+									this.currentBlogPostId = newId;
+									// Update the pending reload state with new ID
+									const updatedState = JSON.parse(sessionStorage.getItem('notepad:pendingReload'));
+									updatedState.blogPostId = newId;
+									sessionStorage.setItem('notepad:pendingReload', JSON.stringify(updatedState));
 								}
 							}
 						}
-						frontmatter += '---\n\n';
 						
-						// Combine frontmatter and content
-						const fullContent = frontmatter + pending.content;
-						
-						// Generate filename
-						let filename;
-						if (pending.blogPostId && !pending.blogPostId.startsWith('new-post-')) {
-							filename = pending.blogPostId.endsWith('.md') ? pending.blogPostId : `${pending.blogPostId}.md`;
-						} else {
-							const slug = this.generateSlug(pending.title);
-							filename = `${slug}.md`;
+						// If all succeeded, page will reload due to file changes
+						if (failures.length === 0) {
+							// Just wait for the reload
+							pushBtn.textContent = 'Changes pushed! Reloading...';
 						}
-						
-						// Send to API
-						const response = await fetch('http://localhost:4322/api/save-blog-post', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify({
-								filename: filename,
-								content: fullContent
-							})
-						});
-						
-						const result = await response.json();
-						
-						if (result.success) {
-							console.log('Pending blog save executed successfully:', result);
-							
-							// Update blog post list if it was a new post
-							if (pending.blogPostId && pending.blogPostId.startsWith('new-post-')) {
-								const newPostId = result.filename.replace('.md', '');
-								const newPost = {
-									id: newPostId,
-									title: pending.metadata.title,
-									pubDate: new Date(pending.metadata.pubDate).toISOString(),
-									category: pending.metadata.category,
-									description: pending.metadata.description,
-									content: pending.content,
-									pageType: pending.metadata.pageType,
-									private: pending.metadata.private || false,
-									markType: pending.metadata.markType || '',
-									markCount: pending.metadata.markCount || 1,
-									markColor: pending.metadata.markColor || ''
-								};
-								window.BLOG_POSTS.unshift(newPost);
-								
-								// Update the pending reload state with the real ID
-								const pendingReload = sessionStorage.getItem('notepad:pendingReload');
-								if (pendingReload) {
-									try {
-										const state = JSON.parse(pendingReload);
-										state.blogPostId = newPostId;
-										sessionStorage.setItem('notepad:pendingReload', JSON.stringify(state));
-									} catch (e) {
-										console.error('Error updating pending reload state:', e);
-									}
-								}
-							} else {
-								// Update existing post
-								const existingIndex = window.BLOG_POSTS.findIndex(p => p.id === pending.blogPostId);
-								if (existingIndex !== -1) {
-									window.BLOG_POSTS[existingIndex] = {
-										...window.BLOG_POSTS[existingIndex],
-										...pending.metadata,
-										content: pending.content
-									};
-								}
-							}
-							
-							// Hide push button after successful save
-							document.getElementById('push-changes-btn').style.display = 'none';
-						} else {
-							console.error('Failed to execute pending save:', result.error);
-						}
-					} catch (err) {
-						console.error('Error executing pending save:', err);
+					} catch (error) {
+						console.error('Queue flush failed:', error);
+						alert('Failed to push changes: ' + error.message);
+						pushBtn.textContent = originalText;
+						pushBtn.disabled = false;
 					}
+					
+					// Update UI
+					this.updateQueueUI();
+				}
+				
+				// Execute pending blog save (legacy - redirects to queue)
+				async executePendingSave() {
+					// This is now handled by the queue system
+					return this.executeQueueFlush();
 				}
 				
 				// Initialize File System Access
@@ -3604,35 +4088,7 @@ try {
 				
 				// Create a new blog post
 				async createNewBlogPost() {
-					// Execute any pending blog save before creating new
-					await this.executePendingSave();
-					
-					// Prompt for category selection
-					const existingCategories = this.getExistingCategories();
-					let selectedCategory = 'uncategorized';
-					
-					// Build prompt message with existing categories
-					let promptMessage = '📁 Select a category for your new blog post\n\n';
-					promptMessage += 'Existing categories:\n';
-					existingCategories.forEach((cat, index) => {
-						const emoji = cat === 'uncategorized' ? '📂' : '📁';
-						promptMessage += `  ${emoji} ${index + 1}. ${cat}\n`;
-					});
-					promptMessage += '\n💡 Tip: Enter a number (1-' + existingCategories.length + ') or type a new category name\n';
-					promptMessage += '(Press Cancel for "uncategorized")';
-					
-					const userInput = prompt(promptMessage);
-					
-					if (userInput) {
-						// Check if user entered a number (selecting existing category)
-						const selectedIndex = parseInt(userInput) - 1;
-						if (!isNaN(selectedIndex) && selectedIndex >= 0 && selectedIndex < existingCategories.length) {
-							selectedCategory = existingCategories[selectedIndex];
-						} else if (userInput.trim()) {
-							// User entered a new category name
-							selectedCategory = userInput.trim().toLowerCase();
-						}
-					}
+					// Note: We no longer auto-save when creating new - user must push changes manually
 					
 					// Clear any active states
 					document.querySelectorAll('.note-item').forEach(item => {
@@ -3648,7 +4104,7 @@ try {
 					
 					// Clear and set up editor
 					document.getElementById('note-title').value = 'New Blog Post';
-					document.getElementById('note-meta').textContent = `Creating new blog post in category: ${selectedCategory}`;
+					document.getElementById('note-meta').textContent = 'Creating new blog post';
 					
 					// Show and clear frontmatter editor
 					const frontmatterEditor = document.getElementById('frontmatter-editor');
@@ -3668,7 +4124,7 @@ try {
 					document.getElementById('meta-description').value = '';
 					document.getElementById('meta-date').value = new Date().toISOString().split('T')[0];
 					document.getElementById('meta-pagetype').value = 'blog';
-					document.getElementById('meta-category').value = selectedCategory;
+					document.getElementById('meta-category').value = 'uncategorized';
 					document.getElementById('meta-private').checked = false;
 					document.getElementById('password-field').style.display = 'none';
 					document.getElementById('meta-password').value = '';
@@ -3855,11 +4311,12 @@ try {
 				bindEvents() {
 					// Handle page unload - save pending blog changes
 					window.addEventListener('beforeunload', async (e) => {
-						if (this.pendingBlogSave) {
+						if (this.operationQueue.getCount() > 0) {
 							// We can't reliably do async operations in beforeunload
 							// So we'll just warn the user
 							e.preventDefault();
-							e.returnValue = 'You have unsaved blog changes. Are you sure you want to leave?';
+							const count = this.operationQueue.getCount();
+							e.returnValue = `You have ${count} unsaved operation${count > 1 ? 's' : ''}. Are you sure you want to leave?`;
 							return e.returnValue;
 						}
 					});
@@ -3919,27 +4376,8 @@ try {
 					document.getElementById('push-changes-btn').addEventListener('click', async (e) => {
 						e.preventDefault();
 						
-						// Store state before push for restoration after reload
-						if (this.pendingBlogSave) {
-							const editor = document.getElementById('editor-content');
-							const stateToRestore = {
-								blogPostId: this.pendingBlogSave.blogPostId,
-								scrollPosition: window.scrollY,
-								editorScrollPosition: editor.scrollTop,
-								timestamp: Date.now()
-							};
-							sessionStorage.setItem('notepad:pendingReload', JSON.stringify(stateToRestore));
-						}
-						
-						await this.executePendingSave();
-						
-						// Hide the button after pushing
-						document.getElementById('push-changes-btn').style.display = 'none';
-						
-						// Show success message
-						const meta = document.getElementById('note-meta');
-						meta.textContent = `Blog post pushed to disk! Page will reload...`;
-						meta.style.color = 'green';
+						// Execute the queue flush
+						await this.executeQueueFlush();
 					});
 					
 					// Toggle edit mode button
@@ -4084,6 +4522,68 @@ try {
 						this.createNewBlogPost();
 					});
 					
+					// Toggle all folders button
+					const toggleAllBtn = document.getElementById('toggle-all-folders');
+					toggleAllBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						
+						// Get current state - if ANY folders are open, collapse all
+						// Otherwise, expand all
+						const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
+						const allCategories = this.getExistingCategories();
+						const shouldCollapseAll = expandedCategories.length > 0;
+						
+						if (shouldCollapseAll) {
+							// Collapse all
+							localStorage.setItem('notepad:expandedBlogCategories', JSON.stringify([]));
+							
+							// Update all UI elements
+							document.querySelectorAll('.blog-category-toggle').forEach(button => {
+								button.setAttribute('aria-expanded', 'false');
+								
+								// Update icon
+								const icon = button.querySelector('.category-icon');
+								if (icon) {
+									icon.textContent = '📁';
+								}
+								
+								// Hide posts container
+								const categoryDiv = button.closest('.blog-category');
+								const postsContainer = categoryDiv.querySelector('.category-posts');
+								if (postsContainer) {
+									postsContainer.style.display = 'none';
+								}
+							});
+							
+							// Update button text
+							toggleAllBtn.textContent = 'expand all';
+						} else {
+							// Expand all
+							localStorage.setItem('notepad:expandedBlogCategories', JSON.stringify(allCategories));
+							
+							// Update all UI elements
+							document.querySelectorAll('.blog-category-toggle').forEach(button => {
+								button.setAttribute('aria-expanded', 'true');
+								
+								// Update icon
+								const icon = button.querySelector('.category-icon');
+								if (icon) {
+									icon.textContent = '📂';
+								}
+								
+								// Show posts container
+								const categoryDiv = button.closest('.blog-category');
+								const postsContainer = categoryDiv.querySelector('.category-posts');
+								if (postsContainer) {
+									postsContainer.style.display = 'block';
+								}
+							});
+							
+							// Update button text
+							toggleAllBtn.textContent = 'collapse all';
+						}
+					});
+					
 					// Blog post list clicks
 					document.getElementById('blog-post-list').addEventListener('click', async (e) => {
 						// Handle category toggle clicks
@@ -4122,6 +4622,9 @@ try {
 							if (postsContainer) {
 								postsContainer.style.display = !isExpanded ? 'block' : 'none';
 							}
+							
+							// Update toggle all button text
+							this.updateToggleAllButtonText();
 							return;
 						}
 						

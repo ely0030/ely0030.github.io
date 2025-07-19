@@ -20,7 +20,11 @@ const blog = defineCollection({
 		markCount: z.number().int().min(1).max(3).optional(),
 		markColor: z.enum(['grey', 'orange', 'blue']).optional(),
 		// New optional page type for selecting alternate layouts
-		pageType: z.enum(['blog', 'magazine']).optional(),
+		pageType: z.enum(['blog', 'magazine', 'stanza', 'essay', 'literature', 'literature2', 'literature3', 'notepad']).optional(),
+		// Determines which Astro layout component to use
+		pageLayout: z.enum(['blog', 'book']).optional(),
+		// Category for grouping posts
+		category: z.string().optional(),
 	}),
 });
 

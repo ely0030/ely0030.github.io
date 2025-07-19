@@ -17,10 +17,14 @@
     "@astrojs/sitemap": "^3.3.0",
     "astro": "^5.7.1",
     "remark-breaks": "^4.0.0",
-    "tufte-css": "^1.8.0"
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "tufte-css": "^1.8.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "rehype-prism-plus": "^2.0.1",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "express": "^4.18.2"
   }
 }

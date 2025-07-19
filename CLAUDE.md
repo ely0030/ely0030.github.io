@@ -27,6 +27,7 @@ npm run build       # Production build
 - `Tab` - Indent (2 spaces)
 - `Shift+Tab` - Unindent
 - **Auto-toggle**: Click in = edit mode, click out = view mode (unless "manual mode" checked)
+- **Lists**: Bullet (-, *, +) and numbered (1.) lists render with visible syntax
 
 ## Known Pitfalls (Avoid These!)
 
@@ -137,6 +138,69 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - Empty lines → `<div class="empty-line">&nbsp;</div>`
 - **WHY**: contentEditable needs block elements for line breaks
 
+### 18. Category Input UX Failure
+**ISSUE**: Prompt popup for category on new post = bad UX
+- Location: notepad.astro:3884 (createNewBlogPost)
+- Fix: Removed prompt entirely - defaults to "uncategorized"
+- User changes category in metadata field after creation
+- Sanitization STILL happens in queueBlogSave (:3481) on save
+
+### 19. Operation Queue System (2025-01-15) 🔥
+**SOLUTION**: Batch all blog operations until manual push
+- Location: notepad.astro:1290-1524 (OperationQueue class)
+- No more auto-saves on navigation - full user control
+- Operations deduped: save→save = latest, create→delete = removed
+- Visual indicators: orange dot on pending posts, button shows count
+- **CRITICAL**: Deletes execute before saves to prevent conflicts
+- Queue persists in sessionStorage across refreshes
+- **GOTCHA**: executeSave MUST generate frontmatter (:1478-1495) - server expects full markdown not raw content
+
+### 20. Planning Wall ContentEditable (2025-01-18) 🔥
+**CRITICAL**: Description fields use contenteditable, NOT textarea
+- Location: planning-wall.astro:704-786
+- Click → cursor at exact position via `caretRangeFromPoint()`
+- Enter key inserts `<br>` + `\u200B` (zero-width space) for cursor
+- **GOTCHA**: Must strip `\u200B` on save (:752)
+- TreeWalker extracts text preserving BR→\n conversion
+
+### 21. Button Focus Outline CSS Specificity
+**ISSUE**: Blue outline persists on buttons despite `outline: none`
+- Location: global.css:936-938 has `button:focus { outline: 2px solid rgba(0, 85, 187, 0.5) }`
+- Component `.class:focus` loses to global `button:focus` selector
+- Fix: Use `button.class:focus { outline: none !important }`
+- Applied to: notepad folder toggles, collapse all button, main index folders
+
+### 21. Markdown Newline Preservation for Literature Pages 🔥
+**ISSUE**: Multiple newlines not preserved exactly as typed
+- Location: src/utils/remark-preserve-newlines.js + astro.config.mjs:17
+- Failed attempts: Inserting HTML/text nodes between paragraphs (wrong AST level)
+- **Solution**: Add `break` nodes to paragraph's children array: `prevNode.children.push({type: 'break'})`
+- CSS fix: global.css:1783-1785 - `p:has(br:last-child) + p { margin-top: 0 }` removes gap
+- **Critical**: Must restart dev server after astro.config.mjs changes
+- Time wasted: 3+ hours trying wrong AST manipulation approaches
+
+### 22. ContentEditable Empty Editor BR Tags (2025-01-19) 🔥
+**CRITICAL**: ContentEditable auto-inserts `<br>` in empty editors
+- Location: notepad.astro:2470-2472 (getPlainTextFromEditor), :2526-2556 (TreeWalker)
+- Issue: Empty new notes showed whitespace block
+- Root cause: `<br>` → TreeWalker converts to `\n` → split('\n') creates `['']` → empty-line div
+- Fix: Detect BR-only content and return empty string
+- **GOTCHA**: Must check BOTH direct innerHTML and TreeWalker path
+
+### 23. Empty String Split Trap (2025-01-19)
+**CRITICAL**: `''.split('\n')` returns `['']` NOT `[]`
+- Location: notepad.astro:3282-3303 (toggleEditMode), :2574-2579 (applyMarkdownFormatting)
+- Issue: Empty content creates one empty-line div with `&nbsp;`
+- Fix: Explicit empty string check before split
+- Wasted: 1+ hour debugging phantom whitespace
+
+### 24. Notepad List Rendering (2025-01-19)
+**FEATURE**: Markdown lists render with visible syntax
+- Location: notepad.astro:2678-2694 (formatMarkdownLine), :2607-2627 (formatInlineMarkdown)
+- Supports: `- `, `* `, `+ ` bullets, `1. ` numbered lists, nested with 2-space indent
+- Pattern: Detect list syntax → wrap in span → apply inline formatting to content
+- **CRITICAL**: Must handle inline markdown (bold/italic/code/links) within list items
+
 ## Page Types
 - **blog** - Standard blog post (default)
 - **magazine** - Larger text, wider spacing
@@ -188,12 +252,16 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 
 ## Notepad Blog Editor
 - Create/edit blog posts at `/notepad`
-- Click "[new blog post]" → prompts for category selection (choose existing or create new)
+- Click "[new blog post]" → creates new post with "uncategorized" category
 - Blog posts organized in collapsible category folders (matches main index)
-- Fill metadata fields (category auto-filled from selection)
-- Click "[save to blog]" during dev to save directly
+- Fill metadata fields (change category in metadata editor)
+- **NEW Queue System**: All changes batched until "[Push Changes (n)]" clicked
+  - No auto-saves - full control over when to trigger refresh
+  - Visual indicators: orange • on posts with pending changes
+  - Smart deduplication: multiple saves = only latest pushed
+  - Queue persists across page refreshes
 - Requires `npm run dev` for save functionality
-- **New**: getExistingCategories() at :3586, createNewBlogPost() at :3606
+- **Category input**: Change in meta-category field (lowercase auto-applied at :3481)
 
 ## Need More Context?
 Start with `docs/LLM_CONTEXT.md` for complete details.

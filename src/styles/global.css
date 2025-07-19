@@ -9,6 +9,7 @@
 /* @import "tufte-css/tufte.min.css";  2️⃣ base Tufte stylesheet (disabled) */
 @import "./prism-tufte.css";           /* 3️⃣ pale ink Prism theme        */
 
+
 /* --- Dark mode override for Astro default code blocks --- */
 pre.astro-code{
   background:#0b0d12 !important;
@@ -75,7 +76,9 @@ pre.astro-code .token.variable {
 
 	/* New palette based on example */
 	--body-background: #fdfdfd;
+	--body-background-stanza: #faf9f7; /* Softer background for stanza */
 	--body-font-color: #000; /* Changed from #24292f to pure black */
+	--body-font-color-stanza: #333; /* Softer black for stanza */
 	--color-link: #0055bb; /* Keeping this blue */
 	--gray-200: #f6f8fa; /* Lighter gray for backgrounds */
 	--gray-500: #6e7781; /* Medium gray for subtle text/borders */
@@ -88,6 +91,7 @@ pre.astro-code .token.variable {
 
 	--box-shadow:
 		0 1px 2px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.07); /* Simplified shadow */
+	--accent: #ff5500;
 }
 
 /* Remove previous font faces */
@@ -158,7 +162,7 @@ h3,
 h4,
 h5,
 h6 {
-	margin: 1.5em 0 0.5rem 0;
+	margin: 1.5em 0 0.2rem 0;
 	color: #000; /* Changed from link color to black */
 	line-height: 1.2;
   font-family: inherit; /* Inherit body font */
@@ -346,7 +350,7 @@ details[open] summary {
   gap: 2em; /* Restore or adjust gap */
   max-width: 1600px;
   margin: 0 auto;
-  padding: 1.5em 0.8em;
+  padding: 1.5em 0.8em 1.5em 20px; /* Match literature2 left padding for sidebar offset */
 }
 
 .sidebar {
@@ -388,19 +392,19 @@ aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
 
 /* Style blog post titles on index page - Old Directory Look */
 .main-content-area .post-list {
-  list-style: disc; /* Add bullets */
-  padding-left: 1.5em; /* Add padding for bullets */
+  list-style: none; /* Remove browser bullets - using custom ones */
+  padding-left: 0; /* Remove padding - bullets are inline now */
   margin: 0 0 1em 0; /* Add bottom margin */
 }
 
 .main-content-area .post-list h2 {
-  margin: 0 0 0.2em 0; /* Keep margin from inline styles */
-  font-size: 1em; /* Reset to base size */
-  font-weight: 400; /* Reset to normal weight */
-  text-transform: none; /* Remove uppercase transform if any */
-  line-height: inherit; /* Use default line height */
-  color: inherit; /* Inherit body text color (won't be visible due to link) */
-  display: inline; /* Make h2 inline to not break the bullet style */
+  margin: 0;
+  font-size: 1em;
+  font-weight: 400;
+  text-transform: none;
+  line-height: inherit;
+  color: inherit;
+  display: inline-block;
 }
 
 .main-content-area .post-list h2 a {
@@ -582,7 +586,7 @@ article {
 .prose h4,
 .prose h5,
 .prose h6 {
-	margin: 1.5em 0 0.5rem 0;
+	margin: 1.5em 0 0.2rem 0;
 	color: #000; /* Ensure black color */
 	line-height: 1.2;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* Match body/Home link font */
@@ -667,7 +671,7 @@ nav.site-nav .internal-links a[href="/about"]:hover {
 .prose h2 {
   font-size: 1.6em;
   margin-top: 1.8em; /* Reduced space before H2 */
-  margin-bottom: 0.7em;
+  margin-bottom: 0.2rem; /* Match general heading bottom margin */
   text-transform: none; /* Remove uppercase for more Tufte-like style */
   letter-spacing: -0.01em; /* Tighter kerning */
 }
@@ -675,7 +679,7 @@ nav.site-nav .internal-links a[href="/about"]:hover {
 .prose h3 {
   font-size: 1.3em;
   margin-top: 1.5em; /* Reduced space before H3 */
-  margin-bottom: 0.6em;
+  margin-bottom: 0.2rem; /* Match general heading bottom margin */
   letter-spacing: -0.01em;
 }
 
@@ -856,16 +860,39 @@ figcaption {
 /* Refined lists with subtle spacing */
 .prose ul, .prose ol {
   padding-left: 1.8em;
-  margin: 1em 0 1.5em;
+  margin: 0.5em 0 1em; /* Reduced from 1em 0 1.5em */
 }
 
 .prose li {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.3em; /* Reduced from 0.5em */
   position: relative;
 }
 
 .prose li::marker {
   color: rgba(0, 0, 0, 0.6);
+}
+
+/* Remove the conflicting rule - handled by the rule below */
+
+/* Reduce spacing when lists directly follow headings */
+.prose h1 + ul, .prose h2 + ul, .prose h3 + ul, .prose h4 + ul, .prose h5 + ul, .prose h6 + ul,
+.prose h1 + ol, .prose h2 + ol, .prose h3 + ol, .prose h4 + ol, .prose h5 + ol, .prose h6 + ol,
+h1 + ul, h2 + ul, h3 + ul, h4 + ul, h5 + ul, h6 + ul,
+h1 + ol, h2 + ol, h3 + ol, h4 + ol, h5 + ol, h6 + ol {
+  margin-top: 0.25em !important;
+}
+
+/* Reduce spacing when paragraphs directly follow headings */
+.prose h1 + p, .prose h2 + p, .prose h3 + p, .prose h4 + p, .prose h5 + p, .prose h6 + p,
+h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p {
+  margin-top: 0.25em !important;
+}
+
+/* Reduce spacing when lists follow paragraphs */
+.prose p + ul, .prose p + ol,
+p + ul, p + ol {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 /* Add optional epigraph styling (quote at beginning of article) */
@@ -1063,31 +1090,35 @@ a:focus, button:focus, input:focus, textarea:focus {
 
 /* Marks before each post title */
 .post-item {
+  margin-bottom: 0.5rem;
   display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: baseline;
 }
-.post-item .mark {
+/* Visual post markers */
+.mark {
   /* Smaller, footnote-like symbol */
+  display: inline;
   font-size: 0.9em;
-  margin-right: 0.3rem;
-  vertical-align: super; /* raise like footnote */
+  margin-right: 0.1em;
+  vertical-align: baseline; /* align with text baseline */
 }
-.post-item .mark-grey {
+.mark-grey {
   color: grey;
 }
-.post-item .mark-orange {
+.mark-orange {
   color: orange;
 }
-.post-item .mark-blue {
+.mark-blue {
   color: blue;
 }
 
 /* Restore default bullet marker before each post-item */
 .post-item::before {
   content: '•';
-  margin-right: 0.5rem;
-  color: var(--body-font-color);
+  margin-right: 0.5em;
+  color: #333;
+  font-weight: bold;
+  font-size: 1.1em;
 }
 
 /* Add layout‑specific overrides */
@@ -1121,11 +1152,76 @@ body.magazine .prose h3 {
 }
 
 body.blog .prose {
-  max-width: 42rem;
-  padding-block: 2rem;
+  /* Refined blog styles for readability */
+  line-height: 1.65;   /* More generous line height for comfort */
+  font-size: 17px;     /* Keep slightly larger size */
+  font-weight: 400;    /* Revert to standard weight (450 felt a bit heavy) */
+  letter-spacing: normal; /* Revert letter spacing */
+  max-width: 40rem;    /* Slightly wider measure, still comfortable */
+  padding-block: 1.5rem; /* Restore some vertical padding */
+  padding-inline: 1rem; /* Restore some horizontal padding */
   text-rendering: optimizeLegibility;
   font-feature-settings: "liga" 1, "kern" 1;
-  color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
+  color: rgba(0, 0, 0, 0.88); /* Slightly softer black for less strain */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif; /* Keep Inter font stack */
+  -webkit-font-smoothing: antialiased; /* Standard antialiasing often looks better */
+  -moz-osx-font-smoothing: grayscale; /* Standard antialiasing */
+}
+
+/* Tighter paragraph spacing for blog style - Increased margin */
+body.blog .prose p {
+  margin-bottom: 1.4em; /* More space between paragraphs */
+}
+
+/* Enhance code blocks to match Obsidian style - Revert for consistency */
+body.blog .prose code:not(pre > code) {
+  font-family: Consolas, Menlo, Monaco, "Courier New", monospace; /* Revert to global code font */
+  font-size: 0.85em; /* Revert size */
+  background-color: var(--gray-200); /* Revert background */
+  border-radius: 2px;
+  padding: 0.1em 0.3em; /* Revert padding */
+  font-weight: 400;
+}
+
+/* Adjust blockquotes - Revert for consistency */
+body.blog .prose blockquote {
+  border-left: 2px solid var(--color-link); /* Revert to original style */
+  background-color: transparent;
+  padding: 0.2em 0 0.2em 1.5em;
+  margin: 2em 0 2em 1em;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* Improve list styling - Consistent with reduced spacing */
+body.blog .prose ul, 
+body.blog .prose ol {
+  padding-left: 1.8em;
+  margin: 0.5em 0 1em; /* Match general .prose list spacing */
+}
+
+body.blog .prose li {
+  margin-bottom: 0.3em; /* Match general .prose list item spacing */
+}
+
+/* Further reduce top margin when lists follow paragraphs in blog */
+body.blog .prose p + ul, 
+body.blog .prose p + ol {
+  margin-top: 0.3em;
+}
+
+/* Match heading styles - Restore more generous spacing */
+body.blog .prose h1, 
+body.blog .prose h2, 
+body.blog .prose h3, 
+body.blog .prose h4 {
+  font-weight: 700; /* Restore original bolder headings */
+  margin-top: 1.8em; /* Restore more top margin */
+  margin-bottom: 0.7em; /* Restore more bottom margin */
+}
+body.blog .prose h3 { 
+  margin-top: 1.5em; 
+  margin-bottom: 0.6em; 
 }
 
 /* Compact reading mode (toggle) */
@@ -1168,3 +1264,1175 @@ body.blog.compact .prose p {
   color: var(--color-link);
   border-color: var(--color-link);
 }
+
+body.stanza .prose {
+  max-width: 52rem;
+  margin: auto;
+  padding: 2.5rem 1.25rem;
+  font-family: 'Ivar Text', Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #1d1d1d;
+  background: #fafafa;
+}
+body.stanza .prose p {
+  margin: 0 0 1em;
+}
+body.stanza .prose p.stanza {
+  margin: 1.8em 0 0.2em;
+}
+body.stanza aside.note {
+  font-style: italic;
+  opacity: .8;
+  margin: 1.2em 0;
+  padding-left: 1em;
+  border-left: 2px solid var(--accent, #ff5500);
+}
+body.stanza .pull {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--accent, #ff5500);
+}
+@media (min-width: 48em) {
+  body.stanza .pull { float: right; width: 40%; margin: 0 0 1em 1.5em; }
+}
+
+body.stanza .layout-wrapper {
+  display: block;
+  max-width: 55rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+body.stanza .sidebar,
+body.stanza .sidenotes-area,
+body.stanza #toggle-compact {
+  display: none !important;
+}
+body.stanza .main-content-area {
+  margin: 0;
+}
+
+body.stanza progress.reading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0,0,0,.08);
+  z-index: 9999;
+}
+body.stanza progress.reading::-webkit-progress-value { background: var(--accent); }
+body.stanza progress.reading::-moz-progress-bar { background: var(--accent); }
+
+/* Pull Quotes for Stanza */
+body.stanza .pull {
+  font-size: 1.15em; /* Slightly larger than body */
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--accent, #ff5500);
+  display: block; /* Default block on mobile */
+  margin: 1.5em 0;
+}
+
+@media (min-width: 60em) { /* Adjust breakpoint as needed */
+  body.stanza .pull {
+    float: right;
+    width: 35%; /* Adjust width */
+    margin: 0.5em -5% 1em 1.5em; /* Negative margin pulls into gutter */
+    text-align: left;
+  }
+}
+
+/* Stanza Specific Heading Styles */
+body.stanza .prose h1,
+body.stanza .prose h2,
+body.stanza .prose h3,
+body.stanza .prose h4,
+body.stanza .prose h5,
+body.stanza .prose h6 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  font-weight: 600; /* Semi-bold */
+  color: var(--body-font-color-stanza);
+  /* Keep general H sizes or override if needed */
+}
+
+/* Quiet Header for Stanza */
+body.stanza .layout-wrapper > aside.sidebar > header.site-header {
+  padding-bottom: 0.5rem; /* Reduce bottom padding */
+  margin-bottom: 0; /* Remove margin */
+}
+body.stanza .layout-wrapper > aside.sidebar > header.site-header nav.site-nav a {
+  font-size: 1rem !important; /* Smaller nav links */
+  padding: 0.2rem 0;
+}
+body.stanza .layout-wrapper > aside.sidebar > header.site-header nav.site-nav div.internal-links a[href="/"] {
+  font-size: 1.5rem !important; /* Smaller main title */
+}
+
+/* Reading Progress Bar */
+body.stanza progress.reading {
+  transition: width 0.1s linear; /* Add transition for animation */
+}
+body.stanza progress.reading::-webkit-progress-value { background: var(--accent); }
+body.stanza progress.reading::-moz-progress-bar { background: var(--accent); }
+
+/* Respect Reduced Motion for Progress Bar */
+@media (prefers-reduced-motion: reduce) {
+  body.stanza progress.reading {
+    transition: none;
+  }
+}
+
+/* LITERATURE PAGE TYPE - Beautiful minimal essay layout */
+:root {
+  --literature-font-size: 13px;
+  --literature-line-height: 1.3;
+  --literature-max-width: 480px;
+  --literature-padding: 20px;
+  --literature-paragraph-spacing: 0.8em;
+  --literature-text-color: #000000;
+  --literature-bg-color: #ffffff;
+}
+
+body.literature {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  background: var(--literature-bg-color);
+  color: var(--literature-text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.literature .layout-wrapper {
+  max-width: none;
+  margin: 0;
+  padding: 1.5em 0 30px var(--literature-padding); /* Keep consistent top padding with standard layout */
+}
+
+body.literature .prose {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-size: var(--literature-font-size);
+  line-height: var(--literature-line-height);
+  color: var(--literature-text-color);
+  max-width: var(--literature-max-width);
+  text-align: left;
+  letter-spacing: -0.003em;
+  margin: 0;
+  font-weight: 400;
+  white-space: pre-line; /* Also preserve line breaks at prose level */
+}
+
+body.literature .prose p {
+  margin: 0 !important; /* Override default .prose p margins */
+  margin-bottom: 0 !important; /* Specifically override margin-bottom */
+  padding: 0 !important;
+  font-size: var(--literature-font-size);
+  line-height: var(--literature-line-height);
+  hanging-punctuation: first last;
+}
+
+/* Add paragraph spacing in literature pages */
+body.literature .prose p + p {
+  margin-top: var(--literature-paragraph-spacing) !important;
+}
+
+/* Override first paragraph styles too */
+body.literature .prose p:first-of-type,
+body.literature .prose p:first-child {
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Make empty paragraphs visible to preserve multiple line breaks */
+body.literature .prose p:empty {
+  height: var(--literature-line-height);
+  margin: 0;
+}
+
+/* Ensure empty paragraphs have content for proper height */
+body.literature .prose p:empty::before {
+  content: '\00a0'; /* non-breaking space */
+  line-height: inherit;
+}
+
+/* No extra spacing for br tags - just a line break */
+body.literature .prose br,
+body.literature .prose p br {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+  height: 0 !important;
+  display: block !important;
+}
+
+/* Title styling - left-aligned */
+body.literature .prose h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--literature-text-color);
+  margin: 0 0 8px 0;
+  text-align: left;
+  letter-spacing: 0;
+  position: relative;
+}
+
+/* Heading hash indicators with size variation */
+body.literature .prose h1::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature .prose h2::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature .prose h3::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature .prose h4::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature .prose h5::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature .prose h6::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+/* Blue on hover */
+body.literature .prose h1:hover::before,
+body.literature .prose h2:hover::before,
+body.literature .prose h3:hover::before,
+body.literature .prose h4:hover::before,
+body.literature .prose h5:hover::before,
+body.literature .prose h6:hover::before {
+  color: #6b8ec5;
+}
+
+
+/* Bold hash when heading has :target (scrolled to via anchor link) */
+body.literature .prose h1:target::before,
+body.literature .prose h2:target::before,
+body.literature .prose h3:target::before,
+body.literature .prose h4:target::before,
+body.literature .prose h5:target::before,
+body.literature .prose h6:target::before {
+  font-weight: 700;
+  color: #4a70a8;
+}
+
+/* Grey hash for active heading (current scroll position) - no color change */
+body.literature .prose h1.active-heading::before,
+body.literature .prose h2.active-heading::before,
+body.literature .prose h3.active-heading::before,
+body.literature .prose h4.active-heading::before,
+body.literature .prose h5.active-heading::before,
+body.literature .prose h6.active-heading::before {
+  color: #999;
+}
+
+/* Subtitle/date styling */
+body.literature .prose .subtitle,
+body.literature time {
+  display: block;
+  text-align: left;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 16px;
+  font-style: normal;
+}
+
+/* Section headings */
+body.literature .prose h2 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.3;
+  color: var(--literature-text-color);
+  margin: 1.5em 0 0.5em 0;
+  letter-spacing: 0;
+  position: relative;
+}
+
+body.literature .prose h3,
+body.literature .prose h4,
+body.literature .prose h5,
+body.literature .prose h6 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--literature-text-color);
+  margin: 1.2em 0 0.4em 0;
+  position: relative;
+}
+
+/* Links - minimal like literature.bio */
+body.literature .prose a {
+  color: #0000EE;
+  text-decoration: none;
+}
+
+body.literature .prose a:hover {
+  text-decoration: underline;
+}
+
+/* Back to blog button */
+body.literature .back-to-blog {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #0066cc;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+body.literature .back-to-blog:hover {
+  color: #0052a3;
+  text-decoration: none;
+}
+
+/* Hide unnecessary elements for literature style */
+body.literature .sidebar,
+body.literature .sidenotes-area,
+body.literature #toggle-compact,
+body.literature .reading-mode-toggle {
+  display: none !important;
+}
+
+body.literature .main-content-area {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+}
+
+body.literature main {
+  margin: 0;
+  padding: 0;
+}
+
+/* Code styling - minimal and clean */
+body.literature .prose code {
+  font-family: 'SF Mono', Monaco, 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.85em;
+  background: #f5f5f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+body.literature .prose pre {
+  font-family: 'SF Mono', Monaco, 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.85em;
+  background: #f8f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 1.5em;
+  overflow-x: auto;
+  margin: 2em 0;
+}
+
+body.literature .prose pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Blockquotes - minimal */
+body.literature .prose blockquote {
+  border-left: 2px solid #ccc;
+  margin: 1em 0;
+  padding: 0 0 0 1em;
+  font-style: normal;
+  color: var(--literature-text-color);
+}
+
+/* Lists - compact */
+body.literature .prose ul,
+body.literature .prose ol {
+  margin: 0.8em 0;
+  padding-left: 1.2em;
+}
+
+body.literature .prose li {
+  margin-bottom: 0.2em;
+}
+
+/* LITERATURE2 PAGE TYPE - Similar to literature but with different settings */
+:root {
+  --literature2-font-size: 15px;
+  --literature2-line-height: 1.3;
+  --literature2-max-width: 660px;
+  --literature2-padding: 20px;
+  --literature2-paragraph-spacing: 0.9em;
+  --literature2-text-color: #000000;
+  --literature2-bg-color: #ffffff;
+}
+
+body.literature2 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  background: var(--literature2-bg-color);
+  color: var(--literature2-text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.literature2 .layout-wrapper {
+  max-width: none;
+  margin: 0;
+  padding: 1.5em 0 30px var(--literature2-padding); /* Keep consistent top padding with standard layout */
+}
+
+body.literature2 .prose {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-size: var(--literature2-font-size);
+  line-height: var(--literature2-line-height);
+  color: var(--literature2-text-color);
+  max-width: var(--literature2-max-width);
+  text-align: left;
+  letter-spacing: -0.003em;
+  margin: 0;
+  font-weight: 400;
+}
+
+body.literature2 .prose p {
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+  font-size: var(--literature2-font-size);
+  line-height: var(--literature2-line-height);
+  hanging-punctuation: first last;
+}
+
+/* Add paragraph spacing only for actual paragraph breaks */
+body.literature2 .prose p + p {
+  margin-top: var(--literature2-paragraph-spacing) !important;
+}
+
+/* Remove margin when previous paragraph ends with breaks - for exact newline preservation */
+body.literature2 .prose p:has(br:last-child) + p {
+  margin-top: 0 !important;
+}
+
+/* Override first paragraph styles */
+body.literature2 .prose p:first-of-type,
+body.literature2 .prose p:first-child {
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Make empty paragraphs visible */
+body.literature2 .prose p:empty {
+  height: var(--literature2-line-height);
+  margin: 0;
+}
+
+body.literature2 .prose p:empty::before {
+  content: '\00a0';
+  line-height: inherit;
+}
+
+/* No extra spacing for br tags */
+body.literature2 .prose br,
+body.literature2 .prose p br {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+  height: 0 !important;
+  display: block !important;
+}
+
+/* Title styling */
+body.literature2 .prose h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--literature2-text-color);
+  margin: 0 0 8px 0;
+  text-align: left;
+  letter-spacing: 0;
+}
+
+/* Subtitle/date styling */
+body.literature2 .prose .subtitle,
+body.literature2 time {
+  display: block;
+  text-align: left;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 16px;
+  font-style: normal;
+}
+
+/* Section headings */
+body.literature2 .prose h2 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--literature2-text-color);
+  margin: 1.5em 0 0.2em 0;
+  letter-spacing: 0;
+}
+
+body.literature2 .prose h3,
+body.literature2 .prose h4,
+body.literature2 .prose h5,
+body.literature2 .prose h6 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--literature2-text-color);
+  margin: 1.2em 0 0.2em 0;
+  letter-spacing: 0;
+}
+
+/* Links */
+body.literature2 .prose a {
+  color: #0066cc;
+  text-decoration: none;
+  border-bottom: 1px solid #0066cc;
+}
+
+body.literature2 .prose a:hover {
+  color: #0052a3;
+  border-bottom-color: #0052a3;
+}
+
+/* Code styling */
+body.literature2 .prose code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  background: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Blockquote styling */
+body.literature2 .prose blockquote {
+  margin: 1em 0;
+  padding-left: 1em;
+  border-left: 3px solid #e0e0e0;
+  color: #666;
+  font-style: italic;
+}
+
+/* Lists */
+body.literature2 .prose ul,
+body.literature2 .prose ol {
+  margin: 0.4em 0 0.8em; /* Reduced top margin */
+  padding-left: 1.2em;
+}
+
+/* Reduce spacing when lists follow headings in literature2 */
+body.literature2 .prose h1 + ul,
+body.literature2 .prose h2 + ul,
+body.literature2 .prose h3 + ul,
+body.literature2 .prose h4 + ul,
+body.literature2 .prose h5 + ul,
+body.literature2 .prose h6 + ul,
+body.literature2 .prose h1 + ol,
+body.literature2 .prose h2 + ol,
+body.literature2 .prose h3 + ol,
+body.literature2 .prose h4 + ol,
+body.literature2 .prose h5 + ol,
+body.literature2 .prose h6 + ol {
+  margin-top: 0.2em;
+}
+
+body.literature2 .prose li {
+  margin-bottom: 0.2em;
+}
+
+/* Further reduce top margin when lists follow paragraphs in literature2 */
+/* Spacing for paragraphs followed by lists in literature2 */
+body.literature2 .prose p + ul,
+body.literature2 .prose p + ol,
+body.literature2 .prose p + ul.contains-task-list,
+body.literature2 .prose p + ol.contains-task-list {
+  margin-top: 0.4em !important;
+  padding-top: 0 !important;
+}
+
+/* Back to blog button */
+body.literature2 .back-to-blog {
+  display: inline-block;
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 1em;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+}
+
+body.literature2 .back-to-blog:hover {
+  border-bottom-color: #0066cc;
+}
+
+/* Horizontal rule - subtle separator */
+body.literature .prose hr {
+  display: block !important;
+  border: none !important;
+  border-top: 1px solid #333 !important;
+  margin: 1.5em 0 !important;
+  width: 100% !important;
+  height: 0 !important;
+}
+
+/* Selection color */
+body.literature ::selection {
+  background: rgba(0, 100, 200, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --literature-font-size: 13px;
+    --literature-padding: 15px;
+  }
+  
+  body.literature .layout-wrapper {
+    padding: 1.5em 0 30px var(--literature-padding); /* Keep consistent top padding with standard layout */
+  }
+  
+  body.literature .prose h1 {
+    font-size: 16px;
+  }
+  
+  body.literature .prose h2 {
+    font-size: 14px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body.literature {
+    background: white;
+    color: black;
+  }
+  
+  body.literature .prose {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  body.literature .style-editor {
+    display: none !important;
+  }
+}
+
+/* LITERATURE3 PAGE TYPE - Similar to literature but with different line height and padding */
+:root {
+  --literature3-font-size: 14px;
+  --literature3-line-height: 1.1;
+  --literature3-max-width: 480px;
+  --literature3-padding: 25px;
+  --literature3-paragraph-spacing: 0.5em;
+  --literature3-text-color: #000000;
+  --literature3-bg-color: #ffffff;
+}
+
+body.literature3 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  background: var(--literature3-bg-color);
+  color: var(--literature3-text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.literature3 .layout-wrapper {
+  max-width: none;
+  margin: 0;
+  padding: 1.5em 0 30px var(--literature3-padding); /* Keep consistent top padding with standard layout */
+}
+
+body.literature3 .prose {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-size: var(--literature3-font-size);
+  line-height: var(--literature3-line-height);
+  color: var(--literature3-text-color);
+  max-width: var(--literature3-max-width);
+  text-align: left;
+  letter-spacing: -0.003em;
+  margin: 0;
+  font-weight: 400;
+  white-space: pre-line; /* Also preserve line breaks at prose level */
+}
+
+body.literature3 .prose p {
+  margin: 0 !important; /* Override default .prose p margins */
+  margin-bottom: 0 !important; /* Specifically override margin-bottom */
+  padding: 0 !important;
+  font-size: var(--literature3-font-size);
+  line-height: var(--literature3-line-height);
+  hanging-punctuation: first last;
+}
+
+/* Add paragraph spacing in literature3 pages */
+body.literature3 .prose p + p {
+  margin-top: var(--literature3-paragraph-spacing) !important;
+}
+
+/* Override first paragraph styles too */
+body.literature3 .prose p:first-of-type,
+body.literature3 .prose p:first-child {
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Make empty paragraphs visible to preserve multiple line breaks */
+body.literature3 .prose p:empty {
+  height: var(--literature3-line-height);
+  margin: 0;
+}
+
+/* Ensure empty paragraphs have content for proper height */
+body.literature3 .prose p:empty::before {
+  content: '\00a0'; /* non-breaking space */
+  line-height: inherit;
+}
+
+/* No extra spacing for br tags - just a line break */
+body.literature3 .prose br,
+body.literature3 .prose p br {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+  height: 0 !important;
+  display: block !important;
+}
+
+/* Title styling - left-aligned */
+body.literature3 .prose h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--literature3-text-color);
+  margin: 0 0 8px 0;
+  text-align: left;
+  letter-spacing: 0;
+  position: relative;
+}
+
+/* Heading hash indicators with size variation */
+body.literature3 .prose h1::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature3 .prose h2::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature3 .prose h3::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature3 .prose h4::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature3 .prose h5::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+body.literature3 .prose h6::before {
+  content: '#';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1;
+  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+/* Blue on hover */
+body.literature3 .prose h1:hover::before,
+body.literature3 .prose h2:hover::before,
+body.literature3 .prose h3:hover::before,
+body.literature3 .prose h4:hover::before,
+body.literature3 .prose h5:hover::before,
+body.literature3 .prose h6:hover::before {
+  color: #6b8ec5;
+}
+
+
+/* Bold hash when heading has :target (scrolled to via anchor link) */
+body.literature3 .prose h1:target::before,
+body.literature3 .prose h2:target::before,
+body.literature3 .prose h3:target::before,
+body.literature3 .prose h4:target::before,
+body.literature3 .prose h5:target::before,
+body.literature3 .prose h6:target::before {
+  font-weight: 700;
+  color: #4a70a8;
+}
+
+/* Grey hash for active heading (current scroll position) - no color change */
+body.literature3 .prose h1.active-heading::before,
+body.literature3 .prose h2.active-heading::before,
+body.literature3 .prose h3.active-heading::before,
+body.literature3 .prose h4.active-heading::before,
+body.literature3 .prose h5.active-heading::before,
+body.literature3 .prose h6.active-heading::before {
+  color: #999;
+}
+
+/* Subtitle/date styling */
+body.literature3 .prose .subtitle,
+body.literature3 time {
+  display: block;
+  text-align: left;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 16px;
+  font-style: normal;
+}
+
+/* Section headings */
+body.literature3 .prose h2 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.3;
+  color: var(--literature3-text-color);
+  margin: 1.5em 0 0.5em 0;
+  letter-spacing: 0;
+  position: relative;
+}
+
+body.literature3 .prose h3,
+body.literature3 .prose h4,
+body.literature3 .prose h5,
+body.literature3 .prose h6 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--literature3-text-color);
+  margin: 1.2em 0 0.4em 0;
+  position: relative;
+}
+
+/* Links - minimal like literature.bio */
+body.literature3 .prose a {
+  color: #0000EE;
+  text-decoration: none;
+}
+
+body.literature3 .prose a:hover {
+  text-decoration: underline;
+}
+
+/* Back to blog button */
+body.literature3 .back-to-blog {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #0066cc;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+body.literature3 .back-to-blog:hover {
+  color: #0052a3;
+  text-decoration: none;
+}
+
+/* Hide unnecessary elements for literature3 style */
+body.literature3 .sidebar,
+body.literature3 .sidenotes-area,
+body.literature3 #toggle-compact,
+body.literature3 .reading-mode-toggle {
+  display: none !important;
+}
+
+body.literature3 .main-content-area {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+}
+
+body.literature3 main {
+  margin: 0;
+  padding: 0;
+}
+
+/* Code styling - minimal and clean */
+body.literature3 .prose code {
+  font-family: 'SF Mono', Monaco, 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.85em;
+  background: #f5f5f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+body.literature3 .prose pre {
+  font-family: 'SF Mono', Monaco, 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.85em;
+  background: #f8f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 1.5em;
+  overflow-x: auto;
+  margin: 2em 0;
+}
+
+body.literature3 .prose pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Blockquotes - minimal */
+body.literature3 .prose blockquote {
+  border-left: 2px solid #ccc;
+  margin: 1em 0;
+  padding: 0 0 0 1em;
+  font-style: normal;
+  color: var(--literature3-text-color);
+}
+
+/* Lists - compact */
+body.literature3 .prose ul,
+body.literature3 .prose ol {
+  margin: 0.8em 0;
+  padding-left: 1.2em;
+}
+
+body.literature3 .prose li {
+  margin-bottom: 0.2em;
+}
+
+/* Hide unnecessary elements for literature3 style */
+body.literature3 .sidebar,
+body.literature3 .sidenotes-area,
+body.literature3 #toggle-compact,
+body.literature3 .reading-mode-toggle {
+  display: none !important;
+}
+
+/* Horizontal rule - subtle separator */
+body.literature3 .prose hr {
+  display: block !important;
+  border: none !important;
+  border-top: 1px solid #333 !important;
+  margin: 1.5em 0 !important;
+  width: 100% !important;
+  height: 0 !important;
+}
+
+/* Selection color */
+body.literature3 ::selection {
+  background: rgba(0, 100, 200, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --literature3-font-size: 13px;
+    --literature3-padding: 15px;
+  }
+  
+  body.literature3 .layout-wrapper {
+    padding: 1.5em 0 30px var(--literature3-padding); /* Keep consistent top padding with standard layout */
+  }
+  
+  body.literature3 .prose h1 {
+    font-size: 16px;
+  }
+  
+  body.literature3 .prose h2 {
+    font-size: 14px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body.literature3 {
+    background: white;
+    color: black;
+  }
+  
+  body.literature3 .prose {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  body.literature3 .style-editor {
+    display: none !important;
+  }
+}
+
+/* NOTEPAD PAGE TYPE - Obsidian-style note-taking */
+:root {
+  --notepad-font-size: 16px;
+  --notepad-line-height: 1.6;
+  --notepad-max-width: 700px;
+  --notepad-bg: #fafafa;
+  --notepad-text: #333;
+  --notepad-accent: #ff8c00; /* Orange */
+  --notepad-tint: rgba(255, 140, 0, 0.05);
+}
+
+/* Notepad page layout - Apache index style */
+body.notepad {
+  font-family: monospace;
+  background: var(--body-background);
+  color: var(--body-font-color);
+}
+
+/* Hide sidebar on notepad page for more space */
+body.notepad .sidebar {
+  display: none;
+}
+
+body.notepad .layout-wrapper {
+  display: block;
+  max-width: none;
+  padding: 1em;
+}
+
+body.notepad .main-content-area {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+body.notepad main {
+  padding: 0;
+  margin: 0;
+}
+
+

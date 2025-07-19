@@ -1,0 +1,1164 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title="Planning Wall" description="Project planning board" />
+	</head>
+	<body>
+		<main>
+  <style is:global>
+    body {
+      background-color: #fdfdfd;
+      color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .planning-wall-header {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 10px;
+    }
+    
+    .planning-wall-header a {
+      color: #000;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    .planning-wall-header a:hover {
+      color: #0055bb;
+    }
+    
+    .planning-wall-header a:focus {
+      outline: none;
+    }
+    
+    .wall-controls {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      margin-bottom: 20px;
+    }
+    
+    .wall-controls a {
+      color: #0055bb;
+      text-decoration: underline;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+    
+    .wall-controls a:hover {
+      text-decoration: none;
+    }
+    
+    .planning-board {
+      display: grid;
+      grid-template-columns: repeat(5, 300px); /* 5 columns of 300px each */
+      gap: 20px;
+      margin-top: 20px;
+      padding-bottom: 100px; /* Space for adding cards at bottom */
+    }
+    
+    .grid-slot {
+      position: relative;
+      min-height: 200px;
+      border: 1px dotted transparent;
+      transition: none; /* Remove transitions for snappiness */
+    }
+    
+    .grid-slot.drag-over {
+      border: 1px dotted #999;
+    }
+    
+    /* No visual change for swap slots borders */
+    .grid-slot.drag-over.swap-indicator {
+      border: 1px dotted transparent;
+    }
+    
+    /* Make the card underneath show it will be swapped */
+    .grid-slot.drag-over.swap-indicator .project-card {
+      opacity: 0.7;
+      background: #f0f0f0;
+      border-style: dashed;
+    }
+    
+    .grid-slot.occupied {
+      border: none;
+    }
+    
+    .project-card {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      border: 1px solid #000;
+      background: #fdfdfd;
+      position: relative;
+      cursor: default;
+      transition: none; /* Snappy movement */
+      margin-bottom: 10px;
+    }
+    
+    /* Remove swap animation - too jumpy */
+    
+    .project-card:last-child {
+      margin-bottom: 0;
+    }
+    
+    .project-card.selected {
+      border: 2px solid #ff5500 !important;
+      box-shadow: 0 0 0 1px #ff5500;
+    }
+    
+    .project-card.dragging {
+      opacity: 0.6;
+      cursor: grabbing !important;
+      z-index: 1000;
+      transform: rotate(2deg);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .project-card.drag-over {
+      border: 2px solid #ff5500;
+    }
+    
+    .card-header {
+      border-bottom: 1px solid #000;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f6f8fa;
+    }
+    
+    .card-title {
+      font-weight: 600;
+      flex: 1;
+      margin-right: 10px;
+      cursor: text;
+    }
+    
+    .card-controls {
+      display: flex;
+      gap: 8px;
+      color: #666;
+      font-size: 12px;
+    }
+    
+    .card-controls a {
+      color: #666;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    
+    .card-controls a:hover {
+      text-decoration: none;
+      color: #000;
+    }
+    
+    .card-content {
+      padding: 10px;
+      min-height: 100px;
+      cursor: text;
+      outline: none;
+    }
+    
+    .card-content[contenteditable="true"]:focus {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .card-meta {
+      padding: 10px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-status {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.1s;
+    }
+    
+    .card-status:hover {
+      border: 1px dotted #999;
+    }
+    
+    .status-planning { color: #666; }
+    .status-active { color: #ff5500; }
+    .status-paused { color: #0055bb; }
+    .status-complete { color: #008000; }
+    
+    .priority-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 8px;
+    }
+    
+    .priority-high { background: #ff5500; }
+    .priority-medium { background: #ffaa00; }
+    .priority-low { background: #999; }
+    
+    .priority-text {
+      cursor: pointer;
+      padding: 2px 6px;
+      border: 1px solid transparent;
+      transition: border-color 0.1s;
+    }
+    
+    .priority-text:hover {
+      border: 1px dotted #999;
+    }
+    
+    /* Custom dropdown styles */
+    .custom-dropdown {
+      position: absolute;
+      background: #fdfdfd;
+      border: 1px solid #000;
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 12px;
+      z-index: 1000;
+      min-width: 100px;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .custom-dropdown-option {
+      padding: 4px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      user-select: none;
+    }
+    
+    .custom-dropdown-option:last-child {
+      border-bottom: none;
+    }
+    
+    .custom-dropdown-option:hover {
+      background: #f0f0f0;
+    }
+    
+    .custom-dropdown-option.selected {
+      background: #f6f8fa;
+      font-weight: 600;
+    }
+    
+    .edit-mode {
+      background: transparent;
+      border: none;
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 13px;
+      width: 100%;
+      padding: 0;
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .edit-mode:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.5);
+    }
+    
+    input.edit-mode {
+      min-height: auto;
+      resize: none;
+    }
+    
+    /* Title specific edit mode */
+    .card-title input.edit-mode {
+      font-weight: 600;
+      font-size: inherit;
+      background: transparent;
+    }
+    
+    .card-title input.edit-mode:focus {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Description edit mode */
+    textarea.edit-mode {
+      line-height: 1.5;
+      padding: 2px;
+    }
+    
+    
+    .drag-handle {
+      cursor: grab;
+      color: #999;
+      user-select: none;
+      font-size: 16px;
+      padding: 0 5px;
+    }
+    
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    
+    /* Prevent drag cursor on editable areas */
+    .card-title,
+    .card-content,
+    .card-status,
+    .priority-text {
+      user-select: text;
+    }
+    
+    /* Show grab cursor on card but not on interactive areas */
+    .project-card {
+      cursor: grab;
+    }
+    
+    .project-card:active {
+      cursor: grabbing;
+    }
+    
+    /* But not on interactive elements within header */
+    .card-title,
+    .card-controls,
+    .card-controls a {
+      cursor: auto;
+    }
+    
+    .card-title {
+      cursor: text !important;
+    }
+    
+    .empty-state {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      text-align: center;
+      color: #666;
+      margin-top: 100px;
+      font-size: 13px;
+    }
+    
+    #save-status {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 12px;
+      color: #666;
+      margin-left: 15px;
+      display: inline-block;
+    }
+    
+    .new-card {
+      opacity: 0.7;
+      border: 2px dashed #999;
+      background: #fafafa;
+    }
+    
+    .new-card .card-header {
+      background: #f0f0f0;
+    }
+  </style>
+
+  <div class="planning-wall-header">
+    <a href="/">Index</a> of /planning-wall
+  </div>
+
+  <div class="wall-controls">
+    <a id="new-project" title="Shift+click to stack below selected/leftmost card">[new card]</a>
+    <a id="save-all">[save all]</a>
+    <a id="clear-completed">[clear completed]</a>
+    <span id="save-status"></span>
+  </div>
+
+  <div id="planning-board" class="planning-board">
+  </div>
+
+  <script>
+    // Planning Wall State Management
+    class PlanningWall {
+      constructor() {
+        this.projects = [];
+        this.unsavedChanges = new Set();
+        this.selectedCardId = null; // Track selected card
+        this.activeDropdown = null; // Track active dropdown
+        this.activeDropdownField = null; // Track field that opened dropdown
+        
+        // Grid configuration
+        this.gridColumns = 5; // Number of columns in grid
+        this.maxRows = 20; // Initial max rows (will expand as needed)
+        
+        // Drag state
+        this.dragState = {
+          draggedCard: null,
+          hoveredSlot: null
+        };
+        
+        this.loadProjects();
+        this.initializeEventListeners();
+        this.render();
+        this.updateSaveButton();
+      }
+
+      loadProjects() {
+        const saved = localStorage.getItem('planning-wall-projects');
+        if (saved) {
+          this.projects = JSON.parse(saved);
+          // Ensure all projects have grid positions
+          this.projects.forEach((project, index) => {
+            if (project.gridX === undefined || project.gridY === undefined) {
+              // Auto-position old projects that don't have grid coords
+              project.gridX = index % this.gridColumns;
+              project.gridY = Math.floor(index / this.gridColumns);
+            }
+          });
+        }
+      }
+
+      saveProjects() {
+        localStorage.setItem('planning-wall-projects', JSON.stringify(this.projects));
+        this.unsavedChanges.clear();
+        this.updateSaveButton();
+        this.showSaveStatus('All changes saved');
+        this.render();
+      }
+      
+      updateSaveButton() {
+        const saveBtn = document.getElementById('save-all');
+        const count = this.unsavedChanges.size;
+        if (count > 0) {
+          saveBtn.textContent = `[save • ${count}]`;
+        } else {
+          saveBtn.textContent = '[save all]';
+        }
+      }
+
+      showSaveStatus(message) {
+        const status = document.getElementById('save-status');
+        status.textContent = message;
+        setTimeout(() => {
+          status.textContent = '';
+        }, 3000);
+      }
+
+      generateId() {
+        return `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      }
+
+      createProject(data) {
+        // Find first empty slot in grid
+        const emptySlot = this.findEmptySlot();
+        
+        const project = {
+          id: this.generateId(),
+          title: data.title || 'Untitled Project',
+          description: data.description || '',
+          status: data.status || 'planning',
+          priority: data.priority || 'medium',
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
+          gridX: emptySlot.x,
+          gridY: emptySlot.y
+        };
+        this.projects.push(project);
+        this.unsavedChanges.add(project.id);
+        this.updateSaveButton();
+        this.render();
+      }
+      
+      findEmptySlot() {
+        // Create a map of occupied slots
+        const occupied = new Set();
+        this.projects.forEach(p => {
+          occupied.add(`${p.gridX},${p.gridY}`);
+        });
+        
+        // Find first empty slot
+        for (let y = 0; y < this.maxRows; y++) {
+          for (let x = 0; x < this.gridColumns; x++) {
+            if (!occupied.has(`${x},${y}`)) {
+              return { x, y };
+            }
+          }
+        }
+        
+        // If all slots are full, expand grid
+        return { x: 0, y: this.maxRows };
+      }
+
+      updateProject(id, updates) {
+        const project = this.projects.find(p => p.id === id);
+        if (project) {
+          Object.assign(project, updates);
+          project.modified = new Date().toISOString();
+          this.unsavedChanges.add(id);
+          this.updateSaveButton();
+          this.render();
+        }
+      }
+
+      deleteProject(id) {
+        this.projects = this.projects.filter(p => p.id !== id);
+        this.unsavedChanges.delete(id);
+        this.updateSaveButton();
+        this.render();
+      }
+
+      // Simple grid-based drag and drop
+      setupGridDragDrop() {
+        // Add listeners to all grid slots
+        document.querySelectorAll('.grid-slot').forEach(slot => {
+          slot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (this.dragState.draggedCard) {
+              slot.classList.add('drag-over');
+              
+              // Check if this slot is occupied by another card
+              const isOccupied = slot.classList.contains('occupied') && 
+                                 !slot.contains(this.dragState.draggedCard);
+              
+              if (isOccupied) {
+                slot.classList.add('swap-indicator');
+              } else {
+                slot.classList.remove('swap-indicator');
+              }
+              
+              this.dragState.hoveredSlot = slot;
+            }
+          });
+          
+          slot.addEventListener('dragleave', (e) => {
+            slot.classList.remove('drag-over', 'swap-indicator');
+            if (this.dragState.hoveredSlot === slot) {
+              this.dragState.hoveredSlot = null;
+            }
+          });
+          
+          slot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.handleDrop(slot);
+          });
+        });
+      }
+      
+      startDrag(card) {
+        this.dragState.draggedCard = card;
+        card.classList.add('dragging');
+      }
+      
+      endDrag() {
+        if (this.dragState.draggedCard) {
+          this.dragState.draggedCard.classList.remove('dragging');
+        }
+        
+        // Clear hover states
+        document.querySelectorAll('.grid-slot').forEach(slot => {
+          slot.classList.remove('drag-over');
+        });
+        
+        this.dragState = {
+          draggedCard: null,
+          hoveredSlot: null
+        };
+      }
+      
+      handleDrop(slot) {
+        if (!this.dragState.draggedCard) return;
+        
+        const draggedCardId = this.dragState.draggedCard.dataset.id;
+        const targetX = parseInt(slot.dataset.x);
+        const targetY = parseInt(slot.dataset.y);
+        
+        // Find the dragged project
+        const draggedProject = this.projects.find(p => p.id === draggedCardId);
+        if (!draggedProject) return;
+        
+        // Check if target slot is occupied
+        const occupyingProject = this.projects.find(p => 
+          p.gridX === targetX && p.gridY === targetY && p.id !== draggedCardId
+        );
+        
+        if (occupyingProject) {
+          // Swap positions
+          const tempX = draggedProject.gridX;
+          const tempY = draggedProject.gridY;
+          
+          draggedProject.gridX = targetX;
+          draggedProject.gridY = targetY;
+          
+          occupyingProject.gridX = tempX;
+          occupyingProject.gridY = tempY;
+          
+          this.unsavedChanges.add(draggedCardId);
+          this.unsavedChanges.add(occupyingProject.id);
+          this.updateSaveButton();
+          
+          this.render();
+        } else {
+          // Just move to empty slot
+          draggedProject.gridX = targetX;
+          draggedProject.gridY = targetY;
+          this.unsavedChanges.add(draggedCardId);
+          this.updateSaveButton();
+          this.render();
+        }
+      }
+
+      clearCompleted() {
+        const completed = this.projects.filter(p => p.status === 'complete');
+        if (completed.length && confirm(`Remove ${completed.length} completed project(s)?`)) {
+          this.projects = this.projects.filter(p => p.status !== 'complete');
+          this.render();
+          this.saveProjects();
+        }
+      }
+
+      render() {
+        // Clean up any active dropdown
+        this.removeCustomDropdown();
+        
+        const board = document.getElementById('planning-board');
+        
+        if (this.projects.length === 0) {
+          board.innerHTML = `
+            <div class="empty-state" id="empty-state" style="grid-column: 1 / -1;">
+              No projects yet. Click [new project] to create one.
+            </div>
+          `;
+          return;
+        }
+        
+        // Calculate needed rows
+        const maxY = Math.max(...this.projects.map(p => p.gridY), 5);
+        const rows = maxY + 2; // Add extra rows for expansion
+        
+        // Create grid of slots
+        let html = '';
+        for (let y = 0; y <= rows; y++) {
+          for (let x = 0; x < this.gridColumns; x++) {
+            const project = this.projects.find(p => p.gridX === x && p.gridY === y);
+            const isOccupied = !!project;
+            
+            html += `
+              <div class="grid-slot ${isOccupied ? 'occupied' : ''}" 
+                   data-x="${x}" 
+                   data-y="${y}">
+                ${project ? this.renderCard(project) : ''}
+              </div>
+            `;
+          }
+        }
+        
+        board.innerHTML = html;
+        
+        // Reattach event listeners
+        this.attachCardListeners();
+        this.setupGridDragDrop();
+      }
+
+      renderCard(project) {
+        const modified = new Date(project.modified).toLocaleDateString();
+        const isSelected = this.selectedCardId === project.id;
+        const isGhost = project.isGhost && !project.title;
+        
+        return `
+          <div class="project-card${isSelected ? ' selected' : ''}${isGhost ? ' new-card' : ''}" draggable="true" data-id="${project.id}">
+            <div class="card-header">
+              <span class="drag-handle">[⋮⋮]</span>
+              <div class="card-title" data-field="title">${project.title ? this.escapeHtml(project.title) : '<span style="color: #999; font-style: italic;">Untitled</span>'}</div>
+              <div class="card-controls">
+                <a class="edit-btn">[edit]</a>
+                <a class="delete-btn">[x]</a>
+              </div>
+            </div>
+            <div class="card-content" data-field="description">${this.formatDescription(project.description)}</div>
+            <div class="card-meta">
+              <span class="card-status status-${project.status}" data-field="status">${project.status}</span>
+              <span>
+                <span data-field="priority" class="priority-text">${project.priority}</span>
+                <span class="priority-dot priority-${project.priority}"></span>
+              </span>
+              <span class="card-date">${modified}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      
+      formatDescription(text) {
+        // First escape HTML, then convert newlines to <br>
+        const escaped = this.escapeHtml(text);
+        return escaped.replace(/\n/g, '<br>');
+      }
+      
+      setupContentEditable(field, projectId) {
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+        
+        // Make it contenteditable on click
+        field.addEventListener('click', (e) => {
+          if (field.contentEditable !== 'true') {
+            field.contentEditable = true;
+            field.focus();
+            
+            // Place cursor at click position
+            const selection = window.getSelection();
+            const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            if (range) {
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+          }
+        });
+        
+        // Save on blur
+        field.addEventListener('blur', () => {
+          if (field.contentEditable === 'true') {
+            field.contentEditable = false;
+            
+            // Get text content preserving line breaks
+            const walker = document.createTreeWalker(
+              field,
+              NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+              null,
+              false
+            );
+            
+            let text = '';
+            let node;
+            while (node = walker.nextNode()) {
+              if (node.nodeType === Node.TEXT_NODE) {
+                text += node.textContent;
+              } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName === 'BR') {
+                text += '\n';
+              } else if (node.nodeType === Node.ELEMENT_NODE && 
+                         (node.nodeName === 'DIV' || node.nodeName === 'P') && 
+                         text.length > 0 && !text.endsWith('\n')) {
+                text += '\n';
+              }
+            }
+            
+            // Clean up extra newlines at the end and remove zero-width spaces
+            text = text.replace(/\n+$/, '').replace(/\u200B/g, '');
+            
+            if (text !== project.description) {
+              this.updateProject(projectId, { description: text });
+            }
+          }
+        });
+        
+        // Handle Enter key to insert line breaks
+        field.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && field.contentEditable === 'true') {
+            e.preventDefault();
+            
+            // Insert a <br> followed by a zero-width space to ensure cursor positioning
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            
+            const br = document.createElement('br');
+            range.deleteContents();
+            range.insertNode(br);
+            
+            // Move cursor after the br
+            range.setStartAfter(br);
+            range.setEndAfter(br);
+            
+            // Insert a zero-width space to ensure the cursor stays on the new line
+            const textNode = document.createTextNode('\u200B');
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+            
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        });
+      }
+      
+      
+      selectCard(cardId) {
+        if (this.selectedCardId === cardId) {
+          // Deselect if clicking the same card
+          this.selectedCardId = null;
+        } else {
+          // Select the new card
+          this.selectedCardId = cardId;
+        }
+        
+        // Update visual state
+        document.querySelectorAll('.project-card').forEach(card => {
+          if (card.dataset.id === this.selectedCardId) {
+            card.classList.add('selected');
+          } else {
+            card.classList.remove('selected');
+          }
+        });
+      }
+
+      attachCardListeners() {
+        document.querySelectorAll('.project-card').forEach(card => {
+          const id = card.dataset.id;
+          
+          // Selection handling
+          card.addEventListener('click', (e) => {
+            // Don't select if clicking on controls, editing, or clickable fields
+            if (e.target.closest('.card-controls') || 
+                e.target.matches('input, textarea, select') ||
+                e.target.closest('[data-field]')) {
+              return;
+            }
+            this.selectCard(id);
+          });
+          
+          // Drag events - allow from anywhere except interactive elements
+          card.addEventListener('dragstart', (e) => {
+            // Prevent drag from interactive elements
+            if (e.target.closest('[data-field]') || 
+                e.target.closest('.card-controls') ||
+                e.target.closest('input') ||
+                e.target.closest('textarea') ||
+                e.target.closest('select')) {
+              e.preventDefault();
+            } else {
+              this.handleDragStart(e, card);
+            }
+          });
+          
+          card.addEventListener('dragend', (e) => this.handleDragEnd(e, card));
+          card.addEventListener('dragover', (e) => this.handleDragOver(e));
+          
+          // Edit button
+          card.querySelector('.edit-btn').addEventListener('click', () => {
+            this.toggleEditMode(card);
+          });
+          
+          // Delete button
+          card.querySelector('.delete-btn').addEventListener('click', () => {
+            if (confirm('Delete this project?')) {
+              this.deleteProject(id);
+            }
+          });
+          
+          // Inline editing - handle description differently
+          const descriptionField = card.querySelector('[data-field="description"]');
+          if (descriptionField) {
+            this.setupContentEditable(descriptionField, id);
+          }
+          
+          // Other fields use the old system
+          card.querySelectorAll('[data-field]:not([data-field="description"])').forEach(field => {
+            field.addEventListener('click', (e) => {
+              if (!e.target.closest('.card-controls')) {
+                // Check if already in edit mode
+                if (!field.querySelector('input, textarea, select')) {
+                  // For dropdowns, check if clicking the same field that has an open dropdown
+                  const fieldName = field.dataset.field;
+                  if ((fieldName === 'status' || fieldName === 'priority') && 
+                      this.activeDropdown && 
+                      this.activeDropdownField === field) {
+                    // Close the dropdown
+                    this.removeCustomDropdown();
+                  } else {
+                    this.makeFieldEditable(field, id);
+                  }
+                }
+              }
+            });
+          });
+        });
+      }
+      
+      // Removed attachColumnListeners - no longer using columns
+
+      toggleEditMode(card) {
+        const fields = card.querySelectorAll('[data-field]');
+        fields.forEach(field => {
+          if (!field.querySelector('input, textarea, select')) {
+            this.makeFieldEditable(field, card.dataset.id);
+          }
+        });
+      }
+
+      makeFieldEditable(field, projectId, clickPosition = null) {
+        const fieldName = field.dataset.field;
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+        
+        // Skip description field - it uses contenteditable
+        if (fieldName === 'description') return;
+        
+        const currentValue = project[fieldName];
+        
+        if (fieldName === 'status' || fieldName === 'priority') {
+          // Create custom dropdown
+          this.createCustomDropdown(field, fieldName, currentValue, projectId);
+        } else {
+          // Text input for title
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'edit-mode';
+          input.value = currentValue;
+          
+          field.innerHTML = '';
+          field.appendChild(input);
+          
+          // Focus and position cursor
+          input.focus();
+          
+          // For title field, don't select all text
+          if (fieldName !== 'title') {
+            input.select();
+          }
+          
+          const saveEdit = () => {
+            // Only trim for title field, preserve whitespace for description
+            const newValue = fieldName === 'title' ? input.value.trim() : input.value;
+            if (newValue !== currentValue) {
+              const updates = { [fieldName]: newValue };
+              
+              // If we're setting a title on a ghost card, remove ghost status
+              if (fieldName === 'title' && newValue && project.isGhost) {
+                updates.isGhost = false;
+              }
+              
+              this.updateProject(projectId, updates);
+            } else {
+              this.render();
+            }
+          };
+          
+          input.addEventListener('blur', saveEdit);
+          
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && input.tagName !== 'TEXTAREA') {
+              e.preventDefault();
+              input.blur();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              this.render();
+            }
+          });
+        }
+      }
+      
+      createCustomDropdown(field, fieldName, currentValue, projectId) {
+        // Close any existing dropdown first
+        this.removeCustomDropdown();
+        
+        const options = fieldName === 'status' 
+          ? ['planning', 'active', 'paused', 'complete']
+          : ['high', 'medium', 'low'];
+        
+        // Create dropdown container
+        const dropdown = document.createElement('div');
+        dropdown.className = 'custom-dropdown';
+        
+        // Position dropdown below the field
+        const rect = field.getBoundingClientRect();
+        dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+        dropdown.style.left = `${rect.left + window.scrollX}px`;
+        
+        // Create options
+        options.forEach(opt => {
+          const option = document.createElement('div');
+          option.className = 'custom-dropdown-option';
+          if (opt === currentValue) {
+            option.classList.add('selected');
+          }
+          option.textContent = opt;
+          
+          option.addEventListener('click', () => {
+            this.updateProject(projectId, { [fieldName]: opt });
+            this.removeCustomDropdown();
+          });
+          
+          dropdown.appendChild(option);
+        });
+        
+        // Add to body to avoid clipping
+        document.body.appendChild(dropdown);
+        
+        // Store reference for cleanup
+        this.activeDropdown = dropdown;
+        this.activeDropdownField = field; // Store field reference
+        
+        // Close on click outside
+        setTimeout(() => {
+          document.addEventListener('click', this.handleDropdownClickOutside);
+        }, 0);
+        
+        // Close on escape
+        document.addEventListener('keydown', this.handleDropdownEscape);
+      }
+      
+      handleDropdownClickOutside = (e) => {
+        if (this.activeDropdown && 
+            !this.activeDropdown.contains(e.target) &&
+            !this.activeDropdownField.contains(e.target)) {
+          this.removeCustomDropdown();
+        }
+      }
+      
+      handleDropdownEscape = (e) => {
+        if (e.key === 'Escape' && this.activeDropdown) {
+          this.removeCustomDropdown();
+        }
+      }
+      
+      removeCustomDropdown() {
+        if (this.activeDropdown) {
+          this.activeDropdown.remove();
+          this.activeDropdown = null;
+          this.activeDropdownField = null;
+          document.removeEventListener('click', this.handleDropdownClickOutside);
+          document.removeEventListener('keydown', this.handleDropdownEscape);
+        }
+      }
+
+      // Simple drag event handlers
+      handleDragStart(e, card) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.id);
+        this.startDrag(card);
+      }
+
+      handleDragEnd(e, card) {
+        this.endDrag();
+      }
+
+      handleDragOver(e) {
+        e.preventDefault(); // Allow drop
+        e.dataTransfer.dropEffect = 'move';
+      }
+
+      createNewCard(nearSelectedCard = false) {
+        let targetSlot;
+        
+        if (nearSelectedCard && this.selectedCardId) {
+          // Find selected card's position
+          const selectedProject = this.projects.find(p => p.id === this.selectedCardId);
+          if (selectedProject) {
+            // Try to place it below the selected card
+            const candidateSlot = { x: selectedProject.gridX, y: selectedProject.gridY + 1 };
+            
+            // Check if that slot is empty
+            const occupied = this.projects.some(p => 
+              p.gridX === candidateSlot.x && p.gridY === candidateSlot.y
+            );
+            
+            if (!occupied) {
+              targetSlot = candidateSlot;
+            }
+          }
+        }
+        
+        // If no target slot yet, find first empty slot
+        if (!targetSlot) {
+          targetSlot = this.findEmptySlot();
+        }
+        
+        // Create a ghost project immediately
+        const ghostProject = {
+          id: this.generateId(),
+          title: '',
+          description: '',
+          status: 'planning',
+          priority: 'medium',
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
+          gridX: targetSlot.x,
+          gridY: targetSlot.y,
+          isGhost: true // Mark as ghost
+        };
+        
+        this.projects.push(ghostProject);
+        this.unsavedChanges.add(ghostProject.id);
+        this.updateSaveButton();
+        this.selectedCardId = ghostProject.id; // Select the new card
+        this.render();
+        
+        // After render, immediately make the title editable
+        setTimeout(() => {
+          const newCard = document.querySelector(`[data-id="${ghostProject.id}"]`);
+          if (newCard) {
+            const titleField = newCard.querySelector('[data-field="title"]');
+            if (titleField) {
+              this.makeFieldEditable(titleField, ghostProject.id);
+            }
+          }
+        }, 0);
+      }
+      
+
+      initializeEventListeners() {
+        // New project button
+        document.getElementById('new-project').addEventListener('click', (e) => {
+          this.createNewCard(e.shiftKey); // Shift+click creates near selected card
+        });
+        
+        // Save all button
+        document.getElementById('save-all').addEventListener('click', () => {
+          if (this.unsavedChanges.size > 0) {
+            this.saveProjects();
+          } else {
+            this.showSaveStatus('No changes to save');
+          }
+        });
+        
+        // Clear completed button
+        document.getElementById('clear-completed').addEventListener('click', () => {
+          this.clearCompleted();
+        });
+        
+        // Auto-save on page unload
+        window.addEventListener('beforeunload', (e) => {
+          if (this.unsavedChanges.size > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+          }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          if (e.metaKey || e.ctrlKey) {
+            if (e.key === 's') {
+              e.preventDefault();
+              if (this.unsavedChanges.size > 0) {
+                this.saveProjects();
+              }
+            }
+          }
+        });
+        
+        // Click outside cards to deselect
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.project-card') && this.selectedCardId) {
+            this.selectedCardId = null;
+            document.querySelectorAll('.project-card.selected').forEach(card => {
+              card.classList.remove('selected');
+            });
+          }
+        });
+      }
+    }
+
+    // Initialize planning wall when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      window.planningWall = new PlanningWall();
+    });
+  </script>
+		</main>
+		<Footer />
+	</body>
+</html>

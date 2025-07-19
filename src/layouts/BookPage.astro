@@ -1,0 +1,142 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+
+const { title, description, photocopy = false, perspective = false } = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={description || ""} />
+		<style>
+			/* Base book page styles embedded directly */
+			body {
+				background: #d8d1c3;
+				display: flex;
+				justify-content: center;
+				padding: 4rem 1rem;
+				margin: 0;
+			}
+
+			.book-page {
+				position: relative;
+				background: url("/textures/paper-fibers.svg") #fdfbf7;
+				background-size: 1000px;
+				max-width: 42rem;
+				padding: 3.5rem 2.75rem;
+				box-shadow:
+					0 6px 10px rgba(0,0,0,.25),
+					inset 0 0 2px rgba(0,0,0,.2);
+				color: #111;
+				line-height: 1.55;
+				text-align: justify;
+				counter-reset: page 1;
+			}
+
+			.book-page p {
+				margin: 0 0 1em;
+				text-indent: 1.3em;
+			}
+
+			.book-page h2 {
+				font-feature-settings: "smcp";
+				margin: 2.5em 0 1em;
+			}
+
+			.book-page img {
+				display: block;
+				margin: 1.5em auto;
+				max-width: 90%;
+			}
+
+			@media (min-width: 60rem) {
+				.book-page {
+					font-size: 1.125rem;
+				}
+			}
+
+			/* Photocopy effect */
+			body.photocopy .book-page {
+				filter: grayscale(1) contrast(1.15) brightness(.92);
+			}
+			
+			body.photocopy .book-page::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background: url("/textures/xerox-noise.svg");
+				background-size: 900px;
+				mix-blend-mode: multiply;
+				opacity: .25;
+				pointer-events: none;
+			}
+
+			/* Perspective effect */
+			body.perspective .book-page {
+				transform: perspective(1300px) rotateX(3deg) rotateY(-4deg);
+			}
+
+			/* Page curl effect */
+			.book-page::before {
+				content: "";
+				position: absolute;
+				bottom: 0;
+				right: 0;
+				width: 8rem;
+				height: 8rem;
+				background: radial-gradient(
+					circle at bottom right,
+					rgba(255,255,255,0) 0%,
+					rgba(0,0,0,.3) 100%
+				);
+				transform: translate(35%,30%) rotate(45deg);
+				filter: blur(6px);
+				pointer-events: none;
+			}
+
+			/* Drop cap */
+			.book-page h1:first-child::first-letter {
+				font-size: 3.8em;
+				line-height: .65;
+				float: left;
+				padding: .05em .1em 0 0;
+			}
+
+			/* Page numbers */
+			.book-page section {
+				counter-increment: page;
+				position: relative;
+			}
+			
+			.book-page section::after {
+				content: counter(page);
+				position: absolute;
+				bottom: 1.2rem;
+				right: 0;
+				font-size: .85em;
+				letter-spacing: .05em;
+			}
+
+			/* Accessibility */
+			@media (prefers-reduced-motion: reduce) {
+				.book-page {
+					transform: none !important;
+				}
+			}
+
+			@media (prefers-contrast: more) {
+				body.photocopy .book-page {
+					filter: none;
+				}
+				body.photocopy .book-page::after {
+					display: none;
+				}
+			}
+		</style>
+	</head>
+	<body class:list={[{ photocopy, perspective }]}>
+		<article class="book-page">
+			<slot />
+		</article>
+	</body>
+</html> 

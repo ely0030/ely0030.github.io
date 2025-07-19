@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import remarkBreaks from 'remark-breaks';
+import remarkPreserveNewlines from './src/utils/remark-preserve-newlines.js';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
@@ -13,7 +14,7 @@ export default defineConfig({
 	integrations: [mdx({ syntaxHighlight: false }), sitemap()],
 	output: 'static',
 	markdown: {
-		remarkPlugins: [remarkBreaks],
+		remarkPlugins: [remarkPreserveNewlines, remarkBreaks],
 		syntaxHighlight: 'prism',
 		rehypePlugins: [[rehypePrism, { ignoreMissing: true }]],
 		smartypants: false,

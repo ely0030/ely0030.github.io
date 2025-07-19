@@ -1,0 +1,398 @@
+---
+// Style editor component for literature page type
+---
+
+<div id="style-editor" class="style-editor">
+  <div class="editor-header">
+    <h3>Style Editor</h3>
+    <button id="toggle-editor" class="toggle-btn">−</button>
+  </div>
+  
+  <div class="editor-content">
+    <div class="control-group">
+      <label for="font-size">Font Size</label>
+      <input type="range" id="font-size" min="12" max="18" value="13" step="1">
+      <span class="value-display">13px</span>
+    </div>
+    
+    <div class="control-group">
+      <label for="line-height">Line Height</label>
+      <input type="range" id="line-height" min="1.1" max="1.6" value="1.3" step="0.1">
+      <span class="value-display">1.3</span>
+    </div>
+    
+    <div class="control-group">
+      <label for="max-width">Content Width</label>
+      <input type="range" id="max-width" min="480" max="1200" value="480" step="20">
+      <span class="value-display">480px</span>
+    </div>
+    
+    <div class="control-group">
+      <label for="padding">Page Margins</label>
+      <input type="range" id="padding" min="10" max="60" value="20" step="5">
+      <span class="value-display">20px</span>
+    </div>
+    
+    <div class="control-group">
+      <label for="paragraph-spacing">Paragraph Spacing</label>
+      <input type="range" id="paragraph-spacing" min="0.5" max="1.5" value="0.8" step="0.1">
+      <span class="value-display">0.8em</span>
+    </div>
+    
+    <div class="control-group">
+      <label for="text-color">Text Color</label>
+      <input type="range" id="text-color" min="0" max="40" value="0" step="5">
+      <span class="value-display">#000000</span>
+    </div>
+    
+    <div class="control-group">
+      <label for="bg-color">Background Tint</label>
+      <input type="range" id="bg-color" min="0" max="10" value="0" step="1">
+      <span class="value-display">#ffffff</span>
+    </div>
+    
+    <div class="button-group">
+      <button id="reset-styles" class="btn-secondary">Reset</button>
+      <button id="copy-settings" class="btn-primary">Copy Settings</button>
+    </div>
+    
+    <textarea id="settings-output" readonly style="display: none;"></textarea>
+  </div>
+</div>
+
+<style>
+  .style-editor {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 300px;
+    z-index: 1000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+  }
+  
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    cursor: move;
+  }
+  
+  .editor-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .toggle-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .editor-content {
+    padding: 16px;
+  }
+  
+  .editor-content.collapsed {
+    display: none;
+  }
+  
+  .control-group {
+    margin-bottom: 16px;
+  }
+  
+  .control-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .control-group input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    border-radius: 2px;
+    outline: none;
+  }
+  
+  .control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #0066cc;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  .control-group input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #0066cc;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .value-display {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 12px;
+    color: #666;
+    min-width: 60px;
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  
+  .btn-primary, .btn-secondary {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .btn-primary {
+    background: #0066cc;
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: #0052a3;
+  }
+  
+  .btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+  }
+  
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  
+  #settings-output {
+    width: 100%;
+    margin-top: 12px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  /* Hide editor on small screens */
+  @media (max-width: 768px) {
+    .style-editor {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Make the editor draggable
+  const editor = document.getElementById('style-editor');
+  const header = editor.querySelector('.editor-header');
+  let isDragging = false;
+  let currentX;
+  let currentY;
+  let initialX;
+  let initialY;
+  let xOffset = 0;
+  let yOffset = 0;
+
+  header.addEventListener('mousedown', dragStart);
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', dragEnd);
+
+  function dragStart(e) {
+    if (e.target.classList.contains('toggle-btn')) return;
+    
+    initialX = e.clientX - xOffset;
+    initialY = e.clientY - yOffset;
+    isDragging = true;
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    
+    e.preventDefault();
+    currentX = e.clientX - initialX;
+    currentY = e.clientY - initialY;
+    xOffset = currentX;
+    yOffset = currentY;
+
+    editor.style.transform = `translate(${currentX}px, ${currentY}px)`;
+  }
+
+  function dragEnd(e) {
+    initialX = currentX;
+    initialY = currentY;
+    isDragging = false;
+  }
+
+  // Toggle editor
+  const toggleBtn = document.getElementById('toggle-editor');
+  const editorContent = editor.querySelector('.editor-content');
+  
+  toggleBtn.addEventListener('click', () => {
+    editorContent.classList.toggle('collapsed');
+    toggleBtn.textContent = editorContent.classList.contains('collapsed') ? '+' : '−';
+  });
+
+  // Style controls
+  const controls = {
+    fontSize: document.getElementById('font-size'),
+    lineHeight: document.getElementById('line-height'),
+    maxWidth: document.getElementById('max-width'),
+    padding: document.getElementById('padding'),
+    paragraphSpacing: document.getElementById('paragraph-spacing'),
+    textColor: document.getElementById('text-color'),
+    bgColor: document.getElementById('bg-color')
+  };
+
+  const defaultValues = {
+    fontSize: 13,
+    lineHeight: 1.3,
+    maxWidth: 480,
+    padding: 20,
+    paragraphSpacing: 0.8,
+    textColor: 0,
+    bgColor: 0
+  };
+
+  // Update styles
+  function updateStyles() {
+    const styles = {
+      fontSize: controls.fontSize.value + 'px',
+      lineHeight: controls.lineHeight.value,
+      maxWidth: controls.maxWidth.value + 'px',
+      padding: controls.padding.value + 'px',
+      paragraphSpacing: controls.paragraphSpacing.value + 'em',
+      textColor: generateColor(controls.textColor.value),
+      bgColor: generateBgColor(controls.bgColor.value)
+    };
+
+    // Apply styles
+    document.documentElement.style.setProperty('--literature-font-size', styles.fontSize);
+    document.documentElement.style.setProperty('--literature-line-height', styles.lineHeight);
+    document.documentElement.style.setProperty('--literature-max-width', styles.maxWidth);
+    document.documentElement.style.setProperty('--literature-padding', styles.padding);
+    document.documentElement.style.setProperty('--literature-paragraph-spacing', styles.paragraphSpacing);
+    document.documentElement.style.setProperty('--literature-text-color', styles.textColor);
+    document.documentElement.style.setProperty('--literature-bg-color', styles.bgColor);
+
+    // Update value displays
+    controls.fontSize.nextElementSibling.textContent = styles.fontSize;
+    controls.lineHeight.nextElementSibling.textContent = styles.lineHeight;
+    controls.maxWidth.nextElementSibling.textContent = styles.maxWidth;
+    controls.padding.nextElementSibling.textContent = styles.padding;
+    controls.paragraphSpacing.nextElementSibling.textContent = styles.paragraphSpacing;
+    controls.textColor.nextElementSibling.textContent = styles.textColor;
+    controls.bgColor.nextElementSibling.textContent = styles.bgColor;
+  }
+
+  function generateColor(value) {
+    const darkness = parseInt(value);
+    const hex = Math.round(darkness * 2.55).toString(16).padStart(2, '0');
+    return `#${hex}${hex}${hex}`;
+  }
+
+  function generateBgColor(value) {
+    const lightness = 255 - (value * 17);
+    const hex = lightness.toString(16).padStart(2, '0');
+    return `#${hex}${hex}${hex}`;
+  }
+
+  // Add event listeners
+  Object.values(controls).forEach(control => {
+    control.addEventListener('input', updateStyles);
+  });
+
+  // Reset button
+  document.getElementById('reset-styles').addEventListener('click', () => {
+    Object.entries(defaultValues).forEach(([key, value]) => {
+      controls[key].value = value;
+    });
+    updateStyles();
+  });
+
+  // Copy settings button
+  document.getElementById('copy-settings').addEventListener('click', async () => {
+    const settings = {
+      fontSize: controls.fontSize.value,
+      lineHeight: controls.lineHeight.value,
+      maxWidth: controls.maxWidth.value,
+      padding: controls.padding.value,
+      paragraphSpacing: controls.paragraphSpacing.value,
+      textColor: controls.textColor.value,
+      bgColor: controls.bgColor.value
+    };
+
+    const output = `Literature Page Style Settings:
+    
+Font Size: ${settings.fontSize}px
+Line Height: ${settings.lineHeight}
+Max Width: ${settings.maxWidth}px
+Padding: ${settings.padding}px
+Paragraph Spacing: ${settings.paragraphSpacing}em
+Text Color: ${generateColor(settings.textColor)}
+Background: ${generateBgColor(settings.bgColor)}
+
+CSS Variables:
+--literature-font-size: ${settings.fontSize}px;
+--literature-line-height: ${settings.lineHeight};
+--literature-max-width: ${settings.maxWidth}px;
+--literature-padding: ${settings.padding}px;
+--literature-paragraph-spacing: ${settings.paragraphSpacing}em;
+--literature-text-color: ${generateColor(settings.textColor)};
+--literature-bg-color: ${generateBgColor(settings.bgColor)};`;
+
+    const textarea = document.getElementById('settings-output');
+    textarea.style.display = 'block';
+    textarea.value = output;
+    
+    try {
+      await navigator.clipboard.writeText(output);
+      const btn = document.getElementById('copy-settings');
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        textarea.style.display = 'none';
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      textarea.select();
+    }
+  });
+
+  // Initialize
+  updateStyles();
+</script>

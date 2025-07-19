@@ -1,0 +1,1059 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title="Planning Wall" description="Project planning board" />
+	</head>
+	<body>
+		<Header />
+		<main>
+  <style is:global>
+    body {
+      background-color: #fdfdfd;
+      color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .planning-wall-header {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 10px;
+    }
+    
+    .wall-controls {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      margin-bottom: 20px;
+    }
+    
+    .wall-controls a {
+      color: #0055bb;
+      text-decoration: underline;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+    
+    .wall-controls a:hover {
+      text-decoration: none;
+    }
+    
+    .planning-board {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+      align-items: flex-start;
+    }
+    
+    .card-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-width: 300px;
+      flex: 0 0 300px;
+    }
+    
+    .project-card {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      border: 1px solid #000;
+      background: #fdfdfd;
+      position: relative;
+      cursor: move;
+      transition: transform 0.1s ease;
+      margin-bottom: 10px;
+    }
+    
+    .project-card:last-child {
+      margin-bottom: 0;
+    }
+    
+    .project-card.selected {
+      border: 2px solid #ff5500 !important;
+      box-shadow: 0 0 0 1px #ff5500;
+    }
+    
+    .project-card.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+    }
+    
+    .project-card.drag-over {
+      border: 2px solid #ff5500;
+    }
+    
+    /* Removed drop-zone styles - using simpler placeholder approach */
+    
+    .card-placeholder {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      border: 2px dashed #ff5500;
+      background: rgba(255, 85, 0, 0.05);
+      position: relative;
+      margin-bottom: 10px;
+      /* Match the exact dimensions of a real card */
+      min-height: 150px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.15s ease;
+    }
+    
+    .card-placeholder:last-child {
+      margin-bottom: 0;
+    }
+    
+    .placeholder-header {
+      border-bottom: 1px solid #ff5500;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 85, 0, 0.05);
+      color: #ff5500;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .placeholder-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff5500;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+    
+    .new-column-placeholder {
+      min-width: 300px;
+      flex: 0 0 300px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    body:has(.project-card.dragging) .new-column-placeholder {
+      opacity: 1;
+    }
+    
+    .card-header {
+      border-bottom: 1px solid #000;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f6f8fa;
+    }
+    
+    .card-title {
+      font-weight: 600;
+      flex: 1;
+      margin-right: 10px;
+    }
+    
+    .card-controls {
+      display: flex;
+      gap: 8px;
+      color: #666;
+      font-size: 12px;
+    }
+    
+    .card-controls a {
+      color: #666;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    
+    .card-controls a:hover {
+      text-decoration: none;
+      color: #000;
+    }
+    
+    .card-content {
+      padding: 10px;
+      min-height: 100px;
+    }
+    
+    .card-meta {
+      padding: 10px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-status {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    
+    .status-planning { color: #666; }
+    .status-active { color: #ff5500; }
+    .status-paused { color: #0055bb; }
+    .status-complete { color: #008000; }
+    
+    .priority-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 8px;
+    }
+    
+    .priority-high { background: #ff5500; }
+    .priority-medium { background: #ffaa00; }
+    .priority-low { background: #999; }
+    
+    .edit-mode {
+      background: #fff;
+      border: 1px solid #000;
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 13px;
+      width: 100%;
+      padding: 5px;
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .edit-mode:focus {
+      outline: none;
+      border: 1px solid #ff5500;
+    }
+    
+    input.edit-mode {
+      min-height: auto;
+      resize: none;
+    }
+    
+    select.edit-mode {
+      min-height: auto;
+      padding: 3px;
+    }
+    
+    .drag-handle {
+      cursor: move;
+      color: #999;
+      user-select: none;
+    }
+    
+    .unsaved-indicator {
+      color: #ff5500;
+      margin-left: 5px;
+    }
+    
+    .empty-state {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      text-align: center;
+      color: #666;
+      margin-top: 100px;
+      font-size: 13px;
+    }
+    
+    #save-status {
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 12px;
+      color: #666;
+      margin-left: 15px;
+      display: inline-block;
+    }
+    
+    .new-card {
+      opacity: 0.7;
+      border: 2px dashed #999;
+      background: #fafafa;
+    }
+    
+    .new-card .card-header {
+      background: #f0f0f0;
+    }
+    
+    .new-card .drag-handle {
+      visibility: hidden;
+    }
+    
+    .new-card input,
+    .new-card textarea {
+      background: transparent;
+      border: none;
+      font-family: Menlo, Monaco, 'Courier New', monospace;
+      font-size: 13px;
+      width: 100%;
+      padding: 0;
+      resize: none;
+    }
+    
+    .new-card input:focus,
+    .new-card textarea:focus {
+      outline: 1px solid #ff5500;
+    }
+    
+    .new-card .card-title input {
+      font-weight: 600;
+    }
+    
+    .new-card-hint {
+      color: #999;
+      font-size: 11px;
+      font-style: italic;
+    }
+  </style>
+
+  <div class="planning-wall-header">
+    Index of /planning-wall
+  </div>
+
+  <div class="wall-controls">
+    <a id="new-project" title="Shift+click to stack below selected/leftmost card">[new card]</a>
+    <a id="save-all">[save all]</a>
+    <a id="clear-completed">[clear completed]</a>
+    <span id="save-status"></span>
+  </div>
+
+  <div id="planning-board" class="planning-board">
+  </div>
+
+  <script>
+    // Planning Wall State Management
+    class PlanningWall {
+      constructor() {
+        this.projects = [];
+        this.unsavedChanges = new Set();
+        this.columns = []; // Track column structure
+        this.selectedCardId = null; // Track selected card
+        
+        // Drag state
+        this.dragState = {
+          draggedCard: null,
+          placeholder: null,
+          sourceColumn: null,
+          sourcePosition: null
+        };
+        
+        this.loadProjects();
+        this.initializeEventListeners();
+        this.initDragAndDrop();
+        this.render();
+      }
+
+      loadProjects() {
+        const saved = localStorage.getItem('planning-wall-projects');
+        if (saved) {
+          this.projects = JSON.parse(saved);
+        }
+        // Load column structure
+        const savedColumns = localStorage.getItem('planning-wall-columns');
+        if (savedColumns) {
+          this.columns = JSON.parse(savedColumns);
+        } else {
+          // Initialize with projects in single columns
+          this.columns = this.projects.map(p => [p.id]);
+        }
+      }
+
+      saveProjects() {
+        localStorage.setItem('planning-wall-projects', JSON.stringify(this.projects));
+        localStorage.setItem('planning-wall-columns', JSON.stringify(this.columns));
+        this.unsavedChanges.clear();
+        this.showSaveStatus('All changes saved');
+        this.render();
+      }
+
+      showSaveStatus(message) {
+        const status = document.getElementById('save-status');
+        status.textContent = message;
+        setTimeout(() => {
+          status.textContent = '';
+        }, 3000);
+      }
+
+      generateId() {
+        return `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      }
+
+      createProject(data) {
+        const project = {
+          id: this.generateId(),
+          title: data.title || 'Untitled Project',
+          description: data.description || '',
+          status: data.status || 'planning',
+          priority: data.priority || 'medium',
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
+          order: this.projects.length
+        };
+        this.projects.push(project);
+        // Add as a new column
+        this.columns.push([project.id]);
+        this.unsavedChanges.add(project.id);
+        this.render();
+      }
+
+      updateProject(id, updates) {
+        const project = this.projects.find(p => p.id === id);
+        if (project) {
+          Object.assign(project, updates);
+          project.modified = new Date().toISOString();
+          this.unsavedChanges.add(id);
+          this.render();
+        }
+      }
+
+      deleteProject(id) {
+        this.projects = this.projects.filter(p => p.id !== id);
+        this.unsavedChanges.delete(id);
+        // Remove from columns
+        this.columns = this.columns.map(col => col.filter(pid => pid !== id)).filter(col => col.length > 0);
+        this.render();
+      }
+
+      // Clean drag-and-drop implementation
+      initDragAndDrop() {
+        // Create placeholder element
+        const placeholder = document.createElement('div');
+        placeholder.className = 'card-placeholder';
+        placeholder.innerHTML = `
+          <div class="placeholder-header">[drop card here]</div>
+          <div class="placeholder-content">↓</div>
+        `;
+        this.dragState.placeholder = placeholder;
+      }
+      
+      startDrag(card) {
+        // Store drag state
+        this.dragState.draggedCard = card;
+        const cardId = card.dataset.id;
+        
+        // Find source position
+        this.columns.forEach((col, colIdx) => {
+          const pos = col.indexOf(cardId);
+          if (pos !== -1) {
+            this.dragState.sourceColumn = colIdx;
+            this.dragState.sourcePosition = pos;
+          }
+        });
+        
+        // Visual feedback
+        card.classList.add('dragging');
+        
+        // Use dragover instead of mousemove for tracking
+        this.globalDragHandler = (e) => {
+          e.preventDefault();
+          if (!this.dragState.draggedCard) return;
+          
+          const column = e.target.closest('.card-column');
+          if (!column) return;
+          
+          const placeholder = this.dragState.placeholder;
+          const mouseY = e.clientY;
+          
+          // Handle new column placeholder
+          if (column.classList.contains('new-column-placeholder')) {
+            placeholder.innerHTML = `
+              <div class="placeholder-header">[create new column]</div>
+              <div class="placeholder-content">+</div>
+            `;
+            column.appendChild(placeholder);
+            return;
+          }
+          
+          // Find insertion point in existing column
+          const cards = Array.from(column.querySelectorAll('.project-card:not(.dragging)'));
+          let insertBefore = null;
+          
+          for (const card of cards) {
+            const cardRect = card.getBoundingClientRect();
+            if (mouseY < cardRect.top + cardRect.height / 2) {
+              insertBefore = card;
+              break;
+            }
+          }
+          
+          // Reset placeholder content
+          placeholder.innerHTML = `
+            <div class="placeholder-header">[drop card here]</div>
+            <div class="placeholder-content">↓</div>
+          `;
+          
+          // Insert placeholder
+          if (insertBefore) {
+            column.insertBefore(placeholder, insertBefore);
+          } else {
+            column.appendChild(placeholder);
+          }
+        };
+        
+        document.addEventListener('dragover', this.globalDragHandler);
+      }
+      
+      endDrag() {
+        const { draggedCard, placeholder, sourceColumn, sourcePosition } = this.dragState;
+        
+        if (!draggedCard || !placeholder) return;
+        
+        // If placeholder is in DOM, execute the move
+        if (placeholder.parentElement) {
+          const targetColumn = placeholder.parentElement;
+          const targetColumnIndex = targetColumn.dataset.column === 'new' 
+            ? this.columns.length 
+            : parseInt(targetColumn.dataset.column);
+          
+          // Calculate target position
+          const cards = Array.from(targetColumn.querySelectorAll('.project-card:not(.dragging)'));
+          const placeholderIndex = Array.from(targetColumn.children).indexOf(placeholder);
+          const targetPosition = cards.filter((card, idx) => 
+            Array.from(targetColumn.children).indexOf(card) < placeholderIndex
+          ).length;
+          
+          // Execute move
+          this.moveCard(draggedCard.dataset.id, targetColumnIndex, targetPosition);
+        }
+        
+        // Clean up
+        if (draggedCard) {
+          draggedCard.classList.remove('dragging');
+        }
+        if (placeholder && placeholder.parentElement) {
+          placeholder.parentElement.removeChild(placeholder);
+        }
+        
+        // Remove event listener
+        if (this.globalDragHandler) {
+          document.removeEventListener('dragover', this.globalDragHandler);
+        }
+        
+        // Reset state
+        this.dragState = {
+          draggedCard: null,
+          placeholder: null,
+          sourceColumn: null,
+          sourcePosition: null
+        };
+      }
+      
+      moveCard(cardId, targetColumn, targetPosition) {
+        
+        // First, find which column currently contains this card
+        let sourceColumnIndex = -1;
+        let sourceCardIndex = -1;
+        
+        this.columns.forEach((col, colIdx) => {
+          const cardIdx = col.indexOf(cardId);
+          if (cardIdx !== -1) {
+            sourceColumnIndex = colIdx;
+            sourceCardIndex = cardIdx;
+          }
+        });
+        
+        if (sourceColumnIndex === -1) {
+          return; // Card not found
+        }
+        
+        // Remove card from source column
+        this.columns[sourceColumnIndex].splice(sourceCardIndex, 1);
+        
+        // Ensure target column exists
+        while (this.columns.length <= targetColumn) {
+          this.columns.push([]);
+        }
+        
+        // Add to target column at position
+        this.columns[targetColumn].splice(targetPosition, 0, cardId);
+        
+        // Clean up empty columns (but preserve at least one)
+        this.columns = this.columns.filter((col, idx) => col.length > 0 || this.columns.length === 1);
+        
+        
+        // Mark as unsaved
+        this.unsavedChanges.add(cardId);
+        this.render();
+      }
+
+      clearCompleted() {
+        const completed = this.projects.filter(p => p.status === 'complete');
+        if (completed.length && confirm(`Remove ${completed.length} completed project(s)?`)) {
+          this.projects = this.projects.filter(p => p.status !== 'complete');
+          this.render();
+          this.saveProjects();
+        }
+      }
+
+      render() {
+        const board = document.getElementById('planning-board');
+        
+        if (this.projects.length === 0) {
+          board.innerHTML = `
+            <div class="empty-state" id="empty-state">
+              No projects yet. Click [new project] to create one.
+            </div>
+          `;
+          return;
+        }
+        
+        // Render columns
+        board.innerHTML = this.columns.map((column, colIndex) => `
+          <div class="card-column" data-column="${colIndex}">
+            ${column.map((projectId, cardIndex) => {
+              const project = this.projects.find(p => p.id === projectId);
+              return project ? this.renderCard(project) : '';
+            }).join('')}
+          </div>
+        `).join('');
+        
+        // Add a placeholder column for new column drops
+        board.insertAdjacentHTML('beforeend', '<div class="card-column new-column-placeholder" data-column="new"></div>');
+        
+        // No need for drop zones anymore - placeholder handles drops
+        
+        // Reattach event listeners for cards
+        this.attachCardListeners();
+        
+        // Attach column listeners
+        this.attachColumnListeners();
+      }
+
+      renderCard(project) {
+        const hasUnsaved = this.unsavedChanges.has(project.id);
+        const modified = new Date(project.modified).toLocaleDateString();
+        const isSelected = this.selectedCardId === project.id;
+        
+        return `
+          <div class="project-card${isSelected ? ' selected' : ''}" draggable="true" data-id="${project.id}">
+            <div class="card-header">
+              <span class="drag-handle">[⋮⋮]</span>
+              <div class="card-title" data-field="title">${this.escapeHtml(project.title)}${hasUnsaved ? '<span class="unsaved-indicator">•</span>' : ''}</div>
+              <div class="card-controls">
+                <a class="edit-btn">[edit]</a>
+                <a class="delete-btn">[x]</a>
+              </div>
+            </div>
+            <div class="card-content" data-field="description">${this.escapeHtml(project.description)}</div>
+            <div class="card-meta">
+              <span class="card-status status-${project.status}" data-field="status">${project.status}</span>
+              <span>
+                <span data-field="priority" class="priority-text">${project.priority}</span>
+                <span class="priority-dot priority-${project.priority}"></span>
+              </span>
+              <span class="card-date">${modified}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      
+      selectCard(cardId) {
+        if (this.selectedCardId === cardId) {
+          // Deselect if clicking the same card
+          this.selectedCardId = null;
+        } else {
+          // Select the new card
+          this.selectedCardId = cardId;
+        }
+        
+        // Update visual state
+        document.querySelectorAll('.project-card').forEach(card => {
+          if (card.dataset.id === this.selectedCardId) {
+            card.classList.add('selected');
+          } else {
+            card.classList.remove('selected');
+          }
+        });
+      }
+
+      attachCardListeners() {
+        document.querySelectorAll('.project-card').forEach(card => {
+          const id = card.dataset.id;
+          
+          // Selection handling
+          card.addEventListener('click', (e) => {
+            // Don't select if clicking on controls or editing
+            if (e.target.closest('.card-controls') || e.target.matches('input, textarea, select')) {
+              return;
+            }
+            this.selectCard(id);
+          });
+          
+          // Drag events - clean and simple
+          card.addEventListener('dragstart', (e) => this.handleDragStart(e, card));
+          card.addEventListener('dragend', (e) => this.handleDragEnd(e, card));
+          card.addEventListener('dragover', (e) => this.handleDragOver(e));
+          
+          // Edit button
+          card.querySelector('.edit-btn').addEventListener('click', () => {
+            this.toggleEditMode(card);
+          });
+          
+          // Delete button
+          card.querySelector('.delete-btn').addEventListener('click', () => {
+            if (confirm('Delete this project?')) {
+              this.deleteProject(id);
+            }
+          });
+          
+          // Inline editing
+          card.querySelectorAll('[data-field]').forEach(field => {
+            field.addEventListener('click', (e) => {
+              if (!e.target.closest('.card-controls')) {
+                this.makeFieldEditable(field, id);
+              }
+            });
+          });
+        });
+      }
+      
+      attachColumnListeners() {
+        // Simple dragover prevention for all columns
+        document.querySelectorAll('.card-column').forEach(column => {
+          column.addEventListener('dragover', (e) => this.handleDragOver(e));
+        });
+      }
+
+      toggleEditMode(card) {
+        const fields = card.querySelectorAll('[data-field]');
+        fields.forEach(field => {
+          if (!field.querySelector('input, textarea, select')) {
+            this.makeFieldEditable(field, card.dataset.id);
+          }
+        });
+      }
+
+      makeFieldEditable(field, projectId) {
+        const fieldName = field.dataset.field;
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+        
+        const currentValue = project[fieldName];
+        let input;
+        
+        if (fieldName === 'description') {
+          input = document.createElement('textarea');
+          input.className = 'edit-mode';
+          input.value = currentValue;
+        } else if (fieldName === 'status' || fieldName === 'priority') {
+          input = document.createElement('select');
+          input.className = 'edit-mode';
+          
+          const options = fieldName === 'status' 
+            ? ['planning', 'active', 'paused', 'complete']
+            : ['high', 'medium', 'low'];
+            
+          options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            if (opt === currentValue) option.selected = true;
+            input.appendChild(option);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'edit-mode';
+          input.value = currentValue;
+        }
+        
+        field.innerHTML = '';
+        field.appendChild(input);
+        input.focus();
+        
+        if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+          input.select();
+        }
+        
+        const saveEdit = () => {
+          const newValue = input.value.trim();
+          if (newValue !== currentValue) {
+            this.updateProject(projectId, { [fieldName]: newValue });
+          } else {
+            this.render();
+          }
+        };
+        
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && input.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            input.blur();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.render();
+          }
+        });
+      }
+
+      // Simple drag event handlers
+      handleDragStart(e, card) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.id);
+        this.startDrag(card);
+      }
+
+      handleDragEnd(e, card) {
+        this.endDrag();
+      }
+
+      handleDragOver(e) {
+        e.preventDefault(); // Allow drop
+        e.dataTransfer.dropEffect = 'move';
+      }
+
+      createNewCard(stackVertically = false) {
+        // Check if there's already a new card being created
+        if (document.querySelector('.new-card')) {
+          return;
+        }
+        
+        // Remove empty state if it exists
+        const emptyState = document.getElementById('empty-state');
+        if (emptyState) {
+          emptyState.remove();
+        }
+        
+        const newCardHtml = `
+          <div class="project-card new-card" data-id="new-card-temp">
+            <div class="card-header">
+              <span class="drag-handle">[⋮⋮]</span>
+              <div class="card-title">
+                <input type="text" placeholder="Project name" id="new-card-title" autofocus>
+              </div>
+              <div class="card-controls">
+                <a class="save-new-btn">[save]</a>
+                <a class="cancel-new-btn">[x]</a>
+              </div>
+            </div>
+            <div class="card-content">
+              <textarea placeholder="What needs to be done?" id="new-card-description"></textarea>
+            </div>
+            <div class="card-meta">
+              <span class="new-card-hint">Fill in details and click [save]</span>
+              <span>
+                <select id="new-card-priority" class="edit-mode">
+                  <option value="high">high</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="low">low</option>
+                </select>
+                <span class="priority-dot priority-medium"></span>
+              </span>
+            </div>
+          </div>
+        `;
+        
+        const board = document.getElementById('planning-board');
+        const columns = board.querySelectorAll('.card-column:not(.drop-zone-column)');
+        
+        if (stackVertically && columns.length > 0) {
+          // Shift+click: Find target column based on selection or use leftmost
+          let targetColumn = null;
+          
+          if (this.selectedCardId) {
+            // Find the column containing the selected card
+            columns.forEach(col => {
+              if (col.querySelector(`.project-card[data-id="${this.selectedCardId}"]`)) {
+                targetColumn = col;
+              }
+            });
+          }
+          
+          // If no selected card or selected card not found, use leftmost column
+          if (!targetColumn) {
+            targetColumn = columns[0];
+          }
+          
+          // Ensure column has proper data-column attribute
+          if (!targetColumn.dataset.column) {
+            // Find the index of this column
+            Array.from(columns).forEach((col, idx) => {
+              if (col === targetColumn) {
+                targetColumn.dataset.column = idx;
+              }
+            });
+          }
+          
+          // If selected card exists, insert after it; otherwise at end of column
+          if (this.selectedCardId) {
+            const selectedCard = targetColumn.querySelector(`.project-card[data-id="${this.selectedCardId}"]`);
+            if (selectedCard) {
+              selectedCard.insertAdjacentHTML('afterend', newCardHtml);
+            } else {
+              // Fallback: add at end of column
+              targetColumn.insertAdjacentHTML('beforeend', newCardHtml);
+            }
+          } else {
+            // No selection, add at end of leftmost column
+            targetColumn.insertAdjacentHTML('beforeend', newCardHtml);
+          }
+        } else {
+          // Default: Create new column to the right
+          const newColumnIndex = this.columns.length;
+          const newColumnHtml = `<div class="card-column" data-column="${newColumnIndex}">${newCardHtml}</div>`;
+          const dropZoneColumn = board.querySelector('.drop-zone-column');
+          if (dropZoneColumn) {
+            dropZoneColumn.insertAdjacentHTML('beforebegin', newColumnHtml);
+          } else {
+            board.insertAdjacentHTML('beforeend', newColumnHtml);
+          }
+        }
+        
+        // Focus on title input
+        const titleInput = document.getElementById('new-card-title');
+        titleInput.focus();
+        
+        // Attach event listeners to the new card
+        const newCard = document.querySelector('.new-card');
+        
+        // Save button
+        newCard.querySelector('.save-new-btn').addEventListener('click', () => {
+          this.saveNewCard();
+        });
+        
+        // Cancel button
+        newCard.querySelector('.cancel-new-btn').addEventListener('click', () => {
+          newCard.remove();
+          // If no projects exist, show empty state again
+          if (this.projects.length === 0) {
+            this.render();
+          }
+        });
+        
+        // Enter key on title saves
+        titleInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.saveNewCard();
+          } else if (e.key === 'Escape') {
+            newCard.remove();
+            // If no projects exist, show empty state again
+            if (this.projects.length === 0) {
+              this.render();
+            }
+          }
+        });
+        
+        // Priority dropdown updates the dot
+        document.getElementById('new-card-priority').addEventListener('change', (e) => {
+          const dot = newCard.querySelector('.priority-dot');
+          dot.className = `priority-dot priority-${e.target.value}`;
+        });
+      }
+      
+      saveNewCard() {
+        const title = document.getElementById('new-card-title').value.trim();
+        const description = document.getElementById('new-card-description').value.trim();
+        const priority = document.getElementById('new-card-priority').value;
+        
+        if (!title) {
+          document.getElementById('new-card-title').focus();
+          return;
+        }
+        
+        // Check where the ghost card is placed
+        const ghostCard = document.querySelector('.new-card');
+        const parentColumn = ghostCard.closest('.card-column');
+        const columnIndex = parseInt(parentColumn.dataset.column);
+        const otherCardsInColumn = parentColumn.querySelectorAll('.project-card:not(.new-card)').length;
+        
+        // Create the project
+        const project = {
+          id: this.generateId(),
+          title: title,
+          description: description,
+          status: 'planning',
+          priority: priority,
+          created: new Date().toISOString(),
+          modified: new Date().toISOString()
+        };
+        
+        this.projects.push(project);
+        
+        // Add to the appropriate column based on where ghost card is
+        if (otherCardsInColumn > 0) {
+          // Ghost card is stacked in existing column
+          this.columns[columnIndex].push(project.id);
+        } else {
+          // Ghost card is in its own new column
+          this.columns.push([project.id]);
+        }
+        
+        this.unsavedChanges.add(project.id);
+        this.render();
+      }
+
+      initializeEventListeners() {
+        // New project button
+        document.getElementById('new-project').addEventListener('click', (e) => {
+          this.createNewCard(e.shiftKey);
+        });
+        
+        // Save all button
+        document.getElementById('save-all').addEventListener('click', () => {
+          if (this.unsavedChanges.size > 0) {
+            this.saveProjects();
+          } else {
+            this.showSaveStatus('No changes to save');
+          }
+        });
+        
+        // Clear completed button
+        document.getElementById('clear-completed').addEventListener('click', () => {
+          this.clearCompleted();
+        });
+        
+        // Auto-save on page unload
+        window.addEventListener('beforeunload', (e) => {
+          if (this.unsavedChanges.size > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+          }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          if (e.metaKey || e.ctrlKey) {
+            if (e.key === 's') {
+              e.preventDefault();
+              if (this.unsavedChanges.size > 0) {
+                this.saveProjects();
+              }
+            }
+          }
+        });
+        
+        // Click outside cards to deselect
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.project-card') && this.selectedCardId) {
+            this.selectedCardId = null;
+            document.querySelectorAll('.project-card.selected').forEach(card => {
+              card.classList.remove('selected');
+            });
+          }
+        });
+      }
+    }
+
+    // Initialize planning wall when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      window.planningWall = new PlanningWall();
+    });
+  </script>
+		</main>
+		<Footer />
+	</body>
+</html>

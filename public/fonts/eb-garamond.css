@@ -1,0 +1,38 @@
+/* EB Garamond font loading */
+@font-face {
+  font-family: 'EB Garamond';
+  src: local('EB Garamond'),
+       url('https://fonts.gstatic.com/s/ebgaramond/v27/SlGUmQSNjdsmc35JDF1K5FRy.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Italic variant */
+@font-face {
+  font-family: 'EB Garamond';
+  src: local('EB Garamond Italic'),
+       url('https://fonts.gstatic.com/s/ebgaramond/v27/SlGWmQSNjdsmc35JDF1K5FRy.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Bold variant */
+@font-face {
+  font-family: 'EB Garamond';
+  src: local('EB Garamond Bold'),
+       url('https://fonts.gstatic.com/s/ebgaramond/v27/SlGUmQSNjdsmc35JDF1K5FRy.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fallback to system fonts if web font fails to load */
+@font-face {
+  font-family: 'EB Garamond';
+  src: local('Georgia');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+} 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notepad Click Test</title>
+    <style>
+        body {
+            padding: 20px;
+            font-family: monospace;
+        }
+        #test-area {
+            border: 2px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        #editor {
+            border: 1px solid #999;
+            padding: 10px;
+            min-height: 100px;
+            background: white;
+        }
+        #output {
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 20px;
+            background: #f0f0f0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Notepad Click/Blur Test</h1>
+    
+    <div id="test-area">
+        <p>Click inside the editor, then click outside to test blur event:</p>
+        <div id="editor" contenteditable="true">
+            Click here to focus, then click outside...
+        </div>
+        <button id="test-button">Test Button</button>
+    </div>
+    
+    <div id="output">Console output will appear here...</div>
+    
+    <script>
+        const editor = document.getElementById('editor');
+        const output = document.getElementById('output');
+        
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            output.textContent += `[${time}] ${msg}\n`;
+            console.log(msg);
+        }
+        
+        // Document click handler (capture phase)
+        document.addEventListener('click', (e) => {
+            log(`Document click (capture): ${e.target.tagName} #${e.target.id || 'no-id'}`);
+        }, true);
+        
+        // Document click handler (bubble phase)
+        document.addEventListener('click', (e) => {
+            log(`Document click (bubble): ${e.target.tagName} #${e.target.id || 'no-id'}`);
+        }, false);
+        
+        // Editor focus
+        editor.addEventListener('focus', (e) => {
+            log('Editor FOCUS event');
+        });
+        
+        // Editor blur
+        editor.addEventListener('blur', (e) => {
+            log('Editor BLUR event triggered');
+            setTimeout(() => {
+                log(`Blur timeout - activeElement: ${document.activeElement.tagName} #${document.activeElement.id || 'no-id'}`);
+            }, 0);
+        });
+        
+        // Test button click
+        document.getElementById('test-button').addEventListener('click', (e) => {
+            log('Test button clicked');
+        });
+        
+        log('Test page loaded - ready to test');
+    </script>
+</body>
+</html>

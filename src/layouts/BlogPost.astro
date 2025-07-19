@@ -4,6 +4,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
+import StyleEditor from '../components/StyleEditor.astro';
 import { type MarkdownHeading } from 'astro';
 
 type Props = CollectionEntry<'blog'>['data'];
@@ -36,7 +37,7 @@ const toc = buildToc(headings);
 <html lang="en">
 	<head>
 		<BaseHead title={title} description={description} />
-		<style>
+		<style is:global>
 			/* Remove main width override */
 			/* main {
 				width: calc(100% - 2em);
@@ -65,6 +66,12 @@ const toc = buildToc(headings);
 			.tags-list li {
 				display: inline-block;
 				margin-right: 0.5em;
+			}
+			
+			/* Fix spacing between paragraphs and lists */
+			body.literature2 .prose p + ul,
+			body.literature2 .prose p + ol {
+				margin-top: 0.5em !important;
 			}
 			.tags-list a {
 				color: rgb(var(--link-color)); /* Use purple for tag links */
@@ -95,7 +102,7 @@ const toc = buildToc(headings);
 			} */
 			.prose {
 				/* Keep this selector if other styles depend on it, or remove if unused */
-				white-space: pre-line;
+				/* white-space: pre-line; */ /* REMOVED: This was causing excessive spacing between elements */
 			}
 			/* TOC Styles */
 			.toc-container {
@@ -162,6 +169,9 @@ const toc = buildToc(headings);
 					<button id="toggle-compact" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 10; font-size: 0.75rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.8); border: 1px solid #eee; border-radius: 4px; color: #666; box-shadow: 0 1px 3px rgba(0,0,0,0.1); opacity: 0.3; transition: opacity 0.2s">Aa</button>
 					<article>
 						<div class="prose">
+							{(pageType === 'literature' || pageType === 'literature2' || pageType === 'literature3') && (
+								<a href="/" class="back-to-blog">« Back to blog</a>
+							)}
 							{/*
 							<div class="post-header">
 								<h1 class="post-title">{title}</h1>
@@ -199,6 +209,7 @@ const toc = buildToc(headings);
                 {/* TODO: Render actual sidenotes here */}
             </aside>
 		</div>
+		<progress class="reading" max="100" value="0" style="display:none"></progress>
 		<script type="module" client:load>
 			// Add hover effect for button
 			const btn = document.getElementById('toggle-compact');
@@ -214,6 +225,75 @@ const toc = buildToc(headings);
 				if (body.classList.contains('compact')) localStorage.setItem(key, '1');
 				else localStorage.removeItem(key);
 			});
+			const bodyCls=document.body.classList; if(bodyCls.contains('stanza')){const prog=document.querySelector('progress.reading'); if(prog){prog.style.display='block'; window.addEventListener('scroll',()=>{const h=document.documentElement; const percent=h.scrollTop/(h.scrollHeight-h.clientHeight); prog.value=percent*100;});}
+			document.querySelectorAll('.prose p').forEach(p=>{if(p.textContent.trim().length<60)p.classList.add('stanza');});}
 		</script>
+		{(pageType === 'literature' || pageType === 'literature2' || pageType === 'literature3') && (
+			<script type="module">
+				// Track active heading based on scroll position
+				const headings = document.querySelectorAll('.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6');
+				
+				// Add click handlers to headings for hash navigation
+				headings.forEach(heading => {
+					heading.style.cursor = 'pointer';
+					heading.addEventListener('click', (e) => {
+						e.preventDefault();
+						// Calculate position with offset for better spacing
+						const headingTop = heading.offsetTop;
+						const offset = 20; // Space above heading
+						const scrollTo = headingTop - offset;
+						
+						// Smooth scroll to heading with offset
+						window.scrollTo({
+							top: scrollTo,
+							behavior: 'smooth'
+						});
+						
+						// Update URL hash if heading has an ID
+						if (heading.id) {
+							history.pushState(null, null, '#' + heading.id);
+						}
+					});
+				});
+				
+				function updateActiveHeading() {
+					const scrollPosition = window.scrollY + 100; // Add offset for better UX
+					let activeHeading = null;
+					
+					// Find the heading that's currently in view
+					for (let i = headings.length - 1; i >= 0; i--) {
+						const heading = headings[i];
+						const headingTop = heading.offsetTop;
+						
+						if (scrollPosition >= headingTop) {
+							activeHeading = heading;
+							break;
+						}
+					}
+					
+					// Remove active class from all headings
+					headings.forEach(h => h.classList.remove('active-heading'));
+					
+					// Add active class to current heading
+					if (activeHeading) {
+						activeHeading.classList.add('active-heading');
+					}
+				}
+				
+				// Update on scroll with throttling
+				let scrollTimer;
+				window.addEventListener('scroll', () => {
+					if (scrollTimer) return;
+					scrollTimer = setTimeout(() => {
+						scrollTimer = null;
+						updateActiveHeading();
+					}, 50);
+				});
+				
+				// Update on load
+				updateActiveHeading();
+			</script>
+		)}
+		{pageType === 'literature' && <StyleEditor />}
 	</body>
 </html>

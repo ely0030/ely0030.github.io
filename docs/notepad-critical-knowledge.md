@@ -553,12 +553,11 @@ if (pending.blogPostId.startsWith('new-post-')) {
 - Always includes 'uncategorized' as fallback
 - Sorts: uncategorized first, then alphabetical
 
-#### 2. New Post Category Selection
-**createNewBlogPost()** (:3606-3634)
-- Prompts user with numbered list of existing categories
-- Allows new category creation via text input
-- Pre-fills `meta-category` field with selection
-- Shows selected category in meta text
+#### 2. New Post Creation
+**createNewBlogPost()** (:3884-)
+- Creates new post with default "uncategorized" category
+- User changes category in metadata editor
+- No prompts or popups - direct creation
 
 #### 3. Visual Folder Organization
 **populateBlogPosts()** (:1487-1600)
@@ -576,3 +575,118 @@ if (pending.blogPostId.startsWith('new-post-')) {
 - **Folder icons**: 📂 (open) vs 📁 (closed)
 - **Default expanded**: 'uncategorized' category starts open
 - **Post sorting**: Within category, newest first by pubDate
+- **Filesystem note**: Categories are VISUAL ONLY - posts saved flat in content/blog/
+- **Sanitization impact**: `"My Posts!"` saves as `category: "my-posts"` in frontmatter
+
+## Operation Queue System (2025-01-15)
+
+### Overview
+**Location**: `src/pages/notepad.astro:1290-1524` (OperationQueue class)
+**Purpose**: Batch all blog changes until manual push to minimize page refreshes
+
+### Key Integration Points
+- **queueBlogSave()** (:3465-3549) - Adds ops to queue, updates DOM immediately
+- **deleteBlogPost()** (:3383-3436) - No API call, just queues + DOM update
+- **executeQueueFlush()** (:3587-3646) - Runs all ops in order
+- **updateQueueUI()** (:3551-3584) - Updates button count/color
+
+### Architecture
+1. **OperationQueue Class**
+   - Map-based storage: key = resourceId, value = latest operation
+   - Operation types: 'create', 'save', 'delete'
+   - SessionStorage persistence for crash recovery
+   - Intelligent deduplication of operations
+
+2. **Operation Deduplication**
+   - save→save = keep latest only
+   - save→delete = just delete
+   - create→delete = remove from queue entirely
+   - delete→save = convert to save (undelete)
+
+3. **Execution Order**
+   - Deletes execute FIRST (prevents filename conflicts)
+   - Creates/saves execute chronologically after deletes
+
+### UI Integration
+- **Push button**: Shows count + tooltip with summary
+- **Color coding**: Orange (3+), Red (5+) - colors set at :3563-3572
+- **Post indicators**: Orange • on posts with pending ops (:1786-1793)
+- **Meta text**: Shows pending operation count
+- **Button styles**: Added at :126-140 (transitions, disabled state)
+
+### Critical Implementation Details
+1. **No auto-saves**: Removed executePendingSave from:
+   - loadNote (:2057)
+   - loadBlogPost (:1845)
+   - createNewBlogPost (:3817)
+
+2. **Immediate DOM updates**: Changes visible instantly
+   - window.BLOG_POSTS updated in memory (:3522-3544)
+   - populateBlogPosts() refreshes UI (:3547)
+   - Actual disk writes deferred
+   - Delete animation with 300ms delay (:3401-3415)
+
+3. **State restoration**: After push + reload
+   - Stores current post ID, scroll positions
+   - Maps temp IDs to real IDs for new posts
+   - Restores within 5 second window
+
+### Common Pitfalls
+- **Temp ID mapping**: New posts have 'new-post-timestamp' IDs until saved (:3618-3630)
+- **Password hashing**: Now in OperationQueue.executeSave (:1469-1476)
+- **Frontmatter generation**: MUST happen in executeSave (:1478-1495) NOT blog-save-server.js
+- **Content format**: Server expects "---\nfrontmatter\n---\n\ncontent" NOT separate fields
+- **Filename generation**: Creates only need slug from title (:1499-1508)
+- **Queue persistence**: Check on init (:1588-1600) with warning message
+- **beforeunload**: Updated to check operationQueue.getCount() (:4085-4093)
+
+## Button Focus Outline Removal (2025-01-16)
+
+### Global vs Component CSS Specificity Battle
+**Issue**: Blue outline on folder/button clicks despite component `outline: none`
+**Root cause**: Global CSS at `src/styles/global.css:936-938` sets `button:focus { outline: 2px solid rgba(0, 85, 187, 0.5) }`
+**Failed fix**: Component styles can't override global button selector specificity
+
+### Solution Pattern
+**Notepad buttons**: `src/pages/notepad.astro:743-745` - `.blog-category-toggle:focus { outline: none }`
+**Collapse all**: `src/pages/notepad.astro:135` - `.folder-toggle-all { outline: none }`
+**Main index**: `src/pages/index.astro:299-307` - Added `!important` + `button.folder-header` selector
+
+### Key Insight
+Component-scoped CSS loses to global element selectors. Must use:
+1. Higher specificity (`button.class` not just `.class`)
+2. `!important` when fighting global styles
+3. All focus states: `:focus`, `:focus-visible`, `:active`
+
+## ContentEditable BR Tag Creation (2025-01-19)
+
+### Issue: Empty Note Creation Shows BR Tag
+**Location**: `src/pages/notepad.astro:1944-1945` (createNewNote)
+**Symptom**: New notes show `<br>` as literal text in view mode
+**Root cause**: contentEditable creates `<br>` for empty content, extracted as plain text
+**Fix**: Check for single `<br>` tag and convert to empty string
+```javascript
+if (content === '<br>') content = '';
+```
+
+## Empty String Split Creates Phantom Whitespace (2025-01-19)
+
+### Issue: Empty Notes Render with Extra Whitespace
+**Location**: `src/pages/notepad.astro:1543-1550` (formatMarkdownLine)
+**Symptom**: Empty notes show whitespace/newline in rendered view
+**Root cause**: `''.split('\n')` returns `['']` not `[]`
+**Result**: Creates `<div class="empty-line">&nbsp;</div>` for non-existent line
+**Fix**: Check `content === ''` before splitting
+```javascript
+const lines = content === '' ? [] : content.split('\n');
+```
+
+## List Rendering Support (2025-01-19)
+
+### Implementation
+**Location**: `src/pages/notepad.astro:1696-1721` (formatMarkdownLine)
+**Pattern**: Convert markdown list syntax to HTML
+- `- item` → `<ul><li>item</li></ul>`
+- `1. item` → `<ol><li>item</li></ol>`
+**Critical**: Must escape HTML in list items to prevent XSS
+**Styling**: Applied same typography as paragraphs (Georgia font, proper spacing)
