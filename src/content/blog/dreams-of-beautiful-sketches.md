@@ -1,22 +1,21 @@
 ---
-title: Dreams of Beautiful Sketches
-description: "On the art of gathering tools and finding purpose"
-pubDate: 2025-04-20
-private: true
-passwordHash: 8cf450e9730f83af4cc570d8ef3c4bdaa2cf02d9f2ce57f4626cec1459f55082
-pageType: literature
+title: "Dreams of Beautiful Sketches"
+description: "Dreams of Beautiful Sketches"
+pubDate: 2025-07-19T00:00:00.000Z
+pageType: "literature2"
+category: "uncategorized"
 ---
 
-# Dreams of Beautiful Sketches
+I've had these thoughts about things
 
-I've got dreams of beautiful sketches
+Sometimes I think of a life where I inhabit a world where everything is perfect.
 
-Get the camera  
-Get the film  
-Get the right film  
-Get the brush  
-Get the canvas  
+where there are only things I like
 
-Get the furniture
+I'm surrounded by beauty
 
-What do you live for?
+I'm surrounded by things that make my heart swell
+
+
+
+---

@@ -1,7 +1,7 @@
 @echo off
 echo.
 echo =======================================================
-echo  Starting Blog Server with HTTPS...
+echo  Starting SECURE Blog Server with HTTPS...
 echo =======================================================
 echo.
 

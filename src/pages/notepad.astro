@@ -463,6 +463,83 @@ try {
 					padding-left: 0;
 				}
 			}
+
+			.auth-modal {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: rgba(0, 0, 0, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 10000;
+			}
+
+			.auth-modal-content {
+				background: white;
+				padding: 2rem;
+				border-radius: 8px;
+				max-width: 400px;
+				width: 90%;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			}
+
+			.auth-modal-content h2 {
+				margin: 0 0 1rem 0;
+				color: #333;
+			}
+
+			.auth-modal-content input {
+				width: 100%;
+				padding: 0.75rem;
+				margin: 0.5rem 0;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 16px;
+			}
+
+			.auth-modal-content button {
+				width: 100%;
+				padding: 0.75rem;
+				background: #ff8c00;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				font-size: 16px;
+				cursor: pointer;
+				transition: background 0.2s;
+			}
+
+			.auth-modal-content button:hover {
+				background: #ff7700;
+			}
+
+			.auth-error {
+				color: #d32f2f;
+				margin-top: 0.5rem;
+				font-size: 14px;
+				text-align: center;
+			}
+
+			/* Add logout button to main UI */
+			.auth-status {
+				position: fixed;
+				top: 1rem;
+				right: 1rem;
+				z-index: 100;
+			}
+
+			.auth-status button {
+				padding: 0.5rem 1rem;
+				background: #666;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 14px;
+			}
 		</style>
 		<style is:global>
 			/* Markdown syntax highlighting - needs to be global for dynamic content */
@@ -898,6 +975,15 @@ try {
 		</style>
 	</head>
 	<body class="notepad">
+<div id="auth-modal" class="auth-modal" style="display: none;">
+  <div class="auth-modal-content">
+    <h2>🔒 Authentication Required</h2>
+    <p>Enter your password to edit blog posts:</p>
+    <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+    <button id="auth-login-btn">Login</button>
+    <div id="auth-error" class="auth-error"></div>
+  </div>
+</div>
 		<div class="layout-wrapper">
 			<aside class="sidebar">
 				<Header />
@@ -910,8 +996,12 @@ try {
 						<p><a href="/">Parent Directory</a></p>
 					</div>
 					<div class="notepad-container">
-						<aside class="note-sidebar">
-							<h2>Notes/</h2>
+						<div class="note-sidebar">
+							<div class="apache-header">
+								<h1>Index of /notepad</h1>
+								<hr>
+								<p><a href="/">Parent Directory</a></p>
+							</div>
 							<div class="note-actions">
 								<a href="#" class="btn btn-primary" id="new-note-btn">[new]</a>
 								<a href="#" class="btn" id="export-btn">[export]</a>
@@ -932,7 +1022,7 @@ try {
 							<ul class="blog-post-list" id="blog-post-list">
 								<!-- Blog posts will be populated here -->
 							</ul>
-						</aside>
+						</div>
 						<div class="editor-container">
 							<div class="editor-header">
 								<input type="text" class="note-title-input" id="note-title" placeholder="untitled" value="untitled">

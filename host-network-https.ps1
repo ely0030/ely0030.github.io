@@ -11,8 +11,8 @@ if (-not (Test-Path "certs/cert.pem") -or -not (Test-Path "certs/key.pem")) {
 $env:ASTRO_TELEMETRY_DISABLED = "1"
 
 # Start blog save API
-Write-Host "Starting Blog Save API..." -ForegroundColor Cyan
-$blogApi = Start-Process -FilePath "node" -ArgumentList "blog-save-server.js" -PassThru -WindowStyle Minimized
+Write-Host "Starting Blog Save API (Secure)..." -ForegroundColor Cyan
+$blogApi = Start-Process -FilePath "node" -ArgumentList "blog-save-server-secure.js" -PassThru -WindowStyle Minimized
 
 # Start Astro on different port
 Write-Host "Starting Astro Dev Server..." -ForegroundColor Cyan
