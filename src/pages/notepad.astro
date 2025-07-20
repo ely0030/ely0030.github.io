@@ -1747,8 +1747,10 @@ try {
 					
 					// Check if authenticated
 					if (!authManager.isAuthenticated) {
+						// Set up a retry for this specific operation after login
+						window.pendingAuthOperation = () => this.executeSave(operation, apiEndpoint);
 						showLoginModal();
-						throw new Error('Authentication required');
+						throw new Error('Authentication required, login pending.');
 					}
 
 					const response = await fetch(apiEndpoint, {
@@ -1764,6 +1766,13 @@ try {
 					});
 					
 					if (!response.ok) {
+						// If auth token is bad, force re-login
+						if (response.status === 401 || response.status === 403) {
+							authManager.logout();
+							window.pendingAuthOperation = () => this.executeSave(operation, apiEndpoint);
+							showLoginModal();
+							throw new Error('Authentication token invalid, login pending.');
+						}
 						throw new Error(`Save failed: ${response.statusText}`);
 					}
 					
@@ -1774,8 +1783,9 @@ try {
 				async executeDelete(operation, apiEndpoint) {
 					// Check if authenticated
 					if (!authManager.isAuthenticated) {
+						window.pendingAuthOperation = () => this.executeDelete(operation, apiEndpoint);
 						showLoginModal();
-						throw new Error('Authentication required');
+						throw new Error('Authentication required, login pending.');
 					}
 
 					const response = await fetch('/api/delete-blog-post', {
@@ -1790,6 +1800,12 @@ try {
 					});
 					
 					if (!response.ok) {
+						if (response.status === 401 || response.status === 403) {
+							authManager.logout();
+							window.pendingAuthOperation = () => this.executeDelete(operation, apiEndpoint);
+							showLoginModal();
+							throw new Error('Authentication token invalid, login pending.');
+						}
 						throw new Error(`Delete failed: ${response.statusText}`);
 					}
 					

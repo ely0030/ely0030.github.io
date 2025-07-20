@@ -54,7 +54,7 @@ fi
 
 # Start the blog save API server
 echo -e "\n📝 Starting Blog Save API Server..."
-node blog-save-server.js &
+node blog-save-server-secure.js &
 BLOG_API_PID=$!
 
 sleep 2
@@ -140,7 +140,7 @@ echo ""
 echo "🔐 Security Status:"
 echo "   ✅ Traffic encrypted (HTTPS)"
 echo "   ✅ Telemetry disabled"
-echo "   ⚠️  No authentication (anyone on network can edit)"
+echo "   ✅ Authentication required (password protected)"
 echo ""
 echo "🛑 Press Ctrl+C to stop the server"
 echo "================================================"

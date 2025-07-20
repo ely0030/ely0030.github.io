@@ -35,7 +35,7 @@ timeout /t 5 >nul
 
 REM Start HTTPS Proxy in its own window
 echo [3/3] Starting HTTPS Proxy on port 4320...
-start "HTTPS Proxy - Port 4320" cmd /k "echo HTTPS PROXY SERVER && echo ================== && echo. && echo Access the site at: https://localhost:4320 && echo. && echo This proxies: && echo   /api/* requests to port 4322 (secure blog server) && echo   all other requests to port 4321 (Astro) && echo. && node https-proxy.js"
+start "HTTPS Proxy - Port 4320" cmd /k "echo HTTPS PROXY SERVER && echo ================== && echo. && echo Access the site at: https://localhost:4320 && echo. && echo This proxies: && echo   /api/* requests to port 4322 (secure blog server) && echo   all other requests to port 4321 (Astro) && echo. && set LISTEN_PORT=4320 && set ASTRO_PORT=4321 && set API_PORT=4322 && node https-proxy.cjs"
 
 echo.
 echo ========================================

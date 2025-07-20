@@ -22,7 +22,10 @@ Start-Sleep -Seconds 5
 
 # Start the dedicated HTTPS proxy
 Write-Host "Starting HTTPS Proxy..." -ForegroundColor Cyan
-$proxy = Start-Process -FilePath "node" -ArgumentList "https-proxy.js" -PassThru
+$env:LISTEN_PORT = "4321"
+$env:ASTRO_PORT = "4320"
+$env:API_PORT = "4322"
+$proxy = Start-Process -FilePath "node" -ArgumentList "https-proxy.cjs" -PassThru
 
 Write-Host "`n✅ HTTPS Blog Server Running!" -ForegroundColor Green
 Write-Host "Access at: https://192.168.0.160:4321" -ForegroundColor Yellow

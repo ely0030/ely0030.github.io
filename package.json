@@ -21,7 +21,8 @@
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
     "tufte-css": "^1.8.0",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "express": "^4.18.2",

@@ -47,7 +47,7 @@ fi
 
 # Start the blog save API server in the background
 echo -e "\n📝 Starting Blog Save API Server..."
-node blog-save-server.js &
+node blog-save-server-secure.js &
 BLOG_API_PID=$!
 
 # Give the API server a moment to start
