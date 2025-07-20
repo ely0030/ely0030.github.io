@@ -15,6 +15,7 @@
 [network-hosting-setup.md](#network-hosting)             HTTP-only local network setup
 [https-setup.md](#https-setup)                           HTTPS local network setup for all platforms
 [minipc-https-setup-log-2025-07-19.md](#minipc-log)      Case study of a difficult Windows HTTPS setup
+[windows-pc-setup.md](#windows-setup)                    Windows-specific setup guide with common fixes
 
 ### Security (2025-01-19)
 [SECURITY-SETUP.md](#security-setup)                     Quick auth setup guide (ROOT DIR)
@@ -112,6 +113,12 @@
 **Purpose**: Detailed log of a Windows HTTPS setup session
 **Contains**: A real-world example of troubleshooting PowerShell, PSReadLine, and OpenSSL issues.
 **When to use**: When the main `https-setup.md` guide isn't working on Windows.
+
+### <a id="windows-setup"></a>windows-pc-setup.md
+**Purpose**: Comprehensive Windows setup guide  
+**Contains**: Step-by-step setup, HTTPS proxy fixes, authentication setup  
+**Critical**: Covers common Windows-specific issues and solutions  
+**When to use**: Setting up the blog on a Windows PC
 
 ### <a id="security-setup"></a>SECURITY-SETUP.md
 **Purpose**: Quick authentication setup guide  
@@ -285,6 +292,16 @@
 **Purpose**: Bug tracking and resolutions  
 **Contains**: Documented issues with investigation process and solutions  
 **When to use**: Researching similar problems or adding new bug reports
+
+---
+
+## 📝 Session Logs & Tickets
+
+### Session Documentation
+[_temp/windows-setup-session-2025-01-20.md](#session-2025-01-20)     Complete Windows setup session with all fixes
+
+### Open Tickets
+[_OPS/TICKETS/_open/https-proxy-header-error.md](#proxy-header-ticket)     HTTPS proxy undefined header error
 
 ---
 

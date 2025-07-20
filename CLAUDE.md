@@ -270,5 +270,53 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - Requires `npm run dev` for save functionality
 - **Category input**: Change in meta-category field (lowercase auto-applied at :3481)
 
+## Windows Setup (2025-01-20) 🔥
+**CRITICAL**: Windows setup has specific gotchas and fixes
+
+### Quick Start
+```batch
+# Use the DEBUG batch file for troubleshooting
+start-https-server-DEBUG.bat
+```
+
+### Common Windows Issues & Fixes
+
+#### 1. HTTPS Proxy Header Error
+**Error**: `TypeError [ERR_HTTP_INVALID_HEADER_VALUE]: Invalid value "undefined"`
+- **Location**: https-proxy.cjs header handling
+- **Fix**: Use `delete proxyHeaders['accept-encoding']` not `undefined`
+- **Ticket**: `_OPS/TICKETS/_open/https-proxy-header-error.md`
+
+#### 2. BLOG_POSTS Not Loading in Notepad
+**Error**: Notepad shows no posts, can't create new ones
+- **Cause**: Missing `handleLogout` function stops script execution
+- **Fix**: Added function definition in notepad.astro:4955-4961
+- **Also**: Added initialization wrapper to wait for BLOG_POSTS
+
+#### 3. Authentication Flow
+- First save attempt → 403 error (normal)
+- Login modal appears → enter password from `.env`
+- Subsequent saves work without prompting
+- **Fix**: Modified error handling to not show alerts for auth interruptions
+
+#### 4. Port Configuration
+**DEBUG batch file kills ALL node processes first!**
+- HTTPS Proxy: Port 4320
+- Astro Dev: Port 4321  
+- Secure API: Port 4322
+- Access via: https://localhost:4320
+
+### Certificate Generation
+```batch
+mkdir certs
+cd certs
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -config ../generate-cert.conf
+```
+
+### See Also
+- `docs/windows-pc-setup.md` - Full Windows setup guide
+- `_temp/windows-setup-session-2025-01-20.md` - Detailed session log
+- `docs/minipc-https-setup-log-2025-07-19.md` - Another Windows setup example
+
 ## Need More Context?
 Start with `docs/LLM_CONTEXT.md` for complete details.

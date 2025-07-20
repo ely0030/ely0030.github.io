@@ -2019,16 +2019,17 @@ try {
 				populateBlogPosts(highlightNewId = null) {
 					const blogPostList = document.getElementById('blog-post-list');
 					if (!blogPostList) {
-						console.log('Blog post list element not found');
+						console.error('Blog post list element not found');
 						return;
 					}
 					
 					if (typeof window.BLOG_POSTS === 'undefined') {
-						console.log('BLOG_POSTS not defined');
+						console.error('BLOG_POSTS not defined in populateBlogPosts');
 						return;
 					}
 					
-					console.log('Loading blog posts:', window.BLOG_POSTS.length);
+					console.log('Loading blog posts:', window.BLOG_POSTS.length, 'posts');
+					console.log('Blog posts:', window.BLOG_POSTS);
 					blogPostList.innerHTML = '';
 					
 					// Group posts by category
@@ -4114,9 +4115,14 @@ try {
 						// Execute all operations
 						const results = await this.operationQueue.flush('/api/save-blog-post');
 						
-						// Check for failures
+						// Check for failures (excluding auth issues)
 						const failures = results.filter(r => !r.success);
-						if (failures.length > 0) {
+						
+						// Check if we stopped for authentication
+						const stoppedForAuth = results.length < this.operationQueue.getCount();
+						
+						if (failures.length > 0 && !stoppedForAuth) {
+							// Only show error if we have real failures, not auth interruptions
 							console.error('Some operations failed:', failures);
 							alert(`${failures.length} operation(s) failed. Check console for details.`);
 						}
@@ -4140,6 +4146,10 @@ try {
 						if (failures.length === 0) {
 							// Just wait for the reload
 							pushBtn.textContent = 'Changes pushed! Reloading...';
+							// Force reload after a short delay if hot reload doesn't work
+							setTimeout(() => {
+								window.location.reload();
+							}, 1500);
 						}
 					} catch (error) {
 						console.error('Queue flush failed:', error);
@@ -4951,14 +4961,37 @@ try {
 				}
 			});
 
+			// Define handleLogout function
+			function handleLogout() {
+				authManager.logout();
+				hideLoginModal();
+				// Optionally show a message
+				console.log('Logged out successfully');
+			}
+
 			// Export auth functions for global use
 			window.authManager = authManager;
 			window.showLoginModal = showLoginModal;
 			window.handleLogout = handleLogout;
 
-			// Initialize app
-			const app = new NotepadApp();
-			app.init();
+			// Initialize app when DOM is ready
+			function initializeApp() {
+				if (typeof window.BLOG_POSTS === 'undefined') {
+					console.error('BLOG_POSTS not defined, waiting...');
+					setTimeout(initializeApp, 100);
+					return;
+				}
+				console.log('Initializing app with', window.BLOG_POSTS.length, 'blog posts');
+				const app = new NotepadApp();
+				app.init();
+			}
+			
+			// Start initialization
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', initializeApp);
+			} else {
+				initializeApp();
+			}
 		</script>
 	</body>
 </html>
