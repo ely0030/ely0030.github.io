@@ -1685,6 +1685,12 @@ try {
 								this.tempIdMapping.set(op.resourceId, realId);
 							}
 						} catch (error) {
+							// Check if it's an auth error that needs user interaction
+							if (error.message && error.message.includes('Authentication required')) {
+								// Auth modal is already shown, stop processing
+								// Don't mark as failed, keep in queue for retry
+								break;
+							}
 							results.push({ success: false, operation: op, error });
 						}
 					}
@@ -4080,6 +4086,14 @@ try {
 				async executeQueueFlush() {
 					const count = this.operationQueue.getCount();
 					if (count === 0) return;
+					
+					// Check if authenticated first
+					if (!authManager.isAuthenticated) {
+						// Set up retry after login
+						window.pendingAuthOperation = () => this.executeQueueFlush();
+						showLoginModal();
+						return;
+					}
 					
 					// Update UI to show processing
 					const pushBtn = document.getElementById('push-changes-btn');
