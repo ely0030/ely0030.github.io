@@ -231,6 +231,13 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - **Features**: Rate limiting (5 attempts/15min), path traversal protection
 - **See**: `SECURITY-SETUP.md` for full instructions
 
+## Protected Mode (2025-01-20) 🔒
+- **Complete site protection**: Requires password to view ANY page
+- **Windows**: Run `start-https-server-PROTECTED.bat`
+- **Mac/Unix**: Run `./run-dev-protected.sh`
+- **How it works**: Protected proxy shows login page for all unauthenticated requests
+- **See**: `PROTECTED-MODE-SETUP.md` for details
+
 ## Image Organization
 - **Pattern**: Per-post folders `/public/post-name/` + shared `/public/shared/`
 - **Reference**: Absolute paths `/shared/image.webp`

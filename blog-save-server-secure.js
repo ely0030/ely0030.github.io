@@ -98,6 +98,15 @@ app.post('/api/login', (req, res) => {
   
   if (password === AUTH_PASSWORD) {
     console.log(`✅ Successful login from IP: ${ip}`);
+    
+    // Set httpOnly cookie for site-wide auth
+    res.cookie('blog_auth', AUTH_TOKEN, {
+      httpOnly: true,
+      secure: true, // Required for HTTPS
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
     res.json({ 
       success: true,
       token: AUTH_TOKEN 
@@ -108,8 +117,25 @@ app.post('/api/login', (req, res) => {
   }
 });
 
+// Logout endpoint
+app.post('/api/logout', (req, res) => {
+  // Clear the auth cookie
+  res.clearCookie('blog_auth', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict'
+  });
+  
+  console.log('✅ User logged out');
+  res.json({ success: true, message: 'Logged out successfully' });
+});
+
 // Handle preflight requests
 app.options('/api/login', (req, res) => {
+  res.sendStatus(200);
+});
+
+app.options('/api/logout', (req, res) => {
   res.sendStatus(200);
 });
 
