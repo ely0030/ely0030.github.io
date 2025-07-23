@@ -2820,8 +2820,9 @@ try {
 					const sectionName = section.dataset.section;
 					const content = section.querySelector('.blog-section-content');
 					
-					// Get current state
-					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+					// Get current state (default to all sections expanded)
+					const allSectionNames = Object.keys(this.sections);
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(allSectionNames));
 					const isExpanded = expandedSections.includes(sectionName);
 					
 					// Toggle state
@@ -2978,7 +2979,7 @@ try {
 					this.sections = newSections;
 					
 					// Ensure new section is expanded
-					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(this.sections)));
 					if (!expandedSections.includes(sectionName)) {
 						expandedSections.push(sectionName);
 						localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
@@ -3122,7 +3123,7 @@ try {
 							delete this.sections[oldName];
 							
 							// Update expanded state
-							const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+							const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(this.sections)));
 							const index = expandedSections.indexOf(oldName);
 							if (index > -1) {
 								expandedSections[index] = newName;
@@ -3165,7 +3166,7 @@ try {
 					delete this.sections[sectionName];
 					
 					// Clean up expanded state
-					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(this.sections)));
 					const index = expandedSections.indexOf(sectionName);
 					if (index > -1) {
 						expandedSections.splice(index, 1);
@@ -5869,7 +5870,7 @@ try {
 							const content = sectionDiv.querySelector('.blog-section-content');
 							
 							// Get current expanded sections
-							const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+							const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(this.sections)));
 							const isExpanded = expandedSections.includes(sectionName);
 							
 							// Toggle state
