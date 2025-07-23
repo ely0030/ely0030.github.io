@@ -63,11 +63,17 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
     }
     
     .planning-board {
-      display: grid;
-      grid-template-columns: repeat(5, 300px); /* 5 columns of 300px each */
+      display: flex;
       gap: 20px;
       margin-top: 20px;
       padding-bottom: 100px; /* Space for adding cards at bottom */
+    }
+    
+    .grid-column {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
     
     .grid-slot {
@@ -103,7 +109,7 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
       background: #fdfdfd;
       position: relative;
       cursor: default;
-      transition: none; /* Snappy movement */
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
       margin-bottom: 10px;
     }
     
@@ -114,8 +120,13 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
     }
     
     .project-card.selected {
-      border: 2px solid #ff5500 !important;
-      box-shadow: 0 0 0 1px #ff5500;
+      border: 1px solid #ff5500 !important;
+      box-shadow: 0 0 0 1px rgba(255, 85, 0, 0.2), inset 0 0 0 1px rgba(255, 85, 0, 0.1);
+      background-color: rgba(255, 85, 0, 0.02);
+    }
+    
+    .project-card.selected .card-header {
+      background: rgba(255, 85, 0, 0.03);
     }
     
     .project-card.dragging {
@@ -127,7 +138,8 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
     }
     
     .project-card.drag-over {
-      border: 2px solid #ff5500;
+      border: 1px solid #ff5500;
+      opacity: 0.9;
     }
     
     .card-header {
@@ -137,6 +149,7 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
       justify-content: space-between;
       align-items: center;
       background: #f6f8fa;
+      transition: background-color 0.15s ease;
     }
     
     .card-title {
@@ -478,17 +491,36 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
           occupied.add(`${p.gridX},${p.gridY}`);
         });
         
-        // Find first empty slot
-        for (let y = 0; y < this.maxRows; y++) {
-          for (let x = 0; x < this.gridColumns; x++) {
-            if (!occupied.has(`${x},${y}`)) {
-              return { x, y };
-            }
+        // Find the column with the least items or first available slot
+        const columnCounts = Array(this.gridColumns).fill(0);
+        const maxYPerColumn = Array(this.gridColumns).fill(-1);
+        
+        this.projects.forEach(p => {
+          if (p.gridX >= 0 && p.gridX < this.gridColumns) {
+            columnCounts[p.gridX]++;
+            maxYPerColumn[p.gridX] = Math.max(maxYPerColumn[p.gridX], p.gridY);
+          }
+        });
+        
+        // Find column with least items
+        let minCount = Infinity;
+        let targetColumn = 0;
+        for (let x = 0; x < this.gridColumns; x++) {
+          if (columnCounts[x] < minCount) {
+            minCount = columnCounts[x];
+            targetColumn = x;
           }
         }
         
-        // If all slots are full, expand grid
-        return { x: 0, y: this.maxRows };
+        // Find first empty Y position in target column
+        for (let y = 0; y <= maxYPerColumn[targetColumn] + 1; y++) {
+          if (!occupied.has(`${targetColumn},${y}`)) {
+            return { x: targetColumn, y };
+          }
+        }
+        
+        // Default to next position in target column
+        return { x: targetColumn, y: maxYPerColumn[targetColumn] + 1 };
       }
 
       updateProject(id, updates) {
@@ -626,32 +658,75 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
         
         if (this.projects.length === 0) {
           board.innerHTML = `
-            <div class="empty-state" id="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state" id="empty-state">
               No projects yet. Click [new project] to create one.
             </div>
           `;
           return;
         }
         
-        // Calculate needed rows
-        const maxY = Math.max(...this.projects.map(p => p.gridY), 5);
-        const rows = maxY + 2; // Add extra rows for expansion
+        // Group projects by column
+        const columns = Array.from({ length: this.gridColumns }, () => []);
         
-        // Create grid of slots
+        // Sort projects by gridY within each column
+        const sortedProjects = [...this.projects].sort((a, b) => {
+          if (a.gridX === b.gridX) {
+            return a.gridY - b.gridY;
+          }
+          return a.gridX - b.gridX;
+        });
+        
+        // Assign projects to columns
+        sortedProjects.forEach(project => {
+          if (project.gridX >= 0 && project.gridX < this.gridColumns) {
+            columns[project.gridX].push(project);
+          }
+        });
+        
+        // Create columns HTML
         let html = '';
-        for (let y = 0; y <= rows; y++) {
-          for (let x = 0; x < this.gridColumns; x++) {
-            const project = this.projects.find(p => p.gridX === x && p.gridY === y);
-            const isOccupied = !!project;
+        for (let x = 0; x < this.gridColumns; x++) {
+          html += `<div class="grid-column" data-column="${x}">`;
+          
+          // Add projects in this column
+          const columnProjects = columns[x];
+          let currentY = 0;
+          
+          columnProjects.forEach((project, index) => {
+            // Add empty slots if there's a gap
+            while (currentY < project.gridY) {
+              html += `
+                <div class="grid-slot" 
+                     data-x="${x}" 
+                     data-y="${currentY}">
+                </div>
+              `;
+              currentY++;
+            }
             
+            // Add the project slot
             html += `
-              <div class="grid-slot ${isOccupied ? 'occupied' : ''}" 
+              <div class="grid-slot occupied" 
+                   data-x="${x}" 
+                   data-y="${project.gridY}">
+                ${this.renderCard(project)}
+              </div>
+            `;
+            currentY = project.gridY + 1;
+          });
+          
+          // Add extra empty slots at the bottom
+          const maxY = Math.max(...this.projects.map(p => p.gridY), 5);
+          for (let y = currentY; y <= maxY + 2; y++) {
+            html += `
+              <div class="grid-slot" 
                    data-x="${x}" 
                    data-y="${y}">
-                ${project ? this.renderCard(project) : ''}
               </div>
             `;
           }
+          
+          html += '</div>'; // Close column
         }
         
         board.innerHTML = html;

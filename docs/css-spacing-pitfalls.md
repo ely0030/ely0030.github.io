@@ -148,7 +148,7 @@ Removes margin when paragraph ends with breaks for exact newline preservation.
 
 ## ContentEditable Cursor Positioning
 
-**Location**: planning-wall.astro:762-785
+**Location**: planning-wall.astro:796-820
 **Symptom**: Enter key doesn't create newlines OR cursor jumps to wrong position
 
 ### What happened
@@ -192,11 +192,46 @@ if (!this.activeDropdown.contains(e.target) &&
 }
 ```
 
+## Planning Wall Column Independence
+
+**Location**: planning-wall.astro:65-77, :627-711  
+**Symptom**: Card height changes affect adjacent columns  
+**Time wasted**: Investigation + implementation
+
+### What happened
+CSS Grid makes all slots in a row same height:
+```css
+.planning-board {
+  display: grid;
+  grid-template-columns: repeat(5, 300px);
+}
+```
+When one card grows tall, entire row grows, pushing down slots in ALL columns.
+
+### Solution
+Flexbox columns with independent vertical flow:
+```css
+.planning-board {
+  display: flex;
+  gap: 20px;
+}
+.grid-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+```
+
+### Critical gotcha
+**Auto-compaction required**: Must compact cards to eliminate gaps on EVERY render.
+Without compaction, deleted cards leave permanent gaps in columns.
+
 ## Key Lessons
 
 1. **Check white-space first** when margin/padding changes do nothing
 2. **JSX whitespace = content** - newlines between elements create gaps
 3. **Always use `is:global`** for cross-component styles in Astro
+4. **Grid vs Flexbox** - CSS Grid rows force uniform height; use Flexbox for independent columns
 4. **CSS load order > specificity** in build tools
 5. **Test in production build** - dev server lies about CSS order
 6. **Global element selectors beat class selectors** - use higher specificity or !important

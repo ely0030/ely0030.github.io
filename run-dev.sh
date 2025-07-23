@@ -1,7 +1,7 @@
 #!/bin/bash
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm use 18.17.1
+nvm use 20.19.2
 
 # Auto-convert literature files from drafts folder
 echo "🔄 Checking for markdown files to convert..."
@@ -24,4 +24,4 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # Start the dev server with telemetry disabled
-ASTRO_TELEMETRY_DISABLED=1 astro dev 
+ASTRO_TELEMETRY_DISABLED=1 npx astro dev 

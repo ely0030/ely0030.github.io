@@ -816,12 +816,162 @@ try {
 			}
 			
 			/* Blog category styles */
+			.blog-section {
+				margin-bottom: 1.2em;
+			}
+			
+			.blog-section-header {
+				font-size: 1.05em;
+				font-weight: 600;
+				opacity: 0.7;
+				margin-bottom: 0.4em;
+				padding: 0.3em 0;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				gap: 0.5em;
+			}
+			
+			.blog-section-name {
+				font-family: monospace;
+			}
+			
+			.section-controls {
+				display: none;
+				gap: 0.3em;
+				margin-left: auto;
+				opacity: 0.6;
+			}
+			
+			.blog-section-header:hover .section-controls,
+			.blog-section-header.editing .section-controls {
+				display: flex;
+			}
+			
+			.blog-section-header.editing {
+				background: rgba(0, 0, 0, 0.02);
+				padding-left: 0.3em;
+				padding-right: 0.3em;
+				margin-left: -0.3em;
+				margin-right: -0.3em;
+				border-radius: 3px;
+			}
+			
+			.section-control {
+				font-size: 0.8em;
+				color: #666;
+				text-decoration: none;
+				padding: 0 0.3em;
+			}
+			
+			.section-control:hover {
+				color: #c00;
+				text-decoration: underline;
+			}
+			
+			.section-control.delete-mode {
+				color: #c00;
+			}
+			
+			.section-control.confirm-delete {
+				color: #c00;
+				font-weight: bold;
+			}
+			
+			.add-section-container {
+				margin-top: 1em;
+				padding-top: 1em;
+				border-top: 1px solid #eee;
+			}
+			
+			.add-section-btn {
+				font-size: 0.9em;
+				color: #666;
+				text-decoration: none;
+			}
+			
+			.add-section-btn:hover {
+				color: var(--color-link);
+				text-decoration: underline;
+			}
+			
+			.section-name-input {
+				font-family: monospace;
+				font-size: 1.05em;
+				font-weight: 600;
+				border: none !important;
+				padding: 0 !important;
+				margin: 0 !important;
+				background: transparent !important;
+				outline: none !important;
+				box-shadow: none !important;
+				-webkit-appearance: none !important;
+				-moz-appearance: none !important;
+				appearance: none !important;
+				width: auto;
+				min-width: 150px;
+				opacity: 0.7;
+				color: inherit;
+				cursor: text;
+			}
+			
+			.blog-section-content {
+				padding-left: 1.2em;
+			}
+			
+			/* Section dragging styles */
+			.blog-section.dragging {
+				opacity: 0.5;
+			}
+			
+			.blog-section.drag-over-top {
+				border-top: 2px solid #ff5500;
+			}
+			
+			.blog-section.drag-over-bottom {
+				border-bottom: 2px solid #ff5500;
+			}
+			
+			.blog-section-header {
+				cursor: move;
+			}
+			
+			.blog-section-header.editing {
+				cursor: default;
+			}
+			
 			.blog-category {
 				margin-bottom: 0.8em;
+				transition: opacity 0.3s ease;
+			}
+			
+			.blog-category.dragging {
+				opacity: 0.6;
+				cursor: grabbing;
+			}
+			
+			.blog-category.drag-over-top {
+				border-top: 2px solid #ff5500;
+				margin-top: 2px;
+			}
+			
+			.blog-category.drag-over-bottom {
+				border-bottom: 2px solid #ff5500;
+				margin-bottom: 2px;
+			}
+			
+			.blog-section.drag-over {
+				background-color: rgba(255, 140, 0, 0.05);
+			}
+			
+			.blog-section.drag-over .blog-section-header {
+				background-color: rgba(255, 140, 0, 0.1);
+				border-radius: 3px;
 			}
 			
 			.blog-category-header {
 				margin-bottom: 0.2em;
+				cursor: move;
 			}
 			
 			.blog-category-toggle {
@@ -836,8 +986,44 @@ try {
 				font-size: 1em;
 				color: var(--color-link);
 				text-align: left;
-				width: auto;
+				width: 100%;
 				transition: opacity 0.2s ease;
+				-webkit-user-select: none;
+				user-select: none;
+			}
+			
+			.blog-category-header.draggable {
+				cursor: grab;
+				padding: 2px 4px;
+				margin: -2px -4px;
+				border-radius: 3px;
+				position: relative;
+				user-select: none;
+			}
+			
+			.blog-category-header.draggable::before {
+				content: '⋮⋮';
+				position: absolute;
+				left: -0.8em;
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 0.8em;
+				color: #ccc;
+				letter-spacing: -0.3em;
+				opacity: 0;
+				transition: opacity 0.2s ease;
+			}
+			
+			.blog-category-header.draggable:hover::before {
+				opacity: 1;
+			}
+			
+			.blog-category-header.draggable:hover {
+				background-color: rgba(0, 0, 0, 0.03);
+			}
+			
+			.blog-category-header.draggable:active {
+				cursor: grabbing;
 			}
 			
 			.blog-category-toggle:focus {
@@ -1257,6 +1443,28 @@ try {
 					enableLinkify: true,
 					enableTypographer: true,
 				}
+			};
+
+			// Section configuration for blog post organization
+			const DEFAULT_SECTIONS = {
+				'Writing': ['articles', 'creative', 'ideas', 'thoughts'],
+				'Technical': ['technical'],
+				'Personal': ['personal', 'protocols'],
+				'Miscellaneous': ['uncategorized', 'archive', 'saved']
+			};
+
+			// Category metadata for visual styling
+			const CATEGORY_META = {
+				articles: { icon: '📝', color: '#2563eb', description: 'Long-form articles and essays' },
+				ideas: { icon: '💡', color: '#10b981', description: 'Quick thoughts and concepts' },
+				creative: { icon: '🎨', color: '#8b5cf6', description: 'Creative writing and experiments' },
+				technical: { icon: '⚙️', color: '#f59e0b', description: 'Technical posts and tutorials' },
+				personal: { icon: '🌱', color: '#06b6d4', description: 'Personal reflections and stories' },
+				protocols: { icon: '📋', color: '#14b8a6', description: 'Systems and protocols for life' },
+				thoughts: { icon: '💭', color: '#ec4899', description: 'Random thoughts and musings' },
+				saved: { icon: '📁', color: '#ef4444', description: 'Bookmarked and saved content' },
+				uncategorized: { icon: '📁', color: '#6b7280', description: 'Posts awaiting categorization' },
+				archive: { icon: '🗄️', color: '#9ca3af', description: 'Archived content' }
 			};
 
 			// Storage abstraction for robustness and future-proofing
@@ -1884,6 +2092,11 @@ try {
 					this.imageUrlCache = new Map(); // Cache blob URLs to prevent recreating
 					this.operationQueue = new OperationQueue(); // New queue system for blog operations
 					this.currentBlogPostId = null; // Track which blog post is being edited
+					this.sections = this.loadSections(); // Load custom sections or defaults
+					this.draggedCategory = null; // Track dragged category during drag operation
+					this.draggedSection = null; // Track dragged section during drag operation
+					this.editingSection = null; // Track which section is being edited inline
+					this.deleteConfirmations = new Set(); // Track delete confirmations
 					
 					// Debounced save function
 					this.debouncedSave = this.debounce(
@@ -2015,13 +2228,16 @@ try {
 					}
 				}
 				
-				// Populate blog posts list from BLOG_POSTS global
+				
+				// Populate blog posts list from BLOG_POSTS global with sections
 				populateBlogPosts(highlightNewId = null) {
+					console.log('=== populateBlogPosts called ===');
 					const blogPostList = document.getElementById('blog-post-list');
 					if (!blogPostList) {
 						console.error('Blog post list element not found');
 						return;
 					}
+					console.log('Blog post list found, clearing and rebuilding...');
 					
 					if (typeof window.BLOG_POSTS === 'undefined') {
 						console.error('BLOG_POSTS not defined in populateBlogPosts');
@@ -2029,7 +2245,6 @@ try {
 					}
 					
 					console.log('Loading blog posts:', window.BLOG_POSTS.length, 'posts');
-					console.log('Blog posts:', window.BLOG_POSTS);
 					blogPostList.innerHTML = '';
 					
 					// Group posts by category
@@ -2042,63 +2257,157 @@ try {
 						postsByCategory[category].push(post);
 					});
 					
-					// Sort categories (uncategorized first, then alphabetically)
-					const sortedCategories = Object.keys(postsByCategory).sort((a, b) => {
-						if (a === 'uncategorized') return -1;
-						if (b === 'uncategorized') return 1;
-						return a.localeCompare(b);
+					// Get current section organization
+					const sections = this.sections;
+					
+					// Track expanded states
+					const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(sections)));
+					
+					// Add any new categories that aren't in any section to Miscellaneous
+					const allCategoriesInSections = new Set();
+					Object.values(sections).forEach(cats => cats.forEach(cat => allCategoriesInSections.add(cat)));
+					
+					Object.keys(postsByCategory).forEach(category => {
+						if (!allCategoriesInSections.has(category)) {
+							if (!sections['Miscellaneous']) {
+								sections['Miscellaneous'] = [];
+							}
+							sections['Miscellaneous'].push(category);
+						}
 					});
 					
-					// Track expanded state in localStorage
-					const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
-					
-					// Create category folders
-					sortedCategories.forEach(category => {
-						const posts = postsByCategory[category];
+					// Create sections with categories
+					Object.entries(sections).forEach(([sectionName, categories]) => {
+						// Get categories that have posts
+						const visibleCategories = categories.filter(cat => postsByCategory[cat]);
 						
-						// Sort posts by date (newest first)
-						posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+						// Create section container
+						const sectionDiv = document.createElement('div');
+						sectionDiv.className = 'blog-section';
+						sectionDiv.dataset.section = sectionName;
 						
-						// Create category container
-						const categoryDiv = document.createElement('div');
-						categoryDiv.className = 'blog-category';
-						categoryDiv.dataset.category = category;
+						// Create section header
+						const sectionHeader = document.createElement('div');
+						sectionHeader.className = 'blog-section-header';
+						sectionHeader.dataset.section = sectionName;
+						sectionHeader.title = 'Click to expand/collapse, drag to reorder';
 						
-						// Create category header
-						const categoryHeader = document.createElement('div');
-						categoryHeader.className = 'blog-category-header';
+						const sectionNameSpan = document.createElement('span');
+						sectionNameSpan.className = 'blog-section-name';
+						sectionNameSpan.textContent = `${sectionName}/`;
+						sectionNameSpan.title = 'Double-click to edit section name';
 						
-						const categoryToggle = document.createElement('button');
-						categoryToggle.className = 'blog-category-toggle';
-						categoryToggle.dataset.category = category;
-						const isExpanded = expandedCategories.includes(category);
-						categoryToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+						sectionHeader.appendChild(sectionNameSpan);
 						
-						const categoryIcon = document.createElement('span');
-						categoryIcon.className = 'category-icon';
-						categoryIcon.textContent = isExpanded ? '📂' : '📁';
-						categoryToggle.appendChild(categoryIcon);
+						// Add double-click handler for inline editing to the header
+						sectionHeader.addEventListener('dblclick', (e) => {
+							// Don't trigger on controls
+							if (e.target.closest('.section-controls')) return;
+							e.preventDefault();
+							e.stopPropagation();
+							this.startInlineEdit(sectionName);
+						});
 						
-						const categoryName = document.createElement('span');
-						categoryName.className = 'category-name';
-						categoryName.textContent = `${category}/`;
-						categoryToggle.appendChild(categoryName);
+						// Add section controls
+						const controlsDiv = document.createElement('div');
+						controlsDiv.className = 'section-controls';
+						controlsDiv.dataset.section = sectionName;
 						
-						const postCount = document.createElement('span');
-						postCount.className = 'post-count';
-						postCount.textContent = `(${posts.length})`;
-						categoryToggle.appendChild(postCount);
+						// Edit/Cancel button
+						const editBtn = document.createElement('a');
+						editBtn.href = '#';
+						editBtn.className = 'section-control section-edit-btn';
+						editBtn.textContent = '[edit]';
+						editBtn.dataset.section = sectionName;
+						editBtn.dataset.action = 'edit';
+						controlsDiv.appendChild(editBtn);
 						
-						categoryHeader.appendChild(categoryToggle);
-						categoryDiv.appendChild(categoryHeader);
+						// Delete button (hidden initially)
+						const delBtn = document.createElement('a');
+						delBtn.href = '#';
+						delBtn.className = 'section-control section-del-btn';
+						delBtn.textContent = '[del]';
+						delBtn.dataset.section = sectionName;
+						delBtn.dataset.action = 'delete';
+						delBtn.style.display = 'none';
+						controlsDiv.appendChild(delBtn);
 						
-						// Create posts container
-						const postsContainer = document.createElement('ul');
-						postsContainer.className = 'category-posts';
-						postsContainer.style.display = isExpanded ? 'block' : 'none';
+						sectionHeader.appendChild(controlsDiv);
+						sectionDiv.appendChild(sectionHeader);
 						
-						// Add posts to category
-						posts.forEach(post => {
+						// Create section content container
+						const sectionContent = document.createElement('div');
+						sectionContent.className = 'blog-section-content';
+						const isSectionExpanded = expandedSections.includes(sectionName);
+						sectionContent.style.display = isSectionExpanded ? 'block' : 'none';
+						
+						// Add empty state message if no categories
+						if (visibleCategories.length === 0) {
+							const emptyMsg = document.createElement('div');
+							emptyMsg.className = 'section-empty-state';
+							emptyMsg.style.cssText = 'padding: 1em 2em; color: #999; font-style: italic; font-family: monospace; font-size: 0.9em;';
+							emptyMsg.textContent = '(empty section - drag categories here)';
+							sectionContent.appendChild(emptyMsg);
+						}
+						
+						// Add categories to section
+						visibleCategories.forEach(category => {
+							const posts = postsByCategory[category];
+							if (!posts || posts.length === 0) return;
+							
+							// Sort posts by date (newest first)
+							posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+							
+							// Create category container
+							const categoryDiv = document.createElement('div');
+							categoryDiv.className = 'blog-category';
+							categoryDiv.dataset.category = category;
+							
+							// Create category header - make the whole header draggable
+							const categoryHeader = document.createElement('div');
+							categoryHeader.className = 'blog-category-header draggable';
+							categoryHeader.draggable = true;
+							categoryHeader.dataset.category = category;
+							categoryHeader.dataset.section = sectionName;
+							categoryHeader.title = 'Drag to reorder or move to another section';
+							
+							
+							const categoryToggle = document.createElement('div');
+							categoryToggle.className = 'blog-category-toggle';
+							categoryToggle.dataset.category = category;
+							categoryToggle.setAttribute('role', 'button');
+							categoryToggle.setAttribute('tabindex', '0');
+							const isExpanded = expandedCategories.includes(category);
+							categoryToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+							
+							// Use folder icons for expand/collapse state
+							const meta = CATEGORY_META[category] || { icon: '📁', color: '#6b7280' };
+							const categoryIcon = document.createElement('span');
+							categoryIcon.className = 'category-icon';
+							categoryIcon.textContent = isExpanded ? '📂' : '📁';
+							categoryToggle.appendChild(categoryIcon);
+							
+							const categoryName = document.createElement('span');
+							categoryName.className = 'category-name';
+							categoryName.textContent = `${category}/`;
+							categoryToggle.appendChild(categoryName);
+							
+							const postCount = document.createElement('span');
+							postCount.className = 'post-count';
+							postCount.textContent = `(${posts.length})`;
+							categoryToggle.appendChild(postCount);
+							
+							categoryHeader.appendChild(categoryToggle);
+							categoryDiv.appendChild(categoryHeader);
+							
+							// Create posts container
+							const postsContainer = document.createElement('ul');
+							postsContainer.className = 'category-posts';
+							postsContainer.style.display = isExpanded ? 'block' : 'none';
+							
+							// Add posts to category
+							posts.forEach(post => {
 							const li = document.createElement('li');
 							li.className = 'blog-post-item';
 							li.dataset.postId = post.id;
@@ -2181,13 +2490,47 @@ try {
 							li.appendChild(metaDiv);
 							postsContainer.appendChild(li);
 						});
+							
+							categoryDiv.appendChild(postsContainer);
+							sectionContent.appendChild(categoryDiv);
+						});
 						
-						categoryDiv.appendChild(postsContainer);
-						blogPostList.appendChild(categoryDiv);
+						sectionDiv.appendChild(sectionContent);
+						blogPostList.appendChild(sectionDiv);
 					});
+					
+					// Check if add section button already exists
+					let existingAddSection = document.querySelector('.add-section-container');
+					if (!existingAddSection) {
+						// Add "add section" button
+						const addSectionDiv = document.createElement('div');
+						addSectionDiv.className = 'add-section-container';
+						
+						const addSectionBtn = document.createElement('a');
+						addSectionBtn.href = '#';
+						addSectionBtn.className = 'add-section-btn';
+						addSectionBtn.textContent = '[+ add section]';
+						addSectionBtn.id = 'add-section-btn';
+						
+						// Add click handler
+						addSectionBtn.addEventListener('click', (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							this.addSection();
+						});
+						
+						addSectionDiv.appendChild(addSectionBtn);
+						blogPostList.appendChild(addSectionDiv);
+					}
 					
 					// Update toggle all button text based on current state
 					this.updateToggleAllButtonText();
+					
+					// IMPORTANT: Set up drag and drop every time we recreate the DOM
+					// Use requestAnimationFrame to ensure DOM has been painted
+					requestAnimationFrame(() => {
+						this.setupDragAndDrop();
+					});
 				}
 				
 				// Update the toggle all button text based on folder states
@@ -2203,6 +2546,620 @@ try {
 					} else {
 						toggleBtn.textContent = 'expand all';
 					}
+				}
+				
+				// Load sections from localStorage or use defaults
+				loadSections() {
+					const saved = localStorage.getItem('notepad:customSections');
+					console.log('Loading sections from localStorage:', saved);
+					if (saved) {
+						try {
+							const sections = JSON.parse(saved);
+							console.log('Parsed sections:', sections);
+							return sections;
+						} catch (e) {
+							console.error('Failed to load custom sections:', e);
+						}
+					}
+					// Return a deep copy of defaults
+					console.log('Using default sections');
+					return JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+				}
+				
+				// Save sections to localStorage
+				saveSections() {
+					localStorage.setItem('notepad:customSections', JSON.stringify(this.sections));
+				}
+				
+				// Set up drag and drop for categories
+				setupDragAndDrop() {
+					// This now only needs to set draggable on headers
+					const categoryHeaders = document.querySelectorAll('.blog-category-header.draggable');
+					categoryHeaders.forEach(header => {
+						header.draggable = true;
+					});
+					
+					// Set up drop zones for section reordering
+					document.querySelectorAll('.blog-section').forEach(section => {
+						section.addEventListener('dragover', this.handleSectionDragOver.bind(this));
+						section.addEventListener('drop', this.handleSectionDrop.bind(this));
+					});
+					
+					// Set up section header click to toggle
+					document.querySelectorAll('.blog-section-header').forEach(header => {
+						header.addEventListener('click', (e) => {
+							// Only toggle if clicking on the header itself, not controls
+							if (!e.target.closest('.section-controls') && !this.editingSection) {
+								this.toggleSection(e);
+							}
+						});
+						
+						// Double-click to edit
+						header.addEventListener('dblclick', (e) => {
+							if (!e.target.closest('.section-controls')) {
+								const section = header.dataset.section;
+								this.startInlineEdit(section);
+							}
+						});
+						
+						// Make section headers draggable
+						header.draggable = true;
+						header.addEventListener('dragstart', this.handleSectionDragStart.bind(this));
+						header.addEventListener('dragend', this.handleSectionDragEnd.bind(this));
+					});
+				}
+				
+				// Handle drag start
+				handleDragStart(e) {
+					// With event delegation, we need to find the actual category header
+					const categoryHeader = e.target.closest('.blog-category-header.draggable');
+					if (!categoryHeader) return;
+					
+					const category = categoryHeader.dataset.category;
+					const section = categoryHeader.dataset.section;
+					
+					this.draggedCategory = {
+						category: category,
+						fromSection: section
+					};
+					
+					// Add dragging class to the category div
+					const categoryDiv = categoryHeader.closest('.blog-category');
+					categoryDiv.classList.add('dragging');
+					
+					// Store drag data
+					e.dataTransfer.effectAllowed = 'move';
+					e.dataTransfer.setData('text/plain', category);
+				}
+				
+				// Handle drag end
+				handleDragEnd(e) {
+					// Remove dragging class from all categories
+					document.querySelectorAll('.blog-category.dragging').forEach(el => {
+						el.classList.remove('dragging');
+					});
+					
+					// Remove drag-over classes
+					document.querySelectorAll('.blog-section.drag-over').forEach(el => {
+						el.classList.remove('drag-over');
+					});
+					
+					// Remove category drag indicators
+					document.querySelectorAll('.blog-category').forEach(cat => {
+						cat.classList.remove('drag-over-top', 'drag-over-bottom');
+					});
+					
+					this.draggedCategory = null;
+				}
+				
+				// Handle drag over for categories
+				handleCategoryDragOver(e) {
+					if (!this.draggedCategory) {
+						return;
+					}
+					
+					e.preventDefault();
+					e.dataTransfer.dropEffect = 'move';
+					
+					// Check if we're over a category
+					const targetCategory = e.target.closest('.blog-category');
+					if (targetCategory) {
+						const targetCategoryName = targetCategory.dataset.category;
+						if (targetCategoryName === this.draggedCategory.category) return;
+						
+						// Calculate if we're in top or bottom half
+						const rect = targetCategory.getBoundingClientRect();
+						const y = e.clientY - rect.top;
+						const height = rect.height;
+						
+						// Clear previous indicators
+						document.querySelectorAll('.blog-category').forEach(cat => {
+							cat.classList.remove('drag-over-top', 'drag-over-bottom');
+						});
+						
+						// Show drop indicator
+						if (y < height / 2) {
+							targetCategory.classList.add('drag-over-top');
+						} else {
+							targetCategory.classList.add('drag-over-bottom');
+						}
+					} else {
+						// Over section but not category - show section highlight
+						const section = e.target.closest('.blog-section');
+						if (section && !section.classList.contains('drag-over')) {
+							// Remove from other sections
+							document.querySelectorAll('.blog-section.drag-over').forEach(el => {
+								if (el !== section) el.classList.remove('drag-over');
+							});
+							section.classList.add('drag-over');
+						}
+						// Clear category indicators
+						document.querySelectorAll('.blog-category').forEach(cat => {
+							cat.classList.remove('drag-over-top', 'drag-over-bottom');
+						});
+					}
+				}
+				
+				// Handle drag leave for categories
+				handleCategoryDragLeave(e) {
+					const section = e.target.closest('.blog-section');
+					if (section && !section.contains(e.relatedTarget)) {
+						section.classList.remove('drag-over');
+					}
+				}
+				
+				// Handle drop for categories
+				handleCategoryDrop(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					
+					if (!this.draggedCategory) return;
+					
+					const { category, fromSection } = this.draggedCategory;
+					let toSection = null;
+					
+					// Check if dropped on a category (for reordering)
+					const targetCategory = e.target.closest('.blog-category');
+					if (targetCategory) {
+						const targetCategoryName = targetCategory.dataset.category;
+						const targetSection = targetCategory.closest('.blog-section');
+						toSection = targetSection.dataset.section;
+						
+						// Calculate position
+						const rect = targetCategory.getBoundingClientRect();
+						const y = e.clientY - rect.top;
+						const height = rect.height;
+						const insertBefore = y < height / 2;
+						
+						// Remove from source section
+						const fromCategories = this.sections[fromSection];
+						const categoryIndex = fromCategories.indexOf(category);
+						if (categoryIndex > -1) {
+							fromCategories.splice(categoryIndex, 1);
+						}
+						
+						// Add to target section at specific position
+						const toCategories = this.sections[toSection];
+						const targetIndex = toCategories.indexOf(targetCategoryName);
+						
+						if (targetIndex > -1) {
+							if (insertBefore) {
+								toCategories.splice(targetIndex, 0, category);
+							} else {
+								toCategories.splice(targetIndex + 1, 0, category);
+							}
+						} else {
+							// Shouldn't happen, but just in case
+							toCategories.push(category);
+						}
+					} else {
+						// Dropped on section (not on a specific category)
+						const targetSection = e.target.closest('.blog-section');
+						if (!targetSection) return;
+						
+						toSection = targetSection.dataset.section;
+						
+						// Don't do anything if dropped on same section with no position change
+						if (fromSection === toSection) return;
+						
+						// Update sections
+						const fromCategories = this.sections[fromSection];
+						const toCategories = this.sections[toSection];
+						
+						// Remove from old section
+						const index = fromCategories.indexOf(category);
+						if (index > -1) {
+							fromCategories.splice(index, 1);
+						}
+						
+						// Add to new section
+						if (!toCategories.includes(category)) {
+							toCategories.push(category);
+						}
+					}
+					
+					// Save and refresh
+					console.log('BEFORE SAVE - sections:', JSON.stringify(this.sections, null, 2));
+					this.saveSections();
+					console.log('AFTER SAVE - sections in localStorage:', localStorage.getItem('notepad:customSections'));
+					this.populateBlogPosts();
+					
+					// Show feedback
+					console.log(`Moved ${category} to ${toSection || 'section'}`);
+					
+					// Clean up drag indicators
+					document.querySelectorAll('.blog-category').forEach(cat => {
+						cat.classList.remove('drag-over-top', 'drag-over-bottom');
+					});
+					document.querySelectorAll('.blog-section').forEach(section => {
+						section.classList.remove('drag-over');
+					});
+				}
+				
+				// Toggle section expand/collapse
+				toggleSection(e) {
+					const header = e.target.closest('.blog-section-header');
+					if (!header) return;
+					
+					const section = header.closest('.blog-section');
+					const sectionName = section.dataset.section;
+					const content = section.querySelector('.blog-section-content');
+					
+					// Get current state
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+					const isExpanded = expandedSections.includes(sectionName);
+					
+					// Toggle state
+					if (isExpanded) {
+						content.style.display = 'none';
+						const index = expandedSections.indexOf(sectionName);
+						if (index > -1) expandedSections.splice(index, 1);
+					} else {
+						content.style.display = 'block';
+						expandedSections.push(sectionName);
+					}
+					
+					// Save state
+					localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
+				}
+				
+				// Handle section drag start
+				handleSectionDragStart(e) {
+					// Don't start drag if clicking on controls or editing
+					if (e.target.closest('.section-controls') || this.editingSection) {
+						e.preventDefault();
+						return;
+					}
+					
+					const sectionHeader = e.target.closest('.blog-section-header');
+					if (!sectionHeader) return;
+					
+					const sectionName = sectionHeader.dataset.section;
+					this.draggedSection = sectionName;
+					
+					e.dataTransfer.effectAllowed = 'move';
+					e.dataTransfer.setData('text/html', e.target.innerHTML);
+					
+					// Add dragging class
+					const sectionDiv = sectionHeader.closest('.blog-section');
+					sectionDiv.classList.add('dragging');
+				}
+				
+				// Handle section drag end
+				handleSectionDragEnd(e) {
+					const sectionDiv = e.target.closest('.blog-section');
+					if (sectionDiv) {
+						sectionDiv.classList.remove('dragging');
+					}
+					
+					document.querySelectorAll('.blog-section').forEach(section => {
+						section.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom');
+					});
+					
+					this.draggedSection = null;
+				}
+				
+				// Handle section drag over
+				handleSectionDragOver(e) {
+					if (!this.draggedSection || this.draggedCategory) return;
+					
+					e.preventDefault();
+					e.dataTransfer.dropEffect = 'move';
+					
+					const sectionDiv = e.target.closest('.blog-section');
+					if (!sectionDiv) return;
+					
+					// Get the section name being hovered over
+					const targetSection = sectionDiv.dataset.section;
+					if (targetSection === this.draggedSection) return;
+					
+					// Calculate if we're in top or bottom half
+					const rect = sectionDiv.getBoundingClientRect();
+					const y = e.clientY - rect.top;
+					const height = rect.height;
+					
+					// Clear previous indicators
+					document.querySelectorAll('.blog-section').forEach(s => {
+						s.classList.remove('drag-over-top', 'drag-over-bottom');
+					});
+					
+					// Show drop indicator
+					if (y < height / 2) {
+						sectionDiv.classList.add('drag-over-top');
+					} else {
+						sectionDiv.classList.add('drag-over-bottom');
+					}
+				}
+				
+				// Handle section drop
+				handleSectionDrop(e) {
+					if (!this.draggedSection || this.draggedCategory) return;
+					
+					e.preventDefault();
+					e.stopPropagation();
+					
+					const sectionDiv = e.target.closest('.blog-section');
+					if (!sectionDiv) return;
+					
+					const targetSection = sectionDiv.dataset.section;
+					if (targetSection === this.draggedSection) return;
+					
+					// Calculate position
+					const rect = sectionDiv.getBoundingClientRect();
+					const y = e.clientY - rect.top;
+					const height = rect.height;
+					const insertBefore = y < height / 2;
+					
+					// Reorder sections
+					const sectionsArray = Object.entries(this.sections);
+					const draggedIndex = sectionsArray.findIndex(([name]) => name === this.draggedSection);
+					const targetIndex = sectionsArray.findIndex(([name]) => name === targetSection);
+					
+					if (draggedIndex === -1 || targetIndex === -1) return;
+					
+					// Remove dragged section
+					const [draggedEntry] = sectionsArray.splice(draggedIndex, 1);
+					
+					// Insert at new position
+					let newIndex = targetIndex;
+					if (!insertBefore && draggedIndex < targetIndex) {
+						newIndex = targetIndex;
+					} else if (!insertBefore) {
+						newIndex = targetIndex + 1;
+					} else if (draggedIndex < targetIndex) {
+						newIndex = targetIndex - 1;
+					}
+					
+					sectionsArray.splice(newIndex, 0, draggedEntry);
+					
+					// Rebuild sections object
+					this.sections = Object.fromEntries(sectionsArray);
+					this.saveSections();
+					this.populateBlogPosts();
+					
+					// Clear classes
+					document.querySelectorAll('.blog-section').forEach(section => {
+						section.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom');
+					});
+				}
+				
+				// Add a new section
+				addSection() {
+					// Generate a unique new section name
+					let sectionNum = 1;
+					let sectionName = `New Section`;
+					while (this.sections[sectionName]) {
+						sectionName = `New Section ${sectionNum}`;
+						sectionNum++;
+					}
+					
+					// Add new section at the beginning
+					const newSections = {};
+					newSections[sectionName] = [];
+					// Add all existing sections after the new one
+					Object.entries(this.sections).forEach(([name, categories]) => {
+						newSections[name] = categories;
+					});
+					this.sections = newSections;
+					
+					// Ensure new section is expanded
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+					if (!expandedSections.includes(sectionName)) {
+						expandedSections.push(sectionName);
+						localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
+					}
+					
+					this.saveSections();
+					this.populateBlogPosts();
+					
+					// Immediately start editing the new section
+					setTimeout(() => {
+						this.startInlineEdit(sectionName);
+					}, 100);
+				}
+				
+				// Start inline editing for a section
+				startInlineEdit(sectionName) {
+					
+					// Don't allow editing while another is being edited
+					if (this.editingSection) {
+						this.finishInlineEdit(false);
+					}
+					
+					this.editingSection = sectionName;
+					
+					// Find the section header
+					const sectionDiv = document.querySelector(`.blog-section[data-section="${sectionName}"]`);
+					if (!sectionDiv) return;
+					
+					const header = sectionDiv.querySelector('.blog-section-header');
+					const nameSpan = header.querySelector('.blog-section-name');
+					const controls = header.querySelector('.section-controls');
+					if (!controls) {
+						console.error('Section controls not found for', sectionName);
+						return;
+					}
+					
+					const editBtn = controls.querySelector('.section-edit-btn');
+					const delBtn = controls.querySelector('.section-del-btn');
+					
+					if (!editBtn || !delBtn) {
+						console.error('Edit or delete button not found for', sectionName);
+						return;
+					}
+					
+					// Create input element
+					const input = document.createElement('input');
+					input.type = 'text';
+					input.className = 'section-name-input';
+					input.value = sectionName;
+					input.dataset.originalName = sectionName;
+					
+					// Replace span text with input
+					nameSpan.textContent = '';
+					nameSpan.appendChild(input);
+					
+					// Change edit button to cancel and show delete
+					editBtn.textContent = '[cancel]';
+					editBtn.classList.add('cancel-mode');
+					delBtn.style.display = '';
+					
+					// Add editing class to header for always-visible controls
+					header.classList.add('editing');
+					
+					// Focus and select
+					input.focus();
+					input.select();
+					
+					// Add slash suffix that moves with cursor
+					const slashSpan = document.createElement('span');
+					slashSpan.textContent = '/';
+					slashSpan.style.opacity = '0.7';
+					nameSpan.appendChild(slashSpan);
+					
+					// Adjust input width based on content
+					const adjustWidth = () => {
+						input.style.width = Math.max(input.value.length + 1, 10) + 'ch';
+					};
+					adjustWidth();
+					
+					// Handle input events
+					input.addEventListener('input', adjustWidth);
+					
+					input.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							this.finishInlineEdit(true);
+						} else if (e.key === 'Escape') {
+							e.preventDefault();
+							this.finishInlineEdit(false);
+						}
+					});
+					
+					input.addEventListener('blur', () => {
+						// Small delay to allow button clicks to register
+						setTimeout(() => {
+							if (this.editingSection === sectionName) {
+								this.finishInlineEdit(true);
+							}
+						}, 200);
+					});
+				}
+				
+				// Finish inline editing
+				finishInlineEdit(save) {
+					if (!this.editingSection) return;
+					
+					const sectionDiv = document.querySelector(`.blog-section[data-section="${this.editingSection}"]`);
+					if (!sectionDiv) return;
+					
+					const header = sectionDiv.querySelector('.blog-section-header');
+					const nameSpan = header.querySelector('.blog-section-name');
+					const input = header.querySelector('.section-name-input');
+					const controls = header.querySelector('.section-controls');
+					const editBtn = controls?.querySelector('.section-edit-btn');
+					const delBtn = controls?.querySelector('.section-del-btn');
+					
+					if (!input) return;
+					
+					const oldName = input.dataset.originalName;
+					const newName = input.value.trim();
+					
+					// Reset buttons
+					if (editBtn) {
+						editBtn.textContent = '[edit]';
+						editBtn.classList.remove('cancel-mode');
+					}
+					if (delBtn) {
+						delBtn.style.display = 'none';
+					}
+					
+					// Remove editing class
+					header.classList.remove('editing');
+					
+					if (save && newName && newName !== oldName) {
+						// Check if new name already exists
+						if (this.sections[newName]) {
+							this.showError(`Section "${newName}" already exists`);
+						} else {
+							// Rename section
+							this.sections[newName] = this.sections[oldName];
+							delete this.sections[oldName];
+							
+							// Update expanded state
+							const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+							const index = expandedSections.indexOf(oldName);
+							if (index > -1) {
+								expandedSections[index] = newName;
+								localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
+							}
+							
+							this.saveSections();
+							this.populateBlogPosts();
+							this.showMessage(`Renamed section to "${newName}"`);
+							this.editingSection = null;
+							return;
+						}
+					}
+					
+					// Restore original text
+					nameSpan.textContent = `${oldName}/`;
+					this.editingSection = null;
+				}
+				
+				// Remove a section
+				removeSection(sectionName) {
+					const categories = this.sections[sectionName] || [];
+					
+					// Clear confirmation state
+					this.deleteConfirmations.delete(sectionName);
+					
+					// Move categories to Miscellaneous if any
+					if (categories.length > 0) {
+						if (!this.sections['Miscellaneous']) {
+							this.sections['Miscellaneous'] = [];
+						}
+						categories.forEach(cat => {
+							if (!this.sections['Miscellaneous'].includes(cat)) {
+								this.sections['Miscellaneous'].push(cat);
+							}
+						});
+					}
+					
+					// Remove section
+					delete this.sections[sectionName];
+					
+					// Clean up expanded state
+					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+					const index = expandedSections.indexOf(sectionName);
+					if (index > -1) {
+						expandedSections.splice(index, 1);
+						localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
+					}
+					
+					this.saveSections();
+					this.populateBlogPosts();
+					this.showMessage(`Removed section "${sectionName}"`);
 				}
 				
 				// Load a blog post for editing
@@ -4569,20 +5526,20 @@ try {
 						}
 					});
 					
-					// TEMPORARY DEBUG: Document-level click handler
+					// Document-level click handler for resetting states
 					document.addEventListener('click', (e) => {
-						console.log('=== Document Click Debug ===');
-						console.log('Target:', e.target);
-						console.log('Target tagName:', e.target.tagName);
-						console.log('Target className:', e.target.className);
-						console.log('Target id:', e.target.id);
-						console.log('Current activeElement:', document.activeElement);
-						const editor = document.getElementById('editor-content');
-						console.log('Editor edit mode:', editor?.dataset.editMode);
-						console.log('Editor focused?', document.activeElement === editor);
-						console.log('Event phase:', e.eventPhase);
-						console.log('===========================');
-					}, true); // Use capture phase
+						// Reset delete confirmations if clicking outside
+						if (!e.target.classList.contains('section-control')) {
+							this.deleteConfirmations.forEach(section => {
+								const control = document.querySelector(`.section-control[data-section="${section}"]`);
+								if (control && control.textContent === '[sure?]') {
+									control.textContent = '[del]';
+									control.classList.remove('confirm-delete');
+								}
+							});
+							this.deleteConfirmations.clear();
+						}
+					});
 					
 					// New note button
 					document.getElementById('new-note-btn').addEventListener('click', (e) => {
@@ -4833,7 +5790,88 @@ try {
 					});
 					
 					// Blog post list clicks
-					document.getElementById('blog-post-list').addEventListener('click', async (e) => {
+					const blogPostList = document.getElementById('blog-post-list');
+					if (!blogPostList) {
+						console.error('blog-post-list element not found!');
+						return;
+					}
+					
+					blogPostList.addEventListener('click', async (e) => {
+						// Handle section control clicks
+						if (e.target.classList.contains('section-control')) {
+							e.preventDefault();
+							e.stopPropagation();
+							
+							const control = e.target;
+							const section = control.dataset.section;
+							
+							if (control.dataset.action === 'edit') {
+								if (control.textContent === '[edit]') {
+									this.startInlineEdit(section);
+								} else if (control.textContent === '[cancel]') {
+									this.finishInlineEdit(false);
+								}
+							} else if (control.dataset.action === 'delete') {
+								if (control.textContent === '[del]') {
+									control.textContent = '[sure?]';
+									control.classList.add('confirm-delete');
+									this.deleteConfirmations.add(section);
+								
+									// Reset after timeout
+									setTimeout(() => {
+										if (this.deleteConfirmations.has(section)) {
+											control.textContent = '[del]';
+											control.classList.remove('confirm-delete');
+											this.deleteConfirmations.delete(section);
+										}
+									}, 3000);
+								} else if (control.textContent === '[sure?]') {
+									this.removeSection(section);
+								}
+							}
+							return;
+						}
+						
+						// Handle add section button
+						const addBtn = e.target.closest('.add-section-btn');
+						if (addBtn || e.target.id === 'add-section-btn' || e.target.classList.contains('add-section-btn')) {
+							e.preventDefault();
+							this.addSection();
+							return;
+						}
+						
+						// Handle section header clicks for expand/collapse
+						if (e.target.classList.contains('blog-section-header') || e.target.classList.contains('blog-section-name')) {
+							// Don't toggle if clicking on controls or input
+							if (e.target.closest('.section-controls') || e.target.tagName === 'INPUT') {
+								return;
+							}
+							
+							e.preventDefault();
+							const header = e.target.classList.contains('blog-section-header') ? e.target : e.target.closest('.blog-section-header');
+							const sectionName = header.dataset.section;
+							const sectionDiv = header.closest('.blog-section');
+							const content = sectionDiv.querySelector('.blog-section-content');
+							
+							// Get current expanded sections
+							const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+							const isExpanded = expandedSections.includes(sectionName);
+							
+							// Toggle state
+							if (isExpanded) {
+								const index = expandedSections.indexOf(sectionName);
+								expandedSections.splice(index, 1);
+								content.style.display = 'none';
+							} else {
+								expandedSections.push(sectionName);
+								content.style.display = 'block';
+							}
+							
+							// Save state
+							localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
+							return;
+						}
+						
 						// Handle category toggle clicks
 						if (e.target.closest('.blog-category-toggle')) {
 							e.preventDefault();
@@ -4984,6 +6022,26 @@ try {
 				console.log('Initializing app with', window.BLOG_POSTS.length, 'blog posts');
 				const app = new NotepadApp();
 				app.init();
+				window.notepadApp = app; // Make app globally accessible
+				
+				// Set up global drag event handling for dynamic content
+				document.addEventListener('dragover', (e) => {
+					if (app.draggedCategory) {
+						app.handleCategoryDragOver(e);
+					}
+				});
+				
+				document.addEventListener('drop', (e) => {
+					if (app.draggedCategory) {
+						app.handleCategoryDrop(e);
+					}
+				});
+				
+				document.addEventListener('dragleave', (e) => {
+					if (app.draggedCategory) {
+						app.handleCategoryDragLeave(e);
+					}
+				});
 			}
 			
 			// Start initialization

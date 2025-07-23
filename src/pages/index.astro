@@ -461,21 +461,33 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 						opacity: 0;
 						transform: translateY(-0.2em);
 						transition: opacity 0.3s ease, transform 0.3s ease;
+						background: #002147;
+						padding: 0.25em 0.5em;
+						border-radius: 3px;
 					}
 					.post-item.has-active-form .inline-pw-form {
 						opacity: 1;
 						transform: translateY(0);
 					}
 					.inline-pw-form input[type="password"] {
-						font-size: 1em;
-						padding: 2px 4px;
-						border: 1px solid #ccc;
+						font-size: 0.9em;
+						padding: 3px 6px;
+						border: 1px solid rgba(255, 255, 255, 0.3);
+						background: rgba(255, 255, 255, 0.1);
+						color: #ffffff;
 						margin: 0;
 						/* Fix vertical sizing */
 						height: 1.4em;
 						box-sizing: border-box;
 						line-height: 1;
 						/* Outline handled inline via style attribute */
+					}
+					.inline-pw-form input[type="password"]:focus {
+						border-color: rgba(255, 255, 255, 0.6);
+						background: rgba(255, 255, 255, 0.15);
+					}
+					.inline-pw-form input[type="password"]::placeholder {
+						color: rgba(255, 255, 255, 0.5);
 					}
 					/* Remove focus outline only from private links */
 					a.private-link:focus {

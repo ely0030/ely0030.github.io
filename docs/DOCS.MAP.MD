@@ -120,6 +120,13 @@
 **Critical**: Covers common Windows-specific issues and solutions  
 **When to use**: Setting up the blog on a Windows PC
 
+### <a id="protected-mode"></a>PROTECTED-MODE-SETUP.md
+**Purpose**: Complete site password protection  
+**Contains**: Setup for requiring auth to VIEW any page (not just edit)  
+**Critical**: Proxy MUST load .env file or token mismatch occurs  
+**Files**: https-proxy-protected.cjs, start-https-server-PROTECTED.bat, run-dev-protected.sh  
+**When to use**: Preventing IoT devices from even viewing blog content
+
 ### <a id="security-setup"></a>SECURITY-SETUP.md
 **Purpose**: Quick authentication setup guide  
 **Contains**: Step-by-step auth implementation, .env setup, script modifications  

@@ -1,16 +1,16 @@
 # Planning Wall
 
-Fixed grid project board at `/planning-wall`. Complete rewrite 2025-01-17.
+Fixed grid project board at `/planning-wall`. Complete rewrite 2025-01-17. Updated 2025-01-20 for column-independent vertical layout.
 
-## Architecture (Grid-Based)
+## Architecture (Column-Independent Vertical Layout)
 
 **State**: 
 - `this.projects[]` - array with `{id, title, ..., gridX, gridY}`
 - NO columns array - positions stored directly on projects
 - `this.gridColumns = 5` - fixed width
-- Grid auto-expands vertically
+- Each column maintains independent vertical flow
 
-**Critical**: Old column-based docs are OBSOLETE. System now uses CSS grid + absolute positioning.
+**Critical**: Column-independent system where cards float to top within their column. Y positions auto-compact on render to eliminate gaps.
 
 ## Drag-Drop Implementation
 
@@ -35,14 +35,13 @@ NO placeholders, NO drop zones, NO position calculations. Just:
 
 ## Non-Obvious Gotchas
 
-### Grid Slot Generation (lines 540-555)
+### Grid Slot Generation (lines 662-704)
 ```javascript
-for (let y = 0; y <= rows; y++) {
-  for (let x = 0; x < this.gridColumns; x++) {
-    // CRITICAL: data-x/data-y attributes MUST match loop indices
-    `<div class="grid-slot" data-x="${x}" data-y="${y}">`
+for (let x = 0; x < this.gridColumns; x++) {
+  html += `<div class="grid-column" data-column="${x}">`;
+  // Each column manages its own Y positions independently
 ```
-Mismatch = drops land in wrong position.
+Column-based structure ensures vertical changes stay within columns.
 
 ### Swap Logic (lines 461-473)
 When dropping on occupied slot:
@@ -51,9 +50,21 @@ When dropping on occupied slot:
 3. Move occupying → original position
 4. Mark BOTH as unsaved
 
-### findEmptySlot() (lines 415-433)
-Scans left→right, top→bottom. Returns `{x:0, y:maxRows}` if full.
-**PITFALL**: Don't assume first empty is visually logical placement.
+### findEmptySlot() (lines 480-517)
+Finds column with least items, then first empty Y position in that column.
+**NEW**: Balances card distribution across columns for better visual layout.
+
+### Auto-Compaction (lines 674-692)
+**CRITICAL**: Y positions auto-compact within columns on every render:
+```javascript
+// For each column, sort by Y, reassign sequential positions
+columnProjects.forEach((project, index) => {
+  project.gridY = index;
+});
+```
+Eliminates gaps when cards deleted/moved. Columns independent - moving card in column 0 doesn't affect column 1.
+
+**PITFALL**: Compaction happens BEFORE slot generation. Must use compacted positions for data-y attributes or drops go to wrong place.
 
 ### Event Binding Order
 1. `render()` rebuilds DOM
@@ -72,10 +83,15 @@ Auto-positions in reading order.
 ## CSS Dependencies
 
 ### Critical Classes
-- `.grid-slot` - MUST have `position: relative`
+- `.planning-board` - Uses `display: flex` for column layout
+- `.grid-column` - Flexbox column with `gap: 10px` between cards
+- `.grid-slot` - MUST have `position: relative` and `min-height: 120px`
 - `.project-card` - NO transitions (causes jump)
 - `.dragging` - z-index: 1000 required
 - Border changes MUST use `border-style` not `border` (preserves width)
+
+### Height Matching Pitfall
+**GOTCHA**: Empty slots must match card height (~120px) or drop targets become 0px tall and undroppable. CSS `min-height` critical.
 
 ### Apache Aesthetic
 - Dotted borders only
@@ -90,6 +106,8 @@ Auto-positions in reading order.
 3. **Invisible drop zones** - too small to hit
 4. **Animations** - felt "jumpy" not "snappy"
 5. **Pointer events** - less reliable than drag events
+6. **Fixed Y positions** - gaps after deletes looked broken
+7. **Cross-column compaction** - unpredictable card movement
 
 ## Card Editing (2025-01-18 Rewrite)
 
@@ -107,6 +125,18 @@ Auto-positions in reading order.
 - Toggle on re-click (lines 770-774)
 - `user-select: none` prevents text selection (line 232)
 - **BUG FIX**: Store `activeDropdownField` to prevent immediate close (line 868)
+
+### Card Selection Styling (2025-01-21) 🎨
+**EVOLUTION**: Orange too harsh → deep blue → back to subtle orange
+- Location: planning-wall.astro:122-130, 145-152
+- Border: `1px solid #ff5500` (subtle orange, not 2px)
+- Double shadow: `0 0 0 1px rgba(255, 85, 0, 0.2), inset 0 0 0 1px rgba(255, 85, 0, 0.1)`
+- Background tint: `rgba(255, 85, 0, 0.02)` - barely visible
+- Header darker on selected: `rgba(255, 85, 0, 0.03)`
+- **TRANSITIONS**: Added 0.15s cubic-bezier for smooth feel
+- Card header also transitions background-color
+- Priority dots reverted to original orange/yellow/gray
+- **LESSON**: User wanted finesse in visual design, not animations
 
 ### Ghost Cards (lines 920-975)
 - Create real card immediately with `isGhost: true`
@@ -126,5 +156,8 @@ Auto-positions in reading order.
 **Lost cards**: Check gridX/gridY values in localStorage
 **Newlines lost**: Check if description using `.trim()` (shouldn't)
 **Dropdown won't close**: Verify `activeDropdownField` cleanup
+**Cards overlap**: Verify auto-compaction running in render()
+**Empty column too short**: Check `.grid-slot` has `min-height: 120px`
+**Gaps after delete**: Compaction only within columns - check gridX values
 
 File: `/src/pages/planning-wall.astro` (all inline, ~1100 lines)

@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const https = require("https");
 const http = require("http");
 const fs = require("fs");
@@ -43,16 +45,22 @@ function parseCookies(cookieHeader) {
   return cookies;
 }
 
-// Verify auth token (simple HMAC check like the API server)
+// Verify auth token (simple hash check like the API server)
 function verifyAuthToken(token) {
   if (!token) return false;
   
   try {
-    // The API server creates tokens as HMAC-SHA256 of the password
+    // The API server creates tokens as SHA256 hash of the password
     const expectedToken = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHash('sha256')
       .update(JWT_SECRET)
       .digest('hex');
+    
+    console.log(`[${new Date().toISOString()}] Token verification:`, {
+      received: token,
+      expected: expectedToken,
+      match: token === expectedToken
+    });
     
     return token === expectedToken;
   } catch (err) {
@@ -71,102 +79,80 @@ const loginPageHTML = `
   <title>Login Required</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+      background: #fdfdfd;
+      color: #000;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       min-height: 100vh;
-      margin: 0;
-      background: #f5f5f5;
+      padding-top: 40vh;
     }
     .login-container {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    h1 {
-      margin: 0 0 1.5rem 0;
-      color: #333;
       text-align: center;
     }
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #666;
-      font-size: 14px;
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
     }
     input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-      box-sizing: border-box;
+      width: 200px;
+      padding: 4px 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #000;
+      font-family: monospace;
+      font-size: 14px;
     }
     input:focus {
       outline: none;
-      border-color: #ff8c00;
+      border-color: #0055bb;
     }
     button {
-      width: 100%;
-      padding: 0.75rem;
-      background: #ff8c00;
-      color: white;
+      background: none;
       border: none;
-      border-radius: 4px;
-      font-size: 16px;
+      color: #0055bb;
+      font-family: monospace;
+      font-size: 14px;
+      text-decoration: underline;
       cursor: pointer;
-      transition: background 0.2s;
+      padding: 0;
+      margin: 0;
     }
     button:hover {
-      background: #ff7700;
+      text-decoration: none;
     }
     button:disabled {
-      background: #ccc;
+      color: #ccc;
       cursor: not-allowed;
+      text-decoration: none;
     }
     .error {
       color: #d32f2f;
-      margin-top: 0.5rem;
-      font-size: 14px;
-      text-align: center;
-      min-height: 20px;
-    }
-    .info {
-      color: #666;
+      margin-top: 10px;
       font-size: 13px;
-      text-align: center;
-      margin-top: 1rem;
+      font-family: monospace;
+      min-height: 18px;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <h1>🔒 Blog Access</h1>
     <form id="loginForm">
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input 
-          type="password" 
-          id="password" 
-          name="password" 
-          required 
-          autofocus
-          placeholder="Enter blog password"
-        >
-      </div>
-      <button type="submit" id="submitBtn">Login</button>
+      <input 
+        type="password" 
+        id="password" 
+        name="password" 
+        required 
+        autofocus
+      >
+      <button type="submit" id="submitBtn">login</button>
       <div class="error" id="error"></div>
     </form>
-    <div class="info">
-      This blog is protected. Please enter the password to continue.
-    </div>
   </div>
 
   <script>
@@ -180,12 +166,12 @@ const loginPageHTML = `
       
       const password = passwordInput.value;
       if (!password) {
-        errorDiv.textContent = 'Please enter a password';
+        errorDiv.textContent = 'please enter a password';
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Logging in...';
+      submitBtn.textContent = 'logging in...';
       errorDiv.textContent = '';
 
       try {
@@ -203,16 +189,16 @@ const loginPageHTML = `
           // Success! The cookie is set by the server, just reload
           window.location.reload();
         } else {
-          errorDiv.textContent = data.error || 'Invalid password';
+          errorDiv.textContent = data.error || 'invalid password';
           passwordInput.select();
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Login';
+          submitBtn.textContent = 'login';
         }
       } catch (err) {
         console.error('Login error:', err);
-        errorDiv.textContent = 'Connection error. Please try again.';
+        errorDiv.textContent = 'connection error. please try again.';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
+        submitBtn.textContent = 'Submit Query';
       }
     });
 
@@ -240,6 +226,11 @@ https.createServer(options, (req, res) => {
     // Parse cookies and check auth
     const cookies = parseCookies(req.headers.cookie);
     const authToken = cookies.blog_auth;
+    
+    // Debug logging
+    console.log(`[${new Date().toISOString()}] Cookie header:`, req.headers.cookie);
+    console.log(`[${new Date().toISOString()}] Parsed cookies:`, cookies);
+    console.log(`[${new Date().toISOString()}] Auth token:`, authToken);
     
     if (!verifyAuthToken(authToken)) {
       // No valid auth - show login page
@@ -280,8 +271,32 @@ https.createServer(options, (req, res) => {
       res.setHeader(key, proxyRes.headers[key]);
     });
     
-    // Pipe the response
-    proxyRes.pipe(res);
+    // Special handling for login endpoint - set cookie on proxy's domain
+    if (pathname === '/api/login' && proxyRes.statusCode === 200) {
+      // Read the response to get the token
+      let body = '';
+      proxyRes.on('data', chunk => {
+        body += chunk;
+      });
+      proxyRes.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (data.success && data.token) {
+            // Set cookie for the proxy's domain
+            const cookieValue = `blog_auth=${data.token}; HttpOnly; Secure; Path=/; Max-Age=${24*60*60}; SameSite=Lax`;
+            res.setHeader('Set-Cookie', cookieValue);
+            console.log(`[${new Date().toISOString()}] Login successful, cookie set`);
+            console.log(`[${new Date().toISOString()}] Cookie value:`, cookieValue);
+          }
+        } catch (err) {
+          console.error('Error parsing login response:', err);
+        }
+        res.end(body);
+      });
+    } else {
+      // Normal response - just pipe it
+      proxyRes.pipe(res);
+    }
   });
   
   // Handle proxy errors

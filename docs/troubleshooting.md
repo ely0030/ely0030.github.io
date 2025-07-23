@@ -240,6 +240,45 @@ markColor: 'orange'      # 'grey', 'orange', or 'blue'
 3. Clear browser cache
 4. Check network tab for 404s
 
+## Protected Mode Authentication Issues
+
+### Login Succeeds But Still Shows "Unauthorized"
+
+**Problem**: Password accepted, but every page request still requires auth
+
+**Cause**: Token mismatch between proxy and API server
+- API server loads `.env` file with actual password
+- Proxy uses hardcoded default password
+- Tokens don't match even though login "succeeds"
+
+**Solution**: Add to top of `https-proxy-protected.cjs`:
+```javascript
+require('dotenv').config();
+```
+
+**Debug steps**:
+1. Add console.logs to see tokens:
+   ```javascript
+   console.log('Cookie header:', req.headers.cookie);
+   console.log('Auth token:', authToken);
+   console.log('Token verification:', { received, expected, match });
+   ```
+2. Check if received token matches expected:
+   - Received: SHA-256 of actual password
+   - Expected: SHA-256 of proxy's password
+3. Ensure both use same password source
+
+### Cookie Not Being Set
+
+**Problem**: Login successful but cookie not saved
+
+**Causes**:
+1. Cookie domain mismatch (API on :4322, proxy on :4320)
+2. Secure flag on localhost
+3. SameSite too strict
+
+**Solution**: Proxy must intercept login response and set its own cookie
+
 ## Deployment Issues
 
 ### Netlify Build Failures

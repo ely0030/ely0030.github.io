@@ -1,7 +1,7 @@
 #!/bin/bash
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm use 18.17.1
+nvm use 20.19.2
 
 echo "🔒 Starting PROTECTED development server"
 echo "Authentication required to view ANY page"
@@ -37,7 +37,7 @@ trap cleanup EXIT INT TERM
 
 # Start the dev server with telemetry disabled
 echo "🚀 Starting Astro dev server..."
-ASTRO_TELEMETRY_DISABLED=1 astro dev --port 4321 &
+ASTRO_TELEMETRY_DISABLED=1 npx astro dev --port 4321 &
 ASTRO_PID=$!
 
 # Wait for Astro to start

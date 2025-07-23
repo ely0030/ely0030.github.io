@@ -102,8 +102,9 @@ app.post('/api/login', (req, res) => {
     // Set httpOnly cookie for site-wide auth
     res.cookie('blog_auth', AUTH_TOKEN, {
       httpOnly: true,
-      secure: true, // Required for HTTPS
-      sameSite: 'strict',
+      secure: false, // Changed to false for local development
+      sameSite: 'lax', // Changed from strict to lax for cross-port
+      path: '/', // Explicit path
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
     

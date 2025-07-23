@@ -9,6 +9,13 @@ This guide helps you set up HTTPS for your blog when hosting on your local netwo
 - **Modern Features**: Some browser features require HTTPS
 - **Peace of Mind**: Especially important if you have IoT devices or guests on your network
 
+## Protected Mode Option
+
+For complete site protection (requiring password to VIEW any page, not just edit), see:
+- **Documentation**: `PROTECTED-MODE-SETUP.md`
+- **Scripts**: `start-https-server-PROTECTED.bat` (Windows), `run-dev-protected.sh` (Unix/Mac)
+- **Key difference**: Standard HTTPS allows reading, protected mode blocks all access without password
+
 ## Option 1: Self-Signed Certificate (Recommended for Home Use)
 
 ### Step 1: Generate Certificate (Linux/macOS)

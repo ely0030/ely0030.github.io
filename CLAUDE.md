@@ -162,6 +162,10 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - Enter key inserts `<br>` + `\u200B` (zero-width space) for cursor
 - **GOTCHA**: Must strip `\u200B` on save (:752)
 - TreeWalker extracts text preserving BR→\n conversion
+- **Selection styling** (2025-01-21): planning-wall.astro:122-130
+  - Orange border (1px #ff5500) + double shadow effect
+  - Header gets subtle orange tint on selection
+  - Smooth 0.15s transitions for elegant feel
 
 ### 21. Button Focus Outline CSS Specificity
 **ISSUE**: Blue outline persists on buttons despite `outline: none`
@@ -200,6 +204,25 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - Supports: `- `, `* `, `+ ` bullets, `1. ` numbered lists, nested with 2-space indent
 - Pattern: Detect list syntax → wrap in span → apply inline formatting to content
 - **CRITICAL**: Must handle inline markdown (bold/italic/code/links) within list items
+
+### 25. Protected Proxy .env Loading (2025-01-20) 🔥
+**CRITICAL**: https-proxy-protected.cjs MUST load .env file
+- Location: https-proxy-protected.cjs:1 - needs `require('dotenv').config()`
+- Issue: Proxy uses default password, API uses .env password → token mismatch
+- Symptoms: Login succeeds but still shows "Unauthorized" on every request
+- Fix: Add dotenv loading at top of proxy file
+- Wasted: 30+ min debugging "working" auth that wasn't working
+
+### 26. Protected Mode Login Page Styling (2025-01-21) 🔥
+**CRITICAL**: Protected proxy login is NOT PasswordGate component
+- Location: https-proxy-protected.cjs:80-173 (embedded HTML/CSS)
+- Issue: Searched wrong files - it's inline HTML in proxy, not a component
+- Fix: Edit styles directly in loginPageHTML const
+- Final design: Minimal - just password input + login button at 40vh
+- **GOTCHA**: Three different password UIs exist:
+  - PasswordGate.astro (blog post protection)
+  - index.astro inline form (private link clicks)
+  - https-proxy-protected.cjs (site-wide protection)
 
 ## Page Types
 - **blog** - Standard blog post (default)
