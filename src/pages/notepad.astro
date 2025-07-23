@@ -2372,6 +2372,14 @@ try {
 							categoryHeader.dataset.section = sectionName;
 							categoryHeader.title = 'Drag to reorder or move to another section';
 							
+							// Add inline drag handler to ensure it works
+							categoryHeader.ondragstart = (e) => {
+								console.log('Category dragstart:', category);
+								this.handleDragStart(e);
+							};
+							categoryHeader.ondragend = (e) => {
+								this.handleDragEnd(e);
+							};
 							
 							const categoryToggle = document.createElement('div');
 							categoryToggle.className = 'blog-category-toggle';
@@ -2779,9 +2787,7 @@ try {
 					}
 					
 					// Save and refresh
-					console.log('BEFORE SAVE - sections:', JSON.stringify(this.sections, null, 2));
 					this.saveSections();
-					console.log('AFTER SAVE - sections in localStorage:', localStorage.getItem('notepad:customSections'));
 					this.populateBlogPosts();
 					
 					// Show feedback
