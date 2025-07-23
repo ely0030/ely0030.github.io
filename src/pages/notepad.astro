@@ -2279,8 +2279,8 @@ try {
 					
 					// Create sections with categories
 					Object.entries(sections).forEach(([sectionName, categories]) => {
-						// Get categories that have posts
-						const visibleCategories = categories.filter(cat => postsByCategory[cat]);
+						// Use all categories from the section (including empty ones)
+						const visibleCategories = categories;
 						
 						// Create section container
 						const sectionDiv = document.createElement('div');
@@ -2353,11 +2353,12 @@ try {
 						
 						// Add categories to section
 						visibleCategories.forEach(category => {
-							const posts = postsByCategory[category];
-							if (!posts || posts.length === 0) return;
+							const posts = postsByCategory[category] || [];
 							
-							// Sort posts by date (newest first)
-							posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+							// Sort posts by date (newest first) - only if there are posts
+							if (posts.length > 0) {
+								posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+							}
 							
 							// Create category container
 							const categoryDiv = document.createElement('div');
@@ -2374,7 +2375,6 @@ try {
 							
 							// Add inline drag handler to ensure it works
 							categoryHeader.ondragstart = (e) => {
-								console.log('Category dragstart:', category);
 								this.handleDragStart(e);
 							};
 							categoryHeader.ondragend = (e) => {
@@ -2413,6 +2413,15 @@ try {
 							const postsContainer = document.createElement('ul');
 							postsContainer.className = 'category-posts';
 							postsContainer.style.display = isExpanded ? 'block' : 'none';
+							
+							// Add empty state message for categories with no posts
+							if (posts.length === 0) {
+								const emptyMsg = document.createElement('li');
+								emptyMsg.className = 'category-empty-state';
+								emptyMsg.style.cssText = 'padding: 0.5em 1em; color: #999; font-style: italic; font-size: 0.9em; list-style: none;';
+								emptyMsg.textContent = '(no posts yet)';
+								postsContainer.appendChild(emptyMsg);
+							}
 							
 							// Add posts to category
 							posts.forEach(post => {
@@ -2791,7 +2800,7 @@ try {
 					this.populateBlogPosts();
 					
 					// Show feedback
-					console.log(`Moved ${category} to ${toSection || 'section'}`);
+					this.showMessage(`Moved "${category}" category to ${toSection} section`);
 					
 					// Clean up drag indicators
 					document.querySelectorAll('.blog-category').forEach(cat => {
