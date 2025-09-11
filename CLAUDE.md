@@ -224,6 +224,15 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
   - index.astro inline form (private link clicks)
   - https-proxy-protected.cjs (site-wide protection)
 
+### 27. Astro Content Collection Caching (2025-07-24) 🔥🔥🔥
+**CRITICAL**: Notepad saves work but content shows old version after reload
+- **NOT A BUG**: Files save correctly, Astro dev server caches aggressively
+- Verify: Check file on disk → has new content → UI shows old = Astro cache
+- **NO FIX in Astro v5.12.0**: Must restart dev server or refresh twice
+- Wasted: 4+ hours debugging "broken" saves that were working perfectly
+- **Production**: Works fine, only affects dev mode
+- See: docs/notepad-critical-knowledge.md for full debugging approach
+
 ## Page Types
 - **blog** - Standard blog post (default)
 - **magazine** - Larger text, wider spacing
@@ -305,8 +314,20 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 
 ### Quick Start
 ```batch
-# Use the DEBUG batch file for troubleshooting
-start-https-server-DEBUG.bat
+# Use batch files for HTTPS setup
+start-https-server.bat        # Normal operation
+start-https-server-DEBUG.bat  # Troubleshooting (separate windows)
+```
+
+### Enable Console Logging (2025-07-24)
+To see save operations in terminal, edit `host-network-https.ps1`:
+```powershell
+# Shows all logs in main console
+$blogApi = Start-Process -FilePath "node" -ArgumentList "blog-save-server-secure.js" -PassThru -NoNewWindow
+$proxy = Start-Process -FilePath "node" -ArgumentList "https-proxy.cjs" -PassThru -NoNewWindow
+
+# Remove "Press any key" - just close window to stop
+while ($true) { Start-Sleep -Seconds 60 }
 ```
 
 ### Common Windows Issues & Fixes
@@ -331,10 +352,14 @@ start-https-server-DEBUG.bat
 
 #### 4. Port Configuration
 **DEBUG batch file kills ALL node processes first!**
-- HTTPS Proxy: Port 4320
-- Astro Dev: Port 4321  
+- HTTPS Proxy: Port 4321 (main access point)
+- Astro Dev: Port 4320  
 - Secure API: Port 4322
-- Access via: https://localhost:4320
+- Access via: https://localhost:4321
+
+#### 5. npx Not Found Error
+**Error**: `Start-Process : This command cannot be run due to the error: %1 is not a valid Win32 application`
+- **Fix**: Use `npx.cmd` instead of `npx` in PowerShell scripts
 
 ### Certificate Generation
 ```batch

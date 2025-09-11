@@ -7,7 +7,8 @@ import { getCollection } from 'astro:content';
 import FormattedDate from '../components/FormattedDate.astro';
 
 // Fetch all blog posts, sort by date descending
-const posts = (await getCollection('blog'))
+// Exclude any entries under the PRIVATE folder from the site index
+const posts = (await getCollection('blog', ({ id }) => !id.includes('/PRIVATE/') && !id.startsWith('PRIVATE/')))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 // Function to safely decode HTML entities and ensure proper UTF-8 display
@@ -38,16 +39,16 @@ const postsByCategory = processedPosts.reduce((acc, post) => {
 
 // Define category metadata for visual styling
 const categoryMeta = {
-  articles: { icon: '📝', color: '#2563eb', description: 'Long-form articles and essays' },
-  ideas: { icon: '💡', color: '#10b981', description: 'Quick thoughts and concepts' },
-  creative: { icon: '🎨', color: '#8b5cf6', description: 'Creative writing and experiments' },
-  technical: { icon: '⚙️', color: '#f59e0b', description: 'Technical posts and tutorials' },
-  personal: { icon: '🌱', color: '#06b6d4', description: 'Personal reflections and stories' },
-  protocols: { icon: '📋', color: '#14b8a6', description: 'Systems and protocols for life' },
-  thoughts: { icon: '💭', color: '#ec4899', description: 'Random thoughts and musings' },
-  saved: { icon: '📁', color: '#ef4444', description: 'Bookmarked and saved content' },
-  uncategorized: { icon: '📁', color: '#6b7280', description: 'Posts awaiting categorization' },
-  archive: { icon: '🗄️', color: '#9ca3af', description: 'Archived content' }
+  articles: { icon: '[A]', color: '#2563eb', description: 'Long-form articles and essays' },
+  ideas: { icon: '[i]', color: '#10b981', description: 'Quick thoughts and concepts' },
+  creative: { icon: '[C]', color: '#8b5cf6', description: 'Creative writing and experiments' },
+  technical: { icon: '[T]', color: '#f59e0b', description: 'Technical posts and tutorials' },
+  personal: { icon: '[P]', color: '#06b6d4', description: 'Personal reflections and stories' },
+  protocols: { icon: '[R]', color: '#14b8a6', description: 'Systems and protocols for life' },
+  thoughts: { icon: '[t]', color: '#ec4899', description: 'Random thoughts and musings' },
+  saved: { icon: '[+]', color: '#ef4444', description: 'Bookmarked and saved content' },
+  uncategorized: { icon: '[?]', color: '#6b7280', description: 'Posts awaiting categorization' },
+  archive: { icon: '[X]', color: '#9ca3af', description: 'Archived content' }
 };
 
 // Define sections to group categories
@@ -55,7 +56,8 @@ const sections = {
   'Writing': ['articles', 'creative', 'ideas', 'thoughts'],
   'Technical': ['technical'],
   'Personal': ['personal', 'protocols'],
-  'Miscellaneous': ['uncategorized', 'archive', 'saved']
+  'Saved Resources': ['saved'],
+  'Miscellaneous': ['uncategorized', 'archive']
 };
 
 // Add any new categories that aren't in categoryMeta to Miscellaneous
@@ -64,7 +66,7 @@ if (unknownCategories.length > 0) {
   sections['Miscellaneous'].push(...unknownCategories);
   // Give unknown categories a default style
   unknownCategories.forEach(cat => {
-    categoryMeta[cat] = { icon: '📁', color: '#6b7280', description: cat };
+    categoryMeta[cat] = { icon: '[/]', color: '#6b7280', description: cat };
   });
 }
 
@@ -119,7 +121,7 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body class="no-transitions">
+	<body class="literature2 no-transitions">
 		<div class="layout-wrapper">
 			<aside class="sidebar">
 				<Header />
@@ -199,7 +201,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 				<Footer />
 				<style>
 					.apache-header h1 {
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 						font-size: 1.5em;
 						font-weight: bold;
 						margin: 0 0 0.5em 0;
@@ -215,7 +220,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 					.folder-list {
 						margin: 0;
 						padding: 0;
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 					}
 					
 					.section-group {
@@ -229,7 +237,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 					.section-header {
 						margin-bottom: 0.3em;
 						padding: 0.1em 0;
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 					}
 					
 					.section-name {
@@ -277,7 +288,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 						padding: 0;
 						cursor: pointer;
 						font-size: 1em;
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 						color: var(--color-link);
 						width: auto;
 						text-align: left;
@@ -361,7 +375,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 					}
 					
 					.file-prefix {
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 						color: #999;
 						opacity: 0.5;
 						margin-right: 0.2em;
@@ -374,7 +391,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 						text-transform: none;
 						margin: 0;
 						line-height: 1.5;
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 						flex: 1;
 						min-width: 0;
 						list-style: none;
@@ -400,7 +420,10 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 					.file-date {
 						margin-left: 1em;
 						color: #666;
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+						font-weight: 400;
+						-webkit-font-smoothing: antialiased;
+						-moz-osx-font-smoothing: grayscale;
 						font-size: 0.9em;
 						white-space: nowrap;
 					}

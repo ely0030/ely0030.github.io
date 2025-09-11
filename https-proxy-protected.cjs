@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const https = require("https");
 const http = require("http");
+const net = require("net");
 const fs = require("fs");
 const url = require("url");
 const crypto = require("crypto");
@@ -214,7 +215,7 @@ const loginPageHTML = `
 `;
 
 // Create HTTPS server with auth protection
-https.createServer(options, (req, res) => {
+const server = https.createServer(options, (req, res) => {
   const startTime = Date.now();
   const parsedUrl = url.parse(req.url);
   const pathname = parsedUrl.pathname;
@@ -343,7 +344,50 @@ https.createServer(options, (req, res) => {
     proxyReq.end();
   }
   
-}).listen(LISTEN_PORT, "0.0.0.0", () => {
+});
+
+// Proxy WebSocket upgrades (for Vite HMR etc.)
+server.on('upgrade', (req, socket, head) => {
+  try {
+    const parsedUrl = url.parse(req.url);
+    const pathname = parsedUrl.pathname || '/';
+
+    // Enforce auth for upgrade requests too (same rule set)
+    if (!isPublicPath(pathname)) {
+      const cookies = parseCookies(req.headers.cookie);
+      const authToken = cookies.blog_auth;
+      if (!verifyAuthToken(authToken)) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+    }
+
+    // Tunnel the upgrade to the Astro dev server
+    const upstream = net.connect(ASTRO_PORT, '127.0.0.1', () => {
+      // Recreate the original HTTP upgrade request for the upstream server
+      const headers = { ...req.headers, host: `127.0.0.1:${ASTRO_PORT}` };
+      const headerLines = Object.keys(headers)
+        .map((k) => `${k}: ${headers[k]}`)
+        .join('\r\n');
+      const requestLine = `${req.method} ${req.url} HTTP/${req.httpVersion}`;
+      upstream.write(requestLine + '\r\n' + headerLines + '\r\n\r\n');
+      if (head && head.length) upstream.write(head);
+      upstream.pipe(socket);
+      socket.pipe(upstream);
+    });
+
+    upstream.on('error', (err) => {
+      console.error('WebSocket upstream error:', err.message);
+      try { socket.destroy(); } catch {}
+    });
+  } catch (e) {
+    console.error('Upgrade handling error:', e);
+    try { socket.destroy(); } catch {}
+  }
+});
+
+server.listen(LISTEN_PORT, "0.0.0.0", () => {
   console.log(`
 HTTPS PROXY SERVER (PROTECTED MODE)
 ===================================

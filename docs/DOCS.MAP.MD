@@ -1,27 +1,27 @@
 # Documentation Map for ely0030's Blog
 
-## =� Quick Navigation
+⚠️ **IMPORTANT FOR AI ASSISTANTS**: Start with CLAUDE.md in root directory for quick context
 
-### Core Documentation
+## Quick Navigation
+
+### Core Documentation (Most Useful)
+[../CLAUDE.md](#claude-md)                               **START HERE** - Quick AI assistant reference
 [LLM_CONTEXT.md](#llm-context)                           Complete project overview for AI/LLMs
 [features_index.md](#features-index)                     Index of all features with locations
 [changelog.md](#changelog)                               Project history and updates
+[troubleshooting.md](#troubleshooting)                   Common issues and solutions
 
 ### Development & Setup
 [development_workflow.md](#development-workflow)         Dev environment, scripts, commands
 [build_configuration.md](#build-configuration)           Build system, TypeScript, dependencies
-[astro-netlify-deployment.md](#deployment)               Netlify deployment guide
-[troubleshooting.md](#troubleshooting)                   Common issues and solutions
-[network-hosting-setup.md](#network-hosting)             HTTP-only local network setup
-[https-setup.md](#https-setup)                           HTTPS local network setup for all platforms
-[minipc-https-setup-log-2025-07-19.md](#minipc-log)      Case study of a difficult Windows HTTPS setup
 [windows-pc-setup.md](#windows-setup)                    Windows-specific setup guide with common fixes
+[https-setup.md](#https-setup)                           HTTPS local network setup for all platforms
+[network-hosting-setup.md](#network-hosting)             HTTP-only local network setup
 
-### Security (2025-01-19)
-[SECURITY-SETUP.md](#security-setup)                     Quick auth setup guide (ROOT DIR)
-[blog-save-server-secure.js](#secure-server)             Authenticated blog save API (ROOT DIR)
-[notepad-auth-patch.js](#auth-patch)                     Client auth code for notepad (ROOT DIR)
-[_OPS/BLUEPRINTS/security-enhancement/](#security-blueprints) Future security implementation plans
+### Security & Protected Mode
+[../SECURITY-SETUP.md](#security-setup)                  Quick auth setup guide (ROOT DIR)
+[../PROTECTED-MODE-SETUP.md](#protected-mode)            Complete site protection mode (ROOT DIR)
+[protected-mode-critical.md](#protected-critical)        Protected mode implementation details
 
 ### Content Features
 [page_types.md](#page-types)                             All page styles (blog, magazine, stanza, literature)
@@ -32,37 +32,66 @@
 [folder-navigation.md](#folder-navigation)               Apache-style category folders
 [category_system.md](#category-system)                   Visual category implementation
 
-### Notepad Editor
-[notepad-critical-knowledge.md](#notepad-critical)       Must-read notepad gotchas
+### Notepad Editor (Key Docs)
+[notepad-critical-knowledge.md](#notepad-critical)       **MUST READ** - Critical gotchas and issues
 [notepad-implementation-summary.md](#notepad-summary)    Feature overview and usage
-[notepad-image-paste.md](#notepad-images)               Image paste/storage system
-[notepad-editor-evolution.md](#notepad-evolution)        ContentEditable history
-[notepad-layout-fix.md](#notepad-layout)                Grid debugging case study
-[obsidian-style-editor-fix.md](#obsidian-editor)        Single document approach
-[apache-notepad-style.md](#apache-notepad)              Apache aesthetic styling
+[notepad-drag-drop-categories.md](#notepad-dragdrop)     Blog category drag-drop system
+[notepad-image-paste.md](#notepad-images)                Image paste/storage system
+[notepad-layout-fix.md](#notepad-layout)                 Grid debugging case study
 
-### Technical Features
-[rss_and_sitemap.md](#rss-sitemap)                      RSS feed and sitemap generation
-[code_block_component.md](#code-blocks)                  CodeBlock component details
-[code-block-styling.md](#code-styling)                   Code styling implementation struggles
+### Planning Wall
+[planning-wall.md](#planning-wall)                       Planning wall feature documentation
+
+### Page Types & Content
+[page_types.md](#page-types)                             All page styles (blog, magazine, stanza, literature)
+[literature-type-implementation.md](#literature-type)     Critical notes for literature pages
+[book-layout.md](#book-layout)                           Book-style page with effects
+[visual-markers.md](#visual-markers)                     iOS-style post indicators (!!, ??)
+[private_password_feature.md](#password-protection)       Client-side password system
+[category_system.md](#category-system)                   Visual category implementation
+[folder-navigation.md](#folder-navigation)               Apache-style category folders
+
+### CSS & Styling Issues (Important)
+[css-spacing-pitfalls.md](#css-pitfalls)                 **CRITICAL** - CSS traps to avoid
+[astro-css-scoping-trap.md](#css-scoping)                Dynamic element styling fix
 [font_system.md](#fonts)                                 Typography and ET Book fonts
+[code-block-styling.md](#code-styling)                   Code styling implementation struggles
+
+### Less Frequently Needed
+
+#### Deployment & Network
+[astro-netlify-deployment.md](#deployment)               Netlify deployment guide
+[minipc-https-setup-log-2025-07-19.md](#minipc-log)      Case study of a difficult Windows HTTPS setup
+
+#### Technical Details
+[rss_and_sitemap.md](#rss-sitemap)                       RSS feed and sitemap generation
+[code_block_component.md](#code-blocks)                  CodeBlock component details
 [title_countdown_feature.md](#countdown)                 Dynamic countdown in page title
 [live-markdown-rendering.md](#live-markdown)             Live markdown in notepad editor
 
-### Utilities & Fixes
+#### Archives & Fixes
 [newline-converter.md](#newline-converter)               Auto-converter for literature pages
 [newline-preservation-complete.md](#newline-preservation) Complete newline preservation solution
 [remark-ast-manipulation.md](#remark-ast)                Remark plugin AST lessons learned
 [character_encoding_fix.md](#encoding-fix)               UTF-8 encoding solutions
 [archive_system.md](#archives)                           Static HTML preservation
 [folder_navigation_flicker_fix.md](#flicker-fix)         Folder jump fix on page load
-[css-spacing-pitfalls.md](#css-pitfalls)                 Critical CSS traps to avoid
-[astro-css-scoping-trap.md](#css-scoping)               Dynamic element styling fix
-[solved-issues/](#solved-issues)                         Bug tracking and resolutions
+[nested-folders-implementation-plan.md](#nested-folders)  Old planning doc for nested folders
+
+#### Notepad History
+[notepad-editor-evolution.md](#notepad-evolution)        ContentEditable history
+[obsidian-style-editor-fix.md](#obsidian-editor)         Single document approach
+[apache-notepad-style.md](#apache-notepad)               Apache aesthetic styling
+[blog-frontend-editing.md](#blog-frontend)               Old blog editing approach
 
 ---
 
-## =� Detailed Contents
+## Detailed Contents
+
+### <a id="claude-md"></a>../CLAUDE.md
+**Purpose**: Quick reference for AI assistants - READ THIS FIRST  
+**Contains**: Project overview, critical files list, dev commands, known pitfalls  
+**When to use**: Always start here before diving into other docs
 
 ### <a id="llm-context"></a>LLM_CONTEXT.md
 **Purpose**: One-stop reference for AI assistants  
@@ -96,7 +125,8 @@
 
 ### <a id="troubleshooting"></a>troubleshooting.md
 **Purpose**: Common problem solutions  
-**Contains**: Port conflicts, build failures, markdown issues  
+**Contains**: Port conflicts, build failures, markdown issues, notepad save debugging  
+**Updated**: 2025-07-24 - Added notepad save debugging steps (Astro caching)
 **When to use**: Something's broken
 
 ### <a id="network-hosting"></a>network-hosting-setup.md
@@ -116,7 +146,8 @@
 
 ### <a id="windows-setup"></a>windows-pc-setup.md
 **Purpose**: Comprehensive Windows setup guide  
-**Contains**: Step-by-step setup, HTTPS proxy fixes, authentication setup  
+**Contains**: Step-by-step setup, HTTPS proxy fixes, authentication setup, console logging  
+**Updated**: 2025-07-24 - Added console logging configuration for save debugging
 **Critical**: Covers common Windows-specific issues and solutions  
 **When to use**: Setting up the blog on a Windows PC
 
@@ -263,7 +294,13 @@
 **Purpose**: Comprehensive notepad gotchas  
 **Contains**: Image handling, CSS scoping, cursor jumps, layout conflicts, edit mode, HTML escaping trap  
 **Critical**: Read FIRST before any notepad work
-**Updated**: 2025-01-16 - Added button focus outline fix
+**Updated**: 2025-07-24 - Added Astro content collection caching issue (saves work but content appears old)
+
+### <a id="notepad-dragdrop"></a>notepad-drag-drop-categories.md
+**Purpose**: Blog category drag-drop implementation
+**Contains**: Section organization, empty category fix, expand state defaults
+**Critical**: Drag-drop is VISUAL ONLY - doesn't re-categorize posts
+**When to use**: Working with notepad category organization
 
 ### <a id="notepad-summary"></a>notepad-implementation-summary.md
 **Purpose**: High-level notepad overview  
@@ -312,22 +349,22 @@
 
 ---
 
-##  Redundancies Fixed
+## Redundancies Fixed
 
 ### Completed Cleanup:
-1.  **development-workflow.md** deleted � Kept `development_workflow.md` (more detailed)
-2.  **rss-sitemap.md** deleted � Kept `rss_and_sitemap.md` (more complete)
-3.  **book_page_layout.md** deleted � Kept `book-layout.md` (more comprehensive)
-4.  **visual_post_markers.md** deleted � Kept `visual-markers.md` (more complete)
-5.  **page-types.md** deleted � Kept `page_types.md` (has critical literature details)
+1. **development-workflow.md** deleted — kept `development_workflow.md` (more detailed)
+2. **rss-sitemap.md** deleted — kept `rss_and_sitemap.md` (more complete)
+3. **book_page_layout.md** deleted — kept `book-layout.md` (more comprehensive)
+4. **visual_post_markers.md** deleted — kept `visual-markers.md` (more complete)
+5. **page-types.md** deleted — kept `page_types.md` (has critical literature details)
 
 ### Consider Future Merges:
-- **code_block_component.md** + **code-block-styling.md** � Could merge into single "Code Blocks" doc
-- **page_types.md** + **literature-type-implementation.md** � Literature details could be section in page_types
+- **code_block_component.md** + **code-block-styling.md** — could merge into single "Code Blocks" doc
+- **page_types.md** + **literature-type-implementation.md** — literature details could be section in page_types
 
 ---
 
-## =� Most Important Docs
+## Most Important Docs
 
 For new developers, read in order:
 1. `LLM_CONTEXT.md` - Overview

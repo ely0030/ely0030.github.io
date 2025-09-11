@@ -1,6 +1,105 @@
 # Changelog
 
-_Last updated: 2025‑01‑19_
+_Last updated: 2025‑01‑24_
+
+## 2025-01-24: Category Drag & Drop Implementation
+
+### Added
+- **Drag & Drop Category Organization**
+  - Categories can now be dragged between sections (Writing, Technical, Personal, etc.)
+  - Visual feedback during drag with orange border indicators
+  - Position-aware dropping for precise placement
+  - Automatic persistence to localStorage
+  - User feedback via showMessage() confirmation
+
+### Technical Details
+- Event handlers: `handleCategoryDragStart`, `handleCategoryDrop`, `handleCategoryDragOver`
+- Document-level event delegation for dynamic content
+- Complete DOM rebuild after drop via `populateBlogPosts()`
+- Visual-only organization - doesn't change post metadata
+
+### Documentation
+- Created `_temp/changelog-drag-drop-categories.md`
+- Updated `notepad-drag-drop-categories.md` with implementation details
+- Added section to `notepad-critical-knowledge.md`
+
+## 2025-07-24: Notepad Save Debugging & Astro Caching Discovery
+
+### Discovered
+- **Astro Content Collection Caching Issue**
+  - Saves work correctly but dev server shows cached content
+  - File on disk updates properly, UI shows old version
+  - No fix available in Astro v5.12.0 - requires server restart
+  - Only affects development mode, production works fine
+
+### Added
+- **Comprehensive Debug Logging**
+  - `notepad.astro` - Content extraction and save queue logging
+  - `blog-save-server-secure.js` - Server-side content preview logging
+  - `host-network-https.ps1` - Console logging configuration
+
+### Fixed
+- **Windows PowerShell Script**
+  - Changed to `-NoNewWindow` for visible server logs
+  - Fixed `npx` not found error (use `npx.cmd` on Windows)
+  - Removed "Press any key" prompt for cleaner operation
+
+### Documentation
+- Updated `notepad-critical-knowledge.md` with Astro caching details
+- Added debugging steps to `troubleshooting.md`
+- Enhanced `windows-pc-setup.md` with console logging setup
+- Updated `CLAUDE.md` with new pitfall #27
+
+## 2025-01-24: Cross-Platform Font System & Notepad Full Width
+
+### Changed
+- **Complete Typography Overhaul**
+  - Replaced generic monospace with Apple-inspired SF font stack
+  - Added -webkit-font-smoothing for consistent rendering
+  - Windows now uses Consolas/Cascadia Code instead of Courier New
+  - Mac uses SF Mono/Menlo for authentic Apple experience
+- **Replaced Emoji Icons with Text Symbols**
+  - Folder icons now use `[A]`, `[i]`, `[C]` etc. for consistency
+  - Eliminates platform-specific emoji rendering differences
+- **Notepad Full Width Layout**
+  - Removed 1200px max-width constraint
+  - Sidebar reduced from 300px to 250px
+  - Editor now uses entire screen width
+
+### Fixed
+- Windows font rendering appearing "soft and round like Comic Sans"
+- Inconsistent emoji appearance between platforms
+- Notepad not utilizing full screen space on Windows
+
+### Technical Details
+- `src/styles/global.css` - Complete font system update
+- `src/pages/notepad.astro` - Width constraints removed
+- `src/pages/index.astro` - Icon replacements
+- Updated `docs/font_system.md` with new strategy
+
+## 2025-07-21: Notepad Category Drag-Drop Fixes
+
+### Fixed
+- **Empty Categories Now Visible**
+  - Categories without posts now display properly after drag-drop
+  - Added "(no posts yet)" message for empty categories
+  - Root cause: Filter at line 2357 was hiding empty categories
+- **Section Expand/Collapse State**
+  - Fixed sections collapsing and hiding all categories on first click
+  - Root cause: Inconsistent localStorage defaults (empty array vs all sections)
+  - Now defaults to all sections expanded on first load
+- **Missing showMessage Method**
+  - Added user feedback when dragging categories between sections
+  - Shows success message: "Moved 'category' to section"
+
+### Technical Details
+- `src/pages/notepad.astro:2283` - Removed category filter
+- `src/pages/notepad.astro:2270-2276` - Fixed expandedSections defaults
+- `src/pages/notepad.astro:5539-5551` - Added showMessage method
+- Created `docs/notepad-drag-drop-categories.md` for implementation details
+
+### Important Note
+Drag-drop is for **visual organization only** - it moves category folders between sections but does NOT re-categorize the posts themselves. Posts retain their original category metadata.
 
 ## 2025-01-19: Security Hardening & Authentication
 

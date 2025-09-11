@@ -51,6 +51,38 @@
       <span class="value-display">#ffffff</span>
     </div>
     
+    <hr style="border:none;border-top:1px solid #eee;margin:12px 0" />
+
+    <div class="control-group">
+      <label for="top-padding">Top Padding</label>
+      <input type="range" id="top-padding" min="0" max="24" value="0" step="1">
+      <span class="value-display">0px</span>
+    </div>
+
+    <div class="control-group">
+      <label for="h1-offset">Heading Offset</label>
+      <input type="range" id="h1-offset" min="-10" max="24" value="4" step="1">
+      <span class="value-display">4px</span>
+    </div>
+
+    <div class="control-group">
+      <label for="left-gutter">Left Gutter</label>
+      <input type="range" id="left-gutter" min="0" max="24" value="10" step="1">
+      <span class="value-display">10px</span>
+    </div>
+
+    <div class="control-group">
+      <label for="anchor-offset">Anchor Offset</label>
+      <input type="range" id="anchor-offset" min="0" max="40" value="24" step="1">
+      <span class="value-display">24px</span>
+    </div>
+
+    <div class="control-group">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="toggle-immersive"> Hide Sidebar (preview)
+      </label>
+    </div>
+    
     <div class="button-group">
       <button id="reset-styles" class="btn-secondary">Reset</button>
       <button id="copy-settings" class="btn-primary">Copy Settings</button>
@@ -274,17 +306,27 @@
     padding: document.getElementById('padding'),
     paragraphSpacing: document.getElementById('paragraph-spacing'),
     textColor: document.getElementById('text-color'),
-    bgColor: document.getElementById('bg-color')
+    bgColor: document.getElementById('bg-color'),
+    topPadding: document.getElementById('top-padding'),
+    h1Offset: document.getElementById('h1-offset'),
+    leftGutter: document.getElementById('left-gutter'),
+    anchorOffset: document.getElementById('anchor-offset'),
+    immersive: document.getElementById('toggle-immersive')
   };
 
   const defaultValues = {
-    fontSize: 13,
-    lineHeight: 1.3,
-    maxWidth: 480,
+    fontSize: 15,
+    lineHeight: 1.4,
+    maxWidth: 560,
     padding: 20,
-    paragraphSpacing: 0.8,
+    paragraphSpacing: 0.9,
     textColor: 0,
-    bgColor: 0
+    bgColor: 0,
+    topPadding: 0,
+    h1Offset: 4,
+    leftGutter: 10,
+    anchorOffset: 24,
+    immersive: false
   };
 
   // Update styles
@@ -296,7 +338,12 @@
       padding: controls.padding.value + 'px',
       paragraphSpacing: controls.paragraphSpacing.value + 'em',
       textColor: generateColor(controls.textColor.value),
-      bgColor: generateBgColor(controls.bgColor.value)
+      bgColor: generateBgColor(controls.bgColor.value),
+      topPadding: controls.topPadding.value + 'px',
+      h1Offset: controls.h1Offset.value + 'px',
+      leftGutter: controls.leftGutter.value + 'px',
+      anchorOffset: controls.anchorOffset.value + 'px',
+      immersive: !!controls.immersive.checked
     };
 
     // Apply styles
@@ -307,6 +354,29 @@
     document.documentElement.style.setProperty('--literature-paragraph-spacing', styles.paragraphSpacing);
     document.documentElement.style.setProperty('--literature-text-color', styles.textColor);
     document.documentElement.style.setProperty('--literature-bg-color', styles.bgColor);
+    document.documentElement.style.setProperty('--literature-top-padding', styles.topPadding);
+    document.documentElement.style.setProperty('--literature-h1-offset', styles.h1Offset);
+    document.documentElement.style.setProperty('--literature-left-gutter', styles.leftGutter);
+    document.documentElement.style.setProperty('--literature-anchor-offset', styles.anchorOffset);
+    document.body.classList.toggle('editor-immersive', styles.immersive);
+
+    // Persist values
+    try {
+      localStorage.setItem('style:literature', JSON.stringify({
+        fontSize: controls.fontSize.value,
+        lineHeight: controls.lineHeight.value,
+        maxWidth: controls.maxWidth.value,
+        padding: controls.padding.value,
+        paragraphSpacing: controls.paragraphSpacing.value,
+        textColor: controls.textColor.value,
+        bgColor: controls.bgColor.value,
+        topPadding: controls.topPadding.value,
+        h1Offset: controls.h1Offset.value,
+        leftGutter: controls.leftGutter.value,
+        anchorOffset: controls.anchorOffset.value,
+        immersive: controls.immersive.checked
+      }));
+    } catch {}
 
     // Update value displays
     controls.fontSize.nextElementSibling.textContent = styles.fontSize;
@@ -316,6 +386,10 @@
     controls.paragraphSpacing.nextElementSibling.textContent = styles.paragraphSpacing;
     controls.textColor.nextElementSibling.textContent = styles.textColor;
     controls.bgColor.nextElementSibling.textContent = styles.bgColor;
+    controls.topPadding.nextElementSibling.textContent = styles.topPadding;
+    controls.h1Offset.nextElementSibling.textContent = styles.h1Offset;
+    controls.leftGutter.nextElementSibling.textContent = styles.leftGutter;
+    controls.anchorOffset.nextElementSibling.textContent = styles.anchorOffset;
   }
 
   function generateColor(value) {
@@ -338,9 +412,11 @@
   // Reset button
   document.getElementById('reset-styles').addEventListener('click', () => {
     Object.entries(defaultValues).forEach(([key, value]) => {
-      controls[key].value = value;
+      if (key === 'immersive') controls[key].checked = !!value;
+      else controls[key].value = value;
     });
     updateStyles();
+    try { localStorage.removeItem('style:literature'); } catch {}
   });
 
   // Copy settings button
@@ -365,6 +441,12 @@ Paragraph Spacing: ${settings.paragraphSpacing}em
 Text Color: ${generateColor(settings.textColor)}
 Background: ${generateBgColor(settings.bgColor)}
 
+Top Padding: ${controls.topPadding.value}px
+Heading Offset: ${controls.h1Offset.value}px
+Left Gutter: ${controls.leftGutter.value}px
+Anchor Offset: ${controls.anchorOffset.value}px
+Immersive (preview): ${controls.immersive.checked}
+
 CSS Variables:
 --literature-font-size: ${settings.fontSize}px;
 --literature-line-height: ${settings.lineHeight};
@@ -372,7 +454,11 @@ CSS Variables:
 --literature-padding: ${settings.padding}px;
 --literature-paragraph-spacing: ${settings.paragraphSpacing}em;
 --literature-text-color: ${generateColor(settings.textColor)};
---literature-bg-color: ${generateBgColor(settings.bgColor)};`;
+--literature-bg-color: ${generateBgColor(settings.bgColor)};
+--literature-top-padding: ${controls.topPadding.value}px;
+--literature-h1-offset: ${controls.h1Offset.value}px;
+--literature-left-gutter: ${controls.leftGutter.value}px;
+--literature-anchor-offset: ${controls.anchorOffset.value}px;`;
 
     const textarea = document.getElementById('settings-output');
     textarea.style.display = 'block';
@@ -393,6 +479,16 @@ CSS Variables:
     }
   });
 
-  // Initialize
+  // Initialize (load saved settings if present)
+  try {
+    const saved = JSON.parse(localStorage.getItem('style:literature') || 'null');
+    if (saved) {
+      Object.entries(saved).forEach(([key, value]) => {
+        if (!controls[key]) return;
+        if (key === 'immersive') controls[key].checked = !!value;
+        else controls[key].value = value;
+      });
+    }
+  } catch {}
   updateStyles();
 </script>

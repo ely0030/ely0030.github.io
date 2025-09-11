@@ -9,6 +9,22 @@ const { title, description, photocopy = false, perspective = false } = Astro.pro
 	<head>
 		<BaseHead title={title} description={description || ""} />
 		<style>
+			/* Page type indicator styles */
+			.page-type-indicator {
+				display: inline-block;
+				font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+				font-size: 0.75rem;
+				padding: 0.25rem 0.5rem;
+				background: rgba(139, 69, 19, 0.1);
+				border: 1px solid rgba(139, 69, 19, 0.3);
+				border-radius: 3px;
+				color: rgba(139, 69, 19, 0.9);
+				margin-bottom: 1.5rem;
+				letter-spacing: 0.02em;
+				position: relative;
+				z-index: 10;
+			}
+			
 			/* Base book page styles embedded directly */
 			body {
 				background: #d8d1c3;

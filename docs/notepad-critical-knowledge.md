@@ -321,6 +321,49 @@ if (isFocused) return; // CRITICAL: Skip formatting while typing
 **Purpose**: Track which delete buttons were clicked for red color persistence
 **Clear on**: Actual deletion (line 1096) OR timeout/click-away (lines 1217, 1230)
 
+## Category Drag & Drop (2025-01-24)
+
+### Feature Overview
+**Purpose**: Visual organization of blog categories between sections
+**Implementation**: `src/pages/notepad.astro:3411-3495`
+**CRITICAL**: Drag & drop is VISUAL ONLY - doesn't re-categorize posts
+
+### Architecture
+**Drag Start**: `:3377-3378` - inline handlers set `this.draggedCategory`
+**Drag Over**: `:3364-3407` - visual feedback with `.drag-over-top/bottom` classes
+**Drop Handler**: `:3411-3495` - updates section arrays, saves to localStorage
+**State Persistence**: `notepad:customSections` key in localStorage
+
+### Implementation Details
+**Event Binding**: `:6790-6805` - Document-level event delegation
+```javascript
+document.addEventListener('drop', (e) => {
+    if (app.draggedCategory) {
+        app.handleCategoryDrop(e);
+    }
+});
+```
+**Visual Feedback**: Orange borders for drop position indicators
+**User Feedback**: `showMessage()` method displays action confirmation
+
+### Common Issues
+1. **Categories "disappearing"**: Empty categories must be shown (fixed `:2356`)
+2. **Section won't expand**: Default to all expanded on first load (`:2270-2276`)
+3. **Console error**: `this.showMessage is not a function` - from cached version, doesn't affect functionality
+4. **Wrong drop position**: Check `data-section` attributes match
+
+### State Management
+**localStorage Keys**:
+- `notepad:customSections` - Section→Categories mapping
+- `notepad:expandedSections` - Which sections are open
+- `notepad:expandedBlogCategories` - Which categories are open
+
+**Save & Refresh Pattern**: All drag operations follow:
+```javascript
+this.saveSections();        // Persist to localStorage
+this.populateBlogPosts();   // Rebuild DOM
+```
+
 ## Markdown Rendering Pitfalls
 
 ### Hidden Content Text Extraction
@@ -690,3 +733,52 @@ const lines = content === '' ? [] : content.split('\n');
 - `1. item` → `<ol><li>item</li></ol>`
 **Critical**: Must escape HTML in list items to prevent XSS
 **Styling**: Applied same typography as paragraphs (Georgia font, proper spacing)
+
+## Blog Category Drag-Drop (2025-07-21)
+
+### Critical Fixes Applied
+**See**: `docs/notepad-drag-drop-categories.md` for complete implementation
+**Key issues**:
+1. Empty categories filtered out → Fixed by showing all categories
+2. Section expand defaults inconsistent → Fixed localStorage defaults
+3. Missing showMessage method → Added at :5539-5551
+
+### Non-obvious Behavior
+**CRITICAL**: Drag-drop is VISUAL ONLY - does not re-categorize posts
+- Moves category label between sections
+- Post metadata unchanged
+- Empty categories now remain visible
+
+## Astro Content Collection Caching (2025-07-24) 🔥🔥🔥
+
+### CRITICAL: Save Works But Content Doesn't Update
+**Location**: Not a code issue - Astro dev server behavior
+**Symptom**: File saves correctly to disk but shows old content after reload
+**Root cause**: Astro aggressively caches content collections in dev mode
+**Time wasted**: 4+ hours debugging "save not working" when it WAS working
+
+### Verification Steps
+1. Edit content → Save → Check file on disk: ✅ Updated
+2. Page reloads → Shows old content: ❌ Cached
+3. Manual browser refresh → Still old content: ❌ Cached
+4. Restart dev server → Shows new content: ✅ Cache cleared
+
+### Failed Workarounds
+- Cache-busting URL parameters: `?_refresh=${Date.now()}`
+- Hard reload with `window.location.href`
+- In-memory BLOG_POSTS updates (helps but not reliable)
+
+### ONLY Reliable Solution
+**Astro v5.12.0 has NO fix for this in dev mode**
+- Production builds work perfectly
+- Dev mode requires occasional server restart
+- This is NOT a bug in our code
+
+### Debug Approach That Found Issue
+Added extensive logging at:
+- `notepad.astro:10-44` - Server-side content loading
+- `notepad.astro:3762-3829` - Content extraction (getPlainTextFromEditor)
+- `notepad.astro:5047-5055` - Save queue content
+- `blog-save-server-secure.js:156-167` - Server receives correct content
+
+**Key insight**: Logs proved content saved correctly, Astro just cached old version

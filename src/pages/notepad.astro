@@ -10,7 +10,14 @@ const pageDescription = 'A minimalist notepad for capturing thoughts';
 // Fetch all blog posts, sort by date descending
 let posts = [];
 try {
-	const allPosts = await getCollection('blog');
+	// Force fresh collection load by clearing any module cache
+	if (import.meta.env.DEV) {
+		// In development, getCollection might cache results
+		console.log('Fetching fresh blog posts...');
+	}
+	
+	// Exclude entries under PRIVATE from the notepad’s post list
+	const allPosts = await getCollection('blog', ({ id }) => !id.includes('/PRIVATE/') && !id.startsWith('PRIVATE/'));
 	console.log('Found blog posts:', allPosts.length);
 	posts = allPosts
 		.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -20,7 +27,7 @@ try {
 			pubDate: post.data.pubDate.toISOString(),
 			category: post.data.category || 'uncategorized',
 			description: post.data.description || '',
-			content: post.body || '',
+			content: post.body || '', // Note: This is content WITHOUT frontmatter
 			pageType: post.data.pageType || 'blog',
 			// Add other metadata that might be missing
 			private: post.data.private || false,
@@ -29,6 +36,12 @@ try {
 			markColor: post.data.markColor || ''
 		}));
 	console.log('Processed posts:', posts.length);
+	
+	// Debug: Log the goola post specifically
+	const goolaPost = posts.find(p => p.id === 'goola');
+	if (goolaPost) {
+		console.log('Goola post content:', goolaPost.content);
+	}
 } catch (error) {
 	console.error('Error loading blog posts:', error);
 }
@@ -45,7 +58,10 @@ try {
 			}
 
 			.apache-header h1 {
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 1.5em;
 				font-weight: bold;
 				margin: 0 0 0.5em 0;
@@ -59,7 +75,10 @@ try {
 			
 			.apache-header p {
 				margin: 0.5em 0;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 			
 			.apache-header a {
@@ -73,14 +92,48 @@ try {
 
 			.notepad-container {
 				display: grid;
-				grid-template-columns: 300px 1fr;
-				gap: 2em;
-				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+				grid-template-columns: 250px 1fr;
+				gap: 1.5em;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+				width: 100%;
+				max-width: 100%;
 			}
 
 			.note-sidebar {
 				border-right: 1px solid #000;
 				padding-right: 1em;
+				flex-shrink: 0;
+			}
+			
+			/* Match the Header positioning from regular sidebar */
+			.note-sidebar :global(header.site-header) {
+				position: sticky;
+				top: 0.5rem;
+				margin-top: 0;
+				padding-bottom: 1em;
+			}
+			
+			/* Match the nav link sizes from global.css */
+			.note-sidebar :global(nav.site-nav a) {
+				font-size: 28px !important;
+			}
+			
+			.note-sidebar :global(nav.site-nav div.internal-links a[href="/"]) {
+				font-size: 36px !important;
+				font-weight: bold;
+			}
+			
+			.note-sidebar :global(nav.site-nav a[href="/about"]) {
+				font-weight: 400 !important;
+			}
+			
+			.note-main {
+				width: 100%;
+				min-width: 0; /* Allow proper flex shrinking */
+				overflow-x: hidden;
 			}
 
 			.note-sidebar h2 {
@@ -101,9 +154,30 @@ try {
 				margin-bottom: 1em;
 				font-style: italic;
 			}
+			
+			/* Dark mode toggle */
+			.dark-mode-toggle {
+				position: fixed;
+				top: 1em;
+				right: 1em;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-size: 0.9em;
+				background: none;
+				border: 1px solid #000;
+				padding: 0.25em 0.5em;
+				cursor: pointer;
+				z-index: 1000;
+			}
+			
+			.dark-mode-toggle:hover {
+				background: #f5f5f5;
+			}
 
 			.btn {
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 1em;
 				padding: 0;
 				margin: 0 1em 0 0;
@@ -162,7 +236,10 @@ try {
 				list-style: none;
 				padding: 0;
 				margin: 0;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 
 			.note-item {
@@ -172,7 +249,10 @@ try {
 				margin: 0;
 				cursor: pointer;
 				transition: background-color 0.1s;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 			
 			.note-item:hover {
@@ -259,7 +339,10 @@ try {
 				padding: 1em;
 				border: 1px solid #ccc;
 				background: #f9f9f9;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 			
 			.frontmatter-editor h3 {
@@ -297,7 +380,10 @@ try {
 			.metadata-field input[type="number"],
 			.metadata-field select,
 			.metadata-field textarea {
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				padding: 0.3em;
 				border: 1px solid #000;
 				background: white;
@@ -312,12 +398,16 @@ try {
 			}
 
 			.note-title-input {
-				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 1.2em;
 				font-weight: bold;
 				border: none;
 				background: none;
-				width: 100%;
+				width: 50%;
+				max-width: 400px;
 				padding: 0;
 				margin-bottom: 0.2em;
 			}
@@ -325,6 +415,22 @@ try {
 			.note-title-input:focus {
 				outline: none;
 				border-bottom: 1px solid #000;
+			}
+			
+			.note-title-display {
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+				font-size: 1.2em;
+				font-weight: bold;
+				cursor: pointer;
+				padding: 0;
+				margin-bottom: 0.2em;
+			}
+			
+			.note-title-display:hover {
+				opacity: 0.7;
 			}
 
 			.note-meta {
@@ -352,7 +458,10 @@ try {
 			
 			/* Better editor styling */
 			.editor-content[contenteditable] {
-				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 1em;
 				line-height: 1.6;
 				padding: 1em;
@@ -417,7 +526,10 @@ try {
 				margin-left: auto;
 				font-size: 0.9em;
 				color: #666;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 
 			.no-notes {
@@ -613,7 +725,10 @@ try {
 				background: #f0f0f0;
 				padding: 0 0.2em;
 				border-radius: 2px;
-				font-family: Menlo, Monaco, 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji';
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 			
 			.editor-content .md-link {
@@ -799,7 +914,10 @@ try {
 				padding: 2px 4px;
 				border: 1px solid #ddd;
 				border-radius: 3px;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 0.9em;
 				display: inline-block;
 				margin: 2px 0;
@@ -810,7 +928,10 @@ try {
 				list-style: none;
 				padding: 0;
 				margin: 0;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				max-height: 400px;
 				overflow-y: auto;
 			}
@@ -833,7 +954,10 @@ try {
 			}
 			
 			.blog-section-name {
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 			
 			.section-controls {
@@ -896,7 +1020,10 @@ try {
 			}
 			
 			.section-name-input {
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 1.05em;
 				font-weight: 600;
 				border: none !important;
@@ -982,7 +1109,10 @@ try {
 				border: none;
 				padding: 0.2em 0;
 				cursor: pointer;
-				font-family: monospace;
+				font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 				font-size: 1em;
 				color: var(--color-link);
 				text-align: left;
@@ -1159,6 +1289,495 @@ try {
 				animation: fadeInAndExpand 0.3s ease-out forwards;
 			}
 		</style>
+		
+		<!-- Global styles for dark mode -->
+		<style is:global>
+			/* Dark mode color scheme */
+			body.dark-mode {
+				background: #1a1a1a !important; /* Use background to override body.notepad */
+				background-color: #1a1a1a !important;
+				color: #e0e0e0;
+				color-scheme: dark; /* Tell browser we're in dark mode */
+			}
+			
+			/* Override browser default input and button styling in dark mode */
+			body.dark-mode input:not(.note-title-input),
+			body.dark-mode button {
+				background: #2a2a2a !important;
+				background-color: #2a2a2a !important;
+				color: #e0e0e0 !important;
+				-webkit-appearance: none !important;
+				-moz-appearance: none !important;
+				appearance: none !important;
+			}
+			
+			/* Special case for note title - should be transparent */
+			body.dark-mode input.note-title-input {
+				background: transparent !important;
+				background-color: transparent !important;
+				color: #e0e0e0 !important;
+				-webkit-appearance: none !important;
+			}
+			
+			body.dark-mode .apache-header hr,
+			body.dark-mode .note-sidebar,
+			body.dark-mode .note-sidebar h2 {
+				border-color: #444;
+			}
+			
+			body.dark-mode .dark-mode-toggle {
+				background-color: #2a2a2a;
+				border-color: #444;
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .dark-mode-toggle:hover {
+				background-color: #333;
+			}
+			
+			body.dark-mode .btn {
+				color: #66b3ff;
+			}
+			
+			body.dark-mode .btn-primary {
+				color: #ffa500;
+			}
+			
+			body.dark-mode .note-hint {
+				color: #999;
+			}
+			
+			body.dark-mode .note-item {
+				color: #66b3ff;
+			}
+			
+			body.dark-mode .note-item:hover {
+				background-color: #2a2a2a;
+			}
+			
+			body.dark-mode .note-item.active {
+				background-color: #333;
+			}
+			
+			body.dark-mode .pending-indicator {
+				color: #ffa500;
+			}
+			
+			body.dark-mode .folder-toggle {
+				color: #aaa;
+			}
+			
+			body.dark-mode .folder-toggle-all {
+				color: #666;
+			}
+			
+			body.dark-mode .folder-toggle-all:hover {
+				color: #999;
+			}
+			
+			body.dark-mode .blog-post-link {
+				color: #66b3ff;
+			}
+			
+			body.dark-mode .blog-post-date,
+			body.dark-mode .blog-post-meta {
+				color: #999;
+			}
+			
+			body.dark-mode .delete-btn {
+				color: #ff6666;
+			}
+			
+			body.dark-mode .delete-btn:hover {
+				background-color: #ff6666;
+				color: #1a1a1a;
+			}
+			
+			body.dark-mode .editor {
+				background: #2a2a2a;
+				color: #e0e0e0;
+				border-color: #444;
+			}
+			
+			body.dark-mode .editor:focus {
+				background: #2a2a2a;
+				border-color: #666;
+			}
+			
+			body.dark-mode .empty-editor {
+				color: #666;
+			}
+			
+			body.dark-mode input[type="text"],
+			body.dark-mode input[type="date"],
+			body.dark-mode input[type="password"],
+			body.dark-mode input[type="number"],
+			body.dark-mode select,
+			body.dark-mode textarea {
+				background: #2a2a2a !important;
+				color: #e0e0e0;
+				border-color: #444;
+			}
+			
+			body.dark-mode input[type="text"]:focus,
+			body.dark-mode input[type="date"]:focus,
+			body.dark-mode input[type="password"]:focus,
+			body.dark-mode input[type="number"]:focus,
+			body.dark-mode select:focus,
+			body.dark-mode textarea:focus {
+				background: #2a2a2a !important;
+				border-color: #666;
+			}
+			
+			/* Specific overrides for metadata fields */
+			body.dark-mode .metadata-field input[type="text"],
+			body.dark-mode .metadata-field input[type="date"],
+			body.dark-mode .metadata-field input[type="password"],
+			body.dark-mode .metadata-field input[type="number"],
+			body.dark-mode .metadata-field select,
+			body.dark-mode .metadata-field textarea {
+				background: #2a2a2a !important;
+				color: #e0e0e0 !important;
+			}
+			
+			body.dark-mode .meta-description,
+			body.dark-mode .meta-date {
+				color: #999;
+			}
+			
+			body.dark-mode .meta-footer {
+				border-color: #444;
+			}
+			
+			body.dark-mode .blog-meta-edit h3,
+			body.dark-mode .blog-meta-hint {
+				color: #999;
+			}
+			
+			body.dark-mode .shortcut-hint {
+				background: rgba(0, 0, 0, 0.9);
+			}
+			
+			body.dark-mode .shortcut-content {
+				background: #2a2a2a;
+			}
+			
+			body.dark-mode .shortcut-title {
+				color: #e0e0e0;
+			}
+			
+			/* Markdown content in dark mode */
+			body.dark-mode .markdown-content {
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .markdown-content code {
+				background: #333;
+				color: #f8f8f2;
+			}
+			
+			body.dark-mode .markdown-content pre {
+				background: #2a2a2a;
+				border-color: #444;
+			}
+			
+			body.dark-mode .markdown-content pre code {
+				background: transparent;
+			}
+			
+			body.dark-mode .markdown-content a {
+				color: #66b3ff;
+			}
+			
+			body.dark-mode .markdown-content strong {
+				color: #fff;
+			}
+			
+			body.dark-mode .markdown-content em {
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .markdown-content blockquote {
+				border-color: #444;
+				color: #bbb;
+			}
+			
+			body.dark-mode .markdown-content h1,
+			body.dark-mode .markdown-content h2,
+			body.dark-mode .markdown-content h3,
+			body.dark-mode .markdown-content h4,
+			body.dark-mode .markdown-content h5,
+			body.dark-mode .markdown-content h6 {
+				color: #fff;
+			}
+			
+			body.dark-mode .markdown-content hr {
+				border-color: #444;
+			}
+			
+			body.dark-mode .markdown-content table {
+				border-color: #444;
+			}
+			
+			body.dark-mode .markdown-content th,
+			body.dark-mode .markdown-content td {
+				border-color: #444;
+			}
+			
+			body.dark-mode .markdown-content th {
+				background: #2a2a2a;
+			}
+			
+			/* List styles in dark mode */
+			body.dark-mode .markdown-content .list-marker {
+				color: #999;
+			}
+			
+			/* Image styles in dark mode */
+			body.dark-mode .markdown-content img {
+				opacity: 0.9;
+			}
+			
+			/* Empty line indicator in dark mode */
+			body.dark-mode .empty-line {
+				color: #333;
+			}
+			
+			/* Category sections in dark mode */
+			body.dark-mode .draggable-category {
+				background: #2a2a2a;
+				border-color: #444;
+			}
+			
+			body.dark-mode .draggable-category.drag-over {
+				background: #333;
+			}
+			
+			body.dark-mode .category-header {
+				border-color: #444;
+			}
+			
+			body.dark-mode .category-name {
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .empty-category-message {
+				color: #666;
+			}
+			
+			/* Auth modal dark mode */
+			body.dark-mode .auth-modal {
+				background: rgba(0, 0, 0, 0.9);
+			}
+			
+			body.dark-mode .auth-modal-content {
+				background: #2a2a2a;
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .auth-modal-content h2 {
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .auth-modal-content input[type="password"] {
+				background: #333 !important;
+				color: #e0e0e0;
+				border-color: #444;
+			}
+			
+			body.dark-mode .auth-modal-content button {
+				background: #444;
+				color: #e0e0e0;
+				border-color: #666;
+			}
+			
+			body.dark-mode .auth-modal-content button:hover {
+				background: #555;
+			}
+			
+			body.dark-mode .auth-error {
+				color: #ff6666;
+			}
+			
+			/* Fix for editor background - targeting the actual contenteditable div */
+			body.dark-mode #editor-content,
+			body.dark-mode .editor-content {
+				background: #2a2a2a !important;
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .editor-content[contenteditable] {
+				background: #2a2a2a !important;
+				color: #e0e0e0;
+			}
+			
+			/* Fix for placeholder text in editor */
+			body.dark-mode .editor-content.placeholder {
+				color: #666;
+			}
+			
+			/* Fix for frontmatter/metadata editor container */
+			body.dark-mode .frontmatter-editor {
+				background: #2a2a2a !important;
+				border-color: #444;
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .frontmatter-editor h3 {
+				color: #e0e0e0;
+			}
+			
+			/* Fix for apache headers and titles */
+			body.dark-mode .apache-header h1,
+			body.dark-mode .apache-header p,
+			body.dark-mode .apache-header a {
+				color: #e0e0e0;
+			}
+			
+			/* Fix for note title input - corrected selector */
+			body.dark-mode #note-title {
+				background: #2a2a2a !important;
+				color: #e0e0e0;
+				border-color: #444;
+			}
+			
+			body.dark-mode #note-title:focus {
+				background: #2a2a2a !important;
+				border-color: #666;
+			}
+			
+			/* Fix for note-title-input class - keep transparent like in light mode */
+			body.dark-mode .note-title-input {
+				background: transparent !important;
+				background-color: transparent !important;
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .note-title-input:focus {
+				background: transparent !important;
+				background-color: transparent !important;
+				border-bottom-color: #666;
+			}
+			
+			
+			/* Fix for blog posts header */
+			body.dark-mode .blog-posts-header {
+				color: #e0e0e0;
+			}
+			
+			/* Note title display in dark mode */
+			body.dark-mode .note-title-display {
+				color: #e0e0e0;
+			}
+			
+			/* Scrollbar styling for dark mode */
+			body.dark-mode ::-webkit-scrollbar {
+				width: 12px;
+				height: 12px;
+			}
+			
+			body.dark-mode ::-webkit-scrollbar-track {
+				background: #1a1a1a;
+			}
+			
+			body.dark-mode ::-webkit-scrollbar-thumb {
+				background: #444;
+				border-radius: 6px;
+			}
+			
+			body.dark-mode ::-webkit-scrollbar-thumb:hover {
+				background: #555;
+			}
+			
+			/* Firefox scrollbar */
+			body.dark-mode {
+				scrollbar-width: thin;
+				scrollbar-color: #444 #1a1a1a;
+			}
+			
+			/* Additional fixes for any missed text elements */
+			body.dark-mode h1, 
+			body.dark-mode h2, 
+			body.dark-mode h3, 
+			body.dark-mode h4, 
+			body.dark-mode h5, 
+			body.dark-mode h6 {
+				color: #e0e0e0;
+			}
+			
+			/* Fix for section headers */
+			body.dark-mode .blog-section-header {
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .blog-section-name {
+				color: #e0e0e0;
+			}
+			
+			body.dark-mode .section-control {
+				color: #999;
+			}
+			
+			body.dark-mode .section-control:hover {
+				color: #ff6666;
+			}
+			
+			body.dark-mode .section-control.delete-mode,
+			body.dark-mode .section-control.confirm-delete {
+				color: #ff6666;
+			}
+			
+			body.dark-mode .add-section-container {
+				border-top-color: #444;
+			}
+			
+			body.dark-mode .add-section-btn {
+				color: #999;
+			}
+			
+			body.dark-mode .add-section-btn:hover {
+				color: #66b3ff;
+			}
+			
+			body.dark-mode .section-name-input {
+				background: #333 !important;
+				color: #e0e0e0;
+				border-color: #666;
+			}
+			
+			body.dark-mode .section-empty-state {
+				color: #666;
+			}
+			
+			/* Aggressive fix for note title background */
+			body.dark-mode .editor-container .editor-header input#note-title,
+			body.dark-mode .editor-container .editor-header .note-title-input,
+			body.dark-mode input.note-title-input#note-title,
+			body.dark-mode #note-title.note-title-input,
+			body.dark-mode #note-title {
+				background: #2a2a2a !important;
+				background-color: #2a2a2a !important;
+				background-image: none !important;
+				-webkit-appearance: none !important;
+				-moz-appearance: none !important;
+				appearance: none !important;
+				/* Force solid background with box-shadow */
+				box-shadow: inset 0 0 0 1000px #2a2a2a !important;
+				/* Ensure text color works */
+				color: #e0e0e0 !important;
+				-webkit-text-fill-color: #e0e0e0 !important;
+			}
+			
+			/* Fix for focus state as well */
+			body.dark-mode .editor-container .editor-header input#note-title:focus,
+			body.dark-mode input.note-title-input#note-title:focus,
+			body.dark-mode #note-title:focus {
+				background: #2a2a2a !important;
+				background-color: #2a2a2a !important;
+				box-shadow: inset 0 0 0 1000px #2a2a2a !important;
+				-webkit-text-fill-color: #e0e0e0 !important;
+			}
+		</style>
 	</head>
 	<body class="notepad">
 <div id="auth-modal" class="auth-modal" style="display: none;">
@@ -1171,18 +1790,14 @@ try {
   </div>
 </div>
 		<div class="layout-wrapper">
-			<aside class="sidebar">
-				<Header />
-			</aside>
+			<!-- Sidebar is hidden on notepad pages via global.css -->
+			<button class="dark-mode-toggle" id="darkModeToggle">[dark mode]</button>
 			<div class="main-content-area">
 				<main>
-					<div class="apache-header">
-						<h1>Index of /notepad</h1>
-						<hr>
-						<p><a href="/">Parent Directory</a></p>
-					</div>
 					<div class="notepad-container">
 						<div class="note-sidebar">
+							<!-- Move Header here so Home/About are visible on notepad -->
+							<Header />
 							<div class="apache-header">
 								<h1>Index of /notepad</h1>
 								<hr>
@@ -1211,7 +1826,8 @@ try {
 						</div>
 						<div class="editor-container">
 							<div class="editor-header">
-								<input type="text" class="note-title-input" id="note-title" placeholder="untitled" value="untitled">
+								<div class="note-title-display" id="note-title-display">untitled</div>
+								<input type="text" class="note-title-input" id="note-title" placeholder="untitled" value="untitled" style="display: none;">
 								<div class="note-meta" id="note-meta">
 									Last modified: never
 								</div>
@@ -1315,6 +1931,56 @@ try {
 		</script>
 		
 		<script>
+			// Dark mode functionality
+			document.addEventListener('DOMContentLoaded', () => {
+				const darkModeToggle = document.getElementById('darkModeToggle');
+				const body = document.body;
+				
+				// Check for saved dark mode preference
+				const darkMode = localStorage.getItem('notepad-dark-mode');
+				if (darkMode === 'true') {
+					body.classList.add('dark-mode');
+					darkModeToggle.textContent = '[light mode]';
+				}
+				
+				// Toggle dark mode
+				darkModeToggle.addEventListener('click', () => {
+					body.classList.toggle('dark-mode');
+					const isDarkMode = body.classList.contains('dark-mode');
+					localStorage.setItem('notepad-dark-mode', isDarkMode);
+					darkModeToggle.textContent = isDarkMode ? '[light mode]' : '[dark mode]';
+				});
+				
+				// Note title click-to-edit functionality
+				const titleDisplay = document.getElementById('note-title-display');
+				const titleInput = document.getElementById('note-title');
+				
+				if (titleDisplay && titleInput) {
+					// Click display to edit
+					titleDisplay.addEventListener('click', () => {
+						titleDisplay.style.display = 'none';
+						titleInput.style.display = 'block';
+						titleInput.focus();
+						titleInput.select();
+					});
+					
+					// On blur, hide input and show display
+					titleInput.addEventListener('blur', () => {
+						titleDisplay.textContent = titleInput.value || 'untitled';
+						titleInput.style.display = 'none';
+						titleDisplay.style.display = 'block';
+					});
+					
+					// Handle Enter key
+					titleInput.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							titleInput.blur();
+						}
+					});
+				}
+			});
+			
 			// Authentication Manager
 			class AuthManager {
 			  constructor() {
@@ -1455,16 +2121,16 @@ try {
 
 			// Category metadata for visual styling
 			const CATEGORY_META = {
-				articles: { icon: '📝', color: '#2563eb', description: 'Long-form articles and essays' },
-				ideas: { icon: '💡', color: '#10b981', description: 'Quick thoughts and concepts' },
-				creative: { icon: '🎨', color: '#8b5cf6', description: 'Creative writing and experiments' },
-				technical: { icon: '⚙️', color: '#f59e0b', description: 'Technical posts and tutorials' },
-				personal: { icon: '🌱', color: '#06b6d4', description: 'Personal reflections and stories' },
-				protocols: { icon: '📋', color: '#14b8a6', description: 'Systems and protocols for life' },
-				thoughts: { icon: '💭', color: '#ec4899', description: 'Random thoughts and musings' },
-				saved: { icon: '📁', color: '#ef4444', description: 'Bookmarked and saved content' },
-				uncategorized: { icon: '📁', color: '#6b7280', description: 'Posts awaiting categorization' },
-				archive: { icon: '🗄️', color: '#9ca3af', description: 'Archived content' }
+				articles: { icon: '[A]', color: '#2563eb', description: 'Long-form articles and essays' },
+				ideas: { icon: '[i]', color: '#10b981', description: 'Quick thoughts and concepts' },
+				creative: { icon: '[C]', color: '#8b5cf6', description: 'Creative writing and experiments' },
+				technical: { icon: '[T]', color: '#f59e0b', description: 'Technical posts and tutorials' },
+				personal: { icon: '[P]', color: '#06b6d4', description: 'Personal reflections and stories' },
+				protocols: { icon: '[R]', color: '#14b8a6', description: 'Systems and protocols for life' },
+				thoughts: { icon: '[t]', color: '#ec4899', description: 'Random thoughts and musings' },
+				saved: { icon: '[+]', color: '#ef4444', description: 'Bookmarked and saved content' },
+				uncategorized: { icon: '[?]', color: '#6b7280', description: 'Posts awaiting categorization' },
+				archive: { icon: '[X]', color: '#9ca3af', description: 'Archived content' }
 			};
 
 			// Storage abstraction for robustness and future-proofing
@@ -1946,8 +2612,15 @@ try {
 					// Combine frontmatter and content
 					const fullContent = frontmatter + operation.data.content;
 					
+					console.log('ExecuteSave - frontmatter:', frontmatter);
+					console.log('ExecuteSave - content preview:', operation.data.content.substring(0, 100));
+					
 					// Generate filename if needed
 					let filename = operation.data.filename;
+					console.log('ExecuteSave - operation type:', operation.type);
+					console.log('ExecuteSave - operation.data.filename:', operation.data.filename);
+					console.log('ExecuteSave - resourceId:', operation.resourceId);
+					
 					if (!filename && operation.type === 'create') {
 						// Generate slug from title
 						const slug = operation.data.title
@@ -1958,6 +2631,15 @@ try {
 							.replace(/^-+|-+$/g, '');
 						filename = `${slug}.md`;
 					}
+					
+					// CRITICAL FIX: For existing posts, ensure we use the correct filename
+					// The resourceId from Astro doesn't include .md, but we need it for the server
+					if (operation.type === 'save' && filename && !filename.endsWith('.md')) {
+						console.warn('ExecuteSave - WARNING: filename missing .md extension, adding it');
+						filename = `${filename}.md`;
+					}
+					
+					console.log('ExecuteSave - final filename to send:', filename);
 					
 					// Check if authenticated
 					if (!authManager.isAuthenticated) {
@@ -2098,6 +2780,14 @@ try {
 					this.editingSection = null; // Track which section is being edited inline
 					this.deleteConfirmations = new Set(); // Track delete confirmations
 					
+					// Helper to update title in both display and input
+					this.updateTitle = (title) => {
+						const titleDisplay = document.getElementById('note-title-display');
+						const titleInput = document.getElementById('note-title');
+						if (titleDisplay) titleDisplay.textContent = title || 'untitled';
+						if (titleInput) titleInput.value = title || 'untitled';
+					};
+					
 					// Debounced save function
 					this.debouncedSave = this.debounce(
 						() => this.saveCurrentNote(),
@@ -2153,6 +2843,15 @@ try {
 						
 						// Set up UI
 						this.bindEvents();
+						
+						// Clean up cache-busting parameter if present
+						const urlParams = new URLSearchParams(window.location.search);
+						if (urlParams.has('_refresh')) {
+							// Remove the parameter from URL without reloading
+							urlParams.delete('_refresh');
+							const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+							window.history.replaceState({}, '', newUrl);
+						}
 						
 						// Check for pending reload state (from blog post push)
 						const pendingReload = sessionStorage.getItem('notepad:pendingReload');
@@ -2262,7 +2961,17 @@ try {
 					
 					// Track expanded states
 					const expandedCategories = JSON.parse(localStorage.getItem('notepad:expandedBlogCategories') || '["uncategorized"]');
-					const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(sections)));
+					
+					// Check if we have expandedSections in localStorage, if not, default to all sections expanded
+					let expandedSections;
+					const savedExpandedSections = localStorage.getItem('notepad:expandedSections');
+					if (savedExpandedSections && savedExpandedSections !== '[]') {
+						expandedSections = JSON.parse(savedExpandedSections);
+					} else {
+						// First time or empty array - expand all sections
+						expandedSections = Object.keys(sections);
+						localStorage.setItem('notepad:expandedSections', JSON.stringify(expandedSections));
+					}
 					
 					// Add any new categories that aren't in any section to Miscellaneous
 					const allCategoriesInSections = new Set();
@@ -2390,10 +3099,10 @@ try {
 							categoryToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 							
 							// Use folder icons for expand/collapse state
-							const meta = CATEGORY_META[category] || { icon: '📁', color: '#6b7280' };
+							const meta = CATEGORY_META[category] || { icon: '[/]', color: '#6b7280' };
 							const categoryIcon = document.createElement('span');
 							categoryIcon.className = 'category-icon';
-							categoryIcon.textContent = isExpanded ? '📂' : '📁';
+							categoryIcon.textContent = isExpanded ? '[-]' : '[+]';
 							categoryToggle.appendChild(categoryIcon);
 							
 							const categoryName = document.createElement('span');
@@ -2568,18 +3277,15 @@ try {
 				// Load sections from localStorage or use defaults
 				loadSections() {
 					const saved = localStorage.getItem('notepad:customSections');
-					console.log('Loading sections from localStorage:', saved);
 					if (saved) {
 						try {
 							const sections = JSON.parse(saved);
-							console.log('Parsed sections:', sections);
 							return sections;
 						} catch (e) {
 							console.error('Failed to load custom sections:', e);
 						}
 					}
 					// Return a deep copy of defaults
-					console.log('Using default sections');
 					return JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
 				}
 				
@@ -3182,11 +3888,16 @@ try {
 				async loadBlogPost(postId) {
 					// Note: We no longer auto-save when switching posts - user must push changes manually
 					
+					console.log('LoadBlogPost - searching for postId:', postId);
+					console.log('LoadBlogPost - available posts:', window.BLOG_POSTS.map(p => p.id));
+					
 					const post = window.BLOG_POSTS.find(p => p.id === postId);
 					if (!post) {
 						this.showError('Blog post not found');
 						return;
 					}
+					
+					console.log('LoadBlogPost - found post:', post);
 					
 					// Clear active states
 					document.querySelectorAll('.note-item').forEach(item => {
@@ -3197,12 +3908,14 @@ try {
 					});
 					
 					// Update editor
-					document.getElementById('note-title').value = post.title;
+					this.updateTitle(post.title);
 					document.getElementById('note-meta').textContent = `Editing blog post: ${post.id}`;
 					
 					// Show and populate frontmatter editor
 					const frontmatterEditor = document.getElementById('frontmatter-editor');
 					frontmatterEditor.style.display = 'block';
+					
+					console.log('LoadBlogPost - setting currentBlogPostId to:', postId);
 					
 					// Show export post button and save buttons
 					document.getElementById('export-post-btn').style.display = 'inline';
@@ -3239,6 +3952,9 @@ try {
 					
 					// Load content
 					const editor = document.getElementById('editor-content');
+					console.log('LoadBlogPost - post.content preview:', post.content.substring(0, 200));
+					console.log('LoadBlogPost - post.content length:', post.content.length);
+					
 					// Don't use textContent as it doesn't preserve newlines in contentEditable
 					// Instead, set the content as HTML with proper line structure
 					const lines = post.content.split('\n');
@@ -3259,12 +3975,16 @@ try {
 					editor.innerHTML = formattedLines.join('');
 					editor.classList.remove('placeholder');
 					
+					console.log('LoadBlogPost - editor.innerHTML after setting:', editor.innerHTML);
+					
 					// Apply formatting after load
 					setTimeout(() => this.applyMarkdownFormatting(editor), 10);
 					
 					// Set a flag to indicate we're editing a blog post
 					this.currentBlogPostId = postId;
 					this.currentNoteId = null;
+					
+					console.log('LoadBlogPost - currentBlogPostId set to:', this.currentBlogPostId);
 				}
 
 				// Load all notes from storage
@@ -3431,7 +4151,7 @@ try {
 					document.getElementById('push-changes-btn').style.display = 'none';
 					
 					// Update UI
-					document.getElementById('note-title').value = note.title || 'untitled';
+					this.updateTitle(note.title);
 					document.getElementById('note-meta').textContent = `Last modified: ${new Date(note.modified).toLocaleString()}`;
 					
 					// Update editor content
@@ -3668,8 +4388,11 @@ try {
 
 
 				getPlainTextFromEditor(editor) {
+					console.log('getPlainTextFromEditor - editor.innerHTML:', editor.innerHTML);
+					
 					// If editor only contains a BR tag and nothing else, it's empty
 					if (editor.innerHTML === '<br>' || editor.innerHTML === '<br/>') {
+						console.log('getPlainTextFromEditor - empty (BR only)');
 						return '';
 					}
 					
@@ -3682,6 +4405,7 @@ try {
 					// Handle div-based formatting
 					const divs = editor.querySelectorAll('div.text-line, div.empty-line');
 					if (divs.length > 0) {
+						console.log('getPlainTextFromEditor - found', divs.length, 'div-based lines');
 						const lines = [];
 						divs.forEach(div => {
 							if (div.classList.contains('empty-line')) {
@@ -3724,7 +4448,9 @@ try {
 								}
 							}
 						});
-						return lines.join('\n');
+						const result = lines.join('\n');
+						console.log('getPlainTextFromEditor - div-based result:', JSON.stringify(result));
+						return result;
 					}
 					
 					// Fallback for old BR-based formatting
@@ -4545,7 +5271,10 @@ try {
 						color: #666;
 						padding: 6px 12px;
 						border: 1px solid #ddd;
-						font-family: monospace;
+						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 						font-size: 12px;
 						z-index: 10000;
 						opacity: 0;
@@ -4909,7 +5638,7 @@ try {
 					// If we're currently editing this post, clear the editor
 					if (this.currentBlogPostId === postId) {
 						this.currentBlogPostId = null;
-						document.getElementById('note-title').value = 'untitled';
+						this.updateTitle('untitled');
 						document.getElementById('editor-content').textContent = '';
 						document.getElementById('frontmatter-editor').style.display = 'none';
 						
@@ -4945,6 +5674,9 @@ try {
 					const editor = document.getElementById('editor-content');
 					const content = this.getPlainTextFromEditor(editor);
 					
+					console.log('QueueBlogSave - extracted content:', JSON.stringify(content));
+					console.log('QueueBlogSave - content length:', content.length);
+					
 					// Collect metadata
 					const metadata = {
 						title: title || 'Untitled',
@@ -4974,6 +5706,10 @@ try {
 					// Determine if this is a create or save operation
 					const isNewPost = this.currentBlogPostId.startsWith('new-post-');
 					const filename = isNewPost ? null : `${this.currentBlogPostId}.md`;
+					
+					console.log('QueueBlogSave - currentBlogPostId:', this.currentBlogPostId);
+					console.log('QueueBlogSave - isNewPost:', isNewPost);
+					console.log('QueueBlogSave - filename:', filename);
 					
 					// Add to operation queue
 					this.operationQueue.add({
@@ -5100,17 +5836,33 @@ try {
 							alert(`${failures.length} operation(s) failed. Check console for details.`);
 						}
 						
-						// Update temp ID mappings for successful creates
+						// Update temp ID mappings for successful creates AND saves
 						for (const result of results) {
-							if (result.success && result.operation.type === 'create' && result.result.filename) {
-								const newId = result.result.filename.replace('.md', '');
-								// Update current blog post ID if it was the one we created
-								if (this.currentBlogPostId === result.operation.resourceId) {
-									this.currentBlogPostId = newId;
-									// Update the pending reload state with new ID
-									const updatedState = JSON.parse(sessionStorage.getItem('notepad:pendingReload'));
-									updatedState.blogPostId = newId;
-									sessionStorage.setItem('notepad:pendingReload', JSON.stringify(updatedState));
+							if (result.success) {
+								if (result.operation.type === 'create' && result.result.filename) {
+									const newId = result.result.filename.replace('.md', '');
+									// Update current blog post ID if it was the one we created
+									if (this.currentBlogPostId === result.operation.resourceId) {
+										this.currentBlogPostId = newId;
+										// Update the pending reload state with new ID
+										const updatedState = JSON.parse(sessionStorage.getItem('notepad:pendingReload'));
+										updatedState.blogPostId = newId;
+										sessionStorage.setItem('notepad:pendingReload', JSON.stringify(updatedState));
+									}
+								} else if (result.operation.type === 'save') {
+									// For saves, ensure the reload state has the correct ID
+									console.log('Save successful for:', result.operation.resourceId);
+									console.log('Server response:', result.result);
+									
+									// Update the in-memory blog post with the new content
+									const postIndex = window.BLOG_POSTS.findIndex(p => p.id === result.operation.resourceId);
+									if (postIndex >= 0) {
+										window.BLOG_POSTS[postIndex].content = result.operation.data.content;
+										window.BLOG_POSTS[postIndex].title = result.operation.data.title;
+										window.BLOG_POSTS[postIndex].description = result.operation.data.metadata.description;
+										window.BLOG_POSTS[postIndex].category = result.operation.data.metadata.category;
+										console.log('Updated in-memory blog post content');
+									}
 								}
 							}
 						}
@@ -5119,9 +5871,12 @@ try {
 						if (failures.length === 0) {
 							// Just wait for the reload
 							pushBtn.textContent = 'Changes pushed! Reloading...';
-							// Force reload after a short delay if hot reload doesn't work
+							// Force a hard reload to bypass any caching
 							setTimeout(() => {
-								window.location.reload();
+								// Add a cache-busting parameter to force Astro to reload
+								const url = new URL(window.location.href);
+								url.searchParams.set('_refresh', Date.now());
+								window.location.href = url.toString();
 							}, 1500);
 						}
 					} catch (error) {
@@ -5324,7 +6079,7 @@ try {
 					this.currentNoteId = null;
 					
 					// Clear and set up editor
-					document.getElementById('note-title').value = 'New Blog Post';
+					this.updateTitle('New Blog Post');
 					document.getElementById('note-meta').textContent = 'Creating new blog post';
 					
 					// Show and clear frontmatter editor
@@ -5521,6 +6276,20 @@ try {
 						meta.style.color = 'red';
 					}
 					console.error(message);
+				}
+
+				showMessage(message) {
+					const meta = document.getElementById('note-meta');
+					if (meta) {
+						meta.textContent = message;
+						meta.style.color = '#666';
+						// Clear message after 3 seconds
+						setTimeout(() => {
+							if (meta.textContent === message) {
+								meta.textContent = '';
+							}
+						}, 3000);
+					}
 				}
 
 				startAutoSave() {
@@ -5765,7 +6534,7 @@ try {
 								// Update icon
 								const icon = button.querySelector('.category-icon');
 								if (icon) {
-									icon.textContent = '📁';
+									icon.textContent = '[+]';
 								}
 								
 								// Hide posts container
@@ -5789,7 +6558,7 @@ try {
 								// Update icon
 								const icon = button.querySelector('.category-icon');
 								if (icon) {
-									icon.textContent = '📂';
+									icon.textContent = '[-]';
 								}
 								
 								// Show posts container
@@ -5915,7 +6684,7 @@ try {
 							// Update icon
 							const icon = button.querySelector('.category-icon');
 							if (icon) {
-								icon.textContent = !isExpanded ? '📂' : '📁';
+								icon.textContent = !isExpanded ? '[-]' : '[+]';
 							}
 							
 							// Toggle posts visibility

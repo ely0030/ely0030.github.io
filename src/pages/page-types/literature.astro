@@ -1,0 +1,18 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+
+const props = {
+  title: 'Page Type: literature',
+  description: 'Example of the literature layout',
+  pubDate: new Date('2025-01-01'),
+  pageType: 'literature'
+};
+---
+
+<BlogPost {...props}>
+  <section class="prose">
+    <p>Ultra-minimal, dense essay layout. Line breaks and spacing are preserved intentionally.</p>
+    <p><a href="/page-types/">Back to /page-types</a></p>
+  </section>
+</BlogPost>
+

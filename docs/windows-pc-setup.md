@@ -112,6 +112,31 @@ node https-proxy.cjs
    - Firefox: Click "Advanced" → "Accept the Risk and Continue"
 3. Navigate to `/notepad` for blog editing
 
+## Enabling Console Logging (2025-07-24)
+
+To see detailed save logs in the terminal:
+
+### Update PowerShell Script
+In `host-network-https.ps1`, change these lines to use `-NoNewWindow`:
+```powershell
+# Blog save server - shows logs in console
+$blogApi = Start-Process -FilePath "node" -ArgumentList "blog-save-server-secure.js" -PassThru -NoNewWindow
+
+# HTTPS proxy - shows request logs
+$proxy = Start-Process -FilePath "node" -ArgumentList "https-proxy.cjs" -PassThru -NoNewWindow
+
+# Remove "Press any key" prompt - just close window to stop
+# Delete the $null = $Host.UI.RawUI.ReadKey line
+# Replace with infinite loop:
+while ($true) { Start-Sleep -Seconds 60 }
+```
+
+This enables you to see:
+- 📥 Save requests with content preview
+- 📝 File write confirmations  
+- 🚦 All HTTP requests through proxy
+- ❌ Any errors in real-time
+
 ## Common Issues & Solutions
 
 ### Issue 1: HTTPS Proxy Crashes with Header Error

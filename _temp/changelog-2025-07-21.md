@@ -1,33 +1,44 @@
-# Changelog - 2025-07-21
+# Changelog Entry - July 21, 2025
 
-## Summary
-Enhanced UI aesthetics for protected login page and planning wall card selection
+## Notepad Category Drag-Drop Fixes
 
-## Changes
+### Issues Fixed
 
-### Protected Mode Login Page
-- **Redesigned login UI**: Simplified from apache-style header/rules to minimal password box
-- **Applied deep blue theme** (#002147): Added background, white text, transparent form elements
-- **Reverted to minimal style**: Removed deep blue, kept clean monospace aesthetic
-- **Repositioned form**: Moved from centered to 40vh from top for better visual balance
-- **Changed layout**: Login button moved below password input (vertical layout)
-- **Location**: `https-proxy-protected.cjs:80-187`
+1. **Empty Categories Disappearing**
+   - **Problem**: Categories without posts vanished when moved to new sections
+   - **Root Cause**: Line 2357 filtered out categories with no posts
+   - **Solution**: Show all categories from section arrays, added "(no posts yet)" message
 
-### Planning Wall Card Selection
-- **Refined selection styling**: Changed from harsh 2px red border to subtle 1px orange (#ff5500)
-- **Added visual depth**: Double shadow effect (outer + inset) for elegant selection
-- **Subtle background tint**: Added barely visible orange tint to selected cards
-- **Smooth transitions**: Added 0.15s cubic-bezier transitions for border, shadow, and background
-- **Header emphasis**: Selected card headers get slightly darker tint
-- **Location**: `planning-wall.astro:122-130, 145-152`
+2. **Sections Collapsing on First Click**
+   - **Problem**: Clicking a section collapsed it and hid all categories
+   - **Root Cause**: localStorage default was empty array instead of all sections
+   - **Solution**: Fixed 4 instances of `|| '[]'` to default to all sections expanded
 
-### Documentation Updates
-- **CLAUDE.md**: Added pitfall #26 for protected login styling location
-- **planning-wall.md**: Updated card selection styling section with design evolution
-- **protected-mode-critical.md**: Enhanced login page design section with full details
+3. **Missing User Feedback**
+   - **Problem**: `this.showMessage is not a function` error when dropping categories
+   - **Solution**: Added showMessage method at line 5539-5551
 
-## Key Insights
-- Protected mode login is embedded HTML in proxy file, not a component
-- User wanted "apache-like but minimal" not old-school design
-- "Finesse" meant visual design refinement, not animations
-- Three different password UIs exist in the system (PasswordGate, index inline, proxy)
+### Code Changes
+
+```javascript
+// Before (line 2283)
+const visibleCategories = categories.filter(cat => postsByCategory[cat]);
+
+// After
+const visibleCategories = categories;
+```
+
+```javascript
+// Before (line 2825)
+const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || '[]');
+
+// After
+const expandedSections = JSON.parse(localStorage.getItem('notepad:expandedSections') || JSON.stringify(Object.keys(this.sections)));
+```
+
+### Key Insight
+Drag-drop is **visual organization only** - it moves category folders between sections but does NOT re-categorize the posts themselves. This is by design, not a bug.
+
+### Commits
+- `936488d` - fix: Empty categories now visible after drag-and-drop
+- `7bed936` - fix: Section toggle now defaults to expanded state

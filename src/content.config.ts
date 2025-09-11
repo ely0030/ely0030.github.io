@@ -21,6 +21,10 @@ const blog = defineCollection({
 		markColor: z.enum(['grey', 'orange', 'blue']).optional(),
 		// New optional page type for selecting alternate layouts
 		pageType: z.enum(['blog', 'magazine', 'stanza', 'essay', 'literature', 'literature2', 'literature3', 'notepad']).optional(),
+		// Optional: strict spacing for literature (preserve exact line/space intent)
+		strictSpacing: z.boolean().optional(),
+		// Optional: immersive mode for literature (hide nav/sidebar chrome)
+		immersive: z.boolean().optional(),
 		// Determines which Astro layout component to use
 		pageLayout: z.enum(['blog', 'book']).optional(),
 		// Category for grouping posts

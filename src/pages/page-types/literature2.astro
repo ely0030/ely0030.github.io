@@ -1,0 +1,18 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+
+const props = {
+  title: 'Page Type: literature2',
+  description: 'Example of the literature2 layout',
+  pubDate: new Date('2025-01-01'),
+  pageType: 'literature2'
+};
+---
+
+<BlogPost {...props}>
+  <section class="prose">
+    <p>Fixed variant of literature with a slightly larger font and wider measure.</p>
+    <p><a href="/page-types/">Back to /page-types</a></p>
+  </section>
+</BlogPost>
+

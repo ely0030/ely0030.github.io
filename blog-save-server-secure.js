@@ -153,7 +153,18 @@ app.post('/api/save-blog-post', authenticate, async (req, res) => {
   try {
     const { filename, content } = req.body;
     
-    console.log(`📥 Authenticated save request for: ${filename}`);
+    console.log(`\n📥 Authenticated save request for: ${filename}`);
+    console.log(`📝 Content length: ${content.length} characters`);
+    console.log(`📂 Raw filename received: '${filename}'`);
+    
+    // Log content preview (first 200 chars of actual content, excluding frontmatter)
+    const contentLines = content.split('\n');
+    const frontmatterEnd = contentLines.findIndex((line, index) => index > 0 && line === '---');
+    if (frontmatterEnd > 0 && frontmatterEnd < contentLines.length - 1) {
+      const actualContent = contentLines.slice(frontmatterEnd + 1).join('\n').trim();
+      console.log(`📄 Content preview: "${actualContent.substring(0, 200)}${actualContent.length > 200 ? '...' : ''}"`);
+      console.log(`📊 Actual content length: ${actualContent.length} characters`);
+    }
     
     if (!filename || !content) {
       return res.status(400).json({ error: 'Missing filename or content' });
@@ -213,7 +224,15 @@ app.post('/api/save-blog-post', authenticate, async (req, res) => {
     }
     
     // Write the file
+    console.log(`📝 Writing to file path: ${filePath}`);
+    console.log(`📝 Display name: ${displayName}`);
+    console.log(`📝 Content starts with: ${content.substring(0, 100)}...`);
+    
     await fs.writeFile(filePath, content, 'utf8');
+    
+    // Verify file was written
+    const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+    console.log(`📝 File exists after write: ${fileExists}`);
     
     // Preserve original timestamps if this was an update
     if (originalStats) {

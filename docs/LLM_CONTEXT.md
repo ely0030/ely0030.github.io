@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-This is a minimalist Astro blog with custom features for password-protected posts, multiple visual page styles, and a unique countdown timer. Built with Astro 5.7.1, deployed to Netlify.
+This is a minimalist Astro blog with custom features for password-protected posts, multiple visual page styles, and a unique countdown timer. Built with Astro 5.x, deployed to Netlify.
 
 **Key Commands:**
 ```bash
@@ -351,16 +351,17 @@ Obsidian-style note-taking interface with blog post creation/editing capabilitie
 ### Key Features
 - **Local notes**: Browser IndexedDB storage, markdown support, image paste
 - **Blog editor**: Create/edit posts directly, organized in category folders
-- **Category selection**: On new post creation, prompts for category (existing or new)
+- **Drag-drop categories**: Visual organization between sections (Writing, Technical, etc.)
+- **Operation queue**: Batch changes until manual push to minimize refreshes
 - **Save queue**: Defers disk writes to handle Astro HMR reloads gracefully
 
 ### Critical Implementation
-- **getExistingCategories()** (:3586) - Collects unique categories from posts
-- **createNewBlogPost()** (:3606) - Prompts for category, pre-fills metadata
-- **populateBlogPosts()** (:1471) - Groups posts by category with collapsible UI
-- **State persistence**: localStorage for expanded folders, sessionStorage for reload handling
+- **populateBlogPosts()** (:2233) - Groups posts by category with collapsible UI
+- **Drag-drop system** (:2621-2812) - Visual organization only, doesn't re-categorize posts
+- **Operation queue** (:1290-1524) - Batches all changes until manual push
+- **State persistence**: localStorage for sections/folders, sessionStorage for reload handling
 
-See `/docs/notepad-critical-knowledge.md` for implementation pitfalls.
+See `/docs/notepad-critical-knowledge.md` and `/docs/notepad-drag-drop-categories.md` for implementation details.
 
 ## Additional Documentation
 

@@ -1,0 +1,18 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+
+const props = {
+  title: 'Page Type: magazine',
+  description: 'Example of the magazine layout',
+  pubDate: new Date('2025-01-01'),
+  pageType: 'magazine'
+};
+---
+
+<BlogPost {...props}>
+  <section class="prose">
+    <p>Magazine layout emphasizes generous spacing and visual rhythm.</p>
+    <p><a href="/page-types/">Back to /page-types</a></p>
+  </section>
+</BlogPost>
+

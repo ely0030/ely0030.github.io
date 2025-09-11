@@ -1,0 +1,19 @@
+---
+import BookPage from '../../layouts/BookPage.astro';
+
+const props = {
+  title: 'Page Type: book',
+  description: 'Example of the book-style layout',
+  photocopy: false,
+  perspective: false
+};
+---
+
+<BookPage {...props}>
+  <section>
+    <h1>Once upon a time</h1>
+    <p>A sample of the book page layout with justified text, paper texture, and page numbers.</p>
+    <p><a href="/page-types/">Back to /page-types</a></p>
+  </section>
+</BookPage>
+

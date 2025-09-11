@@ -1,0 +1,18 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+
+const props = {
+  title: 'Page Type: blog',
+  description: 'Example of the default blog layout',
+  pubDate: new Date('2025-01-01'),
+  pageType: 'blog'
+};
+---
+
+<BlogPost {...props}>
+  <section class="prose">
+    <p>This is the standard blog layout. It uses tighter spacing and a straightforward reading flow.</p>
+    <p><a href="/page-types/">Back to /page-types</a></p>
+  </section>
+</BlogPost>
+

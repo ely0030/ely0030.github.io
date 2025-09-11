@@ -13,11 +13,6 @@ C
 ---
 # NOTEPAD
 
-- when in the notepad the first time I click out of the editor it squashes all the newlines and fucks up the formatting. after that first time it doesnt happen anymore
-
-
-- there's a random empty white space that keeps spawning in the notepad enter
-when pressing enter, and at the start of the file
 
 
 ### Render Stuff

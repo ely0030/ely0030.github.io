@@ -25,6 +25,12 @@ more content
 
 ## Development Issues
 
+### Live reload/HMR not updating (2025-09-08)
+Symptoms: CSS/layout changes not reflected until manual refresh.
+Fixes:
+- Normal dev (`npm run dev`): HMR now uses plain WS (astro.config.mjs). Restart dev server to pick up config.
+- Protected HTTPS proxy (`run-dev-protected.sh`): Proxy now forwards WebSocket upgrades; HMR works over WSS.
+
 ### Port Already in Use
 
 **Problem**: Error message "Port 4321 is already in use"
@@ -118,6 +124,36 @@ rm -rf node_modules/
 rm package-lock.json
 npm install
 ```
+
+### Rollup Optional Dependency Error (WSL / npm 11)
+
+**Problem**: Errors like:
+```
+Error: Cannot find module '@rollup/rollup-linux-x64-gnu'
+Require stack: .../node_modules/rollup/dist/native.js
+```
+
+**Cause**: npm v11 bug with optional, platform-specific dependencies and/or a lockfile created on a different OS. Rollup v4 installs a platform package (e.g., `@rollup/rollup-linux-x64-gnu`) via optionalDependencies. If it’s skipped or locked to another platform, builds fail.
+
+**Fix**:
+```bash
+# From project root
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install
+```
+
+If the error persists on npm v11, install using npm v10:
+```bash
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npx --yes npm@10.8.2 install
+```
+
+**Notes**:
+- Prefer Node 18.17.1 (from `.nvmrc`) or Node 20.x to match Netlify (20.3.0). This avoids using npm v11 where the bug is observed.
+- Ensure optional deps are not being omitted (don’t use `--omit=optional`).
+- On WSL, avoid reusing a Windows-generated `package-lock.json`.
 
 ## Content Issues
 
@@ -394,6 +430,34 @@ npm run build
 - localStorage key pattern requirements
 - Cursor preservation in live markdown rendering
 - Missing init() call fixes
+- **CRITICAL**: Astro content collection caching (saves work but content appears old)
+
+### Notepad Save Not Working (2025-07-24)
+
+**Problem**: Edited content doesn't appear after saving and reloading
+
+**Debug Steps**:
+1. **Check browser console** for:
+   - `QueueBlogSave - extracted content:` (shows what's being saved)
+   - `ExecuteSave - final filename to send:` (filename being used)
+   - `Save successful for:` (confirms server accepted save)
+
+2. **Check terminal/server console** for:
+   - `📥 Authenticated save request for:` (server received request)
+   - `📄 Content preview:` (actual content being saved)
+   - `✅ Updated blog post:` (file written successfully)
+
+3. **Verify file on disk**:
+   ```bash
+   cat src/content/blog/[filename].md
+   ```
+   If file shows new content but UI shows old = **Astro caching issue**
+
+**Root Cause**: Astro dev server caches content collections
+**Solution**: 
+- Refresh page twice, OR
+- Restart dev server with Ctrl+C → `npm run dev`
+- NOT a bug in save functionality
 
 ### "Expected a default export"
 

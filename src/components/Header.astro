@@ -48,12 +48,8 @@ import HeaderLink from './HeaderLink.astro';
 <style>
 	/* Remove most header-specific styles for a minimal look */
 	header.site-header {
-		/* Remove centering and max-width */
-		/* margin: 0 auto; */
-		/* max-width: 680px; */
-		padding: 0.3em 1em 1em 1em; /* Reduce top padding to move links higher */
-		/* background: white; */ /* Removed */
-		/* box-shadow: 0 2px 8px rgba(var(--black), 5%); */ /* Removed */
+		/* Keep header snug to the top */
+		padding: 0.2rem 1rem 0.8rem 1rem;
 	}
 	/* Remove site title styles */
 	/* .site-title {
@@ -83,6 +79,15 @@ import HeaderLink from './HeaderLink.astro';
 		padding: 0.2em 0; /* Adjust vertical padding */
 		color: #0000EE; /* Set link color to blue */
 		text-decoration: none; /* Remove underline */
+	}
+
+	/* Ensure prominent sizing consistent across pages */
+	nav.site-nav a {
+		font-size: 28px;
+	}
+	nav.site-nav a[href="/"] {
+		font-size: 36px;
+		font-weight: 700;
 	}
 	nav.site-nav :global(a:hover) {
 		text-decoration: underline; /* Add underline on hover */

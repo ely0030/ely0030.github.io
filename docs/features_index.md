@@ -22,13 +22,18 @@ This document provides a comprehensive index of all features available in this A
 
 ### Visual Post Markers
 - **Location**: `content.config.ts`, `index.astro`
-- **Docs**: [visual_post_markers.md](./visual_post_markers.md)
+- **Docs**: [visual-markers.md](./visual-markers.md)
 - **Features**: iOS-style importance indicators (!, ?)
 
 ### Page Types
 - **Location**: `content.config.ts`, layouts
 - **Docs**: [page_types.md](./page_types.md)
 - **Features**: blog, magazine, stanza, essay layouts
+
+### Page Types Showcase
+- **Location**: `src/pages/page-types/` (index + examples)
+- **Routes**: `/page-types/`, `/page-types/{blog|magazine|stanza|literature|literature2|literature3|book}/`
+- **Purpose**: Quick visual reference of each page type using the real layouts
 
 ### Private Posts
 - **Location**: `PasswordGate.astro`
@@ -42,7 +47,7 @@ This document provides a comprehensive index of all features available in this A
 
 ### Notepad (Obsidian-style)
 - **Location**: `/src/pages/notepad.astro`, `global.css:2392-2457`
-- **Docs**: `/docs/notepad-critical-knowledge.md`
+- **Docs**: [notepad-critical-knowledge.md](./notepad-critical-knowledge.md)
 - **Features**: Live markdown rendering, Apache index styling, hybrid persistence
 - **Storage**: localStorage (notes) + IndexedDB (images)
 - **Added**: 2025-01-04, Images: 2025-01-07, Blog editing: 2025-01-13
@@ -58,7 +63,7 @@ This document provides a comprehensive index of all features available in this A
 - **Location**: `src/pages/notepad.astro` (lines 1289-2969)
 - **Purpose**: Edit blog posts directly in the browser
 - **Status**: Implemented, CSS styling issue fixed
-- **Docs**: `/docs/blog-frontend-editing.md`
+- **Docs**: [blog-frontend-editing.md](./blog-frontend-editing.md)
 - **Features**: 
   - View all blog posts in sidebar
   - Create new posts with full metadata
@@ -79,11 +84,15 @@ This document provides a comprehensive index of all features available in this A
   - No borders between categories for cleaner look
   - State persists in localStorage
 
+### Homepage Styling (literature2)
+- **Location**: `src/pages/index.astro` (`body: literature2 no-transitions`), `src/styles/global.css` (`body.literature2 .layout-wrapper`)
+- **Notes**: literature2 keeps the sidebar visible (unlike literature/literature3). This ensures the nav (Home/About) aligns the same as literature2 posts.
+
 ## Layout Features
 
 ### Book Page Layout
 - **Location**: `BookPage.astro`
-- **Docs**: [book_page_layout.md](./book_page_layout.md)
+- **Docs**: [book-layout.md](./book-layout.md)
 - **Features**: Physical book appearance, effects
 
 ### Title Countdown

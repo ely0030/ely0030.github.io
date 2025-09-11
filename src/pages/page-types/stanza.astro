@@ -1,0 +1,18 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+
+const props = {
+  title: 'Page Type: stanza',
+  description: 'Example of the stanza layout',
+  pubDate: new Date('2025-01-01'),
+  pageType: 'stanza'
+};
+---
+
+<BlogPost {...props}>
+  <section class="prose">
+    <p class="stanza">A compact, poetic layout suited for short, rhythmic text.</p>
+    <p><a href="/page-types/">Back to /page-types</a></p>
+  </section>
+</BlogPost>
+

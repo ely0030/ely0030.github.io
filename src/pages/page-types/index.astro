@@ -1,0 +1,54 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const title = 'Page Types';
+const desc = 'Examples of each page type in this site';
+const items = [
+  { slug: 'blog', label: 'blog/' },
+  { slug: 'magazine', label: 'magazine/' },
+  { slug: 'stanza', label: 'stanza/' },
+  { slug: 'literature', label: 'literature/' },
+  { slug: 'literature2', label: 'literature2/' },
+  { slug: 'literature3', label: 'literature3/' },
+  { slug: 'book', label: 'book/' }
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={desc} />
+  </head>
+  <body class="literature2 no-transitions">
+    <div class="layout-wrapper">
+      <aside class="sidebar">
+        <Header />
+      </aside>
+      <div class="main-content-area">
+        <main>
+          <div class="apache-header">
+            <h1>Index of /page-types</h1>
+            <hr />
+            <p><a href="/">Parent Directory</a></p>
+          </div>
+          <ul class="post-list">
+            {items.map((item) => (
+              <li class="post-item">
+                <div class="directory-entry file-entry">
+                  <h2>
+                    <a href={`/${['page-types', item.slug].join('/')}/`}>{item.label}</a>
+                  </h2>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </main>
+        <Footer />
+      </div>
+      <aside class="sidenotes-area"></aside>
+    </div>
+  </body>
+</html>
+

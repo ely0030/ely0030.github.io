@@ -8,6 +8,8 @@ import sitemap from '@astrojs/sitemap';
 import rehypePrism from 'rehype-prism-plus';
 
 // https://astro.build/config
+const isProtectedProxy = !!process.env.LISTEN_PORT; // set by run-dev-protected / proxy flows
+
 export default defineConfig({
 	site: 'https://ely0030.github.io',
 	base: '/',
@@ -42,20 +44,30 @@ export default defineConfig({
 				plugins: []
 			}
 		},
-		server: {
-			proxy: {
-				'/api': {
-					target: 'http://127.0.0.1:4322',
-					changeOrigin: true
-				}
-			},
-			hmr: {
-				protocol: 'wss',
-				// Use the port from the ASTRO_PORT env var if available, otherwise default
-				port: process.env.LISTEN_PORT ? 443 : 24678,
-				clientPort: process.env.LISTEN_PORT ? 443 : 24678
-			}
-		}
+    server: {
+        // Use polling to reliably detect changes on WSL/Windows mounted drives
+        // This avoids missed updates when editing under /mnt/c
+        watch: {
+            usePolling: true,
+            interval: 300
+        },
+        proxy: {
+            '/api': {
+                target: 'http://127.0.0.1:4322',
+                changeOrigin: true
+            }
+        },
+        // HMR: use plain WS in normal dev; WSS only when fronted by HTTPS proxy
+        hmr: isProtectedProxy
+            ? {
+                protocol: 'wss',
+                // Browser connects via the proxy's public port (LISTEN_PORT)
+                clientPort: Number(process.env.LISTEN_PORT),
+              }
+            : {
+                protocol: 'ws'
+              }
+    }
 	},
 	server: {
 		// Expose the server to the network

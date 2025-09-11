@@ -9,6 +9,9 @@
 /* @import "tufte-css/tufte.min.css";  2️⃣ base Tufte stylesheet (disabled) */
 @import "./prism-tufte.css";           /* 3️⃣ pale ink Prism theme        */
 
+/* --- Apple Design System Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
 
 /* --- Dark mode override for Astro default code blocks --- */
 pre.astro-code{
@@ -75,11 +78,11 @@ pre.astro-code .token.variable {
 	/* --highlight-bg: 245, 245, 245; */
 
 	/* New palette based on example */
-	--body-background: #fdfdfd;
+	--body-background: #ffffff; /* Pure white for Apple aesthetic */
 	--body-background-stanza: #faf9f7; /* Softer background for stanza */
-	--body-font-color: #000; /* Changed from #24292f to pure black */
+	--body-font-color: #1d1d1f; /* Apple's subtle dark gray */
 	--body-font-color-stanza: #333; /* Softer black for stanza */
-	--color-link: #0055bb; /* Keeping this blue */
+	--color-link: #0066CC; /* Apple's signature blue */
 	--gray-200: #f6f8fa; /* Lighter gray for backgrounds */
 	--gray-500: #6e7781; /* Medium gray for subtle text/borders */
 
@@ -90,7 +93,7 @@ pre.astro-code .token.variable {
 	/* --hint-color-danger: #f66; */
 
 	--box-shadow:
-		0 1px 2px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.07); /* Simplified shadow */
+		0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06); /* Subtle Apple-style shadow */
 	--accent: #ff5500;
 }
 
@@ -132,7 +135,11 @@ pre.astro-code .token.variable {
 
 body {
 	/* font-family: 'Daminga', Georgia, Times, "Times New Roman", serif; */ /* Remove Daminga */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* System font stack */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   /* font-weight: 300; */ /* Remove Light weight default */
   font-weight: 400; /* Revert to standard weight for better readability */
 	margin: 0;
@@ -359,8 +366,26 @@ details[open] summary {
   /* width: 25%; */
   /* min-width: 200px; */
   padding-right: 0; /* Remove padding, use grid gap */
-  margin-top: -0.8em; /* Add negative margin to move links higher */
+  margin-top: -1.2em; /* Move links slightly higher for consistent placement */
 }
+
+/* Keep the header itself sticky for consistent viewport offset */
+aside.sidebar > header.site-header {
+  position: sticky;
+  top: 0.5rem;
+  margin-top: 0;        /* Neutralize container margin on header */
+  padding-top: 0.2rem;  /* Gentle breathing room */
+}
+
+/* Index page uses body.no-transitions; remove special treatment to match blog posts */
+/* Commented out to match blog post alignment
+body.no-transitions .layout-wrapper {
+  padding-top: 0.5rem;
+}
+body.no-transitions aside.sidebar {
+  margin-top: 0;
+}
+*/
 
 .sidebar nav.site-nav a { 
   font-size: 28px !important; /* Restore size override */
@@ -410,7 +435,10 @@ aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
 .main-content-area .post-list h2 a {
   color: #0000EE; /* Classic hyperlink blue */
   text-decoration: underline; /* Ensure underline */
-  font-family: monospace; /* Use monospace for directory look */
+  font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; /* Use monospace for directory look */
   font-size: inherit; /* Inherit size from h2 */
   font-weight: inherit; /* Inherit weight from h2 */
   text-transform: lowercase; /* Force lowercase */
@@ -436,6 +464,17 @@ aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
 .sidebar nav.site-nav a[href="/about"] {
   font-weight: 400 !important; /* Use normal font weight */
 }
+/* Hide About link on literature pages (keep Home only) */
+body.literature .sidebar nav.site-nav a[href="/about"] {
+  display: none !important;
+}
+
+/* Literature Home link: darker tint to reduce glare */
+body.literature aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
+  color: var(--literature-home-color, #222) !important;
+}
+
+/* Literature keeps About hidden but leaves Home styling identical to index */
 
 /* Responsive adjustments for the layout */
 @media (max-width: 1000px) { 
@@ -721,6 +760,25 @@ figcaption {
 
 .prose a:hover {
   border-bottom: 1px solid rgba(0, 85, 187, 0.7);
+}
+
+/* Literature-specific link styling: softer, typographic underlines */
+body.literature .prose a {
+  color: #0647b9;
+  border-bottom: none;
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(6, 71, 185, 0.55);
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+body.literature .prose a:hover {
+  color: #003f9e;
+  text-decoration-color: rgba(0, 63, 158, 0.8);
+}
+body.literature .prose a:visited {
+  color: #4a70a8;
+  text-decoration-color: rgba(74, 112, 168, 0.55);
 }
 
 /* Subtle table styling */
@@ -1163,9 +1221,13 @@ body.blog .prose {
   text-rendering: optimizeLegibility;
   font-feature-settings: "liga" 1, "kern" 1;
   color: rgba(0, 0, 0, 0.88); /* Slightly softer black for less strain */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif; /* Keep Inter font stack */
-  -webkit-font-smoothing: antialiased; /* Standard antialiasing often looks better */
-  -moz-osx-font-smoothing: grayscale; /* Standard antialiasing */
+  font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Removed font smoothing for consistent Windows/Mac rendering */
+  /* -webkit-font-smoothing: antialiased; */
+  /* -moz-osx-font-smoothing: grayscale; */
 }
 
 /* Tighter paragraph spacing for blog style - Increased margin */
@@ -1299,12 +1361,15 @@ body.stanza .pull {
 }
 
 body.stanza .layout-wrapper {
-  display: block;
-  max-width: 55rem;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  display: grid; /* Use standard three-column grid for consistent nav position */
+  grid-template-columns: 1fr 5fr 2fr;
+  grid-template-areas: "sidebar main sidenotes";
+  gap: 2em;
+  max-width: none;       /* Align with literature2/index style */
+  margin: 0;
+  padding: 1.5em 0 30px 20px; /* Consistent left offset for nav */
 }
-body.stanza .sidebar,
+/* Keep sidenotes hidden on stanza, but retain sidebar for nav */
 body.stanza .sidenotes-area,
 body.stanza #toggle-compact {
   display: none !important;
@@ -1351,7 +1416,10 @@ body.stanza .prose h3,
 body.stanza .prose h4,
 body.stanza .prose h5,
 body.stanza .prose h6 {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-weight: 600; /* Semi-bold */
   color: var(--body-font-color-stanza);
   /* Keep general H sizes or override if needed */
@@ -1386,28 +1454,63 @@ body.stanza progress.reading::-moz-progress-bar { background: var(--accent); }
 
 /* LITERATURE PAGE TYPE - Beautiful minimal essay layout */
 :root {
-  --literature-font-size: 13px;
-  --literature-line-height: 1.3;
-  --literature-max-width: 480px;
+  --literature-font-size: 15px;
+  --literature-line-height: 1.4;
+  --literature-max-width: 560px;
   --literature-padding: 20px;
-  --literature-paragraph-spacing: 0.8em;
-  --literature-text-color: #000000;
-  --literature-bg-color: #ffffff;
+  --literature-paragraph-spacing: 0.9em;
+  --literature-text-color: #0d0d0d;
+  --literature-bg-color: #fbfbfb;
 }
 
 body.literature {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
   background: var(--literature-bg-color);
   color: var(--literature-text-color);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Font smoothing removed for cross-platform consistency */
   text-rendering: optimizeLegibility;
+  --literature-home-color: #222;
+  --literature-top-padding: 0px;   /* adjustable top padding for alignment */
+  --literature-h1-offset: 4px;     /* adjustable h1 top margin */
+  --literature-left-gutter: 10px;  /* adjustable left gutter on desktop */
+  --literature-anchor-offset: 24px;/* distance of # marker from text */
 }
 
 body.literature .layout-wrapper {
   max-width: none;
   margin: 0;
-  padding: 1.5em 0 30px var(--literature-padding); /* Keep consistent top padding with standard layout */
+  padding: var(--literature-top-padding) 0 30px 20px; /* adjustable top alignment */
+}
+
+/* Immersive mode: hide site chrome and center text, Obsidian-like focus */
+body.literature.immersive .sidebar,
+body.literature.immersive .sidenotes-area,
+body.literature.immersive #toggle-compact,
+body.literature.editor-immersive .sidebar,
+body.literature.editor-immersive .sidenotes-area,
+body.literature.editor-immersive #toggle-compact {
+  display: none !important;
+}
+body.literature.immersive .layout-wrapper,
+body.literature.editor-immersive .layout-wrapper {
+  grid-template-columns: 1fr;
+  grid-template-areas: "main";
+  max-width: none;
+  margin: 0;
+  padding: 2rem 0; /* remove left offset */
+}
+body.literature.immersive .main-content-area,
+body.literature.editor-immersive .main-content-area { margin: 0 auto; }
+/* Slightly wider, softer default measure in immersive mode */
+body.literature.immersive { --literature-max-width: 560px; }
+/* Hide heading hash anchors for uncluttered look */
+body.literature.immersive .prose h1::before,
+body.literature.immersive .prose h2::before,
+body.literature.immersive .prose h3::before,
+body.literature.immersive .prose h4::before,
+body.literature.immersive .prose h5::before,
+body.literature.immersive .prose h6::before {
+  display: none !important;
 }
 
 body.literature .prose {
@@ -1420,7 +1523,18 @@ body.literature .prose {
   letter-spacing: -0.003em;
   margin: 0;
   font-weight: 400;
-  white-space: pre-line; /* Also preserve line breaks at prose level */
+  /* Avoid forcing pre-line globally; rely on explicit <br> and inserted spacing */
+  white-space: normal;
+  padding-top: 0; /* Align first heading with Home link */
+  padding-bottom: 28px;
+}
+
+/* Strict spacing: preserve user's exact spacing (optional per-post) */
+body.literature.strict-spacing .prose {
+  white-space: pre-wrap; /* preserve spaces and line breaks */
+}
+body.literature.strict-spacing .prose p + p {
+  margin-top: 0 !important; /* remove paragraph margin to avoid double spacing */
 }
 
 body.literature .prose p {
@@ -1430,11 +1544,18 @@ body.literature .prose p {
   font-size: var(--literature-font-size);
   line-height: var(--literature-line-height);
   hanging-punctuation: first last;
+  hyphens: auto;
 }
 
 /* Add paragraph spacing in literature pages */
 body.literature .prose p + p {
   margin-top: var(--literature-paragraph-spacing) !important;
+}
+
+/* Slight breathing room when lists follow paragraphs in literature */
+body.literature .prose p + ul,
+body.literature .prose p + ol {
+  margin-top: 0.4em !important;
 }
 
 /* Override first paragraph styles too */
@@ -1446,7 +1567,7 @@ body.literature .prose p:first-child {
 
 /* Make empty paragraphs visible to preserve multiple line breaks */
 body.literature .prose p:empty {
-  height: var(--literature-line-height);
+  height: var(--literature-paragraph-spacing);
   margin: 0;
 }
 
@@ -1459,31 +1580,53 @@ body.literature .prose p:empty::before {
 /* No extra spacing for br tags - just a line break */
 body.literature .prose br,
 body.literature .prose p br {
+  /* Let <br> behave as a pure line-break for exact newline mapping */
+  display: inline !important;
   margin: 0 !important;
   padding: 0 !important;
-  line-height: 0 !important;
-  height: 0 !important;
-  display: block !important;
 }
 
 /* Title styling - left-aligned */
 body.literature .prose h1 {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
-  font-weight: 500;
+  font-weight: 600; /* match Home weight */
   font-size: 24px;
   line-height: 1.2;
-  color: var(--literature-text-color);
-  margin: 0 0 8px 0;
+  color: var(--literature-home-color, #222); /* match Home tint */
+  margin: var(--literature-h1-offset) 0 8px 0; /* adjustable heading offset */
   text-align: left;
   letter-spacing: 0;
   position: relative;
 }
 
+/* Literature heading rhythm + positioning for anchor markers */
+body.literature .prose h2,
+body.literature .prose h3,
+body.literature .prose h4,
+body.literature .prose h5,
+body.literature .prose h6 {
+  position: relative;
+}
+
+/* Balance top headings for nicer line breaks */
+body.literature .prose h1,
+body.literature .prose h2 {
+  text-wrap: balance;
+}
+/* Improve paragraph line wrapping */
+body.literature .prose p { text-wrap: pretty; }
+
+body.literature .prose h2 { font-size: 18px; font-weight: 500; margin: 1.2em 0 0.25em; letter-spacing: 0; text-transform: none; }
+body.literature .prose h3 { font-size: 16px; font-weight: 500; margin: 1em 0 0.25em; letter-spacing: 0; }
+body.literature .prose h4 { font-size: 15px; font-weight: 500; margin: 0.9em 0 0.25em; letter-spacing: 0; }
+body.literature .prose h5 { font-size: 14px; font-weight: 600; margin: 0.8em 0 0.2em;  letter-spacing: 0; }
+body.literature .prose h6 { font-size: 13px; font-weight: 600; margin: 0.8em 0 0.2em;  letter-spacing: 0; }
+
 /* Heading hash indicators with size variation */
 body.literature .prose h1::before {
   content: '#';
   position: absolute;
-  left: -30px;
+  left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
   transform: translateY(-50%);
   color: #999;
@@ -1498,7 +1641,7 @@ body.literature .prose h1::before {
 body.literature .prose h2::before {
   content: '#';
   position: absolute;
-  left: -30px;
+  left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
   transform: translateY(-50%);
   color: #999;
@@ -1513,7 +1656,7 @@ body.literature .prose h2::before {
 body.literature .prose h3::before {
   content: '#';
   position: absolute;
-  left: -30px;
+  left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
   transform: translateY(-50%);
   color: #999;
@@ -1528,7 +1671,7 @@ body.literature .prose h3::before {
 body.literature .prose h4::before {
   content: '#';
   position: absolute;
-  left: -30px;
+  left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
   transform: translateY(-50%);
   color: #999;
@@ -1543,7 +1686,7 @@ body.literature .prose h4::before {
 body.literature .prose h5::before {
   content: '#';
   position: absolute;
-  left: -30px;
+  left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
   transform: translateY(-50%);
   color: #999;
@@ -1558,7 +1701,7 @@ body.literature .prose h5::before {
 body.literature .prose h6::before {
   content: '#';
   position: absolute;
-  left: -30px;
+  left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
   transform: translateY(-50%);
   color: #999;
@@ -1664,7 +1807,6 @@ body.literature .back-to-blog:hover {
 }
 
 /* Hide unnecessary elements for literature style */
-body.literature .sidebar,
 body.literature .sidenotes-area,
 body.literature #toggle-compact,
 body.literature .reading-mode-toggle {
@@ -1716,15 +1858,128 @@ body.literature .prose blockquote {
   color: var(--literature-text-color);
 }
 
+/* Subtle back link at top of literature articles */
+body.literature .prose .back-to-blog {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #6e7781;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+body.literature .prose .back-to-blog:hover {
+  color: #000;
+  border-bottom-color: rgba(0, 0, 0, 0.35);
+}
+/* Hide back link in immersive mode to reduce chrome */
+body.literature.immersive .prose .back-to-blog { display: none; }
+
 /* Lists - compact */
 body.literature .prose ul,
 body.literature .prose ol {
   margin: 0.8em 0;
   padding-left: 1.2em;
 }
+/* Task list cleanup */
+body.literature .prose ul.contains-task-list,
+body.literature .prose ol.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+body.literature .prose ul.contains-task-list li,
+body.literature .prose ol.contains-task-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+body.literature .prose ul.contains-task-list input[type="checkbox"],
+body.literature .prose ol.contains-task-list input[type="checkbox"] {
+  margin-top: 0.2em;
+}
 
 body.literature .prose li {
   margin-bottom: 0.2em;
+}
+
+/* Lists directly after headings should sit closer */
+body.literature .prose h1 + ul,
+body.literature .prose h2 + ul,
+body.literature .prose h3 + ul,
+body.literature .prose h4 + ul,
+body.literature .prose h5 + ul,
+body.literature .prose h6 + ul,
+body.literature .prose h1 + ol,
+body.literature .prose h2 + ol,
+body.literature .prose h3 + ol,
+body.literature .prose h4 + ol,
+body.literature .prose h5 + ol,
+body.literature .prose h6 + ol {
+  margin-top: 0.25em;
+}
+/* Paragraph → task list specifically */
+body.literature .prose p + ul.contains-task-list,
+body.literature .prose p + ol.contains-task-list {
+  margin-top: 0.4em !important;
+}
+
+/* Images: minimal look and clean spacing */
+body.literature .prose img {
+  display: block;
+  margin: 1em 0;
+  border-radius: 0;
+}
+
+/* Tables: prevent overflow on narrow measure */
+body.literature .prose table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Comfortable anchor scroll positioning */
+body.literature .prose h1,
+body.literature .prose h2,
+body.literature .prose h3,
+body.literature .prose h4,
+body.literature .prose h5,
+body.literature .prose h6 {
+  scroll-margin-top: 20px;
+}
+
+/* Subtle active-heading style from scroll spy */
+body.literature .prose .active-heading {
+  color: #111;
+}
+
+/* Remove compact toggle on literature pages */
+body.literature #toggle-compact {
+  display: none !important;
+}
+
+/* Prevent hash markers from overflowing on small screens */
+@media (max-width: 720px) {
+  body.literature .prose h1::before,
+  body.literature .prose h2::before,
+  body.literature .prose h3::before,
+  body.literature .prose h4::before,
+  body.literature .prose h5::before,
+  body.literature .prose h6::before {
+    display: none;
+  }
+}
+
+/* Provide a small left gutter when anchor markers are visible */
+@media (min-width: 721px) {
+  body.literature .prose { padding-left: var(--literature-left-gutter); }
+}
+
+/* Disable mid-margin figure push on narrow measure to prevent overflow */
+body.literature .figure-mid-right,
+body.literature .figure-mid-left {
+  margin: 0.3em 0 1em 1.5em !important;
+  width: 45% !important;
+  max-width: 280px !important;
 }
 
 /* LITERATURE2 PAGE TYPE - Similar to literature but with different settings */
@@ -1742,15 +1997,23 @@ body.literature2 {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
   background: var(--literature2-bg-color);
   color: var(--literature2-text-color);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Font smoothing removed for cross-platform consistency */
   text-rendering: optimizeLegibility;
 }
 
+/* Literature2 retains full-width, left-aligned container */
 body.literature2 .layout-wrapper {
   max-width: none;
   margin: 0;
-  padding: 1.5em 0 30px var(--literature2-padding); /* Keep consistent top padding with standard layout */
+  padding: 1.5em 0 30px var(--literature2-padding); /* Keep consistent top padding */
+}
+
+/* BLOG and MAGAZINE PAGE TYPES - align nav position with index/literature2 */
+body.blog .layout-wrapper,
+body.magazine .layout-wrapper {
+  max-width: none;
+  margin: 0;
+  padding: 1.5em 0 30px 20px; /* Consistent left offset for nav */
 }
 
 body.literature2 .prose {
@@ -1945,9 +2208,9 @@ body.literature2 .back-to-blog:hover {
 body.literature .prose hr {
   display: block !important;
   border: none !important;
-  border-top: 1px solid #333 !important;
-  margin: 1.5em 0 !important;
-  width: 100% !important;
+  border-top: 1px solid rgba(0,0,0,0.15) !important;
+  margin: 1.25em auto !important;
+  width: 60% !important;
   height: 0 !important;
 }
 
@@ -1974,6 +2237,9 @@ body.literature ::selection {
   body.literature .prose h2 {
     font-size: 14px;
   }
+
+  /* Slightly increase line-height on small screens for comfort */
+  body.literature .prose { line-height: calc(var(--literature-line-height) + 0.08); }
 }
 
 /* Print styles */
@@ -2008,15 +2274,14 @@ body.literature3 {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
   background: var(--literature3-bg-color);
   color: var(--literature3-text-color);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Font smoothing removed for cross-platform consistency */
   text-rendering: optimizeLegibility;
 }
 
 body.literature3 .layout-wrapper {
   max-width: none;
   margin: 0;
-  padding: 1.5em 0 30px var(--literature3-padding); /* Keep consistent top padding with standard layout */
+  padding: 1.5em 0 30px 20px; /* Align nav offset with index/literature2 */
 }
 
 body.literature3 .prose {
@@ -2273,7 +2538,6 @@ body.literature3 .back-to-blog:hover {
 }
 
 /* Hide unnecessary elements for literature3 style */
-body.literature3 .sidebar,
 body.literature3 .sidenotes-area,
 body.literature3 #toggle-compact,
 body.literature3 .reading-mode-toggle {
@@ -2409,7 +2673,10 @@ body.literature3 ::selection {
 
 /* Notepad page layout - Apache index style */
 body.notepad {
-  font-family: monospace;
+  font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background: var(--body-background);
   color: var(--body-font-color);
 }
@@ -2426,8 +2693,9 @@ body.notepad .layout-wrapper {
 }
 
 body.notepad .main-content-area {
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 1em;
 }
 
 body.notepad main {
@@ -2510,5 +2778,3 @@ body:has(.protected-content) {
   color: #ff9999;
   font-size: 0.85em;
 }
-
-

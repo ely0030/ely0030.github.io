@@ -9,7 +9,10 @@ import { type MarkdownHeading } from 'astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage, tags, pageType = 'blog' } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags, pageType = 'blog', pageLayout, strictSpacing, immersive } = Astro.props;
+
+// Determine the actual page type being used
+const displayPageType = pageLayout === 'book' ? 'book' : pageType;
 
 const headings = Astro.locals.headings ?? [];
 
@@ -38,6 +41,56 @@ const toc = buildToc(headings);
 	<head>
 		<BaseHead title={title} description={description} />
 		<style is:global>
+			/* Page type indicator styles */
+			.page-type-indicator {
+				display: inline-block;
+				font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+				font-size: 0.75rem;
+				padding: 0.25rem 0.5rem;
+				background: rgba(0, 0, 0, 0.05);
+				border: 1px solid rgba(0, 0, 0, 0.1);
+				border-radius: 3px;
+				color: rgba(0, 0, 0, 0.6);
+				margin-bottom: 1.5rem;
+				letter-spacing: 0.02em;
+			}
+			
+			/* Dark mode support */
+			@media (prefers-color-scheme: dark) {
+				.page-type-indicator {
+					background: rgba(255, 255, 255, 0.05);
+					border-color: rgba(255, 255, 255, 0.1);
+					color: rgba(255, 255, 255, 0.6);
+				}
+			}
+			
+			/* Page type specific colors */
+			.page-type-indicator.type-magazine {
+				background: rgba(255, 107, 107, 0.1);
+				border-color: rgba(255, 107, 107, 0.3);
+				color: rgba(255, 107, 107, 0.9);
+			}
+			
+			.page-type-indicator.type-stanza {
+				background: rgba(155, 89, 182, 0.1);
+				border-color: rgba(155, 89, 182, 0.3);
+				color: rgba(155, 89, 182, 0.9);
+			}
+			
+			.page-type-indicator.type-literature,
+			.page-type-indicator.type-literature2,
+			.page-type-indicator.type-literature3 {
+				background: rgba(52, 152, 219, 0.1);
+				border-color: rgba(52, 152, 219, 0.3);
+				color: rgba(52, 152, 219, 0.9);
+			}
+			
+			.page-type-indicator.type-book {
+				background: rgba(139, 69, 19, 0.1);
+				border-color: rgba(139, 69, 19, 0.3);
+				color: rgba(139, 69, 19, 0.9);
+			}
+			
 			/* Remove main width override */
 			/* main {
 				width: calc(100% - 2em);
@@ -136,10 +189,27 @@ const toc = buildToc(headings);
 				text-decoration: underline;
 				color: rgb(var(--black));
 			}
+			/* Toast for "link copied" feedback */
+			.copy-toast {
+				position: fixed;
+				top: 12px;
+				right: 12px;
+				background: rgba(0,0,0,0.75);
+				color: #fff;
+				font-size: 12px;
+				padding: 6px 10px;
+				border-radius: 6px;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+				z-index: 20;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.15s ease;
+			}
+			.copy-toast.show { opacity: 1; }
 		</style>
 	</head>
 
-	<body class={pageType}>
+	<body class={`${pageType} ${strictSpacing ? 'strict-spacing' : ''} ${immersive ? 'immersive' : ''}`}>
 		<div class="layout-wrapper">
 			<aside class="sidebar">
 				<Header />
@@ -169,7 +239,7 @@ const toc = buildToc(headings);
 					<button id="toggle-compact" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 10; font-size: 0.75rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.8); border: 1px solid #eee; border-radius: 4px; color: #666; box-shadow: 0 1px 3px rgba(0,0,0,0.1); opacity: 0.3; transition: opacity 0.2s">Aa</button>
 					<article>
 						<div class="prose">
-							{(pageType === 'literature' || pageType === 'literature2' || pageType === 'literature3') && (
+							{(pageType === 'literature2' || pageType === 'literature3') && (
 								<a href="/" class="back-to-blog">« Back to blog</a>
 							)}
 							{/*
@@ -225,7 +295,7 @@ const toc = buildToc(headings);
 				if (body.classList.contains('compact')) localStorage.setItem(key, '1');
 				else localStorage.removeItem(key);
 			});
-			const bodyCls=document.body.classList; if(bodyCls.contains('stanza')){const prog=document.querySelector('progress.reading'); if(prog){prog.style.display='block'; window.addEventListener('scroll',()=>{const h=document.documentElement; const percent=h.scrollTop/(h.scrollHeight-h.clientHeight); prog.value=percent*100;});}
+const bodyCls=document.body.classList; if(bodyCls.contains('stanza')){const prog=document.querySelector('progress.reading'); if(prog){prog.style.display='block'; window.addEventListener('scroll',()=>{const h=document.documentElement; const percent=h.scrollTop/(h.scrollHeight-h.clientHeight); prog.value=percent*100;});}
 			document.querySelectorAll('.prose p').forEach(p=>{if(p.textContent.trim().length<60)p.classList.add('stanza');});}
 		</script>
 		{(pageType === 'literature' || pageType === 'literature2' || pageType === 'literature3') && (
@@ -236,25 +306,32 @@ const toc = buildToc(headings);
 				// Add click handlers to headings for hash navigation
 				headings.forEach(heading => {
 					heading.style.cursor = 'pointer';
-					heading.addEventListener('click', (e) => {
+					heading.title = 'Click to jump • Alt-click to copy link';
+					heading.addEventListener('click', async (e) => {
 						e.preventDefault();
+						const id = heading.id;
+						if (e.altKey && id) {
+							const url = location.origin + location.pathname + '#' + id;
+							try { await navigator.clipboard.writeText(url); showCopyToast(heading); } catch {}
+							return;
+						}
 						// Calculate position with offset for better spacing
 						const headingTop = heading.offsetTop;
 						const offset = 20; // Space above heading
 						const scrollTo = headingTop - offset;
-						
-						// Smooth scroll to heading with offset
-						window.scrollTo({
-							top: scrollTo,
-							behavior: 'smooth'
-						});
-						
-						// Update URL hash if heading has an ID
-						if (heading.id) {
-							history.pushState(null, null, '#' + heading.id);
-						}
+						window.scrollTo({ top: scrollTo, behavior: 'smooth' });
+						if (id) { history.pushState(null, null, '#' + id); }
 					});
 				});
+
+				function showCopyToast() {
+					const toast = document.createElement('div');
+					toast.textContent = 'Link copied';
+					toast.className = 'copy-toast show';
+					document.body.appendChild(toast);
+					setTimeout(()=> toast.classList.remove('show'), 1000);
+					setTimeout(()=> toast.remove(), 1300);
+				}
 				
 				function updateActiveHeading() {
 					const scrollPosition = window.scrollY + 100; // Add offset for better UX
@@ -292,6 +369,25 @@ const toc = buildToc(headings);
 				
 				// Update on load
 				updateActiveHeading();
+
+				// Save & restore reading position for literature pages
+				if (document.body.classList.contains('literature')) {
+					const key = 'readpos:' + location.pathname;
+					let saveTimer;
+					window.addEventListener('scroll', () => {
+						if (saveTimer) return;
+						saveTimer = setTimeout(() => {
+							saveTimer = null;
+							localStorage.setItem(key, String(window.scrollY));
+						}, 200);
+					});
+
+					const saved = Number(localStorage.getItem(key) || 0);
+					if (saved > 0 && window.scrollY < 10) {
+						// Automatically restore without any UI
+						window.scrollTo({ top: saved - 20, behavior: 'auto' });
+					}
+				}
 			</script>
 		)}
 		{pageType === 'literature' && <StyleEditor />}

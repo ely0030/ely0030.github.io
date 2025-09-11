@@ -2,9 +2,9 @@
 
 This document describes the typography and font system used in the blog.
 
-## Primary Font: ET Book
+## Primary Font: System Fonts with Apple Aesthetic
 
-The blog uses ET Book as its primary font family, providing a Tufte-inspired reading experience.
+The blog uses a carefully crafted system font stack optimized for cross-platform consistency with an Apple-inspired aesthetic. This approach ensures excellent rendering on both Windows and Mac while maintaining a clean, minimal appearance.
 
 ### Font Files
 
@@ -20,13 +20,14 @@ Fonts are loaded via `/public/fonts/et-book.css`:
 @import "/fonts/et-book.css";
 ```
 
-### Usage
+### Cross-Platform Font Strategy
 
-ET Book is set as the primary font family in the global styles, providing:
-- Excellent readability for long-form text
-- Classic book-like appearance
-- Proper line figures for numbers in text
-- Old-style figures for display text
+The font system prioritizes native system fonts for optimal rendering:
+- **Mac**: SF Pro Display/Text, -apple-system, BlinkMacSystemFont
+- **Windows**: Segoe UI with Helvetica Neue fallback
+- **Monospace**: SF Mono (Mac), Cascadia Code/Consolas (Windows)
+- **Font Smoothing**: -webkit-font-smoothing: antialiased for Mac-like rendering
+- **Letter Spacing**: -0.022em for tighter, more elegant typography
 
 ## Additional Available Fonts
 
@@ -74,10 +75,10 @@ font-feature-settings: "smcp";
 
 ## Typography Hierarchy
 
-1. **Headings**: ET Book, various sizes
-2. **Body Text**: ET Book Roman
-3. **Code**: Source Code Pro, Consolas, Monaco (monospace stack)
-4. **UI Elements**: System font stack
+1. **Headings**: SF Pro Display/Text, Helvetica Neue (Apple aesthetic)
+2. **Body Text**: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Helvetica Neue
+3. **Code**: SF Mono, Menlo, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New (monospace)
+4. **UI Elements**: Same as body text for consistency
 
 ## Custom Font Implementation
 
@@ -102,10 +103,10 @@ Example @font-face:
 
 ## Performance Considerations
 
-- WOFF format for broad compatibility
-- `font-display: swap` for better loading experience
-- Subset fonts if only using specific characters
-- Consider variable fonts for multiple weights
+- System fonts load instantly (no network requests)
+- Web fonts (Inter) loaded via Google Fonts CDN when needed
+- Native font rendering for best performance
+- Consistent metrics across platforms with careful font stack ordering
 
 ## Accessibility
 
@@ -121,10 +122,10 @@ Example @font-face:
 - Other fonts: Check individual licenses
 - Personal use fonts should not be used in production
 
-## Future Enhancements
+## Recent Updates (2025-01-24)
 
-Consider:
-- Variable fonts for better performance
-- Font subsetting for faster loads
-- System font stack for UI elements
-- Dark mode font adjustments
+- Replaced emoji folder icons with text symbols ([A], [i], [C], etc.) for consistent rendering
+- Removed Apache font for better cross-platform consistency
+- Applied Apple design aesthetic with SF fonts
+- Added font smoothing properties for Mac-like rendering on all platforms
+- Optimized monospace stack: Consolas first for Windows, Monaco/Menlo for Mac

@@ -24,4 +24,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # Start the dev server with telemetry disabled
+# Force polling so file changes on /mnt/c are detected under WSL
+export CHOKIDAR_USEPOLLING=1
+export CHOKIDAR_INTERVAL=300
 ASTRO_TELEMETRY_DISABLED=1 npx astro dev 

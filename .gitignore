@@ -22,14 +22,17 @@ Thumbs.db
 *.backup*
 *.backup-*
 
-# Content files to exclude from git
-src/content/blog/
+# Content visibility: track public blog posts, keep PRIVATE + drafts out
+src/content/blog/PRIVATE/
 src/content/drafts/
 
 # Keep the directory structure but ignore actual content
 # This allows the skeleton to work while keeping articles private
 !src/content/blog/.gitkeep
 !src/content/drafts/.gitkeep
+
+# Large local installer - keep out of repo
+node-installer.msi
 
 # Logs
 *.log
