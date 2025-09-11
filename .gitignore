@@ -25,6 +25,7 @@ Thumbs.db
 # Content visibility: track public blog posts, keep PRIVATE + drafts out
 src/content/blog/PRIVATE/
 src/content/drafts/
+src/content/blog/.obsidian/
 
 # Keep the directory structure but ignore actual content
 # This allows the skeleton to work while keeping articles private

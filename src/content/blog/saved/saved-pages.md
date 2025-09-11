@@ -44,4 +44,16 @@ read this and it shaped my ass. nobody i show this seems to bite, or maybe arous
 - https://paulgraham.com/vb.html (Paul Graham)
 it do be short
 
+---
+### Ribbonfarm
+- https://www.ribbonfarm.com/2009/10/07/the-gervais-principle-or-the-office-according-to-the-office/
+game theory, game theory, game theory, incentives, incentives, incentives
 
+Ok so apparently this is a pop-culture phenomenon in certain circles, so much so that every LLM I ask about it gives me a snarky cynical answer as if they've heard it one million times before?
+
+my rebuttal:
+"i mean it seems like a fun toy model that's pretty accurate for the most part 
+
+It's more in like "yes this is the holy bible of facts that are ALWAYS true" where, well, if you approach it with that much wherewithal obviously it falls apart 
+
+it kind of feels similar to how everyone eye-rolls at Nietzsche, while his popularity is actually well earned"
