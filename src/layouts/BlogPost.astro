@@ -4,7 +4,6 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
-import StyleEditor from '../components/StyleEditor.astro';
 import { type MarkdownHeading } from 'astro';
 
 type Props = CollectionEntry<'blog'>['data'];
@@ -397,6 +396,5 @@ const bodyCls=document.body.classList; if(bodyCls.contains('stanza')){const prog
 				}
 			</script>
 		)}
-		{pageType === 'literature' && <StyleEditor />}
 	</body>
 </html>
