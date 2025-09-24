@@ -302,6 +302,13 @@ const bodyCls=document.body.classList; if(bodyCls.contains('stanza')){const prog
 			<script type="module">
 				// Track active heading based on scroll position
 				const headings = document.querySelectorAll('.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6');
+
+				// On initial load: show Home, then fade away smoothly
+				if (document.body.classList.contains('literature')) {
+					setTimeout(() => {
+						document.body.classList.add('home-hidden');
+					}, 800);
+				}
 				
 				// Add click handlers to headings for hash navigation
 				headings.forEach(heading => {

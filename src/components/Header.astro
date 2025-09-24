@@ -82,13 +82,8 @@ import HeaderLink from './HeaderLink.astro';
 	}
 
 	/* Ensure prominent sizing consistent across pages */
-	nav.site-nav a {
-		font-size: 28px;
-	}
-	nav.site-nav a[href="/"] {
-		font-size: 36px;
-		font-weight: 700;
-	}
+	nav.site-nav a { font-size: 28px; font-weight: 400; }
+	nav.site-nav a.active { font-size: 36px; font-weight: 700; }
 	nav.site-nav :global(a:hover) {
 		text-decoration: underline; /* Add underline on hover */
 	}
@@ -97,26 +92,9 @@ import HeaderLink from './HeaderLink.astro';
 	nav.site-nav :global(a):focus {
 		outline: none;
 	}
-	nav.site-nav :global(a[href="/about"]:not(.active)) {
-		position: relative;
-		overflow: hidden;
-		transition: color 0.3s ease;
-	}
-	nav.site-nav :global(a[href="/about"]:not(.active))::after {
-		content: '';
-		position: absolute;
-		bottom: 0;
-		left: 50%;
-		width: 0;
-		height: 2px;
-		background: currentColor;
-		transition: width 0.3s ease, left 0.3s ease;
-	}
-	nav.site-nav :global(a[href="/about"]:not(.active):hover)::after,
-	nav.site-nav :global(a[href="/about"]:not(.active):focus)::after {
-		width: 100%;
-		left: 0;
-	}
+
+    /* Keep About link simple and consistent to avoid flicker on navigation */
+
 
 	/* Remove previous link styling rules */
 	/* nav.site-nav a {
@@ -156,4 +134,5 @@ import HeaderLink from './HeaderLink.astro';
 	/* nav.site-nav div.internal-links :global(a[href="/"]) {
 		font-size: 56px !important; 
 	} */
+
 </style>

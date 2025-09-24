@@ -460,10 +460,7 @@ aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
 		/* Removed time styles as element is gone */
 }
 
-/* Ensure About link doesn't become bold */
-.sidebar nav.site-nav a[href="/about"] {
-  font-weight: 400 !important; /* Use normal font weight */
-}
+/* (Reverted) About link uses default nav styling across pages */
 /* Hide About link on literature pages (keep Home only) */
 body.literature .sidebar nav.site-nav a[href="/about"] {
   display: none !important;
@@ -472,6 +469,22 @@ body.literature .sidebar nav.site-nav a[href="/about"] {
 /* Literature Home link: darker tint to reduce glare */
 body.literature aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
   color: var(--literature-home-color, #222) !important;
+}
+
+/* Literature Home: show by default, fade away after load via body.home-hidden */
+body.literature aside.sidebar header.site-header nav.site-nav a[href="/"] {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.35s ease;
+}
+body.literature.home-hidden aside.sidebar header.site-header nav.site-nav a[href="/"] {
+  opacity: 0;
+  pointer-events: none;
+}
+/* Reveal on hover even when hidden */
+body.literature.home-hidden aside.sidebar header.site-header:hover nav.site-nav a[href="/"] {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Literature keeps About hidden but leaves Home styling identical to index */
@@ -1455,12 +1468,12 @@ body.stanza progress.reading::-moz-progress-bar { background: var(--accent); }
 /* LITERATURE PAGE TYPE - Beautiful minimal essay layout */
 :root {
   --literature-font-size: 15px;
-  --literature-line-height: 1.4;
+  --literature-line-height: 1.3;      /* standard literature1 */
   --literature-max-width: 560px;
   --literature-padding: 20px;
-  --literature-paragraph-spacing: 0.9em;
+  --literature-paragraph-spacing: 0.7em; /* standard literature1 */
   --literature-text-color: #0d0d0d;
-  --literature-bg-color: #fbfbfb;
+  --literature-bg-color: #ffffff;
 }
 
 body.literature {
@@ -1470,10 +1483,10 @@ body.literature {
   /* Font smoothing removed for cross-platform consistency */
   text-rendering: optimizeLegibility;
   --literature-home-color: #222;
-  --literature-top-padding: 0px;   /* adjustable top padding for alignment */
-  --literature-h1-offset: 4px;     /* adjustable h1 top margin */
-  --literature-left-gutter: 10px;  /* adjustable left gutter on desktop */
-  --literature-anchor-offset: 24px;/* distance of # marker from text */
+  --literature-top-padding: 0px;    /* adjustable top padding for alignment */
+  --literature-h1-offset: -10px;    /* adjustable h1 top margin */
+  --literature-left-gutter: 4px;    /* adjustable left gutter on desktop */
+  --literature-anchor-offset: 40px; /* distance of anchor marker from text */
 }
 
 body.literature .layout-wrapper {
@@ -1521,12 +1534,18 @@ body.literature .prose {
   max-width: var(--literature-max-width);
   text-align: left;
   letter-spacing: -0.003em;
-  margin: 0;
+  margin: 0 auto; /* center the text column */
   font-weight: 400;
   /* Avoid forcing pre-line globally; rely on explicit <br> and inserted spacing */
   white-space: normal;
   padding-top: 0; /* Align first heading with Home link */
   padding-bottom: 28px;
+}
+
+/* Literature: center defaults for anchor/gutter */
+body.literature {
+  --literature-left-gutter: 4px;
+  --literature-anchor-offset: 40px;
 }
 
 /* Strict spacing: preserve user's exact spacing (optional per-post) */
@@ -1623,38 +1642,14 @@ body.literature .prose h5 { font-size: 14px; font-weight: 600; margin: 0.8em 0 0
 body.literature .prose h6 { font-size: 13px; font-weight: 600; margin: 0.8em 0 0.2em;  letter-spacing: 0; }
 
 /* Heading hash indicators with size variation */
-body.literature .prose h1::before {
-  content: '#';
-  position: absolute;
-  left: calc(-1 * var(--literature-anchor-offset));
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 1;
-  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
-  cursor: pointer;
-  padding: 0 5px;
-}
-
-body.literature .prose h2::before {
-  content: '#';
-  position: absolute;
-  left: calc(-1 * var(--literature-anchor-offset));
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 1;
-  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
-  cursor: pointer;
-  padding: 0 5px;
-}
-
-body.literature .prose h3::before {
-  content: '#';
+/* Literature heading anchor marker — subtle pilcrow on hover only */
+body.literature .prose h1::before,
+body.literature .prose h2::before,
+body.literature .prose h3::before,
+body.literature .prose h4::before,
+body.literature .prose h5::before,
+body.literature .prose h6::before {
+  content: '\00B6'; /* pilcrow */
   position: absolute;
   left: calc(-1 * var(--literature-anchor-offset));
   top: 50%;
@@ -1663,64 +1658,29 @@ body.literature .prose h3::before {
   font-weight: 400;
   font-size: 14px;
   line-height: 1;
-  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  opacity: 0;             /* hidden by default */
+  transition: opacity 0.15s ease;
   cursor: pointer;
   padding: 0 5px;
 }
-
-body.literature .prose h4::before {
-  content: '#';
-  position: absolute;
-  left: calc(-1 * var(--literature-anchor-offset));
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1;
-  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
-  cursor: pointer;
-  padding: 0 5px;
-}
-
-body.literature .prose h5::before {
-  content: '#';
-  position: absolute;
-  left: calc(-1 * var(--literature-anchor-offset));
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-weight: 400;
-  font-size: 11px;
-  line-height: 1;
-  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
-  cursor: pointer;
-  padding: 0 5px;
-}
-
-body.literature .prose h6::before {
-  content: '#';
-  position: absolute;
-  left: calc(-1 * var(--literature-anchor-offset));
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-weight: 400;
-  font-size: 10px;
-  line-height: 1;
-  transition: font-weight 0.2s ease, color 0.2s ease, font-size 0.2s ease;
-  cursor: pointer;
-  padding: 0 5px;
-}
-
-/* Blue on hover */
 body.literature .prose h1:hover::before,
 body.literature .prose h2:hover::before,
 body.literature .prose h3:hover::before,
 body.literature .prose h4:hover::before,
 body.literature .prose h5:hover::before,
 body.literature .prose h6:hover::before {
-  color: #6b8ec5;
+  opacity: 0.45; /* appear only on hover */
+}
+
+/* Blue on hover */
+/* Keep hover color neutral for literature */
+body.literature .prose h1:hover::before,
+body.literature .prose h2:hover::before,
+body.literature .prose h3:hover::before,
+body.literature .prose h4:hover::before,
+body.literature .prose h5:hover::before,
+body.literature .prose h6:hover::before {
+  color: #999;
 }
 
 
@@ -1733,7 +1693,16 @@ body.literature .prose h5:target::before,
 body.literature .prose h6:target::before {
   font-weight: 700;
   color: #4a70a8;
+  opacity: 1; /* ensure visible when targeted */
 }
+
+/* Disable heading markers entirely on literature */
+body.literature .prose h1::before,
+body.literature .prose h2::before,
+body.literature .prose h3::before,
+body.literature .prose h4::before,
+body.literature .prose h5::before,
+body.literature .prose h6::before { display: none !important; content: none !important; }
 
 /* Grey hash for active heading (current scroll position) - no color change */
 body.literature .prose h1.active-heading::before,
@@ -1814,9 +1783,11 @@ body.literature .reading-mode-toggle {
 }
 
 body.literature .main-content-area {
-  margin: 0;
+  margin: 0 auto;           /* center the main column */
   padding: 0;
   max-width: none;
+  display: flex;
+  justify-content: center;  /* center inner article */
 }
 
 body.literature main {
@@ -1971,7 +1942,7 @@ body.literature #toggle-compact {
 
 /* Provide a small left gutter when anchor markers are visible */
 @media (min-width: 721px) {
-  body.literature .prose { padding-left: var(--literature-left-gutter); }
+  body.literature .prose { padding-left: 0; }
 }
 
 /* Disable mid-margin figure push on narrow measure to prevent overflow */

@@ -3,7 +3,7 @@ title: What Daniel Schmachtenberger calls robust solution design
 description: Notes on robust and antifragile approaches to complex problems
 pubDate: 2025-09-11
 category: words
-pageType: blog
+pageType: literature2
 ---
 
 Schmachtenberger's approach to robust solution design seems to involve several key principles:

@@ -3,7 +3,7 @@ title: New Dream
 description: Toward a more evidence-based life and symbiosis
 pubDate: 2025-09-11
 category: thoughts
-pageType: blog
+pageType: literature2
 ---
 
 I have a new dream of a more evidence based life.
