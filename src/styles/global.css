@@ -135,11 +135,8 @@ pre.astro-code .token.variable {
 
 body {
 	/* font-family: 'Daminga', Georgia, Times, "Times New Roman", serif; */ /* Remove Daminga */
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: Arial;
   font-weight: 400;
-  letter-spacing: -0.022em;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   /* font-weight: 300; */ /* Remove Light weight default */
   font-weight: 400; /* Revert to standard weight for better readability */
 	margin: 0;
@@ -461,14 +458,10 @@ aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
 }
 
 /* (Reverted) About link uses default nav styling across pages */
-/* Hide About link on literature pages (keep Home only) */
-body.literature .sidebar nav.site-nav a[href="/about"] {
-  display: none !important;
-}
 
 /* Literature Home link: darker tint to reduce glare */
 body.literature aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
-  color: var(--literature-home-color, #222) !important;
+  color: #000000 !important;
 }
 
 /* Literature Home: show by default, fade away after load via body.home-hidden */
@@ -540,7 +533,7 @@ body.literature.home-hidden aside.sidebar header.site-header:hover nav.site-nav 
     width: 40%;       /* Approx. 2fr / 5fr */
     margin-top: 0.3rem;
     margin-bottom: 1rem;
-    font-family: et-book, Palatino, "palatino linotype", "palatino lt std", "book antiqua", Georgia, serif; /* Changed font stack */
+    font-family: Arial;
     font-size: 0.85em;
     line-height: 1.4;
     vertical-align: baseline;
@@ -555,7 +548,7 @@ label.sidenote-number {
 label.sidenote-number::after,
 .sidenote::before {
     content: counter(sidenote-counter); /* Removed brackets */
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'; /* Match body font */
+    font-family: Arial;
     vertical-align: baseline;
     position: relative;
     top: -0.3em; /* Adjust vertical alignment */
@@ -666,8 +659,7 @@ h6 {
 */
 
 /* Disable hover effect for specific nav links */
-nav.site-nav .internal-links a[href="/"]:hover,
-nav.site-nav .internal-links a[href="/about"]:hover {
+nav.site-nav .internal-links a[href="/"]:hover {
   text-decoration: none; /* Keep text decoration as it is */
   /* You might need to set the color explicitly if it changes on hover */
   /* color: var(--color-link); /* Or the original color */
@@ -1344,7 +1336,7 @@ body.stanza .prose {
   max-width: 52rem;
   margin: auto;
   padding: 2.5rem 1.25rem;
-  font-family: 'Ivar Text', Georgia, serif;
+  font-family: Arial;
   font-size: 1.05rem;
   line-height: 1.6;
   color: #1d1d1d;
@@ -1477,7 +1469,7 @@ body.stanza progress.reading::-moz-progress-bar { background: var(--accent); }
 }
 
 body.literature {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   background: var(--literature-bg-color);
   color: var(--literature-text-color);
   /* Font smoothing removed for cross-platform consistency */
@@ -1527,7 +1519,7 @@ body.literature.immersive .prose h6::before {
 }
 
 body.literature .prose {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-size: var(--literature-font-size);
   line-height: var(--literature-line-height);
   color: var(--literature-text-color);
@@ -1607,7 +1599,7 @@ body.literature .prose p br {
 
 /* Title styling - left-aligned */
 body.literature .prose h1 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 600; /* match Home weight */
   font-size: 24px;
   line-height: 1.2;
@@ -1727,7 +1719,7 @@ body.literature time {
 
 /* Section headings */
 body.literature .prose h2 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 20px;
   line-height: 1.3;
@@ -1741,7 +1733,7 @@ body.literature .prose h3,
 body.literature .prose h4,
 body.literature .prose h5,
 body.literature .prose h6 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 18px;
   line-height: 1.3;
@@ -1965,7 +1957,7 @@ body.literature .figure-mid-left {
 }
 
 body.literature2 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   background: var(--literature2-bg-color);
   color: var(--literature2-text-color);
   /* Font smoothing removed for cross-platform consistency */
@@ -1988,7 +1980,7 @@ body.magazine .layout-wrapper {
 }
 
 body.literature2 .prose {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-size: var(--literature2-font-size);
   line-height: var(--literature2-line-height);
   color: var(--literature2-text-color);
@@ -2048,7 +2040,7 @@ body.literature2 .prose p br {
 
 /* Title styling */
 body.literature2 .prose h1 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 18px;
   line-height: 1.2;
@@ -2071,7 +2063,7 @@ body.literature2 time {
 
 /* Section headings */
 body.literature2 .prose h2 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 16px;
   line-height: 1.3;
@@ -2084,7 +2076,7 @@ body.literature2 .prose h3,
 body.literature2 .prose h4,
 body.literature2 .prose h5,
 body.literature2 .prose h6 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 15px;
   line-height: 1.3;
@@ -2242,7 +2234,7 @@ body.literature ::selection {
 }
 
 body.literature3 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   background: var(--literature3-bg-color);
   color: var(--literature3-text-color);
   /* Font smoothing removed for cross-platform consistency */
@@ -2256,7 +2248,7 @@ body.literature3 .layout-wrapper {
 }
 
 body.literature3 .prose {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-size: var(--literature3-font-size);
   line-height: var(--literature3-line-height);
   color: var(--literature3-text-color);
@@ -2313,7 +2305,7 @@ body.literature3 .prose p br {
 
 /* Title styling - left-aligned */
 body.literature3 .prose h1 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 24px;
   line-height: 1.2;
@@ -2460,7 +2452,7 @@ body.literature3 time {
 
 /* Section headings */
 body.literature3 .prose h2 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 20px;
   line-height: 1.3;
@@ -2474,7 +2466,7 @@ body.literature3 .prose h3,
 body.literature3 .prose h4,
 body.literature3 .prose h5,
 body.literature3 .prose h6 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: Arial;
   font-weight: 500;
   font-size: 18px;
   line-height: 1.3;
@@ -2748,4 +2740,759 @@ body:has(.protected-content) {
   margin: 0;
   color: #ff9999;
   font-size: 0.85em;
+}
+
+/* SOFTONIC PAGE TYPE - Sketchy Download Site Aesthetic */
+
+body.softonic {
+  background: #f5f5f5;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body.softonic .layout-wrapper {
+  max-width: 980px;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+body.softonic .main-content-area {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  padding: 20px;
+  background: #fff;
+}
+
+body.softonic main {
+  padding: 0;
+}
+
+/* Header Banner Ad */
+body.softonic main::before {
+  content: '';
+  display: block;
+  height: 90px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #ddd;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+body.softonic main::after {
+  content: 'Advertisement';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+}
+
+/* Breadcrumb */
+body.softonic .prose::before {
+  content: 'Home > Windows > Utilities > Downloads';
+  display: block;
+  font-size: 12px;
+  color: #0066cc;
+  margin-bottom: 15px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Software Title */
+body.softonic .prose h1 {
+  font-size: 28px;
+  color: #333;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+}
+
+/* Rating and Stats Bar */
+body.softonic .prose h1::after {
+  content: '★★★★☆ 4.2/5 (1,247 votes) • Downloaded 2,847,392 times';
+  display: block;
+  font-size: 13px;
+  font-weight: normal;
+  color: #666;
+  margin-top: 8px;
+}
+
+/* Main Download Button */
+body.softonic .prose h1 + p:first-of-type {
+  background: linear-gradient(180deg, #5cb85c 0%, #449d44 100%);
+  border: 1px solid #398439;
+  border-radius: 4px;
+  padding: 15px 30px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #2d6c2d, 0 4px 8px rgba(0,0,0,0.2);
+  position: relative;
+  margin: 20px 0;
+}
+
+body.softonic .prose h1 + p:first-of-type::before {
+  content: '⬇ DOWNLOAD NOW';
+  display: block;
+}
+
+body.softonic .prose h1 + p:first-of-type::after {
+  content: 'Free • Safe • Secure';
+  display: block;
+  font-size: 11px;
+  font-weight: normal;
+  margin-top: 5px;
+  opacity: 0.9;
+}
+
+body.softonic .prose h1 + p:first-of-type:hover {
+  background: linear-gradient(180deg, #6fd06f 0%, #5cb85c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 #2d6c2d, 0 5px 10px rgba(0,0,0,0.25);
+}
+
+/* Info Boxes */
+body.softonic .prose h2 {
+  background: #f8f8f8;
+  border-left: 4px solid #0066cc;
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #333;
+  margin: 25px 0 15px 0;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+/* Fake Download Buttons in Content */
+body.softonic .prose h3 {
+  background: linear-gradient(180deg, #5bc0de 0%, #31b0d5 100%);
+  border: 1px solid #269abc;
+  border-radius: 3px;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  margin: 15px auto;
+  max-width: 300px;
+  box-shadow: 0 2px 0 #1f7a91;
+}
+
+body.softonic .prose h3::before {
+  content: '⬇ Alternative Download Link';
+  display: block;
+}
+
+body.softonic .prose h3::after {
+  content: 'Sponsored';
+  display: block;
+  font-size: 9px;
+  font-weight: normal;
+  margin-top: 3px;
+  opacity: 0.8;
+}
+
+body.softonic .prose p {
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Lists */
+body.softonic .prose ul,
+body.softonic .prose ol {
+  margin: 15px 0;
+  padding-left: 25px;
+}
+
+body.softonic .prose li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+/* Code blocks look like file info */
+body.softonic .prose code {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #c7254e;
+}
+
+body.softonic .prose pre {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* Sidebar */
+body.softonic .sidebar {
+  display: none;
+}
+
+body.softonic .sidenotes-area {
+  display: block !important;
+  background: #f8f8f8;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Software Info Box */
+body.softonic .sidenotes-area::before {
+  content: 'Software Details';
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #0066cc;
+}
+
+body.softonic .sidenotes-area::after {
+  content: 'Version: 2.4.1\A File Size: 12.3 MB\A License: Freeware\A OS: Windows 7/8/10/11\A Author: SoftwareDev Inc.\A Last Updated: Jan 15, 2025\A \A ──────────────\A \A Related Downloads:\A • SuperDownloader Pro\A • MegaInstaller 2024\A • TurboSetup Wizard\A \A ──────────────\A \A [AD] DOWNLOAD\A Speed Up Your PC!\A Click Here Now →\A \A ──────────────\A \A Also Available For:\A ⊞ Windows\A ⊞ Mac OS X\A ⊞ Linux\A ⊞ Android';
+  white-space: pre-line;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.8;
+  display: block;
+}
+
+/* User Reviews Section */
+body.softonic .prose::after {
+  content: 'USER REVIEWS\A \A ★★★★★ "Great software! Works perfectly!"\A - John D., 2 days ago\A \A ★★★☆☆ "Its okay, bit slow sometimes"\A - Sarah M., 1 week ago\A \A ★★★★☆ "Does what it says"\A - Mike R., 2 weeks ago\A \A [Write a Review]';
+  display: block;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin-top: 30px;
+  white-space: pre-line;
+  font-size: 13px;
+  line-height: 1.8;
+  border-radius: 4px;
+}
+
+/* Links */
+body.softonic .prose a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+body.softonic .prose a:hover {
+  text-decoration: underline;
+  color: #0052a3;
+}
+
+/* Images as screenshots */
+body.softonic .prose img {
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  max-width: 100%;
+  margin: 15px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Blockquote as editor's note */
+body.softonic .prose blockquote {
+  background: #fffbcc;
+  border-left: 4px solid #ffeb3b;
+  padding: 12px 15px;
+  margin: 20px 0;
+  font-style: italic;
+  color: #666;
+}
+
+body.softonic .prose blockquote::before {
+  content: "Editor's Note: ";
+  font-weight: bold;
+  font-style: normal;
+  color: #333;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  body.softonic .main-content-area {
+    grid-template-columns: 1fr;
+  }
+  
+  body.softonic .sidenotes-area {
+    margin-top: 30px;
+  }
+}
+
+/* Bottom Ad Banner */
+body.softonic footer {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  height: 120px;
+  border: 2px solid #ddd;
+  margin-top: 30px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+body.softonic footer::before {
+  content: 'Advertisement - Click Here for Amazing Deals!';
+}
+
+body.softonic footer::after {
+  content: 'Ad';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 10px;
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+
+/* MEDIAFIRE PAGE TYPE - Pixel Perfect Replica */
+
+body.mediafire {
+  background: #074E7F;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body.mediafire .sidebar,
+body.mediafire .sidenotes-area {
+  display: none !important;
+}
+
+body.mediafire .layout-wrapper {
+  background: #074E7F;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+body.mediafire .main-content-area {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  max-width: 100%;
+}
+
+/* Header */
+body.mediafire header.site-header {
+  display: none;
+}
+
+body.mediafire main {
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+/* Top Navigation Bar */
+body.mediafire main::before {
+  content: '';
+  display: block;
+  background: #063F66;
+  height: 60px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+body.mediafire main::after {
+  content: 'MediaFire';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  z-index: 10;
+}
+
+/* Main Container */
+body.mediafire .prose {
+  max-width: 920px;
+  margin: 40px auto 60px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  padding: 0;
+  position: relative;
+}
+
+/* File Icon */
+body.mediafire .prose h1::before {
+  content: '';
+  display: block;
+  width: 100px;
+  height: 100px;
+  margin: 50px auto 30px;
+  background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #E0E0E0;
+}
+
+/* File Name */
+body.mediafire .prose h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #212121;
+  text-align: center;
+  margin: 0 40px 10px;
+  padding: 0;
+  line-height: 1.3;
+  word-wrap: break-word;
+}
+
+/* File Extension and hide first paragraph */
+body.mediafire .prose h1::after {
+  content: '.zip';
+  color: #757575;
+  font-weight: 400;
+}
+
+/* File Stats */
+body.mediafire .prose h1 + p {
+  text-align: center;
+  color: #757575;
+  font-size: 14px;
+  margin: 0 0 30px 0;
+  padding: 0 40px 30px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+body.mediafire .prose h1 + p::before {
+  content: '24.7 MB';
+  display: inline;
+  font-weight: 500;
+  color: #424242;
+  margin-right: 4px;
+}
+
+/* Download Button */
+body.mediafire .prose h2 {
+  background: #0B7AEB !important;
+  color: white !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  text-align: center;
+  padding: 16px 48px;
+  margin: 0 auto 20px !important;
+  max-width: 280px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  text-transform: none !important;
+  letter-spacing: 0.3px;
+}
+
+body.mediafire .prose h2::before {
+  content: 'Download';
+  display: block;
+}
+
+body.mediafire .prose h2::after {
+  content: '';
+  display: none;
+}
+
+body.mediafire .prose h2:hover {
+  background: #0968D1 !important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* Scanning Message */
+body.mediafire .prose h3 {
+  background: #FFF9C4 !important;
+  border-left: 4px solid #FBC02D !important;
+  color: #F57F17 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 12px 20px !important;
+  margin: 0 40px 30px !important;
+  border-radius: 2px !important;
+  text-align: left !important;
+  text-transform: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+body.mediafire .prose h3::before {
+  content: '🛡 Scanning for viruses...';
+  display: block;
+}
+
+body.mediafire .prose h3::after {
+  content: 'No threats detected';
+  display: block;
+  margin-top: 4px;
+  color: #689F38;
+  font-weight: 600;
+}
+
+/* File Description Section */
+body.mediafire .prose > p {
+  color: #424242;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 40px 15px;
+  padding: 0;
+}
+
+/* File Details List */
+body.mediafire .prose ul {
+  list-style: none;
+  padding: 0;
+  margin: 30px 40px;
+  background: #FAFAFA;
+  border-radius: 4px;
+  border: 1px solid #E0E0E0;
+}
+
+body.mediafire .prose ul::before {
+  content: 'File Details';
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+  color: #212121;
+  padding: 16px 20px;
+  border-bottom: 1px solid #E0E0E0;
+  background: #F5F5F5;
+  border-radius: 4px 4px 0 0;
+}
+
+body.mediafire .prose li {
+  padding: 12px 20px;
+  border-bottom: 1px solid #EEEEEE;
+  color: #616161;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+body.mediafire .prose li:last-child {
+  border-bottom: none;
+}
+
+body.mediafire .prose li::before {
+  content: 'Info:';
+  font-weight: 500;
+  color: #757575;
+  flex-shrink: 0;
+  width: 120px;
+}
+
+body.mediafire .prose li:nth-child(1)::before {
+  content: 'Uploaded:';
+}
+
+body.mediafire .prose li:nth-child(2)::before {
+  content: 'File Size:';
+}
+
+body.mediafire .prose li:nth-child(3)::before {
+  content: 'Downloads:';
+}
+
+body.mediafire .prose li:nth-child(4)::before {
+  content: 'File Type:';
+}
+
+body.mediafire .prose li:nth-child(5)::before {
+  content: 'Uploader:';
+}
+
+/* Share Section */
+body.mediafire .prose ol {
+  list-style: none;
+  padding: 20px 40px 30px;
+  margin: 0;
+  border-top: 1px solid #E0E0E0;
+}
+
+body.mediafire .prose ol::before {
+  content: 'Share';
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: #424242;
+  margin-bottom: 15px;
+}
+
+body.mediafire .prose ol li {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background: #E0E0E0;
+  border-radius: 50%;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+body.mediafire .prose ol li:nth-child(1) {
+  background: #1877F2;
+}
+
+body.mediafire .prose ol li:nth-child(2) {
+  background: #1DA1F2;
+}
+
+body.mediafire .prose ol li:nth-child(3) {
+  background: #25D366;
+}
+
+body.mediafire .prose ol li::before {
+  content: '';
+  display: none;
+}
+
+body.mediafire .prose ol li::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* Links */
+body.mediafire .prose a {
+  color: #0B7AEB;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+body.mediafire .prose a:hover {
+  text-decoration: underline;
+}
+
+/* Code/Hash */
+body.mediafire .prose code {
+  background: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #616161;
+}
+
+body.mediafire .prose pre {
+  background: #FAFAFA;
+  border: 1px solid #E0E0E0;
+  padding: 16px;
+  border-radius: 4px;
+  margin: 20px 40px;
+  font-size: 12px;
+  overflow-x: auto;
+}
+
+body.mediafire .prose pre::before {
+  content: 'MD5: ';
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+  color: #424242;
+}
+
+/* Blockquote/Warning */
+body.mediafire .prose blockquote {
+  background: #FFEBEE;
+  border-left: 4px solid #E53935;
+  margin: 20px 40px;
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #C62828;
+  border-radius: 2px;
+}
+
+body.mediafire .prose blockquote::before {
+  content: '⚠ ';
+  font-weight: 600;
+}
+
+/* Images */
+body.mediafire .prose img {
+  max-width: calc(100% - 80px);
+  margin: 20px 40px;
+  border-radius: 4px;
+  border: 1px solid #E0E0E0;
+  display: block;
+}
+
+/* Footer */
+body.mediafire footer {
+  background: #063F66;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+body.mediafire footer::before {
+  content: 'About • Blog • Privacy • Terms • Copyright • Contact';
+  display: block;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 10px;
+}
+
+body.mediafire footer::after {
+  content: '© 2025 MediaFire  Build 124521';
+  display: block;
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  body.mediafire .prose {
+    margin: 20px;
+    border-radius: 4px;
+  }
+
+  body.mediafire .prose h1 {
+    font-size: 22px;
+    margin: 0 20px 10px;
+  }
+
+  body.mediafire .prose h1 + p,
+  body.mediafire .prose > p,
+  body.mediafire .prose ul,
+  body.mediafire .prose ol,
+  body.mediafire .prose h3,
+  body.mediafire .prose pre,
+  body.mediafire .prose blockquote,
+  body.mediafire .prose img {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  body.mediafire .prose h2 {
+    max-width: calc(100% - 40px);
+  }
 }

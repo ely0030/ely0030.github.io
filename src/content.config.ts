@@ -20,7 +20,7 @@ const blog = defineCollection({
 		markCount: z.number().int().min(1).max(3).optional(),
 		markColor: z.enum(['grey', 'orange', 'blue']).optional(),
 		// New optional page type for selecting alternate layouts
-		pageType: z.enum(['blog', 'magazine', 'stanza', 'essay', 'literature', 'literature2', 'literature3', 'notepad']).optional(),
+		pageType: z.enum(['blog', 'magazine', 'stanza', 'essay', 'literature', 'literature2', 'literature3', 'notepad', 'softonic', 'mediafire']).optional(),
 		// Optional: strict spacing for literature (preserve exact line/space intent)
 		strictSpacing: z.boolean().optional(),
 		// Optional: immersive mode for literature (hide nav/sidebar chrome)

@@ -16,8 +16,23 @@ try {
 		console.log('Fetching fresh blog posts...');
 	}
 	
-	// Exclude entries under PRIVATE from the notepad’s post list
-	const allPosts = await getCollection('blog', ({ id }) => !id.includes('/PRIVATE/') && !id.startsWith('PRIVATE/'));
+	// Exclude entries under PRIVATE from the notepad's post list
+	// Also exclude posts with private: true in frontmatter (case-insensitive)
+	const allPosts = await getCollection('blog', ({ id, data }) => {
+		// Exclude posts in PRIVATE folder (case-insensitive since Astro normalizes paths)
+		const idLower = id.toLowerCase();
+		const isInPrivateFolder = idLower.includes('/private/') || idLower.startsWith('private/');
+		// Exclude posts with private: true in frontmatter
+		const isPrivatePost = data.private === true;
+		const shouldExclude = isInPrivateFolder || isPrivatePost;
+
+		// Debug logging in development
+		if (import.meta.env.DEV && shouldExclude) {
+			console.log(`[NOTEPAD] Excluding post: ${id} (folder: ${isInPrivateFolder}, private: ${isPrivatePost})`);
+		}
+
+		return !shouldExclude;
+	});
 	console.log('Found blog posts:', allPosts.length);
 	posts = allPosts
 		.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())

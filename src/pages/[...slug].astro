@@ -5,7 +5,13 @@ import PasswordGate from '../components/PasswordGate.astro'; // assuming this is
 
 export async function getStaticPaths() {
   // Exclude any content inside the PRIVATE folder from static paths
-  const posts = await getCollection('blog', ({ id }) => !id.includes('/PRIVATE/') && !id.startsWith('PRIVATE/'));
+  // Also exclude posts with private: true in frontmatter
+  const posts = await getCollection('blog', ({ id, data }) => {
+    const idLower = id.toLowerCase();
+    const isInPrivateFolder = idLower.includes('/private/') || idLower.startsWith('private/');
+    const isPrivatePost = data.private === true;
+    return !isInPrivateFolder && !isPrivatePost;
+  });
   return posts.map((post) => ({ params: { slug: post.id }, props: post }));
 }
 type Props = CollectionEntry<'blog'>;

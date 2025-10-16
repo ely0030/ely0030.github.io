@@ -8,7 +8,22 @@ import FormattedDate from '../components/FormattedDate.astro';
 
 // Fetch all blog posts, sort by date descending
 // Exclude any entries under the PRIVATE folder from the site index
-const posts = (await getCollection('blog', ({ id }) => !id.includes('/PRIVATE/') && !id.startsWith('PRIVATE/')))
+// Also exclude posts with private: true in frontmatter (case-insensitive)
+const posts = (await getCollection('blog', ({ id, data }) => {
+	// Exclude posts in PRIVATE folder (case-insensitive since Astro normalizes paths)
+	const idLower = id.toLowerCase();
+	const isInPrivateFolder = idLower.includes('/private/') || idLower.startsWith('private/');
+	// Exclude posts with private: true in frontmatter
+	const isPrivatePost = data.private === true;
+	const shouldExclude = isInPrivateFolder || isPrivatePost;
+
+	// Debug logging in development
+	if (import.meta.env.DEV && shouldExclude) {
+		console.log(`[INDEX] Excluding post: ${id} (folder: ${isInPrivateFolder}, private: ${isPrivatePost})`);
+	}
+
+	return !shouldExclude;
+}))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 // Function to safely decode HTML entities and ensure proper UTF-8 display
