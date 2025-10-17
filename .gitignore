@@ -110,3 +110,6 @@ certs/
 *.key
 *.crt
 *.csr
+
+# ClaudePoint checkpoint system
+.claudepoint/
