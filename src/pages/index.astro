@@ -4,46 +4,18 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import { getCollection } from 'astro:content';
-import FormattedDate from '../components/FormattedDate.astro';
 
 // Fetch all blog posts, sort by date descending
-// Exclude any entries under the PRIVATE folder from the site index
-// Also exclude posts with private: true in frontmatter (case-insensitive)
 const posts = (await getCollection('blog', ({ id, data }) => {
-	// Exclude posts in PRIVATE folder (case-insensitive since Astro normalizes paths)
 	const idLower = id.toLowerCase();
 	const isInPrivateFolder = idLower.includes('/private/') || idLower.startsWith('private/');
-	// Exclude posts with private: true in frontmatter
 	const isPrivatePost = data.private === true;
-	const shouldExclude = isInPrivateFolder || isPrivatePost;
-
-	// Debug logging in development
-	if (import.meta.env.DEV && shouldExclude) {
-		console.log(`[INDEX] Excluding post: ${id} (folder: ${isInPrivateFolder}, private: ${isPrivatePost})`);
-	}
-
-	return !shouldExclude;
+	return !(isInPrivateFolder || isPrivatePost);
 }))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
-// Function to safely decode HTML entities and ensure proper UTF-8 display
-function decodeHtmlEntities(text) {
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = text;
-  return textarea.value;
-}
-
-// Ensure proper encoding of title text
-const processedPosts = posts.map(post => {
-  return {
-    ...post,
-    // Ensure the title is properly encoded as UTF-8
-    safeTitle: post.data.title
-  };
-});
-
 // Group posts by category
-const postsByCategory = processedPosts.reduce((acc, post) => {
+const postsByCategory = posts.reduce((acc, post) => {
   const category = post.data.category || 'uncategorized';
   if (!acc[category]) {
     acc[category] = [];
@@ -52,82 +24,22 @@ const postsByCategory = processedPosts.reduce((acc, post) => {
   return acc;
 }, {});
 
-// Define category metadata for visual styling
-const categoryMeta = {
-  articles: { icon: '[A]', color: '#2563eb', description: 'Long-form articles and essays' },
-  ideas: { icon: '[i]', color: '#10b981', description: 'Quick thoughts and concepts' },
-  creative: { icon: '[C]', color: '#8b5cf6', description: 'Creative writing and experiments' },
-  technical: { icon: '[T]', color: '#f59e0b', description: 'Technical posts and tutorials' },
-  personal: { icon: '[P]', color: '#06b6d4', description: 'Personal reflections and stories' },
-  protocols: { icon: '[R]', color: '#14b8a6', description: 'Systems and protocols for life' },
-  thoughts: { icon: '[t]', color: '#ec4899', description: 'Random thoughts and musings' },
-  saved: { icon: '[+]', color: '#ef4444', description: 'Bookmarked and saved content' },
-  uncategorized: { icon: '[?]', color: '#6b7280', description: 'Posts awaiting categorization' },
-  archive: { icon: '[X]', color: '#9ca3af', description: 'Archived content' }
-};
-
-// Define sections to group categories
-const sections = {
-  'Writing': ['articles', 'creative', 'ideas', 'thoughts'],
-  'Technical': ['technical'],
-  'Personal': ['personal', 'protocols'],
-  'Saved Resources': ['saved'],
-  'Miscellaneous': ['uncategorized', 'archive']
-};
-
-// Add any new categories that aren't in categoryMeta to Miscellaneous
-const unknownCategories = Object.keys(postsByCategory).filter(cat => !categoryMeta[cat]);
-if (unknownCategories.length > 0) {
-  sections['Miscellaneous'].push(...unknownCategories);
-  // Give unknown categories a default style
-  unknownCategories.forEach(cat => {
-    categoryMeta[cat] = { icon: '[/]', color: '#6b7280', description: cat };
-  });
+// Add downloads category for Handy+
+if (!postsByCategory['downloads']) {
+  postsByCategory['downloads'] = [];
 }
-
-// Organize categories by section
-const categoriesBySection = {};
-Object.entries(sections).forEach(([sectionName, categoryList]) => {
-  const sectionCategories = {};
-  categoryList.forEach(cat => {
-    if (postsByCategory[cat]) {
-      sectionCategories[cat] = postsByCategory[cat];
-    }
-  });
-  if (Object.keys(sectionCategories).length > 0) {
-    categoriesBySection[sectionName] = sectionCategories;
-  }
-});
-
-// Also sort posts within each category by date
-Object.keys(postsByCategory).forEach(category => {
-  postsByCategory[category].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-});
-
-// Add archive category with manual archived posts if it doesn't exist
-if (!postsByCategory['archive']) {
-  postsByCategory['archive'] = [];
-}
-
-// Add notepad as a fake post in uncategorized
-if (!postsByCategory['uncategorized']) {
-  postsByCategory['uncategorized'] = [];
-}
-// Create a specific date: July 5, 2025
-const notepadDate = new Date('2025-07-05');
-postsByCategory['uncategorized'].push({
-  id: 'notepad-untitled',
+postsByCategory['downloads'].push({
+  id: 'handy-plus',
   data: {
-    title: 'Untitled',
-    pubDate: notepadDate,
-    category: 'uncategorized'
+    title: 'Handy+',
+    pubDate: new Date('2014-02-19'),
+    category: 'downloads'
   },
-  isNotepad: true
+  isArchived: true
 });
 
-// Re-sort uncategorized after adding notepad
-postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-
+// Sort categories alphabetically
+const sortedCategories = Object.keys(postsByCategory).sort();
 
 ---
 
@@ -136,693 +48,75 @@ postsByCategory['uncategorized'].sort((a, b) => b.data.pubDate.valueOf() - a.dat
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body class="literature2 no-transitions">
+	<body class="literature2">
 		<div class="layout-wrapper">
 			<aside class="sidebar">
 				<Header />
 			</aside>
 			<div class="main-content-area">
 				<main>
-					<div class="apache-header">
-						<h1>Index of /</h1>
-						<hr />
-					</div>
-					<div class="folder-list">
-						{Object.entries(categoriesBySection).map(([sectionName, sectionCategories]) => (
-							<div class="section-group">
-								<div class="section-header">
-									<span class="section-name">{sectionName}/</span>
-								</div>
-								<div class="section-content">
-									{Object.entries(sectionCategories).map(([category, categoryPosts]) => {
-										const categoryId = category.toLowerCase().replace(/\s+/g, '-');
-										const meta = categoryMeta[category] || categoryMeta.uncategorized;
-										const postCount = category === 'archive' ? 1 : categoryPosts.length;
-										
-										return (
-											<div class="folder-group" data-category={categoryId} style={`--category-color: ${meta.color};`}>
-												<div class="directory-entry">
-													<div class="folder-header-wrapper">
-														<button class="folder-header" aria-expanded="false" aria-controls={`folder-${categoryId}`} data-category-id={categoryId} title={meta.description}>
-															<span class="folder-icon" aria-hidden="true">{meta.icon}</span>
-															<span class="folder-name">{category}/</span>
-														</button>
-														<span class="post-count">({postCount})</span>
-													</div>
-												</div>
-												<div class="post-list" id={`folder-${categoryId}`} style={`--category-color: ${meta.color};`}>
-													{category === 'archive' ? (
-														<div class="post-item">
-															<div class="directory-entry file-entry">
-																<h2>
-																	<a href="/you-should-exercise.html">You Should Exercise (Archived)</a>
-																</h2>
-															</div>
-														</div>
-													) : categoryPosts.map((post) => {
-											// extract mark fields
-											const { markType, markCount = 0, markColor } = post.data;
-											let markStr = '';
-											if (markType && markCount > 0 && markColor) {
-												const symbol = markType === 'exclamation' ? '!' : '?';
-												markStr = symbol.repeat(markCount);
-											}
-											const dateStr = new Date(post.data.pubDate).toLocaleDateString('en-US', {
-												year: 'numeric',
-												month: 'short',
-												day: '2-digit'
-											});
-											return (
-												<div class="post-item">
-													<div class="directory-entry file-entry">
-														<h2>
-															{markStr && <span class={`mark mark-${markColor}`}>{markStr}</span>}<a href={post.isNotepad ? '/notepad' : `/${post.id}/`} class={post.data.private ? 'private-link' : ''} data-hash={post.data.private ? post.data.passwordHash : undefined}>{post.data.title}</a>
-															{post.data.private && <span class="lock" aria-label="Private">🔒</span>}
-														</h2>
-														<span class="file-date">{dateStr}</span>
-													</div>
-															</div>
-														);
-													})}
-												</div>
-											</div>
-										);
-									})}
-								</div>
+					<h1>Index of /</h1>
+					<hr />
+
+					{sortedCategories.map((category) => {
+						const categoryPosts = postsByCategory[category];
+						return (
+							<div class="category-section">
+								<h2>{category}/</h2>
+								<ul>
+									{categoryPosts.map((post) => (
+										<li>
+											<a href={post.isArchived ? `/${post.id}.html` : `/${post.id}/`}>{post.data.title}</a>
+										</li>
+									))}
+								</ul>
 							</div>
-						))}
-					</div>
+						);
+					})}
 				</main>
 				<Footer />
 				<style>
-					.apache-header h1 {
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
+					h1 {
 						font-size: 1.5em;
-						font-weight: bold;
 						margin: 0 0 0.5em 0;
-						text-transform: none;
 					}
-					
-					.apache-header hr {
+
+					hr {
 						border: none;
 						border-top: 1px solid #000;
-						margin: 0.5em 0;
+						margin: 0.5em 0 1.5em 0;
 					}
-					
-					.folder-list {
-						margin: 0;
-						padding: 0;
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
+
+					.category-section {
+						margin-bottom: 1.5em;
 					}
-					
-					.section-group {
-						margin-bottom: 1.2em;
-					}
-					
-					.section-group:last-child {
-						margin-bottom: 0;
-					}
-					
-					.section-header {
-						margin-bottom: 0.3em;
-						padding: 0.1em 0;
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
-					}
-					
-					.section-name {
+
+					.category-section h2 {
+						font-size: 1.1em;
 						font-weight: 600;
-						color: #333;
-						font-size: 1.05em;
-						opacity: 0.7;
+						margin: 0 0 0.3em 0;
 					}
-					
-					.section-content {
-						padding-left: 1.2em;
-					}
-					
-					.directory-entry {
-						display: flex;
-						align-items: baseline;
-						gap: 0.5em;
-						margin: 0.2em 0;
-					}
-					
-					.folder-group {
-						margin-bottom: 0.2em;
-						padding-bottom: 0.2em;
-						position: relative;
-						transition: background-color 0.2s ease;
-					}
-					
-					.folder-group > .directory-entry {
-						margin-bottom: 0.1em;
-						font-weight: 500;
-					}
-					
-					.folder-header-wrapper {
-						display: inline-flex;
-						align-items: center;
-						gap: 0;
-					}
-					
-					.folder-header {
-						display: inline-flex;
-						align-items: center;
-						gap: 0.2em;
-						background: none;
-						border: none;
-						padding: 0;
-						cursor: pointer;
-						font-size: 1em;
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
-						color: var(--color-link);
-						width: auto;
-						text-align: left;
-						transition: opacity 0.2s ease;
-						line-height: 1.5;
-						font-weight: 400;
-						text-transform: none;
-						text-decoration: none;
-					}
-					
-					.folder-header[aria-expanded="true"] .folder-name {
-						text-decoration: underline;
-					}
-					
-					.folder-header:hover .folder-name {
-						text-decoration: underline;
-					}
-					
-					button.folder-header:focus,
-					button.folder-header:focus-visible,
-					button.folder-header:active,
-					.folder-header:focus,
-					.folder-header:focus-visible,
-					.folder-header:active {
-						outline: none !important;
-						box-shadow: none !important;
-					}
-					
-					.folder-icon {
-						font-size: 1em;
-						transition: none;
-						display: inline-block;
-						text-decoration: none !important;
-					}
-					
-					.folder-header[aria-expanded="false"] .folder-icon {
-						transform: none;
-					}
-					
-					.folder-name {
-						font-weight: 400;
-					}
-					
-					.post-count {
-						font-size: 0.85em;
-						color: #666;
-						font-weight: normal;
-						margin-left: 0.3em;
-						opacity: 0.7;
-						cursor: default;
-						pointer-events: none;
-						user-select: none;
-					}
-					
-					.post-list {
-						padding: 0;
-						margin: 0 0 0 0;
-						overflow: hidden;
-						max-height: 0;
-						transition: max-height 0.05s step-end;
-					}
-					
-					.folder-header[aria-expanded="true"] ~ .post-list {
-						max-height: 9999px;
-					}
-					
-					/* Disable transitions during initial load */
-					.no-transitions .post-list {
-						transition: none !important;
-					}
-					
-					.post-item {
-						position: relative;
-						margin: 0;
-						padding: 0.1em 0 0.1em 1.5em;
-					}
-					
-					
-					.file-entry {
-						padding-left: 0;
-					}
-					
-					.file-prefix {
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
-						color: #999;
-						opacity: 0.5;
-						margin-right: 0.2em;
-						font-weight: normal;
-					}
-					
-					.post-item h2 {
-						font-size: 1em;
-						font-weight: 400;
-						text-transform: none;
-						margin: 0;
-						line-height: 1.5;
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
-						flex: 1;
-						min-width: 0;
+
+					.category-section ul {
 						list-style: none;
+						padding: 0;
+						margin: 0;
 					}
-					
-					.post-item h2::before {
-						content: none;
+
+					.category-section li {
+						margin: 0.2em 0;
+						padding-left: 1em;
 					}
-					
-					.post-item h2::marker {
-						content: none;
-					}
-					
-					.post-item h2 a {
+
+					.category-section a {
 						color: var(--color-link);
 						text-decoration: underline;
 					}
-					
-					.post-item h2 a:hover {
+
+					.category-section a:hover {
 						text-decoration: none;
-					}
-					
-					.file-date {
-						margin-left: 1em;
-						color: #666;
-						font-family: 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-						font-weight: 400;
-						-webkit-font-smoothing: antialiased;
-						-moz-osx-font-smoothing: grayscale;
-						font-size: 0.9em;
-						white-space: nowrap;
-					}
-					
-					.private-link {
-						display: inline-block;
-					}
-					.lock {
-						position: absolute;
-						left: -1.5em;
-						top: 50%;
-						transform: translateY(-50%);
-						font-size: 0.85em;
-						opacity: 0;
-						color: inherit;
-						user-select: none;
-						z-index: 1;
-						transition: opacity 0.2s ease;
-					}
-					.private-link:hover + .lock,
-					.post-item.has-active-form .lock {
-						opacity: 0.9;
-					}
-					@keyframes unlockPop {
-						0% { transform: translateY(-50%) scale(1); }
-						40% { transform: translateY(-50%) scale(1.15); }
-						100% { transform: translateY(-50%) scale(1); }
-					}
-					.lock.unlocking {
-						animation: unlockPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-					}
-					@keyframes unlockSuccess {
-						0% { transform: translateY(-50%) scale(1); }
-						40% { transform: translateY(-50%) scale(1.15); }
-						100% { transform: translateY(-50%) scale(1); }
-					}
-					.lock.success {
-						animation: unlockPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-					}
-					@keyframes shakeError {
-						0% { transform: translateY(-50%) translateX(0); }
-						20% { transform: translateY(-51.5%) translateX(-3px); }
-						40% { transform: translateY(-48.5%) translateX(3px); }
-						60% { transform: translateY(-51.5%) translateX(-3px); }
-						80% { transform: translateY(-48.5%) translateX(3px); }
-						100% { transform: translateY(-50%) translateX(0); }
-					}
-					.lock.error {
-						animation: shakeError 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-					}
-					.inline-pw-form {
-						display: inline-flex;
-						align-items: center;
-						gap: 0.25em;
-						margin: 0;
-						/* Ensure consistent height */
-						height: 1.4em;
-						opacity: 0;
-						transform: translateY(-0.2em);
-						transition: opacity 0.3s ease, transform 0.3s ease;
-						background: #002147;
-						padding: 0.25em 0.5em;
-						border-radius: 3px;
-					}
-					.post-item.has-active-form .inline-pw-form {
-						opacity: 1;
-						transform: translateY(0);
-					}
-					.inline-pw-form input[type="password"] {
-						font-size: 0.9em;
-						padding: 3px 6px;
-						border: 1px solid rgba(255, 255, 255, 0.3);
-						background: rgba(255, 255, 255, 0.1);
-						color: #ffffff;
-						margin: 0;
-						/* Fix vertical sizing */
-						height: 1.4em;
-						box-sizing: border-box;
-						line-height: 1;
-						/* Outline handled inline via style attribute */
-					}
-					.inline-pw-form input[type="password"]:focus {
-						border-color: rgba(255, 255, 255, 0.6);
-						background: rgba(255, 255, 255, 0.15);
-					}
-					.inline-pw-form input[type="password"]::placeholder {
-						color: rgba(255, 255, 255, 0.5);
-					}
-					/* Remove focus outline only from private links */
-					a.private-link:focus {
-						outline: none;
 					}
 				</style>
-				<script is:inline>
-					// Immediately set folder states from localStorage to prevent FOUC
-					document.querySelectorAll('.folder-header').forEach(header => {
-						const catId = header.dataset.categoryId;
-						if (localStorage.getItem(`folder-${catId}`) === 'true') {
-							header.setAttribute('aria-expanded', 'true');
-						}
-					});
-					
-					// Remove no-transitions class after a brief delay
-					window.addEventListener('load', () => {
-						requestAnimationFrame(() => {
-							document.body.classList.remove('no-transitions');
-						});
-					});
-				</script>
-				<script type="module" client:load>
-                  import { sha256 } from 'https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/+esm';
-
-                  let active = null; // {link, h2, originalHTML, form}
-
-                  function restore() {
-                    if (!active) return;
-                    const { h2, originalHTML } = active;
-                    const li = h2.closest('.post-item');
-                    
-                    // Get lock element that's directly inside the list item
-                    // This might exist if the form was previously shown
-                    const directLock = li?.querySelector(':scope > .lock');
-                    
-                    // Parse the original HTML to remove any embedded lock element temporarily
-                    // This ensures we don't duplicate the lock when restoring
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = originalHTML;
-                    const lockInOriginal = tempDiv.querySelector('.lock');
-                    
-                    // Put back the original HTML (link text, etc.)
-                    h2.innerHTML = tempDiv.innerHTML;
-                    h2.style.minHeight = ''; // Reset min height
-                    
-                    // If there was a lock moved outside the h2, handle it properly
-                    if (directLock) {
-                      // Remove any animation classes first
-                      directLock.classList.remove('error', 'unlocking');
-                      
-                      // Start fade animation
-                      directLock.style.opacity = '0';
-                      
-                      // Wait for fade transition to complete before cleanup
-                      directLock.addEventListener('transitionend', () => {
-                        // Check if it's still the active lock before removing
-                        if (li?.contains(directLock) && !li.classList.contains('has-active-form')) {
-                          directLock.remove();
-                          
-                          // Ensure the lock is properly placed back in h2 for hover effect
-                          if (!h2.querySelector('.lock')) {
-                            const link = h2.querySelector('.private-link');
-                            if (link) {
-                              const newLock = directLock.cloneNode(true);
-                              newLock.style.opacity = ''; // Reset inline opacity
-                              link.insertAdjacentElement('afterend', newLock);
-                            }
-                          }
-                        }
-                      }, { once: true });
-                    }
-                    
-                    // Remove class immediately so future hovers work correctly
-                    if (li) li.classList.remove('has-active-form');
-                    active = null;
-                  }
-
-                  document.addEventListener('click', (event) => {
-                    const link = event.target.closest('a.private-link');
-                    const formClicked = active && active.form.contains(event.target);
-
-                    // If clicking inside currently active form, keep it
-                    if (formClicked) {
-                      return;
-                    }
-
-                    // If clicking a non-private link OR outside any link when a form is active, restore.
-                    if (!link || !link.dataset.hash) {
-                      if (active && !event.target.closest('a')) {
-                        restore();
-                      }
-                      return; // Not a private link click, nothing more to do here
-                    }
-
-                    // --- Clicked on a private link --- 
-                    event.preventDefault(); // Prevent default navigation
-
-                    const hash = link.dataset.hash;
-                    const slug = new URL(link.href).pathname;
-                    const storedHash = localStorage.getItem('pw:' + slug);
-
-                    // Check if already authorized
-                    if (storedHash === hash) {
-                      const li = link.closest('.post-item');
-                      const lock = li?.querySelector('.lock');
-                      
-                      // Prevent further clicks
-                      link.style.pointerEvents = 'none';
-                      
-                      if (lock) {
-                        // Make lock visible and show unlock animation
-                        lock.style.opacity = '0.9';
-                        lock.classList.add('unlocking');
-                        
-                        // Quick sequence: Lock > Unlock > Navigate
-                        setTimeout(() => {
-                          // Change to unlocked emoji with a pop effect
-                          lock.textContent = '🔓';
-                          
-                          // Navigate shortly after
-                          setTimeout(() => {
-                            window.location.href = link.href;
-                          }, 400);
-                        }, 180);
-                      } else {
-                        // No lock found, just navigate after a tiny delay
-                        setTimeout(() => {
-                          window.location.href = link.href;
-                        }, 100);
-                      }
-                      
-                      if (li) li.classList.add('has-active-form');
-                      return; // Don't show the password form
-                    }
-
-                    // --- Not authorized, proceed with showing the password form ---
-
-                    // If clicking the *same* link that already has the form, do nothing
-                    if (active && active.link === link) return; 
-
-                    // Restore any previously active form before showing the new one
-                    restore();
-                    
-                    const h2 = link.parentElement;
-                    const li = h2.closest('.post-item'); 
-                    const originalHTML = h2.innerHTML; // Store original H2 content
-                    
-                    // Mark the list item to keep the lock visible
-                    li.classList.add('has-active-form');
-
-                    // Build inline form
-                    const form = document.createElement('form');
-                    form.className = 'inline-pw-form';
-                    form.noValidate = true; // Prevent browser validation UI
-                    form.innerHTML = `
-                      <input type="password" size="12" autofocus style="outline: none;" required />
-                    `;
-
-                    // --- Prepare h2 and lock for form insertion ---
-                    const originalHeight = h2.offsetHeight;
-                    
-                    // Find the original lock icon (might be inside h2 initially)
-                    const lockElement = h2.querySelector('.lock');
-                    let lockClone = null;
-                    if (lockElement) {
-                        lockClone = lockElement.cloneNode(true);
-                        lockElement.remove(); // Remove from h2 before clearing
-                    }
-                    
-                    // Clear h2 but maintain height to prevent layout shift
-                    h2.innerHTML = '';
-                    h2.style.minHeight = originalHeight + 'px';
-                    
-                    // Place the cloned lock onto the LI (outside h2) if it's not already there
-                    if (lockClone && !li.querySelector(':scope > .lock')) { 
-                      li.insertBefore(lockClone, li.firstChild);  
-                    }
-                    
-                    // Create container for form to maintain vertical alignment
-                    const container = document.createElement('span');
-                    container.style.display = 'inline-flex';
-                    container.style.alignItems = 'center';
-                    container.style.height = originalHeight + 'px'; // Ensure consistent height
-
-                    container.appendChild(form);
-                    h2.appendChild(container);
-
-                    // Update active state
-                    active = { link, h2, originalHTML, form };
-
-                    // Add form submit listener
-                    form.addEventListener('submit', (e) => {
-                      e.preventDefault();
-                      const pwInput = form.querySelector('input');
-                      const pw = pwInput.value;
-                      if (!pw) return; // Basic check for empty submission
-                      
-                      const digest = sha256(pw);
-                      if (digest === hash) {
-                        localStorage.setItem('pw:' + slug, hash);
-                        
-                        // Find the lock element
-                        const lockElement = li.querySelector(':scope > .lock');
-                        if (lockElement) {
-                          // Make lock visible and show unlock animation
-                          lockElement.style.opacity = '0.9';
-                          lockElement.classList.add('unlocking');
-                          
-                          // Quick sequence: Lock > Unlock > Navigate
-                          setTimeout(() => {
-                            // Change to unlocked emoji with a pop effect
-                            lockElement.textContent = '🔓';
-                            
-                            // Navigate shortly after
-                            setTimeout(() => {
-                              window.location.href = link.href;
-                            }, 300);
-                          }, 180);
-                        } else {
-                          // No lock found, just navigate
-                          window.location.href = link.href;
-                        }
-                      } else {
-                        // Find the lock element
-                        const lockElement = li.querySelector(':scope > .lock');
-                        if (lockElement) {
-                          // Remove any existing animation classes
-                          lockElement.classList.remove('error');
-                          // Force reflow to restart animation
-                          void lockElement.offsetWidth;
-                          // Add shake animation class
-                          lockElement.classList.add('error');
-                        }
-                        pwInput.value = '';
-                        pwInput.focus();
-                      }
-                    });
-
-                    // Focus the input field
-                    const pwInput = form.querySelector('input');
-                    if(pwInput) pwInput.focus();
-
-                  });
-
-                  // Folder collapse/expand functionality
-                  document.addEventListener('DOMContentLoaded', () => {
-                    // Get all folder headers
-                    const folderHeaders = document.querySelectorAll('.folder-header');
-                    
-                    // Initialize max-heights for smooth animation
-                    folderHeaders.forEach(header => {
-                      const folderGroup = header.closest('.folder-group');
-                      const postList = folderGroup ? folderGroup.querySelector('.post-list') : null;
-                      if (postList) {
-                        if (header.getAttribute('aria-expanded') === 'true') {
-                          postList.style.maxHeight = postList.scrollHeight + 'px';
-                        } else {
-                          postList.style.maxHeight = '0';
-                        }
-                      }
-                    });
-                    
-                    // Add click handlers
-                    folderHeaders.forEach(header => {
-                      header.addEventListener('click', () => {
-                        const isExpanded = header.getAttribute('aria-expanded') === 'true';
-                        const folderGroup = header.closest('.folder-group');
-                        const postList = folderGroup.querySelector('.post-list');
-                        const folderIcon = header.querySelector('.folder-icon');
-                        
-                        if (isExpanded) {
-                          // Collapse
-                          header.setAttribute('aria-expanded', 'false');
-                          if (postList) {
-                            postList.style.maxHeight = '0';
-                          }
-                          // Don't change icon - keep category-specific icon
-                        } else {
-                          // Expand
-                          header.setAttribute('aria-expanded', 'true');
-                          if (postList) {
-                            postList.style.maxHeight = postList.scrollHeight + 'px';
-                          }
-                          // Don't change icon - keep category-specific icon
-                        }
-                        
-                        // Save state to localStorage
-                        const categoryId = folderGroup.dataset.category;
-                        localStorage.setItem(`folder-${categoryId}`, header.getAttribute('aria-expanded'));
-                      });
-                    });
-                    
-                    // State restoration now handled by inline script to prevent FOUC
-                  });
-                  
-                </script>
 			</div>
 			<aside class="sidenotes-area">
 				{/* Sidenotes will go here on relevant pages */}
