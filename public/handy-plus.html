@@ -1011,17 +1011,40 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 	<ul>
 			<li id="review_picture_0" value="0">
 			<div class="accesskey">0</div>
-							<a title="" href="/archived/handy-vid.mp4" class="gallery_thumb track-me track-tracking_place-NewProgramPage track-action-MainImage track-parameter-myVal-7-Zip_1" rel="prog_26187" data-ua="#c,a=MainImage,l=7-Zip 1" onclick="event.preventDefault(); var vid = document.getElementById('handy-video'); vid.requestFullscreen(); vid.controls = true; vid.muted = false;">
-				<video id="handy-video" src="/archived/handy-vid.mp4" width="236" height="165" autoplay loop muted playsinline preload="auto" style="cursor: pointer;"></video>
+							<a title="" href="/handy-plus/demo.mp4" class="gallery_thumb track-me track-tracking_place-NewProgramPage track-action-MainImage track-parameter-myVal-7-Zip_1" rel="prog_26187" data-ua="#c,a=MainImage,l=7-Zip 1" onclick="event.preventDefault(); var vid = document.getElementById('handy-video'); try { vid.removeAttribute('muted'); } catch(e){} vid.muted = false; vid.volume = 1; try { vid.play(); } catch(e){} if (vid.requestFullscreen) { vid.requestFullscreen(); } else if (vid.webkitEnterFullScreen) { vid.webkitEnterFullScreen(); }">
+				<video id="handy-video" src="/handy-plus/demo.mp4" width="236" height="165" autoplay loop muted playsinline preload="auto" style="cursor: pointer;"></video>
 							</a>
 							<script>
 								document.addEventListener('fullscreenchange', function() {
 									var vid = document.getElementById('handy-video');
-									if (!document.fullscreenElement) {
+									if (document.fullscreenElement) {
+										// Entering fullscreen - enable controls and audio
+										vid.controls = true;
+										try { vid.removeAttribute('muted'); } catch(e){}
+										vid.muted = false;
+										vid.volume = 1;
+										try { vid.play(); } catch(e){}
+									} else {
+										// Exiting fullscreen - disable controls and mute
 										vid.controls = false;
 										vid.muted = true;
 									}
 								});
+								// iOS Safari fullscreen events
+								(function(){
+									var vid = document.getElementById('handy-video');
+									if (!vid) return;
+									vid.addEventListener('webkitbeginfullscreen', function(){
+										try { vid.removeAttribute('muted'); } catch(e){}
+										vid.muted = false;
+										vid.volume = 1;
+										try { vid.play(); } catch(e){}
+									});
+									vid.addEventListener('webkitendfullscreen', function(){
+										vid.controls = false;
+										vid.muted = true;
+									});
+								})();
 							</script>
 						</li>
 			<li id="review_picture_1" value="1">
