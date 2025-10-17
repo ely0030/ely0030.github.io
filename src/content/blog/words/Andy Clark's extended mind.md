@@ -1,5 +1,5 @@
 ---
-title: Andy Clark's extended mind thesis
+title: Andy Clark's extended mind
 description: How tools and environment can constitute parts of cognition
 pubDate: 2025-09-11
 category: words
