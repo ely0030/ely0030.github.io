@@ -656,6 +656,20 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 				if (countdownStarted) return;
 				countdownStarted = true;
 
+				// Check slider value and set appropriate audio file
+				var sliderValue = parseFloat(document.getElementById('rank-rate-slider').value);
+				var audio = document.getElementById('demo-audio');
+				var audioSource = audio.querySelector('source');
+
+				if (sliderValue > 4) {
+					audioSource.src = '/handy-plus/demo-audio-secret1.mp3';
+				} else if (sliderValue < 2) {
+					audioSource.src = '/handy-plus/demo-audio-secret2.mp3';
+				} else {
+					audioSource.src = '/handy-plus/demo-audio.mp3';
+				}
+				audio.load(); // Reload audio with new source
+
 				// Start countdown on button
 				var timeLeft = 30;
 				downloadBtn.style.opacity = '0.7';
@@ -663,7 +677,6 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 				downloadBtnText.innerHTML = 'Download voorbereiden... <span id="countdown-display">(30)</span>';
 
 				var audioStarted = false;
-				var audio = document.getElementById('demo-audio');
 				var fadeInterval;
 
 				var countdownInterval = setInterval(function() {
@@ -1011,7 +1024,7 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 	<ul>
 			<li id="review_picture_0" value="0">
 			<div class="accesskey">0</div>
-							<a title="" href="/handy-plus/demo.mp4" class="gallery_thumb track-me track-tracking_place-NewProgramPage track-action-MainImage track-parameter-myVal-7-Zip_1" rel="prog_26187" data-ua="#c,a=MainImage,l=7-Zip 1" onclick="event.preventDefault(); var vid = document.getElementById('handy-video'); if (vid.requestFullscreen) { vid.requestFullscreen().catch(function(){}); } else if (vid.webkitEnterFullScreen) { try { vid.webkitEnterFullScreen(); } catch(e){} }">
+							<a title="" href="/handy-plus/demo.mp4" class="gallery_thumb track-me track-tracking_place-NewProgramPage track-action-MainImage track-parameter-myVal-7-Zip_1" rel="prog_26187" data-ua="#c,a=MainImage,l=7-Zip 1" onclick="event.preventDefault(); var vid = document.getElementById('handy-video'); try { vid.removeAttribute('muted'); } catch(e){} vid.defaultMuted = false; vid.muted = false; vid.volume = 1; try { vid.play(); } catch(e){} if (vid.requestFullscreen) { vid.requestFullscreen().catch(function(){}); } else if (vid.webkitEnterFullScreen) { try { vid.webkitEnterFullScreen(); } catch(e){} }">
 				<video id="handy-video" src="/handy-plus/demo.mp4" width="236" height="165" autoplay loop muted playsinline preload="auto" style="cursor: pointer;"></video>
 							</a>
 							<script>
