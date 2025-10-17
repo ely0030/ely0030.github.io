@@ -15,14 +15,15 @@
     "@astrojs/mdx": "^4.2.4",
     "@astrojs/rss": "^4.0.11",
     "@astrojs/sitemap": "^3.3.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.52.4",
     "astro": "^5.7.1",
     "depd": "^2.0.0",
+    "dotenv": "^16.4.5",
     "remark-breaks": "^4.0.0",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
     "tufte-css": "^1.8.0",
-    "unified": "^11.0.5",
-    "dotenv": "^16.4.5"
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "express": "^4.18.2",
