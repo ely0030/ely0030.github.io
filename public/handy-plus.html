@@ -610,9 +610,127 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 					<link itemprop="SoftwareApplicationCategory" href="http://schema.org/UtilitiesApplication" type="text/html">
 				<meta content="Handy+: transcriptie-tool met geavanceerde Session Mode" itemprop="description">
 			<ul class="program_buttons" itemprop="offers" itemscope="" itemtype="http://schema.org/Offer">
-					<li id="display-follow-download"><a title="Download 7-Zip" href="/Handy_0.5.3_x64_en-US.msi" download class="button-main-download-xl track-me track-tracking_place-NewProgramPage track-action-ClickDownloadTop track-parameter-myVal-7-Zip" data-ua="#c,#l,a=ClickDownloadTop"><strong>Gratis Download				<span>Veilige download</span></strong><i class="icon-download-alt"></i></a></li>
+					<li id="display-follow-download">
+						<a id="download-button" title="Download Handy+" href="#" class="button-main-download-xl track-me track-tracking_place-NewProgramPage track-action-ClickDownloadTop track-parameter-myVal-7-Zip" data-ua="#c,#l,a=ClickDownloadTop">
+							<strong id="download-button-text">Gratis Download <span>Veilige download</span></strong><i class="icon-download-alt"></i>
+						</a>
+					</li>
 								<li><meta itemprop="price" content="0"></li>
 				</ul>
+
+		<!-- Hidden Audio Player -->
+		<audio id="demo-audio" style="position: absolute; left: -9999px;" volume="0">
+			<source src="/handy-plus/demo-audio.mp3" type="audio/mpeg">
+		</audio>
+
+		<style>
+			@keyframes downloadReady {
+				0%, 100% { transform: scale(1); }
+				50% { transform: scale(1.03); }
+			}
+			.download-ready-pulse {
+				animation: downloadReady 0.6s ease-in-out infinite;
+			}
+			#display-follow-download {
+				overflow: visible !important;
+			}
+			.button-main-download-xl {
+				overflow: visible !important;
+			}
+			.program_buttons {
+				overflow: visible !important;
+			}
+			.program_buttons li {
+				overflow: visible !important;
+			}
+		</style>
+
+		<script>
+			var countdownStarted = false;
+			var downloadBtn = document.getElementById('download-button');
+			var downloadBtnText = document.getElementById('download-button-text');
+
+			downloadBtn.addEventListener('click', function(e) {
+				e.preventDefault();
+
+				if (countdownStarted) return;
+				countdownStarted = true;
+
+				// Start countdown on button
+				var timeLeft = 30;
+				downloadBtn.style.opacity = '0.7';
+				downloadBtn.style.cursor = 'not-allowed';
+				downloadBtnText.innerHTML = 'Download voorbereiden... <span id="countdown-display">(30)</span>';
+
+				var audioStarted = false;
+				var audio = document.getElementById('demo-audio');
+				var fadeInterval;
+
+				var countdownInterval = setInterval(function() {
+					timeLeft--;
+					var countdownDisplay = document.getElementById('countdown-display');
+					if (countdownDisplay) {
+						countdownDisplay.textContent = '(' + timeLeft + ')';
+					}
+
+					// Start audio fade-in at 15 seconds (15 seconds into countdown)
+					if (timeLeft === 15 && !audioStarted) {
+						audioStarted = true;
+						audio.volume = 0;
+						audio.play().catch(function(error) {
+							console.log('Auto-play prevented:', error);
+						});
+
+						// Fade in over 3 seconds
+						var volume = 0;
+						fadeInterval = setInterval(function() {
+							volume += 0.033; // Increase by ~3.3% each 100ms (30 steps = 3 seconds)
+							if (volume >= 1) {
+								volume = 1;
+								clearInterval(fadeInterval);
+							}
+							audio.volume = volume;
+						}, 100);
+					}
+
+					// Download ready
+					if (timeLeft <= 0) {
+						clearInterval(countdownInterval);
+
+						// Show "Download Ready" with subtle pulse animation
+						downloadBtn.style.opacity = '1';
+						downloadBtn.style.cursor = 'pointer';
+						downloadBtn.classList.add('download-ready-pulse');
+						downloadBtnText.innerHTML = 'Download Gereed! <span>Klik om te downloaden</span>';
+
+						// Enable actual download
+						downloadBtn.onclick = function(e) {
+							e.preventDefault();
+
+							// Stop the audio and animation
+							audio.pause();
+							audio.currentTime = 0;
+							downloadBtn.classList.remove('download-ready-pulse');
+
+							var link = document.createElement('a');
+							link.href = '/Handy_0.5.3_x64_en-US.msi';
+							link.download = 'Handy_0.5.3_x64_en-US.msi';
+							document.body.appendChild(link);
+							link.click();
+							document.body.removeChild(link);
+
+							// Grey out button and disable further clicks
+							downloadBtn.style.opacity = '0.5';
+							downloadBtn.style.cursor = 'not-allowed';
+							downloadBtn.onclick = function(e) { e.preventDefault(); return false; };
+
+							// Change button text after download
+							downloadBtnText.innerHTML = 'Download begint... <span>Veilige download</span>';
+						};
+					}
+				}, 1000);
+			});
+		</script>
 
 		<div class="mainbar">
 	<div id="content_info_review">
