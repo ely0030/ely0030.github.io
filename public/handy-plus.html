@@ -893,9 +893,18 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 	<ul>
 			<li id="review_picture_0" value="0">
 			<div class="accesskey">0</div>
-							<a title="" href="/archived/handy-vid.mp4" class="gallery_thumb track-me track-tracking_place-NewProgramPage track-action-MainImage track-parameter-myVal-7-Zip_1" rel="prog_26187" data-ua="#c,a=MainImage,l=7-Zip 1">
-				<video src="/archived/handy-vid.mp4" width="236" height="165" controls autoplay loop muted playsinline preload="auto" style="display: block;"></video>
+							<a title="" href="/archived/handy-vid.mp4" class="gallery_thumb track-me track-tracking_place-NewProgramPage track-action-MainImage track-parameter-myVal-7-Zip_1" rel="prog_26187" data-ua="#c,a=MainImage,l=7-Zip 1" onclick="event.preventDefault(); var vid = document.getElementById('handy-video'); vid.requestFullscreen(); vid.controls = true; vid.muted = false;">
+				<video id="handy-video" src="/archived/handy-vid.mp4" width="236" height="165" autoplay loop muted playsinline preload="auto" style="cursor: pointer;"></video>
 							</a>
+							<script>
+								document.addEventListener('fullscreenchange', function() {
+									var vid = document.getElementById('handy-video');
+									if (!document.fullscreenElement) {
+										vid.controls = false;
+										vid.muted = true;
+									}
+								});
+							</script>
 						</li>
 			<li id="review_picture_1" value="1">
 			<div class="accesskey">1</div>
@@ -952,22 +961,37 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 	</div>
 
 										<div id="review_data" class="track_links">
-												<p>Met de nieuwe <strong>Session Mode</strong> verzamel je meerdere transcripties in één      
-  overzichtelijke weergave. In plaats van elke opname direct te plakken, bouwt
-  <strong>Handy</strong> automatisch een sessie op met <strong>slimme clustering op basis       
-  van tijd</strong>—groepen van transcripties worden samengevoegd als ze binnen 5 minuten       
-  van elkaar plaatsvinden.</p>
+												<p>Met de nieuwe <strong>Session Mode</strong> verzamel je meerdere transcripties in één 
+overzichtelijke weergave. Session Mode brengt fundamentele workflow-verbeteringen die 
+<strong>Handy</strong> transformeren van snelle dicteer-tool naar complete spraak-naar-tekst 
+werkruimte:</p>
 
-  <p>De <strong>kleurgecodeerde overlay</strong> toont je direct in welke modus je zit: roze    
-   voor normale modus, blauw tijdens het verzamelen in een sessie, en rood wanneer
-  paste-mode actief is. De <strong>sessie-viewer</strong> biedt een compleet overzicht met      
-  mogelijkheden om entries te sterren, clusters handmatig te splitsen of samenvoegen, en        
-  <strong>alles in één keer te exporteren</strong> naar markdown, JSON of platte tekst.</p>     
+<p><strong>Nieuwe functionaliteit:</strong></p>
+<ul>
+  <li><strong>Instant re-recording</strong> — start direct een nieuwe opname terwijl de 
+  vorige nog transcribeert</li>
+  <li><strong>Sessieverzameling</strong> — transcripties gaan naar je sessie in plaats van 
+  direct naar je cursor</li>
+  <li><strong>Slimme copy-functie</strong> — onthoudt wat je al gekopieerd hebt; kopieer 
+  alleen nieuwe content zonder duplicaten</li>
+  <li><strong>Overlay side panel</strong> — real-time overzicht van alle entries in je 
+  huidige sessie</li>
+  <li><strong>Sessiemanagement</strong> — naam je sessions, delete entries, toegankelijk 
+  via floating overlay of geïntegreerde settings tab</li>
+  <li><strong>Paste-Mode</strong> — sla het op in de sessie EN plak het waar de muis zit, 
+  tegelijkertijd!</li>
+</ul>
 
-  <p><strong>Session Mode</strong> transformeert Handy van een snelle transcriptie-tool naar    
-   een <strong>volwaardige spraak-naar-tekst werkruimte</strong>, perfect voor het verwerken    
-   van interviews, meetings, of lange opnamesessies waarbij je de volledige context wilt        
-  behouden.</p>
+<p>De <strong>kleurgecodeerde overlay</strong> toont je direct in welke modus je zit: roze 
+voor normale modus, blauw tijdens het verzamelen in een sessie, en rood wanneer paste-mode 
+actief is. De <strong>sessie-viewer</strong> biedt een compleet overzicht met mogelijkheden 
+om entries te sterren, clusters handmatig te splitsen of samenvoegen, en <strong>alles in 
+één keer te exporteren</strong> naar markdown, JSON of platte tekst.</p>
+
+<p><strong>Session Mode</strong> transformeert Handy van een snelle transcriptie-tool naar 
+een <strong>volwaardige spraak-naar-tekst werkruimte</strong>, perfect voor het verwerken 
+van interviews, meetings, of lange opnamesessies waarbij je de volledige context wilt 
+behouden.</p>
 											</div>
 									<h3><strong>Handy+ ondersteunt de volgende gedachten</strong></h3>
 					<p>Creatieve gedachten, Wetenschappelijke gedachten, Kunst gedachten, Movie gedachten, Nederlandse gedachten, Enge gedachten.., Money gedachten</p>
@@ -1235,7 +1259,7 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 								</ul>
 							</dd>
 						</dl>
-											<a title="Download 7-Zip" href="https://ely0030.xyz" class="button-main-download-s track-me track-tracking_place-NewProgramPage track-action-OctopusDownload track-parameter-myVal-7-Zip" data-ua="#c,a=OctopusDownload,l=WinRAR"><strong>Download</strong><i class="icon-download-alt"></i></a>
+											<a title="Download handy+" href="https://ely0030.xyz" class="button-main-download-s track-me track-tracking_place-NewProgramPage track-action-OctopusDownload track-parameter-myVal-7-Zip" data-ua="#c,a=OctopusDownload,l=WinRAR"><strong>Download</strong><i class="icon-download-alt"></i></a>
 										</div>
 									</li>
 								<li id="alternative_2" class="box-related-program alternative ">
@@ -1274,7 +1298,7 @@ __wm.bt(750,27,25,2,"web","http://7-zip.nl.softonic.com/","20140219171328",1996,
 								</ul>
 							</dd>
 						</dl>
-											<a title="Download 7-Zip" href="https://ely0030.xyz" class="button-main-download-s track-me track-tracking_place-NewProgramPage track-action-OctopusDownload track-parameter-myVal-7-Zip" data-ua="#c,a=OctopusDownload,l=PeaZip"><strong>Download</strong><i class="icon-download-alt"></i></a>
+											<a title="Download Handy+" href="https://ely0030.xyz" class="button-main-download-s track-me track-tracking_place-NewProgramPage track-action-OctopusDownload track-parameter-myVal-7-Zip" data-ua="#c,a=OctopusDownload,l=PeaZip"><strong>Download</strong><i class="icon-download-alt"></i></a>
 										</div>
 										<div class="send-compare">
 						<a title="Functies vergelijken en alternatieve programma&#39;s voor 7-Zip bekijken" href="https://ely0030.xyz" class="button-standard-s"><strong>Vergelijk</strong> met Handy+</a>
