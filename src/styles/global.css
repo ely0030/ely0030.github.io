@@ -483,13 +483,13 @@ body.literature.home-hidden aside.sidebar header.site-header:hover nav.site-nav 
 /* Literature keeps About hidden but leaves Home styling identical to index */
 
 /* Responsive adjustments for the layout */
-@media (max-width: 1000px) { 
+@media (max-width: 1000px) {
   .layout-wrapper {
     grid-template-columns: 1fr; /* Stack columns on smaller screens */
     grid-template-areas:
       "sidebar"
       "main"
-      "sidenotes"; 
+      "sidenotes";
     gap: 1em; /* Reduce gap for stacked layout */
     padding: 1em 0.5em; /* Reduce padding for stacked layout */
   }
@@ -510,6 +510,11 @@ body.literature.home-hidden aside.sidebar header.site-header:hover nav.site-nav 
   .sidenotes-area {
     margin-top: 1em;
     padding-left: 0; /* Remove padding when stacked */
+  }
+
+  /* Hide Home link on mobile - users can use browser back button */
+  aside.sidebar header.site-header nav.site-nav div.internal-links a[href="/"] {
+    display: none !important;
   }
 
   body {

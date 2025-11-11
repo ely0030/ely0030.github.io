@@ -188,55 +188,37 @@ import Layout from '../layouts/BlogPost.astro';
 
 		/* Mobile responsive */
 		@media (max-width: 768px) {
-			table, thead, tbody, th, td, tr {
-				display: block;
+			h1 {
+				font-size: 14px;
 			}
 
-			thead {
+			thead th.col-play,
+			thead th.col-modified,
+			thead th.col-size,
+			thead th.col-type {
 				display: none;
 			}
 
-			tbody tr {
-				margin-bottom: 15px;
-				border-bottom: 1px solid #1d1d1f;
-				padding-bottom: 10px;
-				padding-left: 20px;
+			tbody td.col-play {
+				padding-right: 8px;
+			}
+
+			tbody td.col-modified,
+			tbody td.col-size,
+			tbody td.col-type {
+				display: none;
+			}
+
+			.col-name {
+				width: 100%;
 			}
 
 			.play-btn {
-				left: 0;
-				top: 5px;
-				transform: none;
+				font-size: 9px;
 			}
 
-			tbody td {
-				border: none;
-				padding: 3px 0;
-				text-align: left !important;
-			}
-
-			tbody td:before {
-				content: attr(class);
-				font-weight: 600;
-				display: inline-block;
-				width: 100px;
-				text-transform: capitalize;
-			}
-
-			.col-name:before {
-				content: "Name: ";
-			}
-
-			.col-modified:before {
-				content: "Modified: ";
-			}
-
-			.col-size:before {
-				content: "Size: ";
-			}
-
-			.col-type:before {
-				content: "Type: ";
+			.playing .play-btn {
+				left: -1px;
 			}
 		}
 	</style>
@@ -259,7 +241,7 @@ import Layout from '../layouts/BlogPost.astro';
 				if (currentRow === row) {
 					if (audioPlayer.paused) {
 						audioPlayer.play();
-						button.textContent = '⏸';
+						button.textContent = '❚❚';
 						row.classList.add('playing');
 					} else {
 						audioPlayer.pause();
@@ -275,7 +257,7 @@ import Layout from '../layouts/BlogPost.astro';
 
 					audioPlayer.src = audioSrc;
 					audioPlayer.play();
-					button.textContent = '⏸';
+					button.textContent = '❚❚';
 					row.classList.add('playing');
 
 					currentRow = row;
@@ -303,7 +285,7 @@ import Layout from '../layouts/BlogPost.astro';
 		// Update button state when audio plays
 		audioPlayer.addEventListener('play', () => {
 			if (currentButton) {
-				currentButton.textContent = '⏸';
+				currentButton.textContent = '❚❚';
 				currentRow?.classList.add('playing');
 			}
 		});
