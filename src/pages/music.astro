@@ -1,0 +1,311 @@
+---
+import Layout from '../layouts/BlogPost.astro';
+---
+
+<Layout
+	title="Music Downloads"
+	description="Free MP3 downloads and unreleased tracks"
+	pubDate={new Date()}
+	pageType="literature"
+>
+	<div class="directory-listing">
+		<h1>Index of /music</h1>
+		<hr>
+
+		<table>
+			<thead>
+				<tr>
+					<th class="col-play"></th>
+					<th class="col-name">Name</th>
+					<th class="col-modified">Last modified</th>
+					<th class="col-size">Size</th>
+					<th class="col-type">Type</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="parent">
+					<td class="col-play"></td>
+					<td class="col-name"><a href="/">..</a></td>
+					<td class="col-modified">-</td>
+					<td class="col-size">-</td>
+					<td class="col-type">Directory</td>
+				</tr>
+				<tr class="file" data-audio-src="/music/Root_of_all_Evil_live.mp3">
+					<td class="col-play">
+						<button class="play-btn" aria-label="Play Root of all Evil live">▶</button>
+					</td>
+					<td class="col-name">
+						<a href="/music/root-of-all-evil/">Root_of_all_Evil_live.mp3</a>
+					</td>
+					<td class="col-modified">2025-11-10 09:51</td>
+					<td class="col-size">11.75M</td>
+					<td class="col-type">audio/mpeg</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<hr>
+
+		<audio id="audio-player" preload="metadata"></audio>
+	</div>
+
+	<style>
+		.directory-listing {
+			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
+			font-size: 13px;
+			line-height: 1.6;
+			max-width: 100%;
+		}
+
+		h1 {
+			font-size: 16px;
+			font-weight: 400;
+			margin: 0 0 10px 0;
+			color: #1d1d1f;
+			letter-spacing: 0;
+		}
+
+		hr {
+			border: none;
+			border-top: 1px solid #1d1d1f;
+			margin: 10px 0 20px 0;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 0;
+		}
+
+		thead th {
+			text-align: left;
+			font-weight: 400;
+			padding: 8px 16px 8px 0;
+			color: #1d1d1f;
+			border-bottom: 1px solid #1d1d1f;
+			font-size: 13px;
+			letter-spacing: 0;
+		}
+
+		thead th.col-play {
+			width: 20px;
+			padding: 0;
+			border: none;
+		}
+
+		tbody td {
+			padding: 8px 16px 8px 0;
+			color: #1d1d1f;
+			border-bottom: 1px solid #e5e5e5;
+			font-size: 13px;
+		}
+
+		tbody td.col-play {
+			width: 20px;
+			padding: 0 10px 0 0;
+			border: none;
+			background: none !important;
+		}
+
+		tbody tr:last-child td {
+			border-bottom: none;
+		}
+
+		.col-name {
+			width: 50%;
+		}
+
+		.col-modified {
+			width: 20%;
+		}
+
+		.col-size {
+			width: 15%;
+			text-align: right;
+		}
+
+		.col-type {
+			width: 15%;
+		}
+
+		.play-btn {
+			background: none;
+			border: none;
+			color: #1d1d1f;
+			font-size: 10px;
+			cursor: pointer;
+			padding: 0;
+			margin: 0;
+			width: 12px;
+			height: auto;
+			line-height: 1;
+			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
+			text-align: left;
+			display: inline-block;
+			position: relative;
+		}
+
+		.play-btn:hover {
+			opacity: 0.6;
+		}
+
+		.play-btn:focus {
+			outline: none;
+		}
+
+		.playing .play-btn {
+			left: -2px;
+		}
+
+		#audio-player {
+			display: none;
+		}
+
+		a {
+			color: #1d1d1f;
+			text-decoration: none;
+			border-bottom: 1px solid transparent;
+			transition: border-bottom-color 0.15s ease;
+		}
+
+		a:hover {
+			border-bottom-color: #1d1d1f;
+		}
+
+		.parent a {
+			font-weight: 600;
+		}
+
+		.preview-section {
+			margin-top: 30px;
+		}
+
+		.audio-preview {
+			width: 100%;
+			max-width: 600px;
+			height: 32px;
+		}
+
+		/* Mobile responsive */
+		@media (max-width: 768px) {
+			table, thead, tbody, th, td, tr {
+				display: block;
+			}
+
+			thead {
+				display: none;
+			}
+
+			tbody tr {
+				margin-bottom: 15px;
+				border-bottom: 1px solid #1d1d1f;
+				padding-bottom: 10px;
+				padding-left: 20px;
+			}
+
+			.play-btn {
+				left: 0;
+				top: 5px;
+				transform: none;
+			}
+
+			tbody td {
+				border: none;
+				padding: 3px 0;
+				text-align: left !important;
+			}
+
+			tbody td:before {
+				content: attr(class);
+				font-weight: 600;
+				display: inline-block;
+				width: 100px;
+				text-transform: capitalize;
+			}
+
+			.col-name:before {
+				content: "Name: ";
+			}
+
+			.col-modified:before {
+				content: "Modified: ";
+			}
+
+			.col-size:before {
+				content: "Size: ";
+			}
+
+			.col-type:before {
+				content: "Type: ";
+			}
+		}
+	</style>
+
+	<script>
+		const audioPlayer = document.getElementById('audio-player');
+		const playButtons = document.querySelectorAll('.play-btn');
+		let currentRow = null;
+		let currentButton = null;
+
+		playButtons.forEach(button => {
+			button.addEventListener('click', (e) => {
+				e.preventDefault();
+				const row = button.closest('tr');
+				const audioSrc = row.getAttribute('data-audio-src');
+
+				if (!audioSrc) return;
+
+				// If clicking the currently playing track
+				if (currentRow === row) {
+					if (audioPlayer.paused) {
+						audioPlayer.play();
+						button.textContent = '⏸';
+						row.classList.add('playing');
+					} else {
+						audioPlayer.pause();
+						button.textContent = '▶';
+						row.classList.remove('playing');
+					}
+				} else {
+					// Stop current track and play new one
+					if (currentButton) {
+						currentButton.textContent = '▶';
+						currentRow?.classList.remove('playing');
+					}
+
+					audioPlayer.src = audioSrc;
+					audioPlayer.play();
+					button.textContent = '⏸';
+					row.classList.add('playing');
+
+					currentRow = row;
+					currentButton = button;
+				}
+			});
+		});
+
+		// Reset button when audio ends
+		audioPlayer.addEventListener('ended', () => {
+			if (currentButton) {
+				currentButton.textContent = '▶';
+				currentRow?.classList.remove('playing');
+			}
+		});
+
+		// Update button state when audio is paused externally
+		audioPlayer.addEventListener('pause', () => {
+			if (currentButton && !audioPlayer.ended) {
+				currentButton.textContent = '▶';
+				currentRow?.classList.remove('playing');
+			}
+		});
+
+		// Update button state when audio plays
+		audioPlayer.addEventListener('play', () => {
+			if (currentButton) {
+				currentButton.textContent = '⏸';
+				currentRow?.classList.add('playing');
+			}
+		});
+	</script>
+</Layout>

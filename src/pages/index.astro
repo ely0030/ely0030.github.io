@@ -24,7 +24,7 @@ const postsByCategory = posts.reduce((acc, post) => {
   return acc;
 }, {});
 
-// Add downloads category for Handy+
+// Add downloads category for Handy+ and Music
 if (!postsByCategory['downloads']) {
   postsByCategory['downloads'] = [];
 }
@@ -36,6 +36,15 @@ postsByCategory['downloads'].push({
     category: 'downloads'
   },
   isArchived: true
+});
+postsByCategory['downloads'].push({
+  id: 'music',
+  data: {
+    title: 'music',
+    pubDate: new Date(),
+    category: 'downloads'
+  },
+  isArchived: false
 });
 
 // Sort categories alphabetically
