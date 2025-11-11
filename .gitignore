@@ -35,11 +35,10 @@ src/content/blog/.obsidian/
 # Large local installer - keep out of repo
 node-installer.msi
 
-# Large media files - music downloads
-public/music/*.mp3
-public/music/*.wav
-public/music/*.flac
-!public/music/.gitkeep
+# Large media files - music downloads (keep small collection, exclude if it grows)
+# public/music/*.mp3
+# public/music/*.wav
+# public/music/*.flac
 
 # Logs
 *.log
