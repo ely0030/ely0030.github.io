@@ -118,3 +118,6 @@ certs/
 
 # ClaudePoint checkpoint system
 .claudepoint/
+
+# Local Netlify folder
+.netlify

@@ -1,5 +1,160 @@
 ---
 import Layout from '../layouts/BlogPost.astro';
+
+// Manual track list with external URLs
+// All files hosted on Catbox - no local file system scanning
+const tracks = [
+	{
+		name: 'Be My Glock.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/tia4sx.mp3',
+		size: '8.4mb',
+		modified: '12.11.25 10:29'
+	},
+	{
+		name: 'Bel Air Hotel.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/as08h7.mp3',
+		size: '8.8mb',
+		modified: '12.11.25 10:32'
+	},
+	{
+		name: 'Cant.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/qnr67h.mp3',
+		size: '8.45mb',
+		modified: '12.11.25 15:30'
+	},
+	{
+		name: "c'est la vie.mp3",
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/v99y5h.mp3',
+		size: '4.6mb',
+		modified: '5.7.24 22:40'
+	},
+	{
+		name: "D'angelo - Inst. #5 (rare).mp3",
+		artist: "D'Angelo",
+		url: 'https://files.catbox.moe/3jy7bb.mp3',
+		size: '7.2mb',
+		modified: '26.10.24 18:04'
+	},
+	{
+		name: 'Danny Scissorhands.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/shirg1.mp3',
+		size: '~8mb',
+		modified: '12.11.25 16:00'
+	},
+	{
+		name: 'DNA.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/an2j6r.mp3',
+		size: '6.0mb',
+		modified: '13.3.25 00:00'
+	},
+	{
+		name: 'Easy.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/82k6va.mp3',
+		size: '5.0mb',
+		modified: '2.7.24 23:44'
+	},
+	{
+		name: 'Finger.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/9ov7nc.mp3',
+		size: '5.5mb',
+		modified: '12.11.25 10:35'
+	},
+	{
+		name: 'fly you out (2020).mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/o3n3cd.mp3',
+		size: '5.7mb',
+		modified: '3.7.24 03:29'
+	},
+	{
+		name: 'Girls Lie Too.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/nw677u.mp3',
+		size: '4.0mb',
+		modified: '12.11.25 10:24'
+	},
+	{
+		name: 'Its Not Your Fault (2022).mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/g1g6ud.mp3',
+		size: '9.0mb',
+		modified: '12.11.25 10:37'
+	},
+	{
+		name: 'Jealousy.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/2vhi4p.mp3',
+		size: '5.5mb',
+		modified: '5.9.24 00:00'
+	},
+	{
+		name: 'Me And You (ROUGH).mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/nah41b.mp3',
+		size: '2.1mb',
+		modified: '12.11.25 10:30'
+	},
+	{
+		name: 'On My Own.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/it86km.mp3',
+		size: '9.9mb',
+		modified: '12.11.25 10:25'
+	},
+	{
+		name: 'Pestilence.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/vxz22l.mp3',
+		size: '6.1mb',
+		modified: '12.11.25 10:42'
+	},
+	{
+		name: 'PIGALLE.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/im2xps.mp3',
+		size: '11mb',
+		modified: '12.11.25 10:28'
+	},
+	{
+		name: 'Shame.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/h0yv4u.mp3',
+		size: '~8mb',
+		modified: '12.11.25 15:45'
+	},
+	{
+		name: 'Sneaking Around (2024).mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/z8kys1.mp3',
+		size: '7.8mb',
+		modified: '12.11.25 11:38'
+	},
+	{
+		name: 'SUPERPOWERS.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/bqh1yg.mp3',
+		size: '7.2mb',
+		modified: '12.11.25 10:27'
+	},
+	{
+		name: 'TILL THE DAY (ft. Sampha).mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/2kzc78.mp3',
+		size: '12mb',
+		modified: '12.11.25 10:25'
+	}
+];
+
+// Sort alphabetically
+tracks.sort((a, b) => a.name.localeCompare(b.name));
 ---
 
 <Layout
@@ -10,41 +165,42 @@ import Layout from '../layouts/BlogPost.astro';
 >
 	<div class="directory-listing">
 		<h1>Index of /music</h1>
-		<hr>
 
 		<table>
 			<thead>
 				<tr>
 					<th class="col-play"></th>
 					<th class="col-name">Name</th>
+					<th class="col-artist">Artist</th>
 					<th class="col-modified">Last modified</th>
 					<th class="col-size">Size</th>
-					<th class="col-type">Type</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr class="parent">
 					<td class="col-play"></td>
 					<td class="col-name"><a href="/">..</a></td>
+					<td class="col-artist">-</td>
 					<td class="col-modified">-</td>
 					<td class="col-size">-</td>
-					<td class="col-type">Directory</td>
 				</tr>
-				<tr class="file" data-audio-src="/music/Root_of_all_Evil_live.mp3">
-					<td class="col-play">
-						<button class="play-btn" aria-label="Play Root of all Evil live">▶</button>
-					</td>
-					<td class="col-name">
-						<a href="/music/root-of-all-evil/">Root_of_all_Evil_live.mp3</a>
-					</td>
-					<td class="col-modified">2025-11-10 09:51</td>
-					<td class="col-size">11.75M</td>
-					<td class="col-type">audio/mpeg</td>
-				</tr>
+				{tracks.map(track => (
+					<tr class="file" data-audio-src={track.url}>
+						<td class="col-play">
+							<button class="play-btn" aria-label={`Play ${track.name}`}>▶</button>
+						</td>
+						<td class="col-name">
+							{track.name}
+						</td>
+						<td class="col-artist">{track.artist}</td>
+						<td class="col-modified">{track.modified}</td>
+						<td class="col-size">
+							<a href={`/download-proxy/?url=${encodeURIComponent(track.url)}&filename=${encodeURIComponent(track.name)}`} class="size-link" download={track.name}>{track.size}</a>
+						</td>
+					</tr>
+				))}
 			</tbody>
 		</table>
-
-		<hr>
 
 		<audio id="audio-player" preload="metadata"></audio>
 	</div>
@@ -52,23 +208,25 @@ import Layout from '../layouts/BlogPost.astro';
 	<style>
 		.directory-listing {
 			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
-			font-size: 13px;
-			line-height: 1.6;
+			font-size: 12px;
+			line-height: 1.4;
 			max-width: 100%;
 		}
 
 		h1 {
-			font-size: 16px;
+			font-size: 14px;
 			font-weight: 400;
-			margin: 0 0 10px 0;
+			margin: 0 0 8px 0;
 			color: #1d1d1f;
 			letter-spacing: 0;
+			cursor: default;
+			pointer-events: none;
 		}
 
 		hr {
 			border: none;
 			border-top: 1px solid #1d1d1f;
-			margin: 10px 0 20px 0;
+			margin: 8px 0 12px 0;
 		}
 
 		table {
@@ -80,29 +238,29 @@ import Layout from '../layouts/BlogPost.astro';
 		thead th {
 			text-align: left;
 			font-weight: 400;
-			padding: 8px 16px 8px 0;
+			padding: 4px 12px 4px 0;
 			color: #1d1d1f;
 			border-bottom: 1px solid #1d1d1f;
-			font-size: 13px;
+			font-size: 11px;
 			letter-spacing: 0;
 		}
 
 		thead th.col-play {
-			width: 20px;
+			width: 18px;
 			padding: 0;
 			border: none;
 		}
 
 		tbody td {
-			padding: 8px 16px 8px 0;
+			padding: 5px 12px 5px 0;
 			color: #1d1d1f;
 			border-bottom: 1px solid #e5e5e5;
-			font-size: 13px;
+			font-size: 12px;
 		}
 
 		tbody td.col-play {
-			width: 20px;
-			padding: 0 10px 0 0;
+			width: 18px;
+			padding: 0 8px 0 0;
 			border: none;
 			background: none !important;
 		}
@@ -112,31 +270,46 @@ import Layout from '../layouts/BlogPost.astro';
 		}
 
 		.col-name {
-			width: 50%;
+			width: 38%;
+		}
+
+		.col-artist {
+			width: 18%;
+			white-space: nowrap;
+			padding-right: 25px !important;
 		}
 
 		.col-modified {
-			width: 20%;
+			width: 22%;
+			white-space: nowrap;
 		}
 
 		.col-size {
-			width: 15%;
+			width: 12%;
 			text-align: right;
 		}
 
-		.col-type {
-			width: 15%;
+		.size-link {
+			color: #0066CC;
+			text-decoration: none;
+			border-bottom: 1px solid transparent;
+			transition: all 0.2s ease;
+		}
+
+		.size-link:hover {
+			border-bottom-color: #0066CC;
+			opacity: 0.8;
 		}
 
 		.play-btn {
 			background: none;
 			border: none;
 			color: #1d1d1f;
-			font-size: 10px;
+			font-size: 9px;
 			cursor: pointer;
 			padding: 0;
 			margin: 0;
-			width: 12px;
+			width: 10px;
 			height: auto;
 			line-height: 1;
 			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
@@ -154,7 +327,7 @@ import Layout from '../layouts/BlogPost.astro';
 		}
 
 		.playing .play-btn {
-			left: -2px;
+			left: -1px;
 		}
 
 		#audio-player {
@@ -176,6 +349,14 @@ import Layout from '../layouts/BlogPost.astro';
 			font-weight: 600;
 		}
 
+		.parent td {
+			text-align: center;
+		}
+
+		.parent .col-name {
+			text-align: left;
+		}
+
 		.preview-section {
 			margin-top: 30px;
 		}
@@ -189,23 +370,23 @@ import Layout from '../layouts/BlogPost.astro';
 		/* Mobile responsive */
 		@media (max-width: 1000px) {
 			h1 {
-				font-size: 14px;
+				font-size: 13px;
 			}
 
 			thead th.col-play,
+			thead th.col-artist,
 			thead th.col-modified,
-			thead th.col-size,
-			thead th.col-type {
+			thead th.col-size {
 				display: none;
 			}
 
 			tbody td.col-play {
-				padding-right: 8px;
+				padding-right: 6px;
 			}
 
+			tbody td.col-artist,
 			tbody td.col-modified,
-			tbody td.col-size,
-			tbody td.col-type {
+			tbody td.col-size {
 				display: none;
 			}
 
@@ -214,7 +395,7 @@ import Layout from '../layouts/BlogPost.astro';
 			}
 
 			.play-btn {
-				font-size: 9px;
+				font-size: 8px;
 			}
 
 			.playing .play-btn {
@@ -289,5 +470,26 @@ import Layout from '../layouts/BlogPost.astro';
 				currentRow?.classList.add('playing');
 			}
 		});
+
+		// Register service worker for download proxy
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/download-sw.js')
+				.then(registration => {
+					console.log('[Download SW] Registered:', registration);
+
+					// If service worker is installing for first time
+					if (registration.installing) {
+						console.log('[Download SW] Installing... Downloads will work after refresh.');
+					}
+
+					// Wait for service worker to be ready
+					navigator.serviceWorker.ready.then(() => {
+						console.log('[Download SW] Ready! Downloads will stream instantly.');
+					});
+				})
+				.catch(error => {
+					console.error('[Download SW] Registration failed:', error);
+				});
+		}
 	</script>
 </Layout>

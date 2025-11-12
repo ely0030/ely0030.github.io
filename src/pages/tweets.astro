@@ -1,0 +1,112 @@
+---
+import Layout from '../layouts/BlogPost.astro';
+---
+
+<Layout
+	title="Saved Tweets"
+	description="Collection of tweets I like"
+	pubDate={new Date()}
+	pageType="literature2"
+>
+	<div class="tweets-listing">
+		<h1>Index of /tweets</h1>
+		<hr>
+
+		<div class="tweet-container">
+			<blockquote class="twitter-tweet" data-theme="light" data-dnt="true">
+				<p lang="en" dir="ltr">
+					<a href="https://x.com/0xaporia/status/1987812367615381647">View tweet</a>
+				</p>
+				&mdash; <a href="https://twitter.com/0xaporia">@0xaporia</a>
+			</blockquote>
+		</div>
+	</div>
+
+	<style>
+		.tweets-listing {
+			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
+			font-size: 13px;
+			line-height: 1.6;
+			max-width: 100%;
+		}
+
+		h1 {
+			font-size: 16px;
+			font-weight: 400;
+			margin: 0 0 10px 0;
+			color: #1d1d1f;
+			letter-spacing: 0;
+			cursor: default;
+			pointer-events: none;
+		}
+
+		hr {
+			border: none;
+			border-top: 1px solid #1d1d1f;
+			margin: 10px 0 20px 0;
+		}
+
+		.tweet-container {
+			margin: 20px 0;
+			display: flex;
+			flex-direction: column;
+			gap: 30px;
+		}
+
+		/* Override Twitter embed styles to match site aesthetic */
+		:global(.twitter-tweet) {
+			margin: 0 !important;
+			max-width: 550px !important;
+		}
+
+		/* Mobile responsive */
+		@media (max-width: 1000px) {
+			h1 {
+				font-size: 14px;
+			}
+
+			:global(.twitter-tweet) {
+				max-width: 100% !important;
+			}
+		}
+	</style>
+
+	<script is:inline>
+		// Extend Window interface for twttr
+		window.twttrLoadAttempts = window.twttrLoadAttempts || 0;
+
+		function loadTwitterWidget() {
+			// Check if already loaded
+			if (window.twttr) {
+				window.twttr.widgets.load();
+				return;
+			}
+
+			// Prevent multiple load attempts
+			if (window.twttrLoadAttempts > 0) {
+				return;
+			}
+			window.twttrLoadAttempts++;
+
+			// Create and load script
+			const script = document.createElement('script');
+			script.src = 'https://platform.twitter.com/widgets.js';
+			script.async = true;
+			script.charset = 'utf-8';
+
+			// Error handling
+			script.onerror = function() {
+				console.warn('Failed to load Twitter widgets script');
+			};
+
+			document.body.appendChild(script);
+		}
+
+		// Wait for DOM to be ready
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', loadTwitterWidget);
+		} else {
+			loadTwitterWidget();
+		}
+	</script>
+</Layout>

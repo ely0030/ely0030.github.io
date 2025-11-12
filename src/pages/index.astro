@@ -46,6 +46,15 @@ postsByCategory['downloads'].push({
   },
   isArchived: false
 });
+postsByCategory['downloads'].push({
+  id: 'tweets',
+  data: {
+    title: 'tweets',
+    pubDate: new Date(),
+    category: 'downloads'
+  },
+  isArchived: false
+});
 
 // Sort categories alphabetically
 const sortedCategories = Object.keys(postsByCategory).sort();
