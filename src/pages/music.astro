@@ -475,57 +475,14 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 		});
 
-		// Register service worker for download proxy
-		if ('serviceWorker' in navigator) {
-			// Disable download links until SW is ready
-			const downloadLinks = document.querySelectorAll('.size-link');
-			let swReady = false;
+		// Detect mobile
+		const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 1000;
 
-			downloadLinks.forEach(link => {
-				link.style.opacity = '0.5';
-				link.style.pointerEvents = 'none';
-				link.title = 'Preparing downloads...';
-			});
+		const downloadLinks = document.querySelectorAll('.size-link');
 
-			navigator.serviceWorker.register('/download-sw.js')
-				.then(registration => {
-					console.log('[Download SW] Registered:', registration);
-
-					// Wait for service worker to be ready
-					return navigator.serviceWorker.ready;
-				})
-				.then(() => {
-					console.log('[Download SW] Ready! Downloads enabled.');
-					swReady = true;
-
-					// Enable download links
-					downloadLinks.forEach(link => {
-						link.style.opacity = '1';
-						link.style.pointerEvents = 'auto';
-						link.title = 'Download';
-					});
-				})
-				.catch(error => {
-					console.error('[Download SW] Registration failed:', error);
-					console.log('[Download SW] Falling back to direct downloads');
-
-					// Fallback: change links to direct Catbox URLs
-					downloadLinks.forEach(link => {
-						const url = new URL(link.href);
-						const fileUrl = url.searchParams.get('url');
-						if (fileUrl) {
-							link.href = fileUrl;
-							link.target = '_blank';
-						}
-						link.style.opacity = '1';
-						link.style.pointerEvents = 'auto';
-						link.title = 'Download (opens in new tab)';
-					});
-				});
-		} else {
-			// No service worker support - use direct links
-			console.log('[Download SW] Service workers not supported');
-			const downloadLinks = document.querySelectorAll('.size-link');
+		if (isMobile) {
+			// Mobile: use direct Catbox links (simpler, more reliable)
+			console.log('[Downloads] Mobile detected - using direct links');
 			downloadLinks.forEach(link => {
 				const url = new URL(link.href);
 				const fileUrl = url.searchParams.get('url');
@@ -533,8 +490,61 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					link.href = fileUrl;
 					link.target = '_blank';
 				}
-				link.title = 'Download (opens in new tab)';
+				link.title = 'Download';
 			});
+		} else {
+			// Desktop: use service worker for instant downloads
+			if ('serviceWorker' in navigator) {
+				// Disable download links until SW is ready
+				downloadLinks.forEach(link => {
+					link.style.opacity = '0.5';
+					link.style.pointerEvents = 'none';
+					link.title = 'Preparing downloads...';
+				});
+
+				navigator.serviceWorker.register('/download-sw.js')
+					.then(registration => {
+						console.log('[Download SW] Registered:', registration);
+						return navigator.serviceWorker.ready;
+					})
+					.then(() => {
+						console.log('[Download SW] Ready! Downloads enabled.');
+						downloadLinks.forEach(link => {
+							link.style.opacity = '1';
+							link.style.pointerEvents = 'auto';
+							link.title = 'Download';
+						});
+					})
+					.catch(error => {
+						console.error('[Download SW] Registration failed:', error);
+						console.log('[Download SW] Falling back to direct downloads');
+
+						// Fallback: change links to direct Catbox URLs
+						downloadLinks.forEach(link => {
+							const url = new URL(link.href);
+							const fileUrl = url.searchParams.get('url');
+							if (fileUrl) {
+								link.href = fileUrl;
+								link.target = '_blank';
+							}
+							link.style.opacity = '1';
+							link.style.pointerEvents = 'auto';
+							link.title = 'Download (opens in new tab)';
+						});
+					});
+			} else {
+				// No service worker support - use direct links
+				console.log('[Download SW] Service workers not supported');
+				downloadLinks.forEach(link => {
+					const url = new URL(link.href);
+					const fileUrl = url.searchParams.get('url');
+					if (fileUrl) {
+						link.href = fileUrl;
+						link.target = '_blank';
+					}
+					link.title = 'Download (opens in new tab)';
+				});
+			}
 		}
 	</script>
 </Layout>
