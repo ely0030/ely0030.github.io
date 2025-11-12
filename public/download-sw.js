@@ -1,7 +1,7 @@
 // Service Worker: Download Proxy
 // Intercepts download requests and adds Content-Disposition headers for instant downloads
 
-const CACHE_NAME = 'download-proxy-v1';
+const CACHE_NAME = 'download-proxy-v2';
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -48,17 +48,31 @@ async function handleDownload(request) {
 	try {
 		console.log(`[Download SW] Fetching: ${fileUrl}`);
 
-		// Fetch the file from Catbox
-		const response = await fetch(fileUrl);
+		// Fetch the file from Catbox with no-cors mode
+		const response = await fetch(fileUrl, {
+			mode: 'cors',
+			credentials: 'omit'
+		});
+
+		console.log(`[Download SW] Response status: ${response.status}, type: ${response.type}`);
 
 		if (!response.ok) {
+			console.error(`[Download SW] Fetch failed with status: ${response.status}`);
 			throw new Error(`Fetch failed: ${response.status}`);
+		}
+
+		// Check if we got a valid response
+		if (!response.body) {
+			console.error('[Download SW] No response body');
+			throw new Error('No response body');
 		}
 
 		// Create new response with download headers
 		const headers = new Headers(response.headers);
 		headers.set('Content-Disposition', `attachment; filename="${filename}"`);
 		headers.set('Content-Type', 'audio/mpeg');
+
+		console.log(`[Download SW] Streaming file: ${filename}`);
 
 		// Return the response with modified headers
 		// The body streams through without buffering!

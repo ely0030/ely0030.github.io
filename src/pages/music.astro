@@ -190,7 +190,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 							<button class="play-btn" aria-label={`Play ${track.name}`}>▶</button>
 						</td>
 						<td class="col-name">
-							<a href={`/download-proxy/?url=${encodeURIComponent(track.url)}&filename=${encodeURIComponent(track.name)}`} class="name-link" download={track.name}>{track.name}</a>
+							{track.name}
 						</td>
 						<td class="col-artist">{track.artist}</td>
 						<td class="col-modified">{track.modified}</td>
@@ -289,17 +289,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			text-align: right;
 		}
 
-		.name-link {
-			color: #1d1d1f;
-			text-decoration: none;
-			border-bottom: 1px solid transparent;
-			transition: border-bottom-color 0.15s ease;
-		}
-
-		.name-link:hover {
-			border-bottom-color: #1d1d1f;
-		}
-
 		.size-link {
 			color: #0066CC;
 			text-decoration: none;
@@ -384,14 +373,14 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				font-size: 13px;
 			}
 
-			thead th.col-play,
 			thead th.col-artist,
 			thead th.col-modified {
 				display: none;
 			}
 
 			tbody td.col-play {
-				padding-right: 6px;
+				padding-right: 8px;
+				width: 20px;
 			}
 
 			tbody td.col-artist,
@@ -400,15 +389,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 
 			.col-name {
-				width: 70%;
+				width: 65%;
+				padding-right: 8px;
 			}
 
 			.col-size {
-				width: 20%;
+				width: 25%;
 			}
 
 			.play-btn {
-				font-size: 8px;
+				font-size: 9px;
+				width: 12px;
 			}
 
 			.playing .play-btn {
@@ -486,23 +477,64 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		// Register service worker for download proxy
 		if ('serviceWorker' in navigator) {
+			// Disable download links until SW is ready
+			const downloadLinks = document.querySelectorAll('.size-link');
+			let swReady = false;
+
+			downloadLinks.forEach(link => {
+				link.style.opacity = '0.5';
+				link.style.pointerEvents = 'none';
+				link.title = 'Preparing downloads...';
+			});
+
 			navigator.serviceWorker.register('/download-sw.js')
 				.then(registration => {
 					console.log('[Download SW] Registered:', registration);
 
-					// If service worker is installing for first time
-					if (registration.installing) {
-						console.log('[Download SW] Installing... Downloads will work after refresh.');
-					}
-
 					// Wait for service worker to be ready
-					navigator.serviceWorker.ready.then(() => {
-						console.log('[Download SW] Ready! Downloads will stream instantly.');
+					return navigator.serviceWorker.ready;
+				})
+				.then(() => {
+					console.log('[Download SW] Ready! Downloads enabled.');
+					swReady = true;
+
+					// Enable download links
+					downloadLinks.forEach(link => {
+						link.style.opacity = '1';
+						link.style.pointerEvents = 'auto';
+						link.title = 'Download';
 					});
 				})
 				.catch(error => {
 					console.error('[Download SW] Registration failed:', error);
+					console.log('[Download SW] Falling back to direct downloads');
+
+					// Fallback: change links to direct Catbox URLs
+					downloadLinks.forEach(link => {
+						const url = new URL(link.href);
+						const fileUrl = url.searchParams.get('url');
+						if (fileUrl) {
+							link.href = fileUrl;
+							link.target = '_blank';
+						}
+						link.style.opacity = '1';
+						link.style.pointerEvents = 'auto';
+						link.title = 'Download (opens in new tab)';
+					});
 				});
+		} else {
+			// No service worker support - use direct links
+			console.log('[Download SW] Service workers not supported');
+			const downloadLinks = document.querySelectorAll('.size-link');
+			downloadLinks.forEach(link => {
+				const url = new URL(link.href);
+				const fileUrl = url.searchParams.get('url');
+				if (fileUrl) {
+					link.href = fileUrl;
+					link.target = '_blank';
+				}
+				link.title = 'Download (opens in new tab)';
+			});
 		}
 	</script>
 </Layout>
