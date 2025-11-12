@@ -1,6 +1,6 @@
 # Service Worker Download Proxy
 
-**Last Updated:** 12.11.25 1:22 PM
+**Last Updated:** 12.11.25 1:45 PM
 
 ## The Problem
 
@@ -33,6 +33,16 @@ Browser receives same-origin response → starts download immediately
 File streams through SW to browser (shows native download progress)
 ```
 
+## Mobile vs Desktop Split
+
+**Mobile devices** bypass service worker entirely - use direct Catbox links.
+
+**Why:** Mobile browsers have stricter service worker lifecycle timing. Downloads were failing with 9kb corrupted files when clicked before SW fully initialized.
+
+**Detection:** User agent regex OR screen width ≤ 1000px
+
+**Trade-off:** Mobile opens Catbox page first (extra step) but 100% reliable vs desktop instant downloads that occasionally fail on slow SW init.
+
 ## Files
 
 **`public/download-sw.js`** - Service worker script
@@ -48,12 +58,12 @@ File streams through SW to browser (shows native download progress)
 
 ## Important Non-Obvious Details
 
-### 1. Service Worker Activation
-**First visit:** SW installs but doesn't control the page yet. Downloads work on second load or after manual refresh.
+### 1. Service Worker Activation (Desktop Only)
+**First visit:** SW installs but may not be ready immediately. Download links disabled (50% opacity) until ready.
 
-**Solution used:** `self.skipWaiting()` + `clients.claim()` makes SW activate immediately, but browser still needs one navigation to use it.
+**Solution:** Check `navigator.serviceWorker.ready` before enabling download links. Visual feedback via opacity + pointer-events.
 
-**For production:** Could show "Activating downloads..." banner on first visit.
+**Mobile:** Bypasses this entirely - uses direct links immediately, no SW involved.
 
 ### 2. Response Body Streaming
 ```javascript
@@ -83,23 +93,22 @@ Service worker validates:
 
 ## Production Deployment
 
-**Works on:**
-- Netlify (static hosting + HTTPS)
-- GitHub Pages (static hosting + HTTPS)
-- Any HTTPS static host
+**Desktop:**
+- Netlify, GitHub Pages, any HTTPS static host
+- Requires HTTPS (SW only works in secure contexts)
 
-**Doesn't work on:**
-- HTTP sites (SW requires secure context)
-- File:// protocol (no SW support)
+**Mobile:**
+- Works anywhere (no SW dependency)
+- Direct Catbox links via target="_blank"
 
 Service worker file (`public/download-sw.js`) is served as a static asset, no build configuration needed.
 
 ## Performance
 
-**Before (client-side fetch):** 20-30s wait → download starts
-**After (service worker):** Click → instant browser download with streaming
+**Desktop (service worker):** Click → instant browser download with streaming
+**Mobile (direct link):** Click → Catbox page opens → user downloads from there
 
-User sees browser's native download progress immediately instead of page showing "downloading..." with no feedback.
+Desktop gets instant downloads. Mobile trades one extra tap for 100% reliability.
 
 ## Alternative Considered: Web Workers
 
