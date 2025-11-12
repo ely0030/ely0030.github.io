@@ -190,7 +190,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 							<button class="play-btn" aria-label={`Play ${track.name}`}>▶</button>
 						</td>
 						<td class="col-name">
-							{track.name}
+							<a href={`/download-proxy/?url=${encodeURIComponent(track.url)}&filename=${encodeURIComponent(track.name)}`} class="name-link" download={track.name}>{track.name}</a>
 						</td>
 						<td class="col-artist">{track.artist}</td>
 						<td class="col-modified">{track.modified}</td>
@@ -289,6 +289,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			text-align: right;
 		}
 
+		.name-link {
+			color: #1d1d1f;
+			text-decoration: none;
+			border-bottom: 1px solid transparent;
+			transition: border-bottom-color 0.15s ease;
+		}
+
+		.name-link:hover {
+			border-bottom-color: #1d1d1f;
+		}
+
 		.size-link {
 			color: #0066CC;
 			text-decoration: none;
@@ -375,8 +386,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			thead th.col-play,
 			thead th.col-artist,
-			thead th.col-modified,
-			thead th.col-size {
+			thead th.col-modified {
 				display: none;
 			}
 
@@ -385,13 +395,16 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 
 			tbody td.col-artist,
-			tbody td.col-modified,
-			tbody td.col-size {
+			tbody td.col-modified {
 				display: none;
 			}
 
 			.col-name {
-				width: 100%;
+				width: 70%;
+			}
+
+			.col-size {
+				width: 20%;
 			}
 
 			.play-btn {
