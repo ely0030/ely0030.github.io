@@ -11,7 +11,7 @@ import rehypePrism from 'rehype-prism-plus';
 const isProtectedProxy = !!process.env.LISTEN_PORT; // set by run-dev-protected / proxy flows
 
 export default defineConfig({
-	site: 'https://ely0030.github.io',
+	site: 'https://ely0030.xyz',
 	base: '/',
 	integrations: [mdx({ syntaxHighlight: false }), sitemap()],
 	output: 'static',
