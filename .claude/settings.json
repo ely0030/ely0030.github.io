@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claudepoint-hook --trigger before_bulk_edit --tool MultiEdit"
+          }
+        ]
+      }
+    ]
+  }
+}
