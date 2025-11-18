@@ -26,6 +26,7 @@ Thumbs.db
 src/content/blog/PRIVATE/
 src/content/drafts/
 src/content/blog/.obsidian/
+src/content/blog/_CARL/
 
 # Keep the directory structure but ignore actual content
 # This allows the skeleton to work while keeping articles private
