@@ -207,7 +207,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			</thead>
 			<tbody>
 				<tr class="parent">
-					<td class="col-play"></td>
+					<td class="col-play">
+						<button class="shuffle-btn" aria-label="Toggle shuffle mode">🔀</button>
+					</td>
 					<td class="col-name"><a href="/">..</a></td>
 					<td class="col-artist">-</td>
 					<td class="col-modified">-</td>
@@ -359,6 +361,56 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			left: -1px;
 		}
 
+		.shuffle-btn {
+			background: none;
+			border: none;
+			color: #1d1d1f;
+			font-size: 9px;
+			cursor: pointer;
+			padding: 0;
+			margin: 0;
+			width: 10px;
+			height: auto;
+			line-height: 1;
+			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
+			text-align: left;
+			display: inline-block;
+			position: relative;
+			opacity: 0;
+			transition: opacity 0.2s ease;
+		}
+
+		/* Show on desktop hover */
+		@media (min-width: 1001px) {
+			.parent:hover .shuffle-btn {
+				opacity: 1;
+			}
+
+			/* Always show when shuffle is active */
+			.shuffle-btn.active {
+				opacity: 1;
+			}
+		}
+
+		/* Always show on mobile */
+		@media (max-width: 1000px) {
+			.shuffle-btn {
+				opacity: 1;
+			}
+		}
+
+		.shuffle-btn:hover {
+			opacity: 0.6 !important;
+		}
+
+		.shuffle-btn:focus {
+			outline: none;
+		}
+
+		.shuffle-btn.active {
+			color: #0066CC;
+		}
+
 		#audio-player {
 			display: none;
 		}
@@ -434,14 +486,87 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			.playing .play-btn {
 				left: -1px;
 			}
+
+			.shuffle-btn {
+				font-size: 9px;
+				width: 12px;
+			}
 		}
 	</style>
 
 	<script>
 		const audioPlayer = document.getElementById('audio-player');
 		const playButtons = document.querySelectorAll('.play-btn');
+		const shuffleBtn = document.querySelector('.shuffle-btn');
 		let currentRow = null;
 		let currentButton = null;
+		let shuffleMode = false;
+		let playedTracks = new Set();
+
+		// Get all track rows (excluding parent row)
+		const getAllTrackRows = () => {
+			return Array.from(document.querySelectorAll('tr.file[data-audio-src]'));
+		};
+
+		// Get a random unplayed track
+		const getRandomUnplayedTrack = () => {
+			const allRows = getAllTrackRows();
+			const unplayedRows = allRows.filter(row => {
+				const audioSrc = row.getAttribute('data-audio-src');
+				return !playedTracks.has(audioSrc);
+			});
+
+			// If all tracks have been played, reset the played set
+			if (unplayedRows.length === 0) {
+				playedTracks.clear();
+				console.log('[Shuffle] All tracks played, resetting...');
+				return allRows[Math.floor(Math.random() * allRows.length)];
+			}
+
+			return unplayedRows[Math.floor(Math.random() * unplayedRows.length)];
+		};
+
+		// Play a specific row
+		const playRow = (row) => {
+			if (!row) return;
+
+			const audioSrc = row.getAttribute('data-audio-src');
+			const button = row.querySelector('.play-btn');
+
+			if (!audioSrc || !button) return;
+
+			// Stop current track
+			if (currentButton) {
+				currentButton.textContent = '▶';
+				currentRow?.classList.remove('playing');
+			}
+
+			// Play new track
+			audioPlayer.src = audioSrc;
+			audioPlayer.play();
+			button.textContent = '❚❚';
+			row.classList.add('playing');
+
+			currentRow = row;
+			currentButton = button;
+
+			// Track this song as played
+			playedTracks.add(audioSrc);
+		};
+
+		// Toggle shuffle mode
+		shuffleBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			shuffleMode = !shuffleMode;
+
+			if (shuffleMode) {
+				shuffleBtn.classList.add('active');
+				console.log('[Shuffle] Shuffle mode ON');
+			} else {
+				shuffleBtn.classList.remove('active');
+				console.log('[Shuffle] Shuffle mode OFF');
+			}
+		});
 
 		playButtons.forEach(button => {
 			button.addEventListener('click', (e) => {
@@ -476,15 +601,27 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 					currentRow = row;
 					currentButton = button;
+
+					// Track this song as played
+					playedTracks.add(audioSrc);
 				}
 			});
 		});
 
-		// Reset button when audio ends
+		// When audio ends, play next random song if shuffle is on
 		audioPlayer.addEventListener('ended', () => {
 			if (currentButton) {
 				currentButton.textContent = '▶';
 				currentRow?.classList.remove('playing');
+			}
+
+			// If shuffle mode is on, play next random unplayed track
+			if (shuffleMode) {
+				const nextRow = getRandomUnplayedTrack();
+				if (nextRow) {
+					console.log('[Shuffle] Auto-playing next random track...');
+					playRow(nextRow);
+				}
 			}
 		});
 
