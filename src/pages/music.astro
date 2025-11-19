@@ -208,7 +208,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			<tbody>
 				<tr class="parent">
 					<td class="col-play">
-						<button class="shuffle-btn" aria-label="Toggle shuffle mode">🔀</button>
+						<button class="shuffle-btn" aria-label="Toggle shuffle mode">⤨</button>
 					</td>
 					<td class="col-name"><a href="/">..</a></td>
 					<td class="col-artist">-</td>
@@ -376,6 +376,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			text-align: left;
 			display: inline-block;
 			position: relative;
+			left: 0;
 			opacity: 0;
 			transition: opacity 0.2s ease;
 		}
