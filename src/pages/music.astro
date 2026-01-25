@@ -165,19 +165,124 @@ const tracks = [
 		size: '1.98mb',
 		modified: '18.11.25 00:00'
 	},
-	{
-		name: "Wasn't There.mp3",
-		artist: 'Anna Wise',
-		url: 'https://files.catbox.moe/aixl4a.mp3',
-		size: '1.18mb',
-		modified: '18.11.25 00:00'
-	},
+	// {
+	// 	name: "Wasn't There.mp3",
+	// 	artist: 'Anna Wise',
+	// 	url: 'https://files.catbox.moe/aixl4a.mp3',
+	// 	size: '1.18mb',
+	// 	modified: '18.11.25 00:00'
+	// },
 	{
 		name: 'Root_of_all_Evil_live.mp3',
 		artist: 'Daniel Caesar',
 		url: 'https://files.catbox.moe/1xw24j.mp3',
 		size: '12.3mb',
 		modified: '18.11.25 00:00'
+	},
+	{
+		name: 'Master Yourself.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/viiywc.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'New Life.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/yhnp0u.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Post Modernity.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/zevuup.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'PROJECTING ME.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/b3t2kb.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Indecision.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/rfepvw.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'For Once In My Life.mp3',
+		artist: 'Monica Martin, James Blake',
+		url: 'https://files.catbox.moe/kclwal.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'peter-collins-1.mp3',
+		artist: 'Peter Collins',
+		url: '/music/peter-collins-1.mp3',
+		size: '0.5mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Midnight in Majorca.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/dd2se0.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Pussy.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/sqr5yb.mp3',
+		size: '?mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Sweet Emily (live).m4a',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/41bgv2.m4a',
+		size: '5.3mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Dope.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/olc4j8.MP3',
+		size: '2mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Sweet.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/zobts5.mp3',
+		size: '8.9mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Salvation On Mt. Olympus.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/akw2x2.mp3',
+		size: '11.2mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'Eye Of Mine.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/wdeeby.mp3',
+		size: '4.1mb',
+		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'YoBro.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/mfe88g.mp3',
+		size: '10.4mb',
+		modified: '25.1.26 00:00'
 	}
 ];
 
@@ -186,22 +291,22 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 ---
 
 <Layout
-	title="Music Downloads"
+	title="ely0030 | Music"
 	description="Free MP3 downloads and unreleased tracks"
 	pubDate={new Date()}
 	pageType="literature"
 	heroImage="/music-banner.jpg"
 >
 	<div class="directory-listing">
-		<h1>Index of /music</h1>
+		<h1><a href="/">Index</a> of /music</h1>
 
 		<table>
 			<thead>
 				<tr>
 					<th class="col-play"></th>
 					<th class="col-name">Name</th>
-					<th class="col-artist">Artist</th>
 					<th class="col-modified">Last modified</th>
+					<th class="col-duration">Duration</th>
 					<th class="col-size">Size</th>
 				</tr>
 			</thead>
@@ -211,8 +316,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						<button class="shuffle-btn" aria-label="Toggle shuffle mode">⤨</button>
 					</td>
 					<td class="col-name"><a href="/">..</a></td>
-					<td class="col-artist">-</td>
 					<td class="col-modified">-</td>
+					<td class="col-duration">-</td>
 					<td class="col-size">-</td>
 				</tr>
 				{tracks.map(track => (
@@ -221,10 +326,11 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 							<button class="play-btn" aria-label={`Play ${track.name}`}>▶</button>
 						</td>
 						<td class="col-name">
-							{track.name}
+							<span class="track-name">{track.name}</span>
+							<span class="track-artist">{track.artist}</span>
 						</td>
-						<td class="col-artist">{track.artist}</td>
 						<td class="col-modified">{track.modified}</td>
+						<td class="col-duration">-</td>
 						<td class="col-size">
 							<a href={`/download-proxy/?url=${encodeURIComponent(track.url)}&filename=${encodeURIComponent(track.name)}`} class="size-link" download={track.name}>{track.size}</a>
 						</td>
@@ -250,8 +356,22 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			margin: 0 0 8px 0;
 			color: #1d1d1f;
 			letter-spacing: 0;
-			cursor: default;
-			pointer-events: none;
+			cursor: default !important;
+		}
+
+		h1 a,
+		h1 a:hover,
+		h1 a:visited,
+		h1 a:active,
+		h1 a:focus {
+			color: #1d1d1f !important;
+			text-decoration: none !important;
+			border: none !important;
+			border-bottom: none !important;
+			background: none !important;
+			box-shadow: none !important;
+			cursor: pointer !important;
+			outline: none !important;
 		}
 
 		hr {
@@ -301,23 +421,37 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		}
 
 		.col-name {
-			width: 38%;
+			width: 50%;
 		}
 
-		.col-artist {
-			width: 18%;
-			white-space: nowrap;
-			padding-right: 25px !important;
+		.track-name {
+			display: block;
 		}
 
-		.col-modified {
-			width: 22%;
-			white-space: nowrap;
+		.track-artist {
+			display: block;
+			font-size: 10px;
+			color: #666;
+			margin-top: 2px;
 		}
 
-		.col-size {
+		.col-modified,
+		th.col-modified {
+			display: none; /* Hidden for now */
+		}
+
+		.col-duration,
+		thead th.col-duration {
 			width: 12%;
-			text-align: right;
+			white-space: nowrap;
+			text-align: center;
+			padding-right: 40px !important;
+		}
+
+		.col-size,
+		thead th.col-size {
+			width: 10%;
+			text-align: center;
 		}
 
 		.size-link {
@@ -455,8 +589,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				font-size: 13px;
 			}
 
-			thead th.col-artist,
-			thead th.col-modified {
+			thead th.col-modified,
+			thead th.col-duration {
 				display: none;
 			}
 
@@ -465,8 +599,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				width: 20px;
 			}
 
-			tbody td.col-artist,
-			tbody td.col-modified {
+			tbody td.col-modified,
+			tbody td.col-duration {
 				display: none;
 			}
 
@@ -699,5 +833,42 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				link.title = 'Download (opens in new tab)';
 			});
 		}
+
+		// Fix h1 cursor and link behavior (override BlogPost layout JS)
+		setTimeout(() => {
+			const h1 = document.querySelector('.directory-listing h1');
+			if (h1) h1.style.cursor = 'default';
+
+			// Make the Index link work by stopping propagation
+			const h1Link = document.querySelector('.directory-listing h1 a');
+			if (h1Link) {
+				h1Link.addEventListener('click', (e) => {
+					e.stopPropagation();
+				});
+			}
+		}, 0);
+
+		// Fetch durations for all tracks
+		const formatDuration = (seconds) => {
+			const mins = Math.floor(seconds / 60);
+			const secs = Math.floor(seconds % 60);
+			return `${mins}:${secs.toString().padStart(2, '0')}`;
+		};
+
+		document.querySelectorAll('tr.file').forEach(row => {
+			const audioSrc = row.getAttribute('data-audio-src');
+			const durationCell = row.querySelector('.col-duration');
+			if (audioSrc && durationCell) {
+				const audio = new Audio();
+				audio.preload = 'metadata';
+				audio.addEventListener('loadedmetadata', () => {
+					durationCell.textContent = formatDuration(audio.duration);
+				});
+				audio.addEventListener('error', () => {
+					durationCell.textContent = '-';
+				});
+				audio.src = audioSrc;
+			}
+		});
 	</script>
 </Layout>

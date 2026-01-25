@@ -276,6 +276,13 @@ Whitespace between elements renders as visible space. CSS margins won't fix it.
 - **Critical**: Figure classes work identically across ALL pageTypes including literature
 - **Example**: See roger-bannister's-feed.md for literature2 image usage
 
+## Music Page (`src/pages/music.astro`)
+- **Tracks**: Manual array at top of file, sorted alphabetically on render
+- **Hosting**: Catbox.moe URLs or local `/music/` folder for problematic files
+- **Duration**: Auto-fetched via Audio API `loadedmetadata` event - no manual entry needed
+- **GOTCHA - BlogPost h1 clicks**: Layout JS hijacks heading clicks for hash nav. Links in h1 need `stopPropagation()` to work
+- **GOTCHA - Column alignment**: Use `text-align: center` for both th and td. `text-align: right` doesn't align headers with cells
+
 ## Where to Look
 - **Styling issues**: src/styles/global.css (search for body.pageType)
 - **Build issues**: astro.config.mjs, vite settings

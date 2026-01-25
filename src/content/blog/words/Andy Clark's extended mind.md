@@ -4,6 +4,7 @@ description: How tools and environment can constitute parts of cognition
 pubDate: 2025-09-11
 category: words
 pageType: literature
+private: true
 ---
 # Andy Clark's extended mind
 Andy Clark's extended mind thesis is one of the most influential and controversial ideas in contemporary philosophy of mind and cognitive science. Developed primarily with David Chalmers in their 1998 paper "The Extended Mind," this thesis fundamentally challenges traditional boundaries of where the mind ends and the world begins.

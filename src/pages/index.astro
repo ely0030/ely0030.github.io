@@ -46,15 +46,15 @@ postsByCategory['downloads'].push({
   },
   isArchived: false
 });
-postsByCategory['downloads'].push({
-  id: 'tweets',
-  data: {
-    title: 'tweets',
-    pubDate: new Date(),
-    category: 'downloads'
-  },
-  isArchived: false
-});
+// postsByCategory['downloads'].push({
+//   id: 'tweets',
+//   data: {
+//     title: 'tweets',
+//     pubDate: new Date(),
+//     category: 'downloads'
+//   },
+//   isArchived: false
+// });
 
 // Sort categories alphabetically
 const sortedCategories = Object.keys(postsByCategory).sort();
@@ -73,14 +73,14 @@ const sortedCategories = Object.keys(postsByCategory).sort();
 			</aside>
 			<div class="main-content-area">
 				<main>
-					<h1>Index of /</h1>
+					<h1>Index</h1>
 					<hr />
 
 					{sortedCategories.map((category) => {
 						const categoryPosts = postsByCategory[category];
 						return (
 							<div class="category-section">
-								<h2>{category}/</h2>
+								<h2>{category}</h2>
 								<ul>
 									{categoryPosts.map((post) => (
 										<li>
