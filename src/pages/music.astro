@@ -283,6 +283,27 @@ const tracks = [
 		url: 'https://files.catbox.moe/mfe88g.mp3',
 		size: '10.4mb',
 		modified: '25.1.26 00:00'
+	},
+	{
+		name: 'letscashhhout.mp3',
+		artist: 'Mk.gee',
+		url: 'https://files.catbox.moe/olf9nh.mp3',
+		size: '8.1mb',
+		modified: '26.1.26 00:00'
+	},
+	{
+		name: 'Bang Bang.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/32bl7h.mp3',
+		size: '8.7mb',
+		modified: '26.1.26 00:00'
+	},
+	{
+		name: 'Changing Me.m4a',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/du564t.m4a',
+		size: '2.1mb',
+		modified: '26.1.26 00:00'
 	}
 ];
 
@@ -312,9 +333,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			</thead>
 			<tbody>
 				<tr class="parent">
-					<td class="col-play">
-						<button class="shuffle-btn" aria-label="Toggle shuffle mode">⤨</button>
-					</td>
+					<td class="col-play"></td>
 					<td class="col-name"><a href="/">..</a></td>
 					<td class="col-modified">-</td>
 					<td class="col-duration">-</td>
@@ -527,57 +546,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			left: -1px;
 		}
 
-		.shuffle-btn {
-			background: none;
-			border: none;
-			color: #1d1d1f;
-			font-size: 9px;
-			cursor: pointer;
-			padding: 0;
-			margin: 0;
-			width: 10px;
-			height: auto;
-			line-height: 1;
-			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
-			text-align: left;
-			display: inline-block;
-			position: relative;
-			left: -2px;
-			opacity: 0;
-			transition: opacity 0.2s ease;
-		}
-
-		/* Show on desktop hover */
-		@media (min-width: 1001px) {
-			.parent:hover .shuffle-btn {
-				opacity: 1;
-			}
-
-			/* Always show when shuffle is active */
-			.shuffle-btn.active {
-				opacity: 1;
-			}
-		}
-
-		/* Always show on mobile */
-		@media (max-width: 1000px) {
-			.shuffle-btn {
-				opacity: 1;
-			}
-		}
-
-		.shuffle-btn:hover {
-			opacity: 0.6 !important;
-		}
-
-		.shuffle-btn:focus {
-			outline: none;
-		}
-
-		.shuffle-btn.active {
-			color: #0066CC;
-		}
-
 		#audio-player {
 			display: none;
 		}
@@ -652,12 +620,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			.playing .play-btn {
 				left: -1px;
-			}
-
-			.shuffle-btn {
-				font-size: 9px;
-				width: 12px;
-				left: -2px;
 			}
 		}
 
@@ -1050,7 +1012,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			top: 1px;
 		}
 
-		.mini-shuffle-btn.active {
+		.mini-player-controls .mini-shuffle-btn.active {
 			color: #0066CC;
 		}
 
@@ -1129,7 +1091,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 	<script>
 		const audioPlayer = document.getElementById('audio-player');
 		const playButtons = document.querySelectorAll('.play-btn');
-		const shuffleBtn = document.querySelector('.shuffle-btn');
 		let currentRow = null;
 		let currentButton = null;
 		let shuffleMode = false;
@@ -1185,20 +1146,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			// Track this song as played
 			playedTracks.add(audioSrc);
 		};
-
-		// Toggle shuffle mode
-		shuffleBtn.addEventListener('click', (e) => {
-			e.preventDefault();
-			shuffleMode = !shuffleMode;
-
-			if (shuffleMode) {
-				shuffleBtn.classList.add('active');
-				console.log('[Shuffle] Shuffle mode ON');
-			} else {
-				shuffleBtn.classList.remove('active');
-				console.log('[Shuffle] Shuffle mode OFF');
-			}
-		});
 
 		playButtons.forEach(button => {
 			button.addEventListener('click', (e) => {
@@ -1477,12 +1424,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		miniShuffleBtn.addEventListener('click', () => {
 			shuffleMode = !shuffleMode;
-			shuffleBtn.classList.toggle('active', shuffleMode);
-			miniShuffleBtn.classList.toggle('active', shuffleMode);
-		});
-
-		// Sync shuffle button states
-		shuffleBtn.addEventListener('click', () => {
 			miniShuffleBtn.classList.toggle('active', shuffleMode);
 		});
 
