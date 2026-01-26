@@ -1069,6 +1069,41 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			background: transparent;
 		}
 
+		/* Loop mode styles - track loop */
+		.mini-player-track.loop-mode .mini-track-name {
+			color: #0066CC;
+		}
+
+		.mini-player-track.loop-mode .mini-track-name .extension {
+			color: #1d1d1f;  /* Keep extension default color */
+		}
+
+		.mini-player-track.loop-mode .mini-track-name::after {
+			content: '↻';
+			font-size: 10px;
+			margin-left: 5px;
+			color: #0066CC;
+			animation: loopIconFadeIn 0.15s ease-out;
+		}
+
+		/* Loop mode styles - artist loop */
+		.mini-player-track.artist-loop-mode .mini-track-artist {
+			color: #0066CC;
+		}
+
+		.mini-player-track.artist-loop-mode .mini-track-artist::after {
+			content: '↻';
+			font-size: 9px;
+			margin-left: 4px;
+			color: #0066CC;
+			animation: loopIconFadeIn 0.15s ease-out;
+		}
+
+		@keyframes loopIconFadeIn {
+			from { opacity: 0; }
+			to { opacity: 1; }
+		}
+
 		@media (max-width: 1000px) {
 			.mini-player:not(.dragged) {
 				bottom: 10px;
@@ -1121,6 +1156,45 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		// Play a specific row
 		const playRow = (row) => {
+			if (!row) return;
+
+			const audioSrc = row.getAttribute('data-audio-src');
+			const button = row.querySelector('.play-btn');
+
+			if (!audioSrc || !button) return;
+
+			// Deactivate track loop mode when changing tracks
+			// (track loop is specific to a track, not a setting)
+			// But keep artist loop mode active
+			if (typeof deactivateLoopMode === 'function' && !artistLoopMode) {
+				deactivateLoopMode();
+			} else if (loopMode) {
+				// If in track loop mode, deactivate it
+				loopMode = false;
+				miniPlayerTrack?.classList.remove('loop-mode');
+			}
+
+			// Stop current track
+			if (currentButton) {
+				currentButton.textContent = '▶';
+				currentRow?.classList.remove('playing');
+			}
+
+			// Play new track
+			audioPlayer.src = audioSrc;
+			audioPlayer.play();
+			button.textContent = '❚❚';
+			row.classList.add('playing');
+
+			currentRow = row;
+			currentButton = button;
+
+			// Track this song as played
+			playedTracks.add(audioSrc);
+		};
+
+		// Play a row without deactivating loop mode (used for artist loop auto-play)
+		const playRowWithoutDeactivatingLoop = (row) => {
 			if (!row) return;
 
 			const audioSrc = row.getAttribute('data-audio-src');
@@ -1187,8 +1261,32 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			});
 		});
 
-		// When audio ends, auto-play next track
+		// When audio ends, auto-play next track (or loop if loop mode active)
 		audioPlayer.addEventListener('ended', () => {
+			// Track loop mode: replay the same track
+			if (loopMode) {
+				audioPlayer.currentTime = 0;
+				audioPlayer.play();
+				return;
+			}
+
+			// Artist loop mode: play next track by the same artist
+			if (artistLoopMode && loopArtist) {
+				const allRows = getAllTrackRows();
+				// Find all tracks by this artist
+				const artistTracks = allRows.filter(row => {
+					const artistEl = row.querySelector('.track-artist');
+					return artistEl && artistEl.textContent === loopArtist;
+				});
+
+				if (artistTracks.length > 0) {
+					const currentIndex = artistTracks.indexOf(currentRow);
+					const nextIndex = (currentIndex + 1) % artistTracks.length;
+					playRowWithoutDeactivatingLoop(artistTracks[nextIndex]);
+					return;
+				}
+			}
+
 			if (currentButton) {
 				currentButton.textContent = '▶';
 				currentRow?.classList.remove('playing');
@@ -1437,6 +1535,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		// Pin state - always starts pinned
 		let isPinned = false;
 
+		// Loop mode - activated by dropping pin on track name
+		let loopMode = false;
+		let loopPinOffsetX = 0;  // Pin offset from card left edge when in loop mode
+		let loopPinOffsetY = 0;  // Pin offset from card top edge when in loop mode
+
+		// Artist loop mode - activated by dropping pin on artist name
+		let artistLoopMode = false;
+		let loopArtist = '';  // The artist name to loop
+
 		// Mini player drag functionality with physics
 		let isDragging = false;
 		let dragOffsetX = 0;
@@ -1488,33 +1595,42 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		// Returns document coords when pinned, viewport coords otherwise
 		const getPinTargetPosition = () => {
 			const cardRect = miniPlayer.getBoundingClientRect();
-			const x = cardRect.right - 25;
-			const y = cardRect.top + 8;
 
 			if (isPinned) {
-				// Document coordinates for absolute positioning
+				// Use style properties directly for consistent document coordinates
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
 				return {
-					x: x + window.scrollX,
-					y: y + window.scrollY
+					x: cardDocX + cardRect.width - 25,
+					y: cardDocY + 8
 				};
 			}
-			return { x, y };
+			// Viewport coordinates for fixed positioning
+			return {
+				x: cardRect.right - 25,
+				y: cardRect.top + 8
+			};
 		};
 
 		// Get center of mini player - for repulsion field
 		// Returns document coords when pinned, viewport coords otherwise
 		const getCardCenter = () => {
 			const cardRect = miniPlayer.getBoundingClientRect();
-			const x = cardRect.left + cardRect.width / 2;
-			const y = cardRect.top + cardRect.height / 2;
 
 			if (isPinned) {
+				// Use style properties directly for consistent document coordinates
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
 				return {
-					x: x + window.scrollX,
-					y: y + window.scrollY
+					x: cardDocX + cardRect.width / 2,
+					y: cardDocY + cardRect.height / 2
 				};
 			}
-			return { x, y };
+			// Viewport coordinates for fixed positioning
+			return {
+				x: cardRect.left + cardRect.width / 2,
+				y: cardRect.top + cardRect.height / 2
+			};
 		};
 
 		// Update pin position and visuals
@@ -1526,7 +1642,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('hidden');
 
-			const target = getPinTargetPosition();
+			// Use loop position if in any loop mode, otherwise standard tack position
+			const target = (loopMode || artistLoopMode) ? getLoopPinPosition() : getPinTargetPosition();
 			const dx = target.x - pinX;
 			const dy = target.y - pinY;
 			const distance = Math.sqrt(dx * dx + dy * dy);
@@ -1666,6 +1783,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			pinGaveUp = false;
 			pinIsLifted = true;  // Pin is being held up!
 
+			// Hide loop icon while pin is in flight (will restore when pin tacks)
+			// Also restore plain text for track name (removes extension span)
+			if (loopMode) {
+				miniTrackNameEl.textContent = getPlainTrackName();
+			}
+			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
+
 			if (alreadyChasing) {
 				// Pin is already in the air - just continue chasing from current position
 				// Don't reset position, just ensure it's in lifted visual state
@@ -1680,7 +1804,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				return;
 			}
 
-			const target = getPinTargetPosition();
+			// Use loop position if in any loop mode, otherwise standard tack position
+			const target = (loopMode || artistLoopMode) ? getLoopPinPosition() : getPinTargetPosition();
 
 			// Start pin at tack position with needle hidden (resting state)
 			autonomousPin.style.transition = 'none';
@@ -1753,7 +1878,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			pinIsLifted = false;  // No longer being held
 			currentCardSpeed = 0;
 
-			const target = getPinTargetPosition();
+			// Use loop position if in any loop mode, otherwise normal tack position
+			const target = (loopMode || artistLoopMode) ? getLoopPinPosition() : getPinTargetPosition();
 
 			// Calculate how far the pin needs to travel
 			const dx = target.x - pinX;
@@ -1799,6 +1925,16 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinNeedle.style.transform = '';
 					pinNeedle.style.transition = '';
 					miniPlayer.classList.remove('just-pinned', 'gliding');
+
+					// Restore loop icon now that pin is tacked
+					if (loopMode) {
+						// Re-wrap extension for proper coloring
+						const plainName = getPlainTrackName();
+						miniTrackNameEl.innerHTML = wrapExtension(plainName);
+						miniPlayerTrack.classList.add('loop-mode');
+					} else if (artistLoopMode) {
+						miniPlayerTrack.classList.add('artist-loop-mode');
+					}
 				}, 200);
 			}, travelTime);
 		};
@@ -2220,6 +2356,137 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			);
 		};
 
+		// Check if point is over the track name text (for loop mode activation)
+		const miniPlayerTrack = miniPlayer.querySelector('.mini-player-track');
+		const miniTrackNameEl = miniPlayer.querySelector('.mini-track-name');
+		const miniTrackArtistEl = miniPlayer.querySelector('.mini-track-artist');
+
+		// Get actual text width (not container width)
+		const getTextWidth = (element) => {
+			const text = element.textContent;
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+			const style = getComputedStyle(element);
+			ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+			return ctx.measureText(text).width;
+		};
+
+		const isOverTrackName = (x, y) => {
+			const rect = miniTrackNameEl.getBoundingClientRect();
+			const viewX = x - window.scrollX;
+			const viewY = y - window.scrollY;
+
+			// Get actual text width
+			const textWidth = Math.min(getTextWidth(miniTrackNameEl), rect.width);
+
+			// Padding: generous on left for easy targeting, minimal on right to avoid empty space
+			const paddingLeft = 8;
+			const paddingRight = 2;  // Tight right edge - don't include loop icon area
+			const paddingTop = 12;
+			const paddingBottom = 2;  // Minimal bottom padding to avoid overlap with artist
+			return (
+				viewX >= rect.left - paddingLeft && viewX <= rect.left + textWidth + paddingRight &&
+				viewY >= rect.top - paddingTop && viewY <= rect.bottom + paddingBottom
+			);
+		};
+
+		// Check if point is over the artist name text (for artist loop mode)
+		const isOverArtistName = (x, y) => {
+			const rect = miniTrackArtistEl.getBoundingClientRect();
+			const viewX = x - window.scrollX;
+			const viewY = y - window.scrollY;
+
+			// Get actual text width
+			const textWidth = Math.min(getTextWidth(miniTrackArtistEl), rect.width);
+
+			// Padding: generous on left for easy targeting, minimal on right to avoid empty space
+			const paddingLeft = 8;
+			const paddingRight = 2;  // Tight right edge - don't include loop icon area
+			const paddingTop = 2;  // Minimal top padding to avoid overlap with track name
+			const paddingBottom = 10;
+			return (
+				viewX >= rect.left - paddingLeft && viewX <= rect.left + textWidth + paddingRight &&
+				viewY >= rect.top - paddingTop && viewY <= rect.bottom + paddingBottom
+			);
+		};
+
+		// Get where pin should rest when in loop mode (uses stored offset from card)
+		const getLoopPinPosition = () => {
+			// Get card's document position directly from its style (more reliable than bounding rect + scroll)
+			const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+			const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+
+			if (isPinned) {
+				// Return document coordinates
+				return {
+					x: cardDocX + loopPinOffsetX,
+					y: cardDocY + loopPinOffsetY
+				};
+			}
+			// For unpinned (fixed position), convert to viewport
+			const cardRect = miniPlayer.getBoundingClientRect();
+			return {
+				x: cardRect.left + loopPinOffsetX,
+				y: cardRect.top + loopPinOffsetY
+			};
+		};
+
+		// Helper to wrap file extension in a span (so it stays default color)
+		const wrapExtension = (filename) => {
+			const lastDot = filename.lastIndexOf('.');
+			if (lastDot > 0) {
+				const base = filename.substring(0, lastDot);
+				const ext = filename.substring(lastDot);
+				return `${base}<span class="extension">${ext}</span>`;
+			}
+			return filename;
+		};
+
+		// Helper to get plain text from track name (strips any HTML)
+		const getPlainTrackName = () => {
+			return miniTrackNameEl.textContent;
+		};
+
+		// Activate track loop mode - pin settles on track name
+		const activateLoopMode = () => {
+			loopMode = true;
+			artistLoopMode = false;  // Only one loop mode at a time
+			loopArtist = '';
+
+			// Wrap extension in span so it stays default color
+			const plainName = getPlainTrackName();
+			miniTrackNameEl.innerHTML = wrapExtension(plainName);
+
+			miniPlayerTrack.classList.add('loop-mode');
+			miniPlayerTrack.classList.remove('artist-loop-mode');
+		};
+
+		// Activate artist loop mode - pin settles on artist name
+		const activateArtistLoopMode = () => {
+			artistLoopMode = true;
+			loopMode = false;  // Only one loop mode at a time
+			loopArtist = miniTrackArtistEl.textContent;
+
+			// Restore plain text for track name (in case it had extension span)
+			miniTrackNameEl.textContent = getPlainTrackName();
+
+			miniPlayerTrack.classList.add('artist-loop-mode');
+			miniPlayerTrack.classList.remove('loop-mode');
+		};
+
+		// Deactivate all loop modes
+		const deactivateLoopMode = () => {
+			// Restore plain text for track name (in case it had extension span)
+			if (loopMode) {
+				miniTrackNameEl.textContent = getPlainTrackName();
+			}
+
+			loopMode = false;
+			artistLoopMode = false;
+			loopArtist = '';
+			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
+		};
+
 		// ========== PIN DRAGGING FROM CARD ==========
 		// Pull up on pin to remove it from card (same feel as pulling from page)
 		let isPinDragging = false;
@@ -2232,6 +2499,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		// Unpin the mini player (convert to fixed positioning)
 		const unpinMiniPlayer = () => {
 			if (!isPinned) return;
+
+			// Deactivate loop mode when unpinning
+			deactivateLoopMode();
 
 			const rect = miniPlayer.getBoundingClientRect();
 			// Convert to viewport coordinates for fixed positioning
@@ -2345,74 +2615,178 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
-			// Check if dropped on/near the mini player - re-pin it!
-			if (isOverMiniPlayer(pinX, pinY)) {
-				// Stop any ongoing glide animation
+			// Get pin head center for accurate hit detection
+			// Pin head is at top:1px, left:6.5px and is 8x8px, so center is at (10.5, 5) from element
+			const pinHeadCenterX = pinX + 10.5;
+			const pinHeadCenterY = pinY + 5;
+
+			// Check artist name FIRST (it's lower, more specific target)
+			// If we checked track name first, overlap would always favor track
+			if (isOverArtistName(pinHeadCenterX, pinHeadCenterY)) {
+				// Dropped on artist name - activate artist loop mode!
 				stopAnimation();
 				miniPlayer.classList.remove('gliding', 'dragging');
 
 				// Convert mini player to document coords for pinned positioning
-				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
 
-				// CRITICAL: Convert pin's current viewport position to document coords
-				// BEFORE switching to absolute, so pin doesn't teleport
+				// Pin stays exactly where user dropped it
 				const pinRect = autonomousPin.getBoundingClientRect();
-				const pinDocX = pinRect.left + window.scrollX;
-				const pinDocY = pinRect.top + window.scrollY;
-				autonomousPin.style.left = pinDocX + 'px';
-				autonomousPin.style.top = pinDocY + 'px';
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
 
-				// Now safe to switch to absolute positioning
+				// Switch to absolute positioning at drop location
 				autonomousPin.style.position = '';
 				autonomousPin.classList.add('pinned');
-
-				// Slide pin to tack spot
-				const target = getPinTargetPosition();
-				autonomousPin.style.transition = 'left 0.12s ease-out, top 0.12s ease-out';
-				pinX = target.x;
-				pinY = target.y;
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
+				// Store pin offset relative to card's document position
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				loopPinOffsetX = pinX - cardDocX;
+				loopPinOffsetY = pinY - cardDocY;
+
+				// Pin the card and activate artist loop mode
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+				activateArtistLoopMode();
+
+				// Pin tacking animation at drop location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
 				setTimeout(() => {
-					autonomousPin.style.transition = '';
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+			} else if (isOverTrackName(pinHeadCenterX, pinHeadCenterY)) {
+				// Dropped on track name - activate track loop mode!
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
 
-					// NOW add .pinned and .just-pinned-from-float for impact animation
-					// Use -from-float because card was unpinned (moderate shadow), not elevated
-					miniPlayer.classList.add('pinned');
-					miniPlayer.classList.add('just-pinned-from-float');
-					isPinned = true;
+				// Convert mini player to document coords for pinned positioning
+				const rect = miniPlayer.getBoundingClientRect();
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
 
-					// Ensure needle is visible before tacking
-					pinNeedle.style.transition = 'none';
-					pinNeedle.style.height = '15px';
-					pinNeedle.style.opacity = '1';
-					pinHead.style.transform = 'rotate(15deg)';
-					pinNeedle.style.transform = 'rotate(15deg)';
-					autonomousPin.offsetHeight;
+				// Pin stays exactly where user dropped it
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
 
-					// Pin tacking animation - needle shrinks as it enters
-					pinNeedle.style.transition = '';
-					autonomousPin.classList.add('tacking');
-					pinNeedle.style.height = '0';
-					pinNeedle.style.opacity = '0';
+				// Switch to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
 
-					// After tacking animation completes (200ms), clean up
-					setTimeout(() => {
-						autonomousPin.classList.remove('tacking');
-						autonomousPin.classList.add('resting');
-						pinHead.style.transform = '';
-						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned-from-float');
-						savePosition();
-					}, 200);
-				}, 120);
+				// Store pin offset relative to card's document position
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				loopPinOffsetX = pinX - cardDocX;
+				loopPinOffsetY = pinY - cardDocY;
+
+				// Pin the card and activate track loop mode
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+				activateLoopMode();
+
+				// Pin tacking animation at drop location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+			} else if (isOverMiniPlayer(pinHeadCenterX, pinHeadCenterY)) {
+				// Check if dropped on/near the mini player - re-pin it (normal mode)
+				// Rewritten to match track name tacking structure (no flash)
+				deactivateLoopMode();
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				const rect = miniPlayer.getBoundingClientRect();
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
+
+				// Calculate target position (tack spot on card)
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				const cardWidth = rect.width;
+				pinX = cardDocX + cardWidth - 25;
+				pinY = cardDocY + 8;
+
+				// Switch pin to absolute positioning at target location (no slide animation)
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Pin the card and mark as pinned
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+
+				// Pin tacking animation at tack location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
 			} else {
 				// Tack pin into page with animation
 				// CRITICAL: Set position to absolute BEFORE setting document coords
@@ -2542,74 +2916,177 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
-			// Check if dropped on/near the mini player - re-pin it!
-			if (isOverMiniPlayer(pinX, pinY)) {
-				// Stop any ongoing glide animation
+			// Get pin head center for accurate hit detection
+			// Pin head is at top:1px, left:6.5px and is 8x8px, so center is at (10.5, 5) from element
+			const pinHeadCenterX = pinX + 10.5;
+			const pinHeadCenterY = pinY + 5;
+
+			// Check artist name FIRST (it's lower, more specific target)
+			if (isOverArtistName(pinHeadCenterX, pinHeadCenterY)) {
+				// Dropped on artist name - activate artist loop mode!
 				stopAnimation();
 				miniPlayer.classList.remove('gliding', 'dragging');
 
 				// Convert mini player to document coords for pinned positioning
-				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
 
-				// CRITICAL: Convert pin's current viewport position to document coords
-				// BEFORE switching to absolute, so pin doesn't teleport
+				// Pin stays exactly where user dropped it
 				const pinRect = autonomousPin.getBoundingClientRect();
-				const pinDocX = pinRect.left + window.scrollX;
-				const pinDocY = pinRect.top + window.scrollY;
-				autonomousPin.style.left = pinDocX + 'px';
-				autonomousPin.style.top = pinDocY + 'px';
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
 
-				// Now safe to switch to absolute positioning
+				// Switch to absolute positioning at drop location
 				autonomousPin.style.position = '';
 				autonomousPin.classList.add('pinned');
-
-				// Slide pin to tack spot
-				const target = getPinTargetPosition();
-				autonomousPin.style.transition = 'left 0.12s ease-out, top 0.12s ease-out';
-				pinX = target.x;
-				pinY = target.y;
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
+				// Store pin offset relative to card's document position
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				loopPinOffsetX = pinX - cardDocX;
+				loopPinOffsetY = pinY - cardDocY;
+
+				// Pin the card and activate artist loop mode
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+				activateArtistLoopMode();
+
+				// Pin tacking animation at drop location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
 				setTimeout(() => {
-					autonomousPin.style.transition = '';
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+			} else if (isOverTrackName(pinHeadCenterX, pinHeadCenterY)) {
+				// Dropped on track name - activate track loop mode!
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
 
-					// NOW add .pinned and .just-pinned-from-float for impact animation
-					// Use -from-float because card was unpinned (moderate shadow), not elevated
-					miniPlayer.classList.add('pinned');
-					miniPlayer.classList.add('just-pinned-from-float');
-					isPinned = true;
+				// Convert mini player to document coords for pinned positioning
+				const rect = miniPlayer.getBoundingClientRect();
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
 
-					// Ensure needle is visible before tacking
-					pinNeedle.style.transition = 'none';
-					pinNeedle.style.height = '15px';
-					pinNeedle.style.opacity = '1';
-					pinHead.style.transform = 'rotate(15deg)';
-					pinNeedle.style.transform = 'rotate(15deg)';
-					autonomousPin.offsetHeight;
+				// Pin stays exactly where user dropped it
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
 
-					// Pin tacking animation - needle shrinks as it enters
-					pinNeedle.style.transition = '';
-					autonomousPin.classList.add('tacking');
-					pinNeedle.style.height = '0';
-					pinNeedle.style.opacity = '0';
+				// Switch to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
 
-					// After tacking animation completes (200ms), clean up
-					setTimeout(() => {
-						autonomousPin.classList.remove('tacking');
-						autonomousPin.classList.add('resting');
-						pinHead.style.transform = '';
-						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned-from-float');
-						savePosition();
-					}, 200);
-				}, 120);
+				// Store pin offset relative to card's document position
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				loopPinOffsetX = pinX - cardDocX;
+				loopPinOffsetY = pinY - cardDocY;
+
+				// Pin the card and activate track loop mode
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+				activateLoopMode();
+
+				// Pin tacking animation at drop location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+			} else if (isOverMiniPlayer(pinHeadCenterX, pinHeadCenterY)) {
+				// Check if dropped on/near the mini player - re-pin it (normal mode)
+				// Rewritten to match track name tacking structure (no flash)
+				deactivateLoopMode();
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				const rect = miniPlayer.getBoundingClientRect();
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
+
+				// Calculate target position (tack spot on card)
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				const cardWidth = rect.width;
+				pinX = cardDocX + cardWidth - 25;
+				pinY = cardDocY + 8;
+
+				// Switch pin to absolute positioning at target location (no slide animation)
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Pin the card and mark as pinned
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+
+				// Pin tacking animation at tack location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
 			} else {
 				// Tack pin into page
 				// CRITICAL: Set position to absolute BEFORE setting document coords
@@ -2753,74 +3230,116 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
-			// Check if dropped on mini player
-			if (isOverMiniPlayer(pinX, pinY)) {
+			// Check if dropped on track name - activate loop mode!
+			if (isOverTrackName(pinX, pinY)) {
 				// Stop any ongoing glide animation
 				stopAnimation();
 				miniPlayer.classList.remove('gliding', 'dragging');
 
 				// Convert mini player to document coords for pinned positioning
-				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
 
-				// CRITICAL: Convert pin's current viewport position to document coords
-				// BEFORE switching to absolute, so pin doesn't teleport
+				// Convert pin's current viewport position to document coords
+				// Pin stays exactly where user dropped it
 				const pinRect = autonomousPin.getBoundingClientRect();
-				const pinDocX = pinRect.left + window.scrollX;
-				const pinDocY = pinRect.top + window.scrollY;
-				autonomousPin.style.left = pinDocX + 'px';
-				autonomousPin.style.top = pinDocY + 'px';
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
 
-				// Now safe to switch to absolute positioning
+				// Switch to absolute positioning at drop location
 				autonomousPin.style.position = '';
 				autonomousPin.classList.add('pinned');
-
-				// Slide pin to tack spot
-				const target = getPinTargetPosition();
-				autonomousPin.style.transition = 'left 0.12s ease-out, top 0.12s ease-out';
-				pinX = target.x;
-				pinY = target.y;
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
+				// Store pin offset relative to card's document position
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				loopPinOffsetX = pinX - cardDocX;
+				loopPinOffsetY = pinY - cardDocY;
+
+				// Pin the card and activate loop mode
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+				activateLoopMode();
+
+				// Pin tacking animation at drop location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
 				setTimeout(() => {
-					autonomousPin.style.transition = '';
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+			} else if (isOverMiniPlayer(pinX, pinY)) {
+				// Check if dropped on mini player (normal mode)
+				// Rewritten to match track name tacking structure (no flash)
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
 
-					// NOW add .pinned and .just-pinned-from-float for impact animation
-					// Use -from-float because card was unpinned (moderate shadow), not elevated
-					miniPlayer.classList.add('pinned');
-					miniPlayer.classList.add('just-pinned-from-float');
-					isPinned = true;
+				// Convert mini player to document coords for pinned positioning
+				const rect = miniPlayer.getBoundingClientRect();
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
 
-					// Ensure needle is visible before tacking
-					pinNeedle.style.transition = 'none';
-					pinNeedle.style.height = '15px';
-					pinNeedle.style.opacity = '1';
-					pinHead.style.transform = 'rotate(15deg)';
-					pinNeedle.style.transform = 'rotate(15deg)';
-					autonomousPin.offsetHeight;
+				// Calculate target position (tack spot on card)
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				const cardWidth = rect.width;
+				pinX = cardDocX + cardWidth - 25;
+				pinY = cardDocY + 8;
 
-					// Pin tacking animation - needle shrinks as it enters
-					pinNeedle.style.transition = '';
-					autonomousPin.classList.add('tacking');
-					pinNeedle.style.height = '0';
-					pinNeedle.style.opacity = '0';
+				// Switch pin to absolute positioning at target location (no slide animation)
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
 
-					// After tacking animation completes (200ms), clean up
-					setTimeout(() => {
-						autonomousPin.classList.remove('tacking');
-						autonomousPin.classList.add('resting');
-						pinHead.style.transform = '';
-						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned-from-float');
-						savePosition();
-					}, 200);
-				}, 120);
+				// Pin the card and mark as pinned
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+
+				// Pin tacking animation at tack location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
 			} else {
 				// Tack into new position
 				// CRITICAL: Set position to absolute BEFORE setting document coords
@@ -2950,13 +3469,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
-			if (isOverMiniPlayer(pinX, pinY)) {
-				// Stop any ongoing glide animation and clean up classes
+			// Check if dropped on track name - activate loop mode!
+			if (isOverTrackName(pinX, pinY)) {
+				// Stop any ongoing glide animation
 				stopAnimation();
 				miniPlayer.classList.remove('gliding', 'dragging');
 
 				// Convert mini player to document coords for pinned positioning
-				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
@@ -2967,25 +3486,26 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				autonomousPin.style.position = '';
 				autonomousPin.classList.add('pinned');
 
-				// Slide pin to tack spot first
-				const target = getPinTargetPosition();
+				// Slide pin to loop position (on track name)
+				const target = getLoopPinPosition();
 				autonomousPin.style.transition = 'left 0.12s ease-out, top 0.12s ease-out';
 				pinX = target.x;
 				pinY = target.y;
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
+				// After pin arrives, activate loop mode
 				setTimeout(() => {
 					autonomousPin.style.transition = '';
 
-					// NOW add .pinned and .just-pinned-from-float for impact animation
-					// Use -from-float because card was unpinned (moderate shadow), not elevated
 					miniPlayer.classList.add('pinned');
 					miniPlayer.classList.add('just-pinned-from-float');
 					isPinned = true;
 
-					// Ensure needle is visible before tacking
+					// Activate loop mode
+					activateLoopMode();
+
+					// Pin tacking animation
 					pinNeedle.style.transition = 'none';
 					pinNeedle.style.height = '15px';
 					pinNeedle.style.opacity = '1';
@@ -2993,13 +3513,11 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinNeedle.style.transform = 'rotate(15deg)';
 					autonomousPin.offsetHeight;
 
-					// Pin tacking animation - needle shrinks as it enters
 					pinNeedle.style.transition = '';
 					autonomousPin.classList.add('tacking');
 					pinNeedle.style.height = '0';
 					pinNeedle.style.opacity = '0';
 
-					// After tacking animation completes (200ms), clean up
 					setTimeout(() => {
 						autonomousPin.classList.remove('tacking');
 						autonomousPin.classList.add('resting');
@@ -3009,6 +3527,58 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						savePosition();
 					}, 200);
 				}, 120);
+			} else if (isOverMiniPlayer(pinX, pinY)) {
+				// Check if dropped on mini player (normal mode)
+				// Rewritten to match track name tacking structure (no flash)
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				const rect = miniPlayer.getBoundingClientRect();
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
+
+				// Calculate target position (tack spot on card)
+				const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+				const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+				const cardWidth = rect.width;
+				pinX = cardDocX + cardWidth - 25;
+				pinY = cardDocY + 8;
+
+				// Switch pin to absolute positioning at target location (no slide animation)
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Pin the card and mark as pinned
+				miniPlayer.classList.add('pinned');
+				miniPlayer.classList.add('just-pinned-from-float');
+				isPinned = true;
+
+				// Pin tacking animation at tack location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
 			} else {
 				// Tack into new position
 				// CRITICAL: Set position to absolute BEFORE setting document coords

@@ -64,11 +64,21 @@ This document provides a comprehensive index of all features available in this A
 - **Purpose**: Edit blog posts directly in the browser
 - **Status**: Implemented, CSS styling issue fixed
 - **Docs**: [blog-frontend-editing.md](./blog-frontend-editing.md)
-- **Features**: 
+- **Features**:
   - View all blog posts in sidebar
   - Create new posts with full metadata
   - Three save methods (export, folder, API)
   - Dev server integration on port 4322
+
+### Music Page + Mini Player
+- **Location**: `src/pages/music.astro`
+- **Docs**: [music-mini-player.md](./music-mini-player.md)
+- **Features**:
+  - Track table with duration auto-fetch
+  - Draggable mini player with physics inertia
+  - Autonomous pin system (separate DOM element)
+  - Double-click to pin/unpin (fixed vs absolute positioning)
+  - Smart pin behavior: asymptotic slowdown, repulsion field, dart-throw tack
 
 ## Navigation Features
 

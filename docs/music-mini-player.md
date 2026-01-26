@@ -166,20 +166,36 @@ Without this, grabbing a gliding card teleports the pin to the tack spot instant
 
 If you use wrong animation, shadow jumps to 0% state = flash.
 
-### Manual Re-pin Flow (4 handlers: mouse/touch × resting/tacked pin)
+### Manual Re-pin Flow (4 handlers: mouse/touch × pin drag/card drag)
+
+**Critical**: No slide animation. Pin goes directly to target position. This prevents teleport/flash bugs when scrolled.
+
 ```javascript
 stopAnimation();
 miniPlayer.classList.remove('gliding', 'dragging');
-// DON'T add .pinned yet - keep unpinned shadow during pin slide
 
-// Pin slides to tack spot (120ms)...
+// Calculate target position in document coords
+const cardDocX = parseFloat(miniPlayer.style.left) || 0;
+const cardDocY = parseFloat(miniPlayer.style.top) || 0;
+pinX = cardDocX + cardWidth - 25;
+pinY = cardDocY + 8;
 
-setTimeout(() => {
-    // NOW add both classes - animation 0% matches current shadow
-    miniPlayer.classList.add('pinned');
-    miniPlayer.classList.add('just-pinned-from-float');
-}, 120);
+// Pin to absolute at target (no transition)
+autonomousPin.style.position = '';
+autonomousPin.classList.add('pinned');
+autonomousPin.style.left = pinX + 'px';
+autonomousPin.style.top = pinY + 'px';
+
+// Pin card and play tacking animation immediately
+miniPlayer.classList.add('pinned');
+miniPlayer.classList.add('just-pinned-from-float');
+isPinned = true;
+// ... tacking animation ...
 ```
 
-### Why Delay Adding `.pinned`
-Adding `.pinned` immediately changes shadow to minimal. We want unpinned shadow during the 120ms pin slide, THEN the impact animation.
+### Why No Slide Animation
+Old code used 120ms slide with delayed `isPinned = true`. This caused:
+1. **Teleport bug**: `getPinTargetPosition()` returned wrong coords when `isPinned` was still false
+2. **Flash bug**: `updateAutonomousPin()` could add `.hidden` during the async window
+
+Fix: Match the Title/Artist tacking pattern - instant positioning, immediate state changes.
