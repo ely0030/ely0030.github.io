@@ -1240,20 +1240,25 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			});
 		});
 
-		// When audio ends, play next random song if shuffle is on
+		// When audio ends, auto-play next track
 		audioPlayer.addEventListener('ended', () => {
 			if (currentButton) {
 				currentButton.textContent = '▶';
 				currentRow?.classList.remove('playing');
 			}
 
-			// If shuffle mode is on, play next random unplayed track
+			// Auto-play: shuffle mode = random, otherwise = sequential
 			if (shuffleMode) {
 				const nextRow = getRandomUnplayedTrack();
 				if (nextRow) {
-					console.log('[Shuffle] Auto-playing next random track...');
 					playRow(nextRow);
 				}
+			} else if (currentRow) {
+				// Play next track in order
+				const allRows = getAllTrackRows();
+				const currentIndex = allRows.indexOf(currentRow);
+				const nextIndex = (currentIndex + 1) % allRows.length;
+				playRow(allRows[nextIndex]);
 			}
 		});
 
