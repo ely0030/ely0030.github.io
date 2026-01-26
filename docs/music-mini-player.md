@@ -153,3 +153,33 @@ if (alreadyChasing) {
 ```
 
 Without this, grabbing a gliding card teleports the pin to the tack spot instantly (jarring). With the check, pin smoothly continues its chase from wherever it currently is.
+
+## Re-pinning (Dropping Pin Back on Card)
+
+### Two Different Impact Animations
+**Critical**: `pin-impact` vs `pin-impact-from-float` exist because animation 0% must match card's current shadow.
+
+| Animation | 0% Shadow | Used When |
+|-----------|-----------|-----------|
+| `pin-impact` | Elevated (0 12px 48px) | Auto-tack from `.pinned.gliding` |
+| `pin-impact-from-float` | Unpinned (0 4px 24px) | Manual re-pin from floating |
+
+If you use wrong animation, shadow jumps to 0% state = flash.
+
+### Manual Re-pin Flow (4 handlers: mouse/touch × resting/tacked pin)
+```javascript
+stopAnimation();
+miniPlayer.classList.remove('gliding', 'dragging');
+// DON'T add .pinned yet - keep unpinned shadow during pin slide
+
+// Pin slides to tack spot (120ms)...
+
+setTimeout(() => {
+    // NOW add both classes - animation 0% matches current shadow
+    miniPlayer.classList.add('pinned');
+    miniPlayer.classList.add('just-pinned-from-float');
+}, 120);
+```
+
+### Why Delay Adding `.pinned`
+Adding `.pinned` immediately changes shadow to minimal. We want unpinned shadow during the 120ms pin slide, THEN the impact animation.

@@ -877,8 +877,40 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 		}
 
+		/* For manual re-pin: starts from unpinned floating shadow (moderate) */
+		@keyframes pin-impact-from-float {
+			0% {
+				/* Start at unpinned floating shadow (matches base .mini-player) */
+				transform: translateY(0) scale(1);
+				box-shadow:
+					0 4px 24px rgba(0, 0, 0, 0.12),
+					0 1px 3px rgba(0, 0, 0, 0.08),
+					inset 0 1px 0 rgba(255, 255, 255, 0.5);
+			}
+			50% {
+				/* Pressed INTO the page by pin */
+				transform: translateY(2px) scale(0.99);
+				box-shadow:
+					0 0 1px rgba(0, 0, 0, 0.04),
+					0 0 0 rgba(0, 0, 0, 0),
+					inset 0 1px 0 rgba(255, 255, 255, 0.5);
+			}
+			100% {
+				/* Settled flat - matches .pinned state */
+				transform: translateY(0) scale(1);
+				box-shadow:
+					0 1px 3px rgba(0, 0, 0, 0.08),
+					0 0 1px rgba(0, 0, 0, 0.05),
+					inset 0 1px 0 rgba(255, 255, 255, 0.5);
+			}
+		}
+
 		.mini-player.pinned.just-pinned {
 			animation: pin-impact 0.2s ease-out forwards;
+		}
+
+		.mini-player.pinned.just-pinned-from-float {
+			animation: pin-impact-from-float 0.2s ease-out forwards;
 		}
 
 		.mini-player:hover:not(.dragging):not(.pinned):not(.gliding) {
@@ -2369,16 +2401,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			// Check if dropped on/near the mini player - re-pin it!
 			if (isOverMiniPlayer(pinX, pinY)) {
-				// Re-pin the mini player
+				// Stop any ongoing glide animation
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
-				miniPlayer.classList.add('pinned');
-				// Keep elevated shadow until pin tacks in
-				miniPlayer.classList.add('gliding');
-				isPinned = true;
 
 				// CRITICAL: Convert pin's current viewport position to document coords
 				// BEFORE switching to absolute, so pin doesn't teleport
@@ -2400,9 +2433,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After arriving, play tacking + card impact SIMULTANEOUSLY
+				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
 				setTimeout(() => {
 					autonomousPin.style.transition = '';
+
+					// NOW add .pinned and .just-pinned-from-float for impact animation
+					// Use -from-float because card was unpinned (moderate shadow), not elevated
+					miniPlayer.classList.add('pinned');
+					miniPlayer.classList.add('just-pinned-from-float');
+					isPinned = true;
 
 					// Ensure needle is visible before tacking
 					pinNeedle.style.transition = 'none';
@@ -2418,16 +2457,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinNeedle.style.height = '0';
 					pinNeedle.style.opacity = '0';
 
-					// Card impact animation - starts at SAME TIME as pin tacking
-					miniPlayer.classList.add('just-pinned');
-
-					// After both animations complete (200ms), clean up
+					// After tacking animation completes (200ms), clean up
 					setTimeout(() => {
 						autonomousPin.classList.remove('tacking');
 						autonomousPin.classList.add('resting');
 						pinHead.style.transform = '';
 						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned', 'gliding');
+						miniPlayer.classList.remove('just-pinned-from-float');
 						savePosition();
 					}, 200);
 				}, 120);
@@ -2562,16 +2598,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			// Check if dropped on/near the mini player - re-pin it!
 			if (isOverMiniPlayer(pinX, pinY)) {
-				// Re-pin the mini player
+				// Stop any ongoing glide animation
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
-				miniPlayer.classList.add('pinned');
-				// Keep elevated shadow until pin tacks in
-				miniPlayer.classList.add('gliding');
-				isPinned = true;
 
 				// CRITICAL: Convert pin's current viewport position to document coords
 				// BEFORE switching to absolute, so pin doesn't teleport
@@ -2593,9 +2630,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After arriving, play tacking + card impact SIMULTANEOUSLY
+				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
 				setTimeout(() => {
 					autonomousPin.style.transition = '';
+
+					// NOW add .pinned and .just-pinned-from-float for impact animation
+					// Use -from-float because card was unpinned (moderate shadow), not elevated
+					miniPlayer.classList.add('pinned');
+					miniPlayer.classList.add('just-pinned-from-float');
+					isPinned = true;
 
 					// Ensure needle is visible before tacking
 					pinNeedle.style.transition = 'none';
@@ -2611,16 +2654,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinNeedle.style.height = '0';
 					pinNeedle.style.opacity = '0';
 
-					// Card impact animation - starts at SAME TIME as pin tacking
-					miniPlayer.classList.add('just-pinned');
-
-					// After both animations complete (200ms), clean up
+					// After tacking animation completes (200ms), clean up
 					setTimeout(() => {
 						autonomousPin.classList.remove('tacking');
 						autonomousPin.classList.add('resting');
 						pinHead.style.transform = '';
 						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned', 'gliding');
+						miniPlayer.classList.remove('just-pinned-from-float');
 						savePosition();
 					}, 200);
 				}, 120);
@@ -2769,16 +2809,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			// Check if dropped on mini player
 			if (isOverMiniPlayer(pinX, pinY)) {
-				// Re-pin the mini player!
+				// Stop any ongoing glide animation
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
-				miniPlayer.classList.add('pinned');
-				// Keep elevated shadow until pin tacks in
-				miniPlayer.classList.add('gliding');
-				isPinned = true;
 
 				// CRITICAL: Convert pin's current viewport position to document coords
 				// BEFORE switching to absolute, so pin doesn't teleport
@@ -2800,9 +2841,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After arriving, play tacking + card impact SIMULTANEOUSLY
+				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
 				setTimeout(() => {
 					autonomousPin.style.transition = '';
+
+					// NOW add .pinned and .just-pinned-from-float for impact animation
+					// Use -from-float because card was unpinned (moderate shadow), not elevated
+					miniPlayer.classList.add('pinned');
+					miniPlayer.classList.add('just-pinned-from-float');
+					isPinned = true;
 
 					// Ensure needle is visible before tacking
 					pinNeedle.style.transition = 'none';
@@ -2818,16 +2865,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinNeedle.style.height = '0';
 					pinNeedle.style.opacity = '0';
 
-					// Card impact animation - starts at SAME TIME as pin tacking
-					miniPlayer.classList.add('just-pinned');
-
-					// After both animations complete (200ms), clean up
+					// After tacking animation completes (200ms), clean up
 					setTimeout(() => {
 						autonomousPin.classList.remove('tacking');
 						autonomousPin.classList.add('resting');
 						pinHead.style.transform = '';
 						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned', 'gliding');
+						miniPlayer.classList.remove('just-pinned-from-float');
 						savePosition();
 					}, 200);
 				}, 120);
@@ -2961,16 +3005,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			autonomousPin.classList.remove('dragging');
 
 			if (isOverMiniPlayer(pinX, pinY)) {
-				// Re-pin the mini player!
+				// Stop any ongoing glide animation and clean up classes
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Convert mini player to document coords for pinned positioning
+				// But DON'T add .pinned yet - keep unpinned shadow during pin slide
 				const rect = miniPlayer.getBoundingClientRect();
 				const docX = rect.left + window.scrollX;
 				const docY = rect.top + window.scrollY;
 				miniPlayer.style.left = docX + 'px';
 				miniPlayer.style.top = docY + 'px';
-				miniPlayer.classList.add('pinned');
-				// Keep elevated shadow until pin tacks in
-				miniPlayer.classList.add('gliding');
-				isPinned = true;
 
 				// Clear inline position before adding .pinned class
 				autonomousPin.style.position = '';
@@ -2984,9 +3029,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				autonomousPin.style.left = pinX + 'px';
 				autonomousPin.style.top = pinY + 'px';
 
-				// After arriving, play tacking + card impact SIMULTANEOUSLY
+				// After pin arrives, play tacking + card impact SIMULTANEOUSLY
 				setTimeout(() => {
 					autonomousPin.style.transition = '';
+
+					// NOW add .pinned and .just-pinned-from-float for impact animation
+					// Use -from-float because card was unpinned (moderate shadow), not elevated
+					miniPlayer.classList.add('pinned');
+					miniPlayer.classList.add('just-pinned-from-float');
+					isPinned = true;
 
 					// Ensure needle is visible before tacking
 					pinNeedle.style.transition = 'none';
@@ -3002,16 +3053,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinNeedle.style.height = '0';
 					pinNeedle.style.opacity = '0';
 
-					// Card impact animation - starts at SAME TIME as pin tacking
-					miniPlayer.classList.add('just-pinned');
-
-					// After both animations complete (200ms), clean up
+					// After tacking animation completes (200ms), clean up
 					setTimeout(() => {
 						autonomousPin.classList.remove('tacking');
 						autonomousPin.classList.add('resting');
 						pinHead.style.transform = '';
 						pinNeedle.style.transform = '';
-						miniPlayer.classList.remove('just-pinned', 'gliding');
+						miniPlayer.classList.remove('just-pinned-from-float');
 						savePosition();
 					}, 200);
 				}, 120);
