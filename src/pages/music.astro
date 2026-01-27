@@ -1239,12 +1239,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			appearance: none;
 			-webkit-tap-highlight-color: transparent;
 			touch-action: manipulation;
-			/* Minimum touch target for accessibility */
-			min-width: 44px;
-			min-height: 44px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
 		}
 
 		.mini-player-controls button:hover {
@@ -1390,9 +1384,14 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				max-width: none;
 			}
 
-			/* Larger touch targets on mobile */
+			/* Larger touch targets on mobile (44px iOS minimum) */
 			.mini-player-controls button {
 				font-size: 16px;
+				min-width: 44px;
+				min-height: 44px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
 			}
 
 			/* Larger progress bar for easier touch */
