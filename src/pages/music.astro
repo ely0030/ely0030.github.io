@@ -377,7 +377,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		<!-- Touch loupe - magnifies what's under thumb when dragging pin -->
 		<div id="touch-loupe" class="touch-loupe hidden">
 			<div class="loupe-viewport"></div>
-			<div class="loupe-label"></div>
 			<div class="loupe-crosshair"></div>
 		</div>
 
@@ -894,26 +893,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			top: 0;
 			left: 0;
 			pointer-events: none;
-		}
-
-		/* Label at bottom of loupe */
-		.touch-loupe .loupe-label {
-			position: absolute;
-			bottom: 8px;
-			left: 50%;
-			transform: translateX(-50%);
-			font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace;
-			font-size: 9px;
-			color: #fff;
-			background: rgba(0, 0, 0, 0.6);
-			padding: 2px 8px;
-			border-radius: 8px;
-			white-space: nowrap;
-			z-index: 11;
-		}
-
-		.touch-loupe .loupe-label:empty {
-			display: none;
 		}
 
 		/* Pin indicator in loupe - shows where pin will drop */
@@ -2041,7 +2020,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		// Touch loupe for mobile
 		const touchLoupe = document.getElementById('touch-loupe');
 		const loupeViewport = touchLoupe?.querySelector('.loupe-viewport');
-		const loupeLabel = touchLoupe?.querySelector('.loupe-label');
 		const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 		// Pin state
@@ -3171,34 +3149,27 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			loupeClone.style.transform = `scale(${LOUPE_SCALE}) translate(${translateX}px, ${translateY}px)`;
 
-			// Detect what's under the pin for label and border color
+			// Detect what's under the pin for border color
 			let targetType = 'none';
-			let label = '';
 
 			if (isOverTrackName(pinCenterX, pinCenterY)) {
-				label = 'Loop track';
 				targetType = 'loop-track';
 			} else if (isOverArtistName(pinCenterX, pinCenterY)) {
-				label = 'Loop artist';
 				targetType = 'loop-artist';
 			} else {
 				const tableTrackHit = isOverTableTrackName(pinCenterX, pinCenterY);
 				if (tableTrackHit) {
-					label = 'Pin to loop';
 					targetType = 'table-track';
 				} else {
 					const tableArtistHit = isOverTableArtistName(pinCenterX, pinCenterY);
 					if (tableArtistHit) {
-						label = 'Loop artist';
 						targetType = 'table-artist';
 					} else if (isOverMiniPlayer(pinCenterX, pinCenterY)) {
-						label = 'Normal mode';
 						targetType = 'mini-player';
 					}
 				}
 			}
 
-			if (loupeLabel) loupeLabel.textContent = label;
 			touchLoupe.setAttribute('data-target', targetType);
 		};
 
@@ -4544,8 +4515,12 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
+			// Calculate pin head center for accurate hit detection
+			const pinHeadCenterX = pinX + 10.5;
+			const pinHeadCenterY = pinY + 5;
+
 			// Check table artist name first (larger remote drop target)
-			const tableArtistHit = isOverTableArtistName(pinX, pinY);
+			const tableArtistHit = isOverTableArtistName(pinHeadCenterX, pinHeadCenterY);
 			if (tableArtistHit) {
 				// Dropped on table artist name - pin stays on table, mini player stays floating
 				stopAnimation();
@@ -4605,7 +4580,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 
 			// Check table track name (larger remote drop target)
-			const tableTrackHit = isOverTableTrackName(pinX, pinY);
+			const tableTrackHit = isOverTableTrackName(pinHeadCenterX, pinHeadCenterY);
 			if (tableTrackHit) {
 				// Dropped on table track name - pin stays on table, mini player stays floating
 				stopAnimation();
@@ -4724,7 +4699,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					miniPlayer.classList.remove('just-pinned-from-float');
 					savePosition();
 				}, 200);
-			} else if (isOverMiniPlayer(pinX, pinY)) {
+			} else if (isOverMiniPlayer(pinHeadCenterX, pinHeadCenterY)) {
 				// Check if dropped on mini player (normal mode)
 				// Rewritten to match track name tacking structure (no flash)
 				stopAnimation();
@@ -4920,8 +4895,12 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
+			// Calculate pin head center for accurate hit detection
+			const pinHeadCenterX = pinX + 10.5;
+			const pinHeadCenterY = pinY + 5;
+
 			// Check table artist name first (larger remote drop target)
-			const tableArtistHit = isOverTableArtistName(pinX, pinY);
+			const tableArtistHit = isOverTableArtistName(pinHeadCenterX, pinHeadCenterY);
 			if (tableArtistHit) {
 				// Dropped on table artist name - pin stays on table, mini player stays floating
 				stopAnimation();
@@ -4981,7 +4960,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 
 			// Check table track name (larger remote drop target)
-			const tableTrackHit = isOverTableTrackName(pinX, pinY);
+			const tableTrackHit = isOverTableTrackName(pinHeadCenterX, pinHeadCenterY);
 			if (tableTrackHit) {
 				// Dropped on table track name - pin stays on table, mini player stays floating
 				stopAnimation();
@@ -5100,7 +5079,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						savePosition();
 					}, 200);
 				}, 120);
-			} else if (isOverMiniPlayer(pinX, pinY)) {
+			} else if (isOverMiniPlayer(pinHeadCenterX, pinHeadCenterY)) {
 				// Check if dropped on mini player (normal mode)
 				// Rewritten to match track name tacking structure (no flash)
 				stopAnimation();
@@ -5211,9 +5190,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		});
 
 		// Revalidate position on window resize
+		// Skip if animation is active (mobile browser bar changes trigger resize)
 		window.addEventListener('resize', () => {
-			if (miniPlayer.classList.contains('dragged')) {
-				stopAnimation();
+			if (miniPlayer.classList.contains('dragged') && !animationId) {
 				const pos = getPosition();
 				const maxX = window.innerWidth - miniPlayer.offsetWidth;
 				const maxY = window.innerHeight - miniPlayer.offsetHeight;
