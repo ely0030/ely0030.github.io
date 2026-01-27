@@ -918,15 +918,30 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			position: absolute;
 			top: 50%;
 			left: 50%;
-			transform: translate(-50%, -6px);  /* Offset so pin HEAD is at center */
+			transform: translate(-50%, -100%);  /* Needle TIP at center */
 			pointer-events: none;
 			z-index: 50;
 			width: 20px;
-			height: 30px;
+			height: 28px;
 		}
 
-		/* Pin head - centered at loupe center */
+		/* Pin needle - BEHIND head, tip at bottom (drop point) */
 		.touch-loupe .loupe-crosshair::before {
+			content: '';
+			position: absolute;
+			bottom: 0;
+			left: 50%;
+			transform: translateX(-50%) rotate(15deg);
+			transform-origin: bottom center;
+			width: 2px;
+			height: 16px;
+			background: linear-gradient(to bottom, #c8ccd0, #666);
+			border-radius: 1px 1px 0 0;
+			z-index: 1;
+		}
+
+		/* Pin head - on top of needle */
+		.touch-loupe .loupe-crosshair::after {
 			content: '';
 			position: absolute;
 			top: 0;
@@ -939,20 +954,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			box-shadow:
 				0 2px 4px rgba(0,0,0,0.4),
 				inset 0 -2px 3px rgba(0,0,0,0.2);
-		}
-
-		/* Pin needle - extends below head */
-		.touch-loupe .loupe-crosshair::after {
-			content: '';
-			position: absolute;
-			top: 12px;
-			left: 50%;
-			transform: translateX(-50%) rotate(15deg);
-			transform-origin: top center;
-			width: 2px;
-			height: 16px;
-			background: linear-gradient(to bottom, #c8ccd0, #888);
-			border-radius: 0 0 1px 1px;
+			z-index: 2;
 		}
 
 		/* Loupe border color based on target */
