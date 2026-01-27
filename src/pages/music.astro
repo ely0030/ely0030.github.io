@@ -82,6 +82,13 @@ const tracks = [
 		modified: '12.11.25 10:24'
 	},
 	{
+		name: 'Hope Is.mp3',
+		artist: 'Daniel Caesar',
+		url: 'https://files.catbox.moe/25e7r9.mp3',
+		size: '~5mb',
+		modified: '27.1.26 00:00'
+	},
+	{
 		name: 'Its Not Your Fault (2022).mp3',
 		artist: 'Daniel Caesar',
 		url: 'https://files.catbox.moe/g1g6ud.mp3',
@@ -648,6 +655,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				inset 0 1px 0 rgba(255, 255, 255, 0.5);
 			cursor: grab;
 			user-select: none;
+			-webkit-user-select: none;
+			touch-action: none;
+			-webkit-touch-callout: none;
 			transition: box-shadow 0.2s ease, transform 0.2s ease;
 		}
 
@@ -699,6 +709,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		.autonomous-pin.resting {
 			pointer-events: auto;
 			cursor: grab;
+			touch-action: none;
+			-webkit-touch-callout: none;
 		}
 
 		/* When pin is on table (not mini player), it should be BEHIND mini player */
@@ -722,6 +734,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			pointer-events: auto;
 			cursor: pointer;
 			z-index: 999;
+			touch-action: none;
+			-webkit-touch-callout: none;
 		}
 
 		.autonomous-pin.tacked .pin-head {
@@ -1013,6 +1027,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			position: relative;
 			border-radius: 2px;
 			overflow: hidden;
+			/* Allow horizontal touch on progress bar */
+			touch-action: pan-x;
+			-webkit-tap-highlight-color: transparent;
 		}
 
 		.mini-progress-fill {
@@ -1033,14 +1050,29 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		.mini-player-controls button {
 			background: none;
 			border: none;
-			font-size: 12px;
+			font-size: 14px;
 			cursor: pointer;
-			padding: 4px;
+			padding: 8px;
 			color: #1d1d1f;
+			/* iOS consistency fixes */
+			-webkit-appearance: none;
+			appearance: none;
+			-webkit-tap-highlight-color: transparent;
+			touch-action: manipulation;
+			/* Minimum touch target for accessibility */
+			min-width: 44px;
+			min-height: 44px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 		}
 
 		.mini-player-controls button:hover {
 			opacity: 0.6;
+		}
+
+		.mini-player-controls button:active {
+			opacity: 0.4;
 		}
 
 		.mini-player-controls button:focus {
@@ -1048,11 +1080,10 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		}
 
 		.mini-shuffle-btn {
-			margin-right: 16px;
+			margin-right: 8px;
 			display: flex;
 			align-items: center;
 			position: relative;
-			top: 1px;
 		}
 
 		.mini-player-controls .mini-shuffle-btn.active {
@@ -1062,7 +1093,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		.mini-player-main {
 			display: flex;
 			align-items: center;
-			gap: 16px;
+			gap: 4px;
 		}
 
 		.mini-volume-wrapper {
@@ -1177,6 +1208,26 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			.mini-track-name {
 				max-width: none;
+			}
+
+			/* Larger touch targets on mobile */
+			.mini-player-controls button {
+				font-size: 16px;
+			}
+
+			/* Larger progress bar for easier touch */
+			.mini-progress-bar {
+				height: 8px;
+				border-radius: 4px;
+			}
+
+			.mini-progress-fill {
+				border-radius: 4px;
+			}
+
+			/* Hide volume slider on mobile - use device volume instead */
+			.mini-volume-wrapper {
+				display: none;
 			}
 		}
 	</style>
@@ -1726,11 +1777,35 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			miniShuffleBtn.classList.toggle('active', shuffleMode);
 		});
 
-		// Seek via progress bar
+		// Seek via progress bar (click)
 		miniProgressBar.addEventListener('click', (e) => {
 			const rect = miniProgressBar.getBoundingClientRect();
 			const percent = (e.clientX - rect.left) / rect.width;
 			audioPlayer.currentTime = percent * audioPlayer.duration;
+		});
+
+		// Seek via progress bar (touch scrubbing)
+		let isScrubbing = false;
+		const seekToTouch = (e) => {
+			const rect = miniProgressBar.getBoundingClientRect();
+			const touch = e.touches[0];
+			const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+			audioPlayer.currentTime = percent * audioPlayer.duration;
+		};
+
+		miniProgressBar.addEventListener('touchstart', (e) => {
+			isScrubbing = true;
+			seekToTouch(e);
+		}, { passive: true });
+
+		document.addEventListener('touchmove', (e) => {
+			if (isScrubbing && e.touches.length === 1) {
+				seekToTouch(e);
+			}
+		}, { passive: true });
+
+		document.addEventListener('touchend', () => {
+			isScrubbing = false;
 		});
 
 		// Pin state - always starts pinned
