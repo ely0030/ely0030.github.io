@@ -370,6 +370,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		<div id="mini-player" class="mini-player hidden">
 			<div class="mini-player-track">
 				<span class="mini-track-name">-</span>
+				<span class="mini-track-queued hidden"> → <span class="queued-name">-</span></span>
 				<span class="mini-track-artist">-</span>
 			</div>
 			<div class="mini-player-progress">
@@ -697,6 +698,11 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			cursor: grab;
 		}
 
+		/* When pin is on table (not mini player), it should be BEHIND mini player */
+		.autonomous-pin.on-table {
+			z-index: 999;
+		}
+
 		.autonomous-pin.resting:active {
 			cursor: grabbing;
 		}
@@ -930,12 +936,27 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		}
 
 		.mini-track-name {
-			display: block;
+			display: inline;
 			font-weight: 500;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			max-width: 220px;
+		}
+
+		.mini-track-queued {
+			display: none;
+			color: #999;
+			font-size: 11px;
+			white-space: nowrap;
+		}
+
+		.mini-track-queued:not(.hidden) {
+			display: inline;
+		}
+
+		.mini-track-queued .queued-name {
+			color: #888;
 		}
 
 		.mini-track-artist {
@@ -1099,6 +1120,21 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			animation: loopIconFadeIn 0.15s ease-out;
 		}
 
+		/* Table element pinned state - when pin is tacked on table row */
+		.track-name.pinned-loop,
+		.track-artist.pinned-loop {
+			color: #0066CC;
+		}
+
+		/* Loop symbol only on track names, not artist names */
+		.track-name.pinned-loop::after {
+			content: '↻';
+			font-size: 9px;
+			margin-left: 4px;
+			color: #0066CC;
+			animation: loopIconFadeIn 0.15s ease-out;
+		}
+
 		@keyframes loopIconFadeIn {
 			from { opacity: 0; }
 			to { opacity: 1; }
@@ -1166,7 +1202,10 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			// Deactivate track loop mode when changing tracks
 			// (track loop is specific to a track, not a setting)
 			// But keep artist loop mode active
-			if (typeof deactivateLoopMode === 'function' && !artistLoopMode) {
+			if (typeof animatePinReturnToMiniPlayer === 'function' && pinOnTable && !artistLoopMode) {
+				// Pin is on table - animate it flying back to mini player
+				animatePinReturnToMiniPlayer();
+			} else if (typeof deactivateLoopMode === 'function' && !artistLoopMode) {
 				deactivateLoopMode();
 			} else if (loopMode) {
 				// If in track loop mode, deactivate it
@@ -1247,6 +1286,11 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						currentRow?.classList.remove('playing');
 					}
 
+					// If pin is on table, animate it flying back to mini player
+					if (typeof animatePinReturnToMiniPlayer === 'function' && pinOnTable) {
+						animatePinReturnToMiniPlayer();
+					}
+
 					audioPlayer.src = audioSrc;
 					audioPlayer.play();
 					button.textContent = '❚❚';
@@ -1263,6 +1307,24 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		// When audio ends, auto-play next track (or loop if loop mode active)
 		audioPlayer.addEventListener('ended', () => {
+			// Check for queued track first (pinned a different track on table)
+			if (queuedLoopRow) {
+				const rowToPlay = queuedLoopRow;
+				queuedLoopRow = null;  // Clear queue - next time it will loop
+				hideQueuedTrack();  // Hide the "next up" indicator
+				playRowWithoutDeactivatingLoop(rowToPlay);
+				// Apply loop mode formatting after mini player updates
+				// Now the queued track is playing, so show the loop symbol
+				setTimeout(() => {
+					if (loopMode) {
+						const plainName = miniTrackNameEl.textContent;
+						miniTrackNameEl.innerHTML = wrapExtension(plainName);
+						miniPlayerTrack.classList.add('loop-mode');  // Now show loop symbol
+					}
+				}, 50);
+				return;
+			}
+
 			// Track loop mode: replay the same track
 			if (loopMode) {
 				audioPlayer.currentTime = 0;
@@ -1421,6 +1483,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		const miniPlayer = document.getElementById('mini-player');
 		const miniTrackName = miniPlayer.querySelector('.mini-track-name');
 		const miniTrackArtist = miniPlayer.querySelector('.mini-track-artist');
+		const miniTrackQueued = miniPlayer.querySelector('.mini-track-queued');
+		const miniQueuedName = miniPlayer.querySelector('.queued-name');
 		const miniCurrentTime = miniPlayer.querySelector('.mini-current-time');
 		const miniDuration = miniPlayer.querySelector('.mini-duration');
 		const miniProgressFill = miniPlayer.querySelector('.mini-progress-fill');
@@ -1500,6 +1564,23 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		});
 
 		miniNextBtn.addEventListener('click', () => {
+			// If there's a queued track (pinned on table), skip to that
+			if (queuedLoopRow) {
+				const rowToPlay = queuedLoopRow;
+				queuedLoopRow = null;
+				hideQueuedTrack();
+				playRowWithoutDeactivatingLoop(rowToPlay);
+				// Show loop symbol after mini player updates
+				setTimeout(() => {
+					if (loopMode) {
+						const plainName = miniTrackNameEl.textContent;
+						miniTrackNameEl.innerHTML = wrapExtension(plainName);
+						miniPlayerTrack.classList.add('loop-mode');
+					}
+				}, 50);
+				return;
+			}
+
 			const allRows = getAllTrackRows();
 			if (shuffleMode) {
 				const nextRow = getRandomUnplayedTrack();
@@ -1544,6 +1625,11 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		let artistLoopMode = false;
 		let loopArtist = '';  // The artist name to loop
 
+		// Pin on table mode - when pin is tacked to table row instead of mini player
+		let pinOnTable = false;
+		let pinnedTableElement = null;  // The table element where pin is tacked
+		let queuedLoopRow = null;  // Track row queued to play next (when pinning a different track on table)
+
 		// Mini player drag functionality with physics
 		let isDragging = false;
 		let dragOffsetX = 0;
@@ -1583,6 +1669,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		let lastPinDistance = 0;  // Track distance to detect card approaching
 		let pinVelX = 0;          // Smoothed velocity for anti-jitter
 		let pinVelY = 0;
+		let pinReturningFromTable = false;  // Flag to prevent chase logic during return animation
 
 		// Pin personality
 		const PIN_GIVEUP_SPEED = 6;     // Card speed where pin gives up chasing hard
@@ -1639,6 +1726,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				autonomousPin.classList.add('hidden');
 				return;
 			}
+			// Don't interfere if pin is doing its own return animation from table
+			if (pinReturningFromTable) return;
 
 			autonomousPin.classList.remove('hidden');
 
@@ -1790,6 +1879,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			}
 			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
 
+			// Also remove highlight from page artist names while pin is floating
+			// (they'll be restored when pin re-tacks if still in artist loop mode)
+			if (artistLoopMode) {
+				const allArtists = document.querySelectorAll('tr.file .track-artist.pinned-loop');
+				allArtists.forEach(el => el.classList.remove('pinned-loop'));
+			}
+
 			if (alreadyChasing) {
 				// Pin is already in the air - just continue chasing from current position
 				// Don't reset position, just ensure it's in lifted visual state
@@ -1872,6 +1968,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		// Called when card fully stops - pin flies to card and tacks in
 		const onCardStopped = () => {
 			if (!isPinned) return;
+			// Don't interfere if pin is doing its own return animation from table
+			if (pinReturningFromTable) return;
 
 			pinGaveUp = false;
 			pinIsRunning = false;
@@ -1934,6 +2032,13 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						miniPlayerTrack.classList.add('loop-mode');
 					} else if (artistLoopMode) {
 						miniPlayerTrack.classList.add('artist-loop-mode');
+						// Also restore highlight on ALL matching page artist names
+						const allArtists = document.querySelectorAll('tr.file .track-artist');
+						allArtists.forEach(el => {
+							if (el.textContent === loopArtist) {
+								el.classList.add('pinned-loop');
+							}
+						});
 					}
 				}, 200);
 			}, travelTime);
@@ -2007,6 +2112,52 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			return bounced;
 		};
 
+		// Ensure mini player is within reachable bounds (can be scrolled to)
+		const ensureInReachableBounds = () => {
+			if (!isPinned) return;
+
+			const pos = getPosition();
+			const playerHeight = miniPlayer.offsetHeight;
+			const playerWidth = miniPlayer.offsetWidth;
+
+			// Check if player is beyond what user can scroll to
+			// For Y: player should be within document content area
+			const maxReachableY = document.documentElement.scrollHeight - playerHeight;
+			const maxReachableX = window.innerWidth - playerWidth;
+
+			let needsCorrection = false;
+			let newX = pos.x;
+			let newY = pos.y;
+
+			if (pos.y > maxReachableY) {
+				newY = maxReachableY;
+				needsCorrection = true;
+			}
+			if (pos.x > maxReachableX) {
+				newX = maxReachableX;
+				needsCorrection = true;
+			}
+			if (pos.x < 0) {
+				newX = 0;
+				needsCorrection = true;
+			}
+			if (pos.y < 0) {
+				newY = 0;
+				needsCorrection = true;
+			}
+
+			if (needsCorrection) {
+				// Smoothly animate back into bounds
+				miniPlayer.style.transition = 'left 0.3s ease-out, top 0.3s ease-out';
+				miniPlayer.style.left = newX + 'px';
+				miniPlayer.style.top = newY + 'px';
+				setTimeout(() => {
+					miniPlayer.style.transition = '';
+					savePosition();
+				}, 300);
+			}
+		};
+
 		// Animate with inertia
 		const animateInertia = () => {
 			const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
@@ -2020,6 +2171,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				}
 				triggerPinImpact();
 				savePosition();
+				// Check if player ended up outside reachable bounds
+				ensureInReachableBounds();
 				return;
 			}
 
@@ -2410,8 +2563,59 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			);
 		};
 
+		// Check if point is over any track name in the main table
+		const isOverTableTrackName = (x, y) => {
+			const viewX = x - window.scrollX;
+			const viewY = y - window.scrollY;
+			const trackNames = document.querySelectorAll('tr.file .track-name');
+
+			for (const el of trackNames) {
+				const rect = el.getBoundingClientRect();
+				const textWidth = Math.min(getTextWidth(el), rect.width);
+
+				// Shrink hitbox slightly from bottom to avoid overlap with artist
+				const paddingX = 6;
+				const shrinkBottom = 3;
+				if (
+					viewX >= rect.left - paddingX && viewX <= rect.left + textWidth + paddingX &&
+					viewY >= rect.top && viewY <= rect.bottom - shrinkBottom
+				) {
+					return el;  // Return the element for context
+				}
+			}
+			return null;
+		};
+
+		// Check if point is over any artist name in the main table
+		const isOverTableArtistName = (x, y) => {
+			const viewX = x - window.scrollX;
+			const viewY = y - window.scrollY;
+			const artistNames = document.querySelectorAll('tr.file .track-artist');
+
+			for (const el of artistNames) {
+				const rect = el.getBoundingClientRect();
+				const textWidth = Math.min(getTextWidth(el), rect.width);
+
+				// Shrink hitbox slightly from bottom
+				const paddingX = 6;
+				const shrinkBottom = 3;
+				if (
+					viewX >= rect.left - paddingX && viewX <= rect.left + textWidth + paddingX &&
+					viewY >= rect.top && viewY <= rect.bottom - shrinkBottom
+				) {
+					return { element: el, artist: el.textContent };
+				}
+			}
+			return null;
+		};
+
 		// Get where pin should rest when in loop mode (uses stored offset from card)
 		const getLoopPinPosition = () => {
+			// If pin is on table, return its current position (doesn't follow card)
+			if (pinOnTable) {
+				return { x: pinX, y: pinY };
+			}
+
 			// Get card's document position directly from its style (more reliable than bounding rect + scroll)
 			const cardDocX = parseFloat(miniPlayer.style.left) || 0;
 			const cardDocY = parseFloat(miniPlayer.style.top) || 0;
@@ -2447,28 +2651,51 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			return miniTrackNameEl.textContent;
 		};
 
+		// Show queued track indicator in mini player
+		const showQueuedTrack = (trackName) => {
+			miniQueuedName.textContent = trackName;
+			miniTrackQueued.classList.remove('hidden');
+		};
+
+		// Hide queued track indicator
+		const hideQueuedTrack = () => {
+			miniTrackQueued.classList.add('hidden');
+		};
+
 		// Activate track loop mode - pin settles on track name
 		const activateLoopMode = () => {
 			loopMode = true;
 			artistLoopMode = false;  // Only one loop mode at a time
 			loopArtist = '';
 
-			// Wrap extension in span so it stays default color
-			const plainName = getPlainTrackName();
-			miniTrackNameEl.innerHTML = wrapExtension(plainName);
-
-			miniPlayerTrack.classList.add('loop-mode');
+			// Only show loop symbol if not waiting for a queued track
+			// (queued track means current track plays once, then queued track loops)
+			if (!queuedLoopRow) {
+				// Wrap extension in span so it stays default color
+				const plainName = getPlainTrackName();
+				miniTrackNameEl.innerHTML = wrapExtension(plainName);
+				miniPlayerTrack.classList.add('loop-mode');
+			}
 			miniPlayerTrack.classList.remove('artist-loop-mode');
 		};
 
 		// Activate artist loop mode - pin settles on artist name
-		const activateArtistLoopMode = () => {
+		// If artistName provided, loop that artist (from table drop); otherwise use current track's artist
+		const activateArtistLoopMode = (artistName = null) => {
 			artistLoopMode = true;
 			loopMode = false;  // Only one loop mode at a time
-			loopArtist = miniTrackArtistEl.textContent;
+			loopArtist = artistName || miniTrackArtistEl.textContent;
 
 			// Restore plain text for track name (in case it had extension span)
 			miniTrackNameEl.textContent = getPlainTrackName();
+
+			// Highlight ALL matching artist names in the table
+			const allArtists = document.querySelectorAll('tr.file .track-artist');
+			allArtists.forEach(el => {
+				if (el.textContent === loopArtist) {
+					el.classList.add('pinned-loop');
+				}
+			});
 
 			miniPlayerTrack.classList.add('artist-loop-mode');
 			miniPlayerTrack.classList.remove('loop-mode');
@@ -2481,10 +2708,160 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				miniTrackNameEl.textContent = getPlainTrackName();
 			}
 
+			// Remove pinned class from table element if any (for track loop)
+			if (pinnedTableElement) {
+				pinnedTableElement.classList.remove('pinned-loop');
+				pinnedTableElement = null;
+			}
+
+			// Remove pinned class from ALL artist names (for artist loop)
+			const allArtists = document.querySelectorAll('tr.file .track-artist.pinned-loop');
+			allArtists.forEach(el => el.classList.remove('pinned-loop'));
+
+			// If pin was on table and not currently being dragged, hide it
+			// (it has no target to return to since mini player is floating)
+			if (pinOnTable && !isPinDragging) {
+				autonomousPin.classList.add('hidden');
+				autonomousPin.classList.remove('resting', 'pinned');
+			}
+
 			loopMode = false;
 			artistLoopMode = false;
 			loopArtist = '';
+			pinOnTable = false;
+			autonomousPin.classList.remove('on-table');
+			queuedLoopRow = null;  // Clear any queued track
+			hideQueuedTrack();  // Hide the queued indicator
 			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
+		};
+
+		// Animate pin flying from table back to mini player (when changing tracks while pin is on table)
+		const animatePinReturnToMiniPlayer = () => {
+			// Clear table visual state but don't hide the pin
+			if (pinnedTableElement) {
+				pinnedTableElement.classList.remove('pinned-loop');
+				pinnedTableElement = null;
+			}
+
+			// Remove pinned class from ALL artist names
+			const allArtists = document.querySelectorAll('tr.file .track-artist.pinned-loop');
+			allArtists.forEach(el => el.classList.remove('pinned-loop'));
+
+			// Clear loop mode state
+			if (loopMode) {
+				miniTrackNameEl.textContent = getPlainTrackName();
+			}
+			loopMode = false;
+			artistLoopMode = false;
+			loopArtist = '';
+			pinOnTable = false;
+			autonomousPin.classList.remove('on-table');
+			queuedLoopRow = null;
+			hideQueuedTrack();
+			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
+
+			// Check if mini player is currently moving (dragging or gliding)
+			const isCardMoving = isDragging || miniPlayer.classList.contains('gliding');
+
+			// Pin is currently in document coordinates (on table)
+			// Get current position
+			const currentPinX = parseFloat(autonomousPin.style.left) || 0;
+			const currentPinY = parseFloat(autonomousPin.style.top) || 0;
+
+			// CRITICAL: Pin the mini player FIRST (convert from fixed to absolute)
+			// This ensures getPinTargetPosition returns document coords
+			if (!isPinned) {
+				const rect = miniPlayer.getBoundingClientRect();
+				// Convert viewport coords to document coords
+				const docX = rect.left + window.scrollX;
+				const docY = rect.top + window.scrollY;
+
+				// Pin the mini player
+				isPinned = true;
+				miniPlayer.classList.add('pinned');
+				autonomousPin.classList.add('pinned');
+				miniPlayer.style.bottom = 'auto';
+				miniPlayer.style.right = 'auto';
+				miniPlayer.style.left = docX + 'px';
+				miniPlayer.style.top = docY + 'px';
+			}
+
+			// If card is moving, just enter chase mode - let normal chase logic handle it
+			if (isCardMoving) {
+				// Set pin position first (preserve table position)
+				pinX = currentPinX;
+				pinY = currentPinY;
+				autonomousPin.style.transition = 'none';
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark as already lifted so onCardStartMoving doesn't reset position
+				pinIsLifted = true;
+				autonomousPin.classList.remove('resting', 'tacked');
+
+				// Now call the normal chase initialization
+				// It will see pinIsLifted=true and keep current position
+				onCardStartMoving();
+
+				// AFTER onCardStartMoving: Start in "gave up" mode - pin follows lazily from far away
+				// This gives it a more sentient feel, like it's assessing the situation
+				pinGaveUp = true;
+				return;
+			}
+
+			// Card is stationary - do the fly-and-tack animation
+			pinReturningFromTable = true;
+
+			// Now get target position (will be in document coords since isPinned is true)
+			const target = getPinTargetPosition();
+
+			// Prepare pin for flight - show needle, remove resting state
+			// CRITICAL: Set transition to none and ensure pin is at current position first
+			autonomousPin.style.transition = 'none';
+			autonomousPin.classList.remove('resting', 'tacked');
+			autonomousPin.style.left = currentPinX + 'px';
+			autonomousPin.style.top = currentPinY + 'px';
+			pinNeedle.style.height = '15px';
+			pinNeedle.style.opacity = '1';
+			pinHead.style.transform = 'rotate(15deg)';
+			pinNeedle.style.transform = 'rotate(15deg)';
+
+			// Force reflow to apply current position before animating
+			autonomousPin.offsetHeight;
+
+			// Calculate flight distance for timing
+			const dx = target.x - currentPinX;
+			const dy = target.y - currentPinY;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+			const flightTime = Math.min(300, Math.max(150, distance * 0.5));
+
+			// Now set transition and animate to target
+			autonomousPin.style.transition = `left ${flightTime}ms cubic-bezier(0.2, 0, 0.2, 1), top ${flightTime}ms cubic-bezier(0.2, 0, 0.2, 1)`;
+			pinX = target.x;
+			pinY = target.y;
+			autonomousPin.style.left = pinX + 'px';
+			autonomousPin.style.top = pinY + 'px';
+
+			// After pin arrives, play tacking animation
+			setTimeout(() => {
+				autonomousPin.style.transition = '';
+
+				// Pin tacking animation - needle shrinks as it enters
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				// After tacking animation completes, clean up
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					pinReturningFromTable = false;  // Clear flag - animation complete
+					savePosition();
+				}, 200);
+			}, flightTime);
 		};
 
 		// ========== PIN DRAGGING FROM CARD ==========
@@ -2492,6 +2869,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		let isPinDragging = false;
 		let pinDragStartY = 0;
 		let pinDragLifted = false;  // Has pin been pulled free?
+		let pinDragFromTable = false;  // Track if drag started from table vs mini player
 		let pinDragOriginalX = 0;
 		let pinDragOriginalY = 0;
 		const PIN_PULL_THRESHOLD = 25;  // How far to pull before pin comes free
@@ -2515,13 +2893,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		// Pin drag start (mouse)
 		autonomousPin.addEventListener('mousedown', (e) => {
-			if (!isPinned || !autonomousPin.classList.contains('resting')) return;
+			// Allow drag when pin is on mini player (isPinned) OR on table (pinOnTable)
+			if ((!isPinned && !pinOnTable) || !autonomousPin.classList.contains('resting')) return;
 
 			e.preventDefault();
 			e.stopPropagation();
 
 			isPinDragging = true;
-			pinDragLifted = false;
+			pinDragLifted = false;  // Always start with pull animation
+			pinDragFromTable = pinOnTable;  // Remember where we started
 			pinDragStartY = e.clientY;
 			pinDragOriginalX = pinX;
 			pinDragOriginalY = pinY;
@@ -2557,7 +2937,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						autonomousPin.classList.add('dragging');
 
 						// CRITICAL: Set fixed position and viewport coords BEFORE unpinning
-						// unpinMiniPlayer() removes .pinned from pin which switches it to fixed
 						const viewPinX = e.clientX - 10;
 						const viewPinY = e.clientY - 5;
 						autonomousPin.style.position = 'fixed';
@@ -2565,8 +2944,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						autonomousPin.style.left = viewPinX + 'px';
 						autonomousPin.style.top = viewPinY + 'px';
 
-						// NOW safe to unpin
-						unpinMiniPlayer();
+						// Handle differently based on where we pulled from
+						if (pinDragFromTable) {
+							// Pulling from table - deactivate loop mode (this also resets pinOnTable)
+							deactivateLoopMode();
+							autonomousPin.classList.remove('pinned');
+						} else {
+							// Pulling from mini player - unpin the card
+							unpinMiniPlayer();
+						}
 
 						// Store document coords for drop detection
 						pinX = viewPinX + window.scrollX;
@@ -2601,6 +2987,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			if (!isPinDragging) return;
 
 			isPinDragging = false;
+			pinDragFromTable = false;  // Reset for next drag
 			autonomousPin.style.transform = '';
 
 			if (!pinDragLifted) {
@@ -2620,7 +3007,118 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			const pinHeadCenterX = pinX + 10.5;
 			const pinHeadCenterY = pinY + 5;
 
-			// Check artist name FIRST (it's lower, more specific target)
+			// Check table artist name first (larger remote drop target)
+			const tableArtistHit = isOverTableArtistName(pinHeadCenterX, pinHeadCenterY);
+			if (tableArtistHit) {
+				// Dropped on table artist name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableArtistHit.element;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// Activate artist loop mode for the dropped artist (mini player shows indicator)
+				activateArtistLoopMode(tableArtistHit.artist);
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check table track name (larger remote drop target)
+			const tableTrackHit = isOverTableTrackName(pinHeadCenterX, pinHeadCenterY);
+			if (tableTrackHit) {
+				// Dropped on table track name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableTrackHit;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// If this is a different track than currently playing, queue it to play when current ends
+				const targetRow = tableTrackHit.closest('tr');
+				if (targetRow && targetRow !== currentRow) {
+					queuedLoopRow = targetRow;  // Will play when current track ends
+					// Show queued track in mini player
+					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
+					showQueuedTrack(queuedTrackName);
+				}
+
+				// Activate track loop mode (mini player shows indicator)
+				activateLoopMode();
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check mini player artist name FIRST (it's lower, more specific target)
 			// If we checked track name first, overlap would always favor track
 			if (isOverArtistName(pinHeadCenterX, pinHeadCenterY)) {
 				// Dropped on artist name - activate artist loop mode!
@@ -2820,13 +3318,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		// Pin drag start (touch)
 		autonomousPin.addEventListener('touchstart', (e) => {
-			if (!isPinned || !autonomousPin.classList.contains('resting')) return;
+			// Allow drag when pin is on mini player (isPinned) OR on table (pinOnTable)
+			if ((!isPinned && !pinOnTable) || !autonomousPin.classList.contains('resting')) return;
 
 			e.stopPropagation();
 
 			const touch = e.touches[0];
 			isPinDragging = true;
-			pinDragLifted = false;
+			pinDragLifted = false;  // Always start with pull animation
+			pinDragFromTable = pinOnTable;  // Remember where we started
 			pinDragStartY = touch.clientY;
 			pinDragOriginalX = pinX;
 			pinDragOriginalY = pinY;
@@ -2868,8 +3368,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 						autonomousPin.style.left = viewPinX + 'px';
 						autonomousPin.style.top = viewPinY + 'px';
 
-						// NOW safe to unpin
-						unpinMiniPlayer();
+						// Handle differently based on where we pulled from
+						if (pinDragFromTable) {
+							// Pulling from table - deactivate loop mode (this also resets pinOnTable)
+							deactivateLoopMode();
+							autonomousPin.classList.remove('pinned');
+						} else {
+							// Pulling from mini player - unpin the card
+							unpinMiniPlayer();
+						}
 
 						// Store document coords for drop detection
 						pinX = viewPinX + window.scrollX;
@@ -2903,6 +3410,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			if (!isPinDragging) return;
 
 			isPinDragging = false;
+			pinDragFromTable = false;  // Reset for next drag
 			autonomousPin.style.transform = '';
 
 			if (!pinDragLifted) {
@@ -2921,7 +3429,118 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			const pinHeadCenterX = pinX + 10.5;
 			const pinHeadCenterY = pinY + 5;
 
-			// Check artist name FIRST (it's lower, more specific target)
+			// Check table artist name first (larger remote drop target)
+			const tableArtistHit = isOverTableArtistName(pinHeadCenterX, pinHeadCenterY);
+			if (tableArtistHit) {
+				// Dropped on table artist name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableArtistHit.element;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// Activate artist loop mode for the dropped artist (mini player shows indicator)
+				activateArtistLoopMode(tableArtistHit.artist);
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check table track name (larger remote drop target)
+			const tableTrackHit = isOverTableTrackName(pinHeadCenterX, pinHeadCenterY);
+			if (tableTrackHit) {
+				// Dropped on table track name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableTrackHit;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// If this is a different track than currently playing, queue it to play when current ends
+				const targetRow = tableTrackHit.closest('tr');
+				if (targetRow && targetRow !== currentRow) {
+					queuedLoopRow = targetRow;  // Will play when current track ends
+					// Show queued track in mini player
+					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
+					showQueuedTrack(queuedTrackName);
+				}
+
+				// Activate track loop mode (mini player shows indicator)
+				activateLoopMode();
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check mini player artist name FIRST (it's lower, more specific target)
 			if (isOverArtistName(pinHeadCenterX, pinHeadCenterY)) {
 				// Dropped on artist name - activate artist loop mode!
 				stopAnimation();
@@ -3230,7 +3849,119 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
-			// Check if dropped on track name - activate loop mode!
+			// Check table artist name first (larger remote drop target)
+			const tableArtistHit = isOverTableArtistName(pinX, pinY);
+			if (tableArtistHit) {
+				// Dropped on table artist name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableArtistHit.element;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// Activate artist loop mode for the dropped artist (mini player shows indicator)
+				activateArtistLoopMode(tableArtistHit.artist);
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check table track name (larger remote drop target)
+			const tableTrackHit = isOverTableTrackName(pinX, pinY);
+			if (tableTrackHit) {
+				// Dropped on table track name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableTrackHit;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// If this is a different track than currently playing, queue it to play when current ends
+				const targetRow = tableTrackHit.closest('tr');
+				if (targetRow && targetRow !== currentRow) {
+					queuedLoopRow = targetRow;  // Will play when current track ends
+					// Show queued track in mini player
+					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
+					showQueuedTrack(queuedTrackName);
+				}
+
+				// Activate track loop mode (mini player shows indicator)
+				activateLoopMode();
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check if dropped on mini player track name - activate loop mode!
 			if (isOverTrackName(pinX, pinY)) {
 				// Stop any ongoing glide animation
 				stopAnimation();
@@ -3469,7 +4200,119 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			autonomousPin.classList.remove('dragging');
 
-			// Check if dropped on track name - activate loop mode!
+			// Check table artist name first (larger remote drop target)
+			const tableArtistHit = isOverTableArtistName(pinX, pinY);
+			if (tableArtistHit) {
+				// Dropped on table artist name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableArtistHit.element;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// Activate artist loop mode for the dropped artist (mini player shows indicator)
+				activateArtistLoopMode(tableArtistHit.artist);
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check table track name (larger remote drop target)
+			const tableTrackHit = isOverTableTrackName(pinX, pinY);
+			if (tableTrackHit) {
+				// Dropped on table track name - pin stays on table, mini player stays floating
+				stopAnimation();
+				miniPlayer.classList.remove('gliding', 'dragging');
+
+				// Pin stays exactly where dropped (on the table) - use document coords
+				const pinRect = autonomousPin.getBoundingClientRect();
+				pinX = pinRect.left + window.scrollX;
+				pinY = pinRect.top + window.scrollY;
+
+				// Switch pin to absolute positioning at drop location
+				autonomousPin.style.position = '';
+				autonomousPin.classList.add('pinned');
+				autonomousPin.style.left = pinX + 'px';
+				autonomousPin.style.top = pinY + 'px';
+
+				// Mark pin as on table (detached from mini player)
+				// Mini player stays floating (NOT pinned) since pin is on table
+				pinOnTable = true;
+				autonomousPin.classList.add('on-table');
+				pinnedTableElement = tableTrackHit;
+				pinnedTableElement.classList.add('pinned-loop');
+
+				// If this is a different track than currently playing, queue it to play when current ends
+				const targetRow = tableTrackHit.closest('tr');
+				if (targetRow && targetRow !== currentRow) {
+					queuedLoopRow = targetRow;  // Will play when current track ends
+					// Show queued track in mini player
+					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
+					showQueuedTrack(queuedTrackName);
+				}
+
+				// Activate track loop mode (mini player shows indicator)
+				activateLoopMode();
+
+				// Pin tacking animation at table location
+				pinNeedle.style.transition = 'none';
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
+				autonomousPin.offsetHeight;
+
+				pinNeedle.style.transition = '';
+				autonomousPin.classList.add('tacking');
+				pinNeedle.style.height = '0';
+				pinNeedle.style.opacity = '0';
+
+				setTimeout(() => {
+					autonomousPin.classList.remove('tacking');
+					autonomousPin.classList.add('resting');
+					pinHead.style.transform = '';
+					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned-from-float');
+					savePosition();
+				}, 200);
+				return;
+			}
+
+			// Check if dropped on mini player track name - activate loop mode!
 			if (isOverTrackName(pinX, pinY)) {
 				// Stop any ongoing glide animation
 				stopAnimation();
