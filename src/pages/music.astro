@@ -3142,10 +3142,12 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			if (!touchLoupe || !loupeViewport || !loupeClone) return;
 
 			// Position loupe above the finger (so thumb doesn't cover it)
-			const loupeX = touchX;
-			const loupeY = touchY - 140;
+			// Clamp to viewport bounds (accounting for translateX(-50%) centering)
+			const halfLoupe = LOUPE_SIZE / 2;
+			const loupeX = Math.max(halfLoupe + 10, Math.min(window.innerWidth - halfLoupe - 10, touchX));
+			const loupeY = Math.max(10, Math.min(window.innerHeight - LOUPE_SIZE - 10, touchY - 140));
 			touchLoupe.style.left = loupeX + 'px';
-			touchLoupe.style.top = Math.max(10, loupeY) + 'px';
+			touchLoupe.style.top = loupeY + 'px';
 
 			// Get the original content's position on screen
 			const mainContent = document.querySelector('.prose-content') || document.querySelector('main') || document.body;
