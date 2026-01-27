@@ -371,7 +371,10 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			<div class="mini-player-track">
 				<span class="mini-track-name">-</span>
 				<span class="mini-track-queued hidden"> → <span class="queued-name">-</span></span>
-				<span class="mini-track-artist">-</span>
+				<div class="mini-artist-line">
+					<span class="mini-track-artist">-</span>
+					<span class="mini-artist-queued hidden"> → <span class="queued-artist-name">-</span></span>
+				</div>
 			</div>
 			<div class="mini-player-progress">
 				<span class="mini-current-time">0:00</span>
@@ -959,10 +962,29 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			color: #888;
 		}
 
-		.mini-track-artist {
+		.mini-artist-line {
 			display: block;
+		}
+
+		.mini-track-artist {
+			display: inline;
 			font-size: 10px;
 			color: #666;
+		}
+
+		.mini-artist-queued {
+			display: none;
+			color: #999;
+			font-size: 10px;
+			white-space: nowrap;
+		}
+
+		.mini-artist-queued:not(.hidden) {
+			display: inline;
+		}
+
+		.mini-artist-queued .queued-artist-name {
+			color: #888;
 		}
 
 		.mini-player-progress {
@@ -1325,6 +1347,27 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				return;
 			}
 
+			// Check for queued artist (pinned a different artist on table)
+			if (queuedLoopArtist) {
+				const artistToLoop = queuedLoopArtist;
+				queuedLoopArtist = null;  // Clear queue
+				hideQueuedTrack();
+				// Find first track by this artist
+				const allRows = getAllTrackRows();
+				const artistTracks = allRows.filter(row => {
+					const artistEl = row.querySelector('.track-artist');
+					return artistEl && artistEl.textContent === artistToLoop;
+				});
+				if (artistTracks.length > 0) {
+					playRowWithoutDeactivatingLoop(artistTracks[0]);
+					// Activate artist loop mode after mini player updates
+					setTimeout(() => {
+						activateArtistLoopMode(artistToLoop);
+					}, 50);
+				}
+				return;
+			}
+
 			// Track loop mode: replay the same track
 			if (loopMode) {
 				audioPlayer.currentTime = 0;
@@ -1485,6 +1528,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		const miniTrackArtist = miniPlayer.querySelector('.mini-track-artist');
 		const miniTrackQueued = miniPlayer.querySelector('.mini-track-queued');
 		const miniQueuedName = miniPlayer.querySelector('.queued-name');
+		const miniArtistQueued = miniPlayer.querySelector('.mini-artist-queued');
+		const miniQueuedArtistName = miniPlayer.querySelector('.queued-artist-name');
 		const miniCurrentTime = miniPlayer.querySelector('.mini-current-time');
 		const miniDuration = miniPlayer.querySelector('.mini-duration');
 		const miniProgressFill = miniPlayer.querySelector('.mini-progress-fill');
@@ -1581,6 +1626,47 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				return;
 			}
 
+			// If there's a queued artist (pinned on table), skip to that artist
+			if (queuedLoopArtist) {
+				const artistToLoop = queuedLoopArtist;
+				queuedLoopArtist = null;
+				hideQueuedTrack();
+				// Find first track by this artist
+				const allRows = getAllTrackRows();
+				const artistTracks = allRows.filter(row => {
+					const artistEl = row.querySelector('.track-artist');
+					return artistEl && artistEl.textContent === artistToLoop;
+				});
+				if (artistTracks.length > 0) {
+					playRowWithoutDeactivatingLoop(artistTracks[0]);
+					setTimeout(() => {
+						activateArtistLoopMode(artistToLoop);
+					}, 50);
+				}
+				return;
+			}
+
+			// If in track loop mode, just replay the same track
+			if (loopMode && currentRow) {
+				playRowWithoutDeactivatingLoop(currentRow);
+				return;
+			}
+
+			// If in artist loop mode, cycle through that artist's tracks only
+			if (artistLoopMode && loopArtist) {
+				const allRows = getAllTrackRows();
+				const artistTracks = allRows.filter(row => {
+					const artistEl = row.querySelector('.track-artist');
+					return artistEl && artistEl.textContent === loopArtist;
+				});
+				if (artistTracks.length > 0 && currentRow) {
+					const currentIndex = artistTracks.indexOf(currentRow);
+					const nextIndex = (currentIndex + 1) % artistTracks.length;
+					playRowWithoutDeactivatingLoop(artistTracks[nextIndex]);
+				}
+				return;
+			}
+
 			const allRows = getAllTrackRows();
 			if (shuffleMode) {
 				const nextRow = getRandomUnplayedTrack();
@@ -1629,6 +1715,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		let pinOnTable = false;
 		let pinnedTableElement = null;  // The table element where pin is tacked
 		let queuedLoopRow = null;  // Track row queued to play next (when pinning a different track on table)
+		let queuedLoopArtist = null;  // Artist name queued for artist loop (when pinning a different artist on table)
 
 		// Mini player drag functionality with physics
 		let isDragging = false;
@@ -1670,6 +1757,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		let pinVelX = 0;          // Smoothed velocity for anti-jitter
 		let pinVelY = 0;
 		let pinReturningFromTable = false;  // Flag to prevent chase logic during return animation
+		let pinWaitingForSlowdown = false;  // Pin came from table, waiting for card to slow down
+		let pinMadeAttempt = false;         // Pin made initial attempt before deciding to wait
+		let pinRunLoopActive = false;       // Prevent multiple runLoop instances
 
 		// Pin personality
 		const PIN_GIVEUP_SPEED = 6;     // Card speed where pin gives up chasing hard
@@ -1786,10 +1876,56 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					pinX = target.x;
 					pinY = target.y;
 					pinIsRunning = false;
+
+					// Pin tacking animation - needle shrinks as it enters
+					autonomousPin.classList.add('tacking');
+					pinNeedle.style.height = '0';
+					pinNeedle.style.opacity = '0';
+
+					// Card impact animation - add BEFORE removing gliding so animation controls shadow
 					miniPlayer.classList.add('just-pinned');
-					setTimeout(() => miniPlayer.classList.remove('just-pinned'), 250);
+
+					// Cleanup after animation (200ms to match CSS animation duration)
+					setTimeout(() => {
+						autonomousPin.classList.remove('tacking');
+						autonomousPin.classList.add('resting');
+						pinHead.style.transform = '';
+						pinNeedle.style.transform = '';
+						pinNeedle.style.transition = '';
+						miniPlayer.classList.remove('just-pinned', 'gliding', 'dragging');
+					}, 200);
 				}
 			} else {
+				// Check if pin is waiting for card to stop (came from table while card was moving)
+				// Don't clear this flag here - let onCardStopped() handle it to avoid race condition
+				if (pinWaitingForSlowdown) {
+					// Card still in motion OR waiting for onCardStopped to be called
+					if (!pinMadeAttempt) {
+						// Make one attempt toward the target, then wait
+						const target = getPinTargetPosition();
+						const dx = target.x - pinX;
+						const dy = target.y - pinY;
+						const dist = Math.sqrt(dx * dx + dy * dy);
+						if (dist > 0) {
+							pinVelX = (dx / dist) * 1.5;
+							pinVelY = (dy / dist) * 1.5;
+						}
+						pinMadeAttempt = true;
+					} else {
+						// Just coast to a stop - no random drift
+						pinVelX *= 0.92;
+						pinVelY *= 0.92;
+					}
+
+					pinX += pinVelX;
+					pinY += pinVelY;
+
+					// Position and skip the rest of chase logic
+					autonomousPin.style.left = pinX + 'px';
+					autonomousPin.style.top = pinY + 'px';
+					return;
+				}
+
 				// Normal chase with asymptotic slowdown
 				const speedFactor = Math.min(1, currentCardSpeed / PIN_GIVEUP_SPEED);
 				const distanceFactor = Math.min(1, distance / PIN_WAIT_DISTANCE);
@@ -1871,6 +2007,9 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			currentCardSpeed = 10; // Assume fast initially
 			pinGaveUp = false;
 			pinIsLifted = true;  // Pin is being held up!
+			pinIsRunning = false; // Stop any chase in progress (runLoop will self-terminate)
+			pinWaitingForSlowdown = false; // Clear waiting state
+			pinMadeAttempt = false;
 
 			// Hide loop icon while pin is in flight (will restore when pin tacks)
 			// Also restore plain text for track name (removes extension span)
@@ -1962,6 +2101,15 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinIsRunning = false;
 			}
 
+			// If card starts moving again while pin was chasing (running mode),
+			// and card is fast, go back to waiting/lazy mode
+			if (pinIsRunning && speed > PIN_GIVEUP_SPEED * 0.5) {
+				pinIsRunning = false;
+				pinWaitingForSlowdown = true;
+				pinMadeAttempt = true; // Skip initial attempt since already moving
+				pinGaveUp = true;
+			}
+
 			updateAutonomousPin();
 		};
 
@@ -1971,10 +2119,41 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			// Don't interfere if pin is doing its own return animation from table
 			if (pinReturningFromTable) return;
 
+			// If pin was waiting/meandering, let it chase first instead of instant tack
+			const wasWaiting = pinWaitingForSlowdown;
+
 			pinGaveUp = false;
-			pinIsRunning = false;
+			pinWaitingForSlowdown = false;  // Clear waiting state
+			pinMadeAttempt = false;
 			pinIsLifted = false;  // No longer being held
 			currentCardSpeed = 0;
+
+			if (wasWaiting) {
+				// Pin was meandering - trigger running mode to chase, then tack when close
+				pinIsRunning = true;
+				// Reset velocity from meander drift for clean chase
+				pinVelX = 0;
+				pinVelY = 0;
+				// Card should look elevated (lifted) while pin approaches
+				miniPlayer.classList.add('gliding');
+				// Start animation loop since card is no longer moving (onCardMoving won't be called)
+				// Guard against multiple runLoop instances
+				if (!pinRunLoopActive) {
+					pinRunLoopActive = true;
+					const runLoop = () => {
+						if (pinIsRunning) {
+							updateAutonomousPin();
+							requestAnimationFrame(runLoop);
+						} else {
+							pinRunLoopActive = false;
+						}
+					};
+					requestAnimationFrame(runLoop);
+				}
+				return;
+			}
+
+			pinIsRunning = false;
 
 			// Use loop position if in any loop mode, otherwise normal tack position
 			const target = (loopMode || artistLoopMode) ? getLoopPinPosition() : getPinTargetPosition();
@@ -2651,15 +2830,24 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			return miniTrackNameEl.textContent;
 		};
 
-		// Show queued track indicator in mini player
+		// Show queued track indicator in mini player (after track name)
 		const showQueuedTrack = (trackName) => {
 			miniQueuedName.textContent = trackName;
 			miniTrackQueued.classList.remove('hidden');
+			miniArtistQueued.classList.add('hidden');  // Only one queue type at a time
 		};
 
-		// Hide queued track indicator
+		// Show queued artist indicator in mini player (after artist name)
+		const showQueuedArtist = (artistName) => {
+			miniQueuedArtistName.textContent = artistName;
+			miniArtistQueued.classList.remove('hidden');
+			miniTrackQueued.classList.add('hidden');  // Only one queue type at a time
+		};
+
+		// Hide all queued indicators
 		const hideQueuedTrack = () => {
 			miniTrackQueued.classList.add('hidden');
+			miniArtistQueued.classList.add('hidden');
 		};
 
 		// Activate track loop mode - pin settles on track name
@@ -2731,6 +2919,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			pinOnTable = false;
 			autonomousPin.classList.remove('on-table');
 			queuedLoopRow = null;  // Clear any queued track
+			queuedLoopArtist = null;  // Clear any queued artist
 			hideQueuedTrack();  // Hide the queued indicator
 			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
 		};
@@ -2757,6 +2946,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			pinOnTable = false;
 			autonomousPin.classList.remove('on-table');
 			queuedLoopRow = null;
+			queuedLoopArtist = null;
 			hideQueuedTrack();
 			miniPlayerTrack.classList.remove('loop-mode', 'artist-loop-mode');
 
@@ -2799,18 +2989,24 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinIsLifted = true;
 				autonomousPin.classList.remove('resting', 'tacked');
 
-				// Now call the normal chase initialization
-				// It will see pinIsLifted=true and keep current position
-				onCardStartMoving();
+				// Show needle in lifted state
+				pinNeedle.style.height = '15px';
+				pinNeedle.style.opacity = '1';
+				pinHead.style.transform = 'rotate(15deg)';
+				pinNeedle.style.transform = 'rotate(15deg)';
 
-				// AFTER onCardStartMoving: Start in "gave up" mode - pin follows lazily from far away
-				// This gives it a more sentient feel, like it's assessing the situation
+				// Always wait and watch first when coming from table
+				// Pin assesses the situation before committing to chase
+				pinWaitingForSlowdown = true;
 				pinGaveUp = true;
 				return;
 			}
 
 			// Card is stationary - do the fly-and-tack animation
 			pinReturningFromTable = true;
+
+			// Card should look elevated while pin approaches
+			miniPlayer.classList.add('gliding');
 
 			// Now get target position (will be in document coords since isPinned is true)
 			const target = getPinTargetPosition();
@@ -2852,12 +3048,16 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinNeedle.style.height = '0';
 				pinNeedle.style.opacity = '0';
 
+				// Card impact animation
+				miniPlayer.classList.add('just-pinned');
+
 				// After tacking animation completes, clean up
 				setTimeout(() => {
 					autonomousPin.classList.remove('tacking');
 					autonomousPin.classList.add('resting');
 					pinHead.style.transform = '';
 					pinNeedle.style.transform = '';
+					miniPlayer.classList.remove('just-pinned', 'gliding');
 					pinReturningFromTable = false;  // Clear flag - animation complete
 					savePosition();
 				}, 200);
@@ -3032,8 +3232,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinnedTableElement = tableArtistHit.element;
 				pinnedTableElement.classList.add('pinned-loop');
 
-				// Activate artist loop mode for the dropped artist (mini player shows indicator)
-				activateArtistLoopMode(tableArtistHit.artist);
+				// Check if this is a different artist than currently playing
+				const currentArtist = miniTrackArtistEl?.textContent || '';
+				if (tableArtistHit.artist !== currentArtist) {
+					// Queue this artist - will activate when current track ends
+					queuedLoopArtist = tableArtistHit.artist;
+					queuedLoopRow = null;  // Clear any track queue
+					showQueuedArtist(tableArtistHit.artist);  // Show "[Artist]" as queued
+				} else {
+					// Same artist - activate immediately
+					activateArtistLoopMode(tableArtistHit.artist);
+				}
 
 				// Pin tacking animation at table location
 				pinNeedle.style.transition = 'none';
@@ -3087,6 +3296,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				const targetRow = tableTrackHit.closest('tr');
 				if (targetRow && targetRow !== currentRow) {
 					queuedLoopRow = targetRow;  // Will play when current track ends
+					queuedLoopArtist = null;  // Clear any artist queue
 					// Show queued track in mini player
 					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
 					showQueuedTrack(queuedTrackName);
@@ -3454,8 +3664,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinnedTableElement = tableArtistHit.element;
 				pinnedTableElement.classList.add('pinned-loop');
 
-				// Activate artist loop mode for the dropped artist (mini player shows indicator)
-				activateArtistLoopMode(tableArtistHit.artist);
+				// Check if this is a different artist than currently playing
+				const currentArtist = miniTrackArtistEl?.textContent || '';
+				if (tableArtistHit.artist !== currentArtist) {
+					// Queue this artist - will activate when current track ends
+					queuedLoopArtist = tableArtistHit.artist;
+					queuedLoopRow = null;  // Clear any track queue
+					showQueuedArtist(tableArtistHit.artist);  // Show "[Artist]" as queued
+				} else {
+					// Same artist - activate immediately
+					activateArtistLoopMode(tableArtistHit.artist);
+				}
 
 				// Pin tacking animation at table location
 				pinNeedle.style.transition = 'none';
@@ -3509,6 +3728,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				const targetRow = tableTrackHit.closest('tr');
 				if (targetRow && targetRow !== currentRow) {
 					queuedLoopRow = targetRow;  // Will play when current track ends
+					queuedLoopArtist = null;  // Clear any artist queue
 					// Show queued track in mini player
 					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
 					showQueuedTrack(queuedTrackName);
@@ -3874,8 +4094,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinnedTableElement = tableArtistHit.element;
 				pinnedTableElement.classList.add('pinned-loop');
 
-				// Activate artist loop mode for the dropped artist (mini player shows indicator)
-				activateArtistLoopMode(tableArtistHit.artist);
+				// Activate artist loop mode OR queue if different artist
+				const currentArtist = miniTrackArtistEl?.textContent || '';
+				if (tableArtistHit.artist !== currentArtist) {
+					// Different artist - queue it instead of immediate activation
+					queuedLoopArtist = tableArtistHit.artist;
+					queuedLoopRow = null;
+					showQueuedArtist(tableArtistHit.artist);
+				} else {
+					// Same artist - activate immediately
+					activateArtistLoopMode(tableArtistHit.artist);
+				}
 
 				// Pin tacking animation at table location
 				pinNeedle.style.transition = 'none';
@@ -3929,6 +4158,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				const targetRow = tableTrackHit.closest('tr');
 				if (targetRow && targetRow !== currentRow) {
 					queuedLoopRow = targetRow;  // Will play when current track ends
+					queuedLoopArtist = null;  // Clear any artist queue
 					// Show queued track in mini player
 					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
 					showQueuedTrack(queuedTrackName);
@@ -4225,8 +4455,17 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				pinnedTableElement = tableArtistHit.element;
 				pinnedTableElement.classList.add('pinned-loop');
 
-				// Activate artist loop mode for the dropped artist (mini player shows indicator)
-				activateArtistLoopMode(tableArtistHit.artist);
+				// Activate artist loop mode OR queue if different artist
+				const currentArtist = miniTrackArtistEl?.textContent || '';
+				if (tableArtistHit.artist !== currentArtist) {
+					// Different artist - queue it instead of immediate activation
+					queuedLoopArtist = tableArtistHit.artist;
+					queuedLoopRow = null;
+					showQueuedArtist(tableArtistHit.artist);
+				} else {
+					// Same artist - activate immediately
+					activateArtistLoopMode(tableArtistHit.artist);
+				}
 
 				// Pin tacking animation at table location
 				pinNeedle.style.transition = 'none';
@@ -4280,6 +4519,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				const targetRow = tableTrackHit.closest('tr');
 				if (targetRow && targetRow !== currentRow) {
 					queuedLoopRow = targetRow;  // Will play when current track ends
+					queuedLoopArtist = null;  // Clear any artist queue
 					// Show queued track in mini player
 					const queuedTrackName = targetRow.querySelector('.track-name')?.textContent || '';
 					showQueuedTrack(queuedTrackName);

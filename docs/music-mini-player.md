@@ -199,3 +199,134 @@ Old code used 120ms slide with delayed `isPinned = true`. This caused:
 2. **Flash bug**: `updateAutonomousPin()` could add `.hidden` during the async window
 
 Fix: Match the Title/Artist tacking pattern - instant positioning, immediate state changes.
+
+## Loop Mode (Track/Artist)
+
+Drop pin on track name → track loops. Drop on artist name → cycles through artist's tracks.
+
+### Text Width Detection
+Uses canvas `measureText()` to detect actual text bounds, not container width. Pin only activates where text exists.
+
+```javascript
+const getTextWidth = (element) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = getComputedStyle(element).font;
+    return ctx.measureText(element.textContent).width;
+};
+```
+
+### Pin Position Memory
+`loopPinOffsetX/Y` stores offset from card. When card moves and stops, pin returns to same relative position (not standard tack spot).
+
+### State Variables
+| Variable | Purpose |
+|----------|---------|
+| `loopMode` | Track loop active |
+| `artistLoopMode` | Artist loop active |
+| `loopArtist` | Artist name string to match |
+| `loopPinOffsetX/Y` | Pin offset from card corner |
+
+## Table Pin Drops
+
+Pin can be dropped on track/artist names in the main table (not just mini player).
+
+### Hitbox Tuning
+`shrinkBottom=3` - vertical hitbox shrunk 3px from bottom to prevent activating when clicking below text. Found through iteration (8→0→4→2→3).
+
+### Queue System
+Pinning a *different* track/artist on table queues it instead of playing immediately.
+
+| Variable | Purpose |
+|----------|---------|
+| `queuedLoopRow` | Queued track row element |
+| `queuedLoopArtist` | Queued artist name string |
+
+**Mutual exclusion**: Setting one clears the other. Only one queue type at a time.
+
+**Visual indicators**: Two separate elements in HTML:
+- `.mini-track-queued` after track name → `song.mp3 → queued.mp3`
+- `.mini-artist-queued` after artist name → `Artist → Queued Artist`
+
+**Why separate elements**: Can't move one element dynamically - simpler to have two and show/hide.
+
+**Next button behavior**:
+- Queued track → plays queued track, activates track loop
+- Queued artist → plays first track by artist, activates artist loop
+- In track loop mode → replays same track
+- In artist loop mode → cycles through same artist's tracks only
+
+Loop symbol hidden while queued (appears after transition).
+
+## Pin Return from Table
+
+When pin is on table and user clicks different track, pin flies back to mini player.
+
+### Critical: Pin Mini Player First
+Must convert mini player from fixed→absolute BEFORE calling `getPinTargetPosition()`. Otherwise coords are wrong.
+
+```javascript
+if (!isPinned) {
+    const rect = miniPlayer.getBoundingClientRect();
+    const docX = rect.left + window.scrollX;
+    const docY = rect.top + window.scrollY;
+    isPinned = true;
+    miniPlayer.classList.add('pinned');
+    // ... set position with docX/docY
+}
+const target = getPinTargetPosition(); // NOW returns document coords
+```
+
+### Card Moving vs Stationary
+| Card State | Pin Behavior |
+|------------|--------------|
+| Stationary | Fly-and-tack animation directly to mini player |
+| Moving | Enter chase mode, set `pinGaveUp=true` for lazy approach |
+
+`pinGaveUp=true` set AFTER `onCardStartMoving()` (which resets it to false). Gives "assessing from afar" feel instead of UFO-like rush.
+
+### Interference Prevention
+`pinReturningFromTable` flag prevents `updateAutonomousPin()` and `onCardStopped()` from overriding the custom return animation.
+
+### Waiting State (Card Moving When Pin Returns)
+
+When pin returns from table while card is moving, it enters a **waiting state** instead of immediately chasing.
+
+**Behavior**: Pin makes one attempt toward the card, coasts to a stop, then waits still until card stops.
+
+**Why**: Prevents UFO-like behavior where pin rushes at moving card then halts abruptly.
+
+**State flags** (line ~1672-1675):
+| Flag | Purpose |
+|------|---------|
+| `pinWaitingForSlowdown` | Pin is waiting for card to stop |
+| `pinMadeAttempt` | Pin already made its initial move |
+| `pinRunLoopActive` | Guards against multiple animation loops |
+
+**Flow**:
+1. `animatePinReturnToMiniPlayer()` detects card is moving → sets `pinWaitingForSlowdown = true`
+2. `updateAutonomousPin()` sees flag → pin makes one impulse toward target, then coasts to stop
+3. Card stops → `onCardStopped()` sees `wasWaiting = true` → sets `pinIsRunning = true`, adds `gliding` class for elevated shadow
+4. `runLoop` animation starts → pin chases at full speed
+5. Pin reaches target → tack animation plays
+
+**Critical: Shadow during chase**
+Card gets `gliding` class when entering running mode (line ~2057). This gives elevated shadow while pin approaches. Without it, card looks flat (wrong) because actual gliding already ended.
+
+**State resets** (prevent stale flags):
+- `onCardStartMoving()` clears `pinIsRunning`, `pinWaitingForSlowdown`, `pinMadeAttempt` (line ~1928-1931)
+- `onCardMoving()` transitions back to waiting if card speeds up during chase (line ~2019-2026)
+
+## Z-Index Layering
+
+| Element | Z-Index | Notes |
+|---------|---------|-------|
+| Mini player | 1000 | Always |
+| Pin (default) | 1001 | Above card when flying |
+| Pin `.on-table` | 999 | Below card when tacked to table |
+
+`.on-table` class added/removed with `pinOnTable` state changes (8 add locations, 2 remove locations).
+
+## Bounds Safety
+
+`ensureInReachableBounds()` called after inertia ends. Absolutely positioned elements don't extend scrollHeight, so card could end up unreachable. Function smoothly animates back if outside bounds.
