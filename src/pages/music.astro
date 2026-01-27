@@ -3088,12 +3088,30 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 			// Clone the entire page content area
 			const mainContent = document.querySelector('.prose-content') || document.querySelector('main') || document.body;
+			const contentRect = mainContent.getBoundingClientRect();
 
 			loupeClone = mainContent.cloneNode(true);
 			loupeClone.classList.add('loupe-clone');
 
 			// Remove interactive/problematic elements from clone
 			loupeClone.querySelectorAll('audio, video, script, style, #touch-loupe, #autonomous-pin').forEach(el => el.remove());
+
+			// Fix mini player positioning in clone (it uses fixed/absolute positioning)
+			const clonedMiniPlayer = loupeClone.querySelector('#mini-player');
+			if (clonedMiniPlayer && miniPlayer) {
+				const mpRect = miniPlayer.getBoundingClientRect();
+				// Convert viewport coords to content-relative coords
+				const relX = mpRect.left - contentRect.left;
+				const relY = mpRect.top - contentRect.top;
+				clonedMiniPlayer.style.cssText = `
+					position: absolute !important;
+					left: ${relX}px !important;
+					top: ${relY}px !important;
+					bottom: auto !important;
+					right: auto !important;
+					transform: none !important;
+				`;
+			}
 
 			// Reset clone styles to match original layout
 			loupeClone.style.cssText = `
