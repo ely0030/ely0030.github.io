@@ -913,39 +913,46 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			display: none;
 		}
 
-		/* Crosshair in loupe center */
+		/* Pin indicator in loupe - shows where pin will drop */
 		.touch-loupe .loupe-crosshair {
 			position: absolute;
 			top: 50%;
 			left: 50%;
-			width: 24px;
-			height: 24px;
-			transform: translate(-50%, -50%);
+			transform: translate(-50%, -6px);  /* Offset so pin HEAD is at center */
 			pointer-events: none;
 			z-index: 50;
+			width: 20px;
+			height: 30px;
 		}
 
-		.touch-loupe .loupe-crosshair::before,
+		/* Pin head - centered at loupe center */
+		.touch-loupe .loupe-crosshair::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 14px;
+			height: 14px;
+			background: radial-gradient(circle at 35% 35%, #ff7b7b, #c0392b);
+			border-radius: 50%;
+			box-shadow:
+				0 2px 4px rgba(0,0,0,0.4),
+				inset 0 -2px 3px rgba(0,0,0,0.2);
+		}
+
+		/* Pin needle - extends below head */
 		.touch-loupe .loupe-crosshair::after {
 			content: '';
 			position: absolute;
-			background: rgba(255, 0, 0, 0.5);
-		}
-
-		.touch-loupe .loupe-crosshair::before {
-			top: 50%;
-			left: 0;
-			right: 0;
-			height: 1px;
-			transform: translateY(-50%);
-		}
-
-		.touch-loupe .loupe-crosshair::after {
+			top: 12px;
 			left: 50%;
-			top: 0;
-			bottom: 0;
-			width: 1px;
-			transform: translateX(-50%);
+			transform: translateX(-50%) rotate(15deg);
+			transform-origin: top center;
+			width: 2px;
+			height: 16px;
+			background: linear-gradient(to bottom, #c8ccd0, #888);
+			border-radius: 0 0 1px 1px;
 		}
 
 		/* Loupe border color based on target */
@@ -3104,6 +3111,10 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			loupeViewport.appendChild(loupeClone);
 		};
 
+		// Store original content position for loupe calculations
+		let loupeContentOffsetX = 0;
+		let loupeContentOffsetY = 0;
+
 		// Update touch loupe - shows magnified view of what's under the pin
 		const updateTouchLoupe = (touchX, touchY, pinCenterX, pinCenterY) => {
 			if (!touchLoupe || !loupeViewport || !loupeClone) return;
@@ -3114,19 +3125,26 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			touchLoupe.style.left = loupeX + 'px';
 			touchLoupe.style.top = Math.max(10, loupeY) + 'px';
 
+			// Get the original content's position on screen
+			const mainContent = document.querySelector('.prose-content') || document.querySelector('main') || document.body;
+			const contentRect = mainContent.getBoundingClientRect();
+
 			// Convert pin document coords to viewport coords
 			const viewPinX = pinCenterX - window.scrollX;
 			const viewPinY = pinCenterY - window.scrollY;
 
-			// The clone needs to be translated so that the point (viewPinX, viewPinY)
-			// appears at the center of the loupe
+			// Pin position relative to the content element
+			const relPinX = viewPinX - contentRect.left;
+			const relPinY = viewPinY - contentRect.top;
+
+			// Center of loupe
 			const loupeCenterX = LOUPE_SIZE / 2;
 			const loupeCenterY = LOUPE_SIZE / 2;
 
-			// Account for scale: we scale first, then translate
-			// So the translation needs to position the scaled content correctly
-			const translateX = loupeCenterX / LOUPE_SCALE - viewPinX;
-			const translateY = loupeCenterY / LOUPE_SCALE - viewPinY;
+			// Translate clone so the pin position appears at loupe center
+			// With scale(S) translate(X,Y), the translate happens in scaled space
+			const translateX = (loupeCenterX - relPinX * LOUPE_SCALE) / LOUPE_SCALE;
+			const translateY = (loupeCenterY - relPinY * LOUPE_SCALE) / LOUPE_SCALE;
 
 			loupeClone.style.transform = `scale(${LOUPE_SCALE}) translate(${translateX}px, ${translateY}px)`;
 
