@@ -1814,199 +1814,91 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		});
 
 		// ========== BROWSER INTEGRATION ==========
-		// Tab title, Media Session API, animated favicon, progress bar in title
-
-		const originalTitle = document.title;
-		let titleUpdateInterval = null;
-		let faviconAnimationFrame = null;
-		let originalFavicon = null;
-
-		// Store original favicon
-		const faviconLink = document.querySelector('link[rel="icon"]') || document.querySelector('link[rel="shortcut icon"]');
-		if (faviconLink) {
-			originalFavicon = faviconLink.href;
-		}
-
-		// Create canvas for animated favicon
-		const faviconCanvas = document.createElement('canvas');
-		faviconCanvas.width = 32;
-		faviconCanvas.height = 32;
-		const faviconCtx = faviconCanvas.getContext('2d');
-
-		// Generate progress bar string (8 chars)
-		const getProgressBar = (progress) => {
-			const filled = Math.round(progress * 8);
-			return '▓'.repeat(filled) + '░'.repeat(8 - filled);
-		};
-
-		// Update document title with track info and progress
-		const updateDocumentTitle = () => {
-			if (!currentRow || audioPlayer.paused) return;
-
-			const trackName = currentRow.querySelector('.track-name')?.textContent || '-';
-			const artist = currentRow.querySelector('.track-artist')?.textContent || '';
-			const progress = audioPlayer.duration ? audioPlayer.currentTime / audioPlayer.duration : 0;
-			const progressBar = getProgressBar(progress);
-			const time = formatDuration(audioPlayer.currentTime);
-
-			// Format: ▶ ▓▓▓░░░░░ 1:23 Song Name - Artist
-			const artistPart = artist ? ` - ${artist}` : '';
-			document.title = `▶ ${progressBar} ${time} ${trackName}${artistPart}`;
-		};
-
-		// Animate favicon with pulsing/equalizer effect
-		let faviconPhase = 0;
-		const animateFavicon = () => {
-			if (audioPlayer.paused) return;
-
-			faviconPhase += 0.15;
-			faviconCtx.clearRect(0, 0, 32, 32);
-
-			// Draw equalizer bars
-			const barCount = 4;
-			const barWidth = 6;
-			const gap = 2;
-			const startX = (32 - (barCount * barWidth + (barCount - 1) * gap)) / 2;
-
-			for (let i = 0; i < barCount; i++) {
-				// Each bar has different phase for wave effect
-				const barPhase = faviconPhase + i * 0.8;
-				const height = 8 + Math.sin(barPhase) * 8 + Math.random() * 4;
-				const x = startX + i * (barWidth + gap);
-				const y = 32 - height - 4;
-
-				// Gradient from dark to light
-				const gradient = faviconCtx.createLinearGradient(x, y + height, x, y);
-				gradient.addColorStop(0, '#333');
-				gradient.addColorStop(1, '#666');
-				faviconCtx.fillStyle = gradient;
-				faviconCtx.fillRect(x, y, barWidth, height);
-			}
-
-			// Update favicon
-			if (faviconLink) {
-				faviconLink.href = faviconCanvas.toDataURL('image/png');
-			}
-
-			faviconAnimationFrame = requestAnimationFrame(animateFavicon);
-		};
-
-		// Start browser integration when playing
-		const startBrowserIntegration = () => {
-			// Start title updates (every 500ms for smooth progress bar)
-			if (titleUpdateInterval) clearInterval(titleUpdateInterval);
-			titleUpdateInterval = setInterval(updateDocumentTitle, 500);
-			updateDocumentTitle();
-
-			// Start favicon animation
-			if (faviconAnimationFrame) cancelAnimationFrame(faviconAnimationFrame);
-			animateFavicon();
-
-			// Update Media Session
-			updateMediaSession();
-		};
-
-		// Stop browser integration when paused
-		const stopBrowserIntegration = () => {
-			// Stop title updates
-			if (titleUpdateInterval) {
-				clearInterval(titleUpdateInterval);
-				titleUpdateInterval = null;
-			}
-
-			// Update title to show paused state
+		// 1. Document title with current track
+		const baseTitle = 'ely0030 | Music';
+		const updateDocumentTitle = (isPlaying = false) => {
 			if (currentRow) {
-				const trackName = currentRow.querySelector('.track-name')?.textContent || '-';
-				const artist = currentRow.querySelector('.track-artist')?.textContent || '';
-				const artistPart = artist ? ` - ${artist}` : '';
-				document.title = `⏸ ${trackName}${artistPart}`;
-			}
-
-			// Stop favicon animation and show paused icon
-			if (faviconAnimationFrame) {
-				cancelAnimationFrame(faviconAnimationFrame);
-				faviconAnimationFrame = null;
-			}
-
-			// Draw paused favicon (two vertical bars)
-			faviconCtx.clearRect(0, 0, 32, 32);
-			faviconCtx.fillStyle = '#666';
-			faviconCtx.fillRect(10, 8, 4, 16);
-			faviconCtx.fillRect(18, 8, 4, 16);
-			if (faviconLink) {
-				faviconLink.href = faviconCanvas.toDataURL('image/png');
+				const trackName = currentRow.querySelector('.track-name')?.textContent || '';
+				const trackArtist = currentRow.querySelector('.track-artist')?.textContent || '';
+				const icon = isPlaying ? '▶' : '⏸';
+				document.title = `${baseTitle} ${icon} ${trackName} - ${trackArtist}`;
+			} else {
+				document.title = baseTitle;
 			}
 		};
 
-		// Reset to original state when stopped
-		const resetBrowserIntegration = () => {
-			if (titleUpdateInterval) {
-				clearInterval(titleUpdateInterval);
-				titleUpdateInterval = null;
-			}
-			if (faviconAnimationFrame) {
-				cancelAnimationFrame(faviconAnimationFrame);
-				faviconAnimationFrame = null;
-			}
-			document.title = originalTitle;
-			if (faviconLink && originalFavicon) {
-				faviconLink.href = originalFavicon;
-			}
-		};
+		audioPlayer.addEventListener('play', () => updateDocumentTitle(true));
+		audioPlayer.addEventListener('pause', () => updateDocumentTitle(false));
+		audioPlayer.addEventListener('ended', () => { document.title = baseTitle; });
 
-		// Media Session API - native OS controls
-		const updateMediaSession = () => {
-			if (!('mediaSession' in navigator) || !currentRow) return;
-
-			const trackName = currentRow.querySelector('.track-name')?.textContent || 'Unknown Track';
-			const artist = currentRow.querySelector('.track-artist')?.textContent || 'Unknown Artist';
-
-			navigator.mediaSession.metadata = new MediaMetadata({
-				title: trackName.replace('.mp3', ''),
-				artist: artist,
-				album: 'music/'
-			});
-
-			// Update playback state
-			navigator.mediaSession.playbackState = audioPlayer.paused ? 'paused' : 'playing';
-		};
-
-		// Set up Media Session action handlers
+		// 2. Media Session API (native OS controls)
 		if ('mediaSession' in navigator) {
-			navigator.mediaSession.setActionHandler('play', () => {
-				audioPlayer.play();
-			});
-			navigator.mediaSession.setActionHandler('pause', () => {
-				audioPlayer.pause();
-			});
-			navigator.mediaSession.setActionHandler('previoustrack', () => {
-				miniPrevBtn.click();
-			});
-			navigator.mediaSession.setActionHandler('nexttrack', () => {
-				miniNextBtn.click();
-			});
-			navigator.mediaSession.setActionHandler('seekto', (details) => {
-				if (details.seekTime !== undefined) {
-					audioPlayer.currentTime = details.seekTime;
+			const updateMediaSession = () => {
+				if (currentRow) {
+					const trackName = currentRow.querySelector('.track-name')?.textContent || 'Unknown';
+					const trackArtist = currentRow.querySelector('.track-artist')?.textContent || 'Unknown';
+					navigator.mediaSession.metadata = new MediaMetadata({
+						title: trackName.replace('.mp3', ''),
+						artist: trackArtist,
+						album: 'ely0030 Music'
+					});
 				}
-			});
+			};
+
+			audioPlayer.addEventListener('play', updateMediaSession);
+
+			navigator.mediaSession.setActionHandler('play', () => audioPlayer.play());
+			navigator.mediaSession.setActionHandler('pause', () => audioPlayer.pause());
+			navigator.mediaSession.setActionHandler('previoustrack', () => miniPrevBtn.click());
+			navigator.mediaSession.setActionHandler('nexttrack', () => miniNextBtn.click());
 		}
 
-		// Hook into play/pause events
-		audioPlayer.addEventListener('play', startBrowserIntegration);
-		audioPlayer.addEventListener('pause', stopBrowserIntegration);
-		audioPlayer.addEventListener('ended', resetBrowserIntegration);
+		// 3. Animated favicon when playing
+		const originalFavicon = document.querySelector('link[rel="icon"]')?.href || '/favicon.svg';
+		let faviconAnimationId = null;
+		const faviconFrames = ['🎵', '🎶'];
+		let faviconFrame = 0;
 
-		// Update media session position periodically
-		audioPlayer.addEventListener('timeupdate', () => {
-			if ('mediaSession' in navigator && audioPlayer.duration) {
-				navigator.mediaSession.setPositionState({
-					duration: audioPlayer.duration,
-					playbackRate: audioPlayer.playbackRate,
-					position: audioPlayer.currentTime
-				});
+		const animateFavicon = () => {
+			const canvas = document.createElement('canvas');
+			canvas.width = 32;
+			canvas.height = 32;
+			const ctx = canvas.getContext('2d');
+			ctx.font = '28px serif';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(faviconFrames[faviconFrame], 16, 18);
+			faviconFrame = (faviconFrame + 1) % faviconFrames.length;
+
+			let favicon = document.querySelector('link[rel="icon"]');
+			if (!favicon) {
+				favicon = document.createElement('link');
+				favicon.rel = 'icon';
+				document.head.appendChild(favicon);
 			}
-		});
+			favicon.href = canvas.toDataURL();
+		};
+
+		const startFaviconAnimation = () => {
+			if (!faviconAnimationId) {
+				animateFavicon();
+				faviconAnimationId = setInterval(animateFavicon, 500);
+			}
+		};
+
+		const stopFaviconAnimation = () => {
+			if (faviconAnimationId) {
+				clearInterval(faviconAnimationId);
+				faviconAnimationId = null;
+				// Restore original favicon
+				let favicon = document.querySelector('link[rel="icon"]');
+				if (favicon) favicon.href = originalFavicon;
+			}
+		};
+
+		audioPlayer.addEventListener('play', startFaviconAnimation);
+		audioPlayer.addEventListener('pause', stopFaviconAnimation);
+		audioPlayer.addEventListener('ended', stopFaviconAnimation);
 
 		// Mini player controls
 		miniPlayBtn.addEventListener('click', () => {
