@@ -336,3 +336,55 @@ Card gets `gliding` class when entering running mode (line ~2057). This gives el
 ## Bounds Safety
 
 `ensureInReachableBounds()` called after inertia ends. Absolutely positioned elements don't extend scrollHeight, so card could end up unreachable. Function smoothly animates back if outside bounds.
+
+## Mobile Touch Support
+
+### Touch Loupe (Magnifying Glass)
+Shows magnified view of page under thumb when dragging pin on mobile.
+
+**Why DOM cloning (not canvas)**: Canvas would require re-rendering all page content. Cloning preserves exact styling and layout with just CSS transforms.
+
+```javascript
+// Clone from content area, not full page (avoids mini player duplication)
+const mainContent = document.querySelector('.prose-content') || document.querySelector('main') || document.body;
+loupeClone = mainContent.cloneNode(true);
+```
+
+**Magnification math** (line ~3148-3151):
+```javascript
+// scale(S) translate(X,Y) - translate happens in scaled space
+const translateX = (loupeCenterX - relPinX * LOUPE_SCALE) / LOUPE_SCALE;
+```
+
+**Pin indicator positioning**: Needle TIP at loupe center (drop point), head sits above. `transform: translate(-50%, -100%)` on crosshair element. Head offset 6px right to align with 15deg needle tilt.
+
+**Edge clamping** (line ~3146-3148): Loupe stays 10px from all viewport edges. Accounts for `translateX(-50%)` centering in horizontal bounds.
+
+### touchcancel Handlers
+**Critical for robustness**. All 4 touch interactions have touchcancel handlers:
+- Progress bar scrubbing (line ~1992)
+- Mini player drag (line ~2979)
+- Pin drag from resting (line ~4405)
+- Tacked pin drag (line ~5185)
+
+Without these, interrupted touches (incoming call, system gesture) leave drag state stuck and loupe visible.
+
+### Touch Guards
+All touchmove handlers check `if (!e.touches.length) return` to prevent crashes if touch ends unexpectedly mid-handler.
+
+### CSS Touch Properties
+| Element | Property | Purpose |
+|---------|----------|---------|
+| `.mini-player` | `touch-action: none` | Block scroll/zoom during drag |
+| `.autonomous-pin.resting` | `touch-action: none` | Block gestures on pin |
+| `.pin-touch-target` | `touch-action: none` | 60px invisible hit area |
+| `.mini-progress-bar` | `touch-action: pan-x` | Allow horizontal scrub only |
+| `.mini-player-controls button` | `touch-action: manipulation` | Fast tap, no double-tap zoom |
+
+### iOS Button Fixes (line ~1230-1248)
+```css
+-webkit-appearance: none;
+-webkit-tap-highlight-color: transparent;
+min-width: 44px;  /* iOS accessibility minimum */
+min-height: 44px;
+```
