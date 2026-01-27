@@ -3073,104 +3073,62 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		// Loupe magnification settings
 		const LOUPE_SIZE = 160;
-		const LOUPE_SCALE = 2.0;
+		const LOUPE_SCALE = 1.8;
 		let loupeClone = null;
 
 		// Create the magnified clone of page content for the loupe
 		const createLoupeClone = () => {
 			if (!loupeViewport) return;
 
-			// Get the content wrapper that contains the table
-			const contentWrapper = document.querySelector('.directory-listing');
-			if (!contentWrapper) return;
+			// Clone the entire page content area
+			const mainContent = document.querySelector('.prose-content') || document.querySelector('main') || document.body;
 
-			// Clone the content
-			loupeClone = contentWrapper.cloneNode(true);
+			loupeClone = mainContent.cloneNode(true);
 			loupeClone.classList.add('loupe-clone');
 
-			// Remove any interactive elements from clone
-			loupeClone.querySelectorAll('audio, button, input').forEach(el => el.remove());
+			// Remove interactive/problematic elements from clone
+			loupeClone.querySelectorAll('audio, video, script, style, #touch-loupe, #autonomous-pin').forEach(el => el.remove());
 
-			// Style the clone
-			loupeClone.style.position = 'absolute';
-			loupeClone.style.pointerEvents = 'none';
-			loupeClone.style.transformOrigin = '0 0';
-			loupeClone.style.transform = `scale(${LOUPE_SCALE})`;
+			// Reset clone styles to match original layout
+			loupeClone.style.cssText = `
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: ${mainContent.offsetWidth}px;
+				pointer-events: none;
+				transform-origin: 0 0;
+			`;
 
 			// Clear viewport and add clone
 			loupeViewport.innerHTML = '';
 			loupeViewport.appendChild(loupeClone);
-
-			// Also clone the mini player if it's visible
-			if (!miniPlayer.classList.contains('hidden')) {
-				const miniClone = miniPlayer.cloneNode(true);
-				miniClone.classList.add('loupe-clone', 'loupe-mini-player');
-				miniClone.style.position = 'absolute';
-				miniClone.style.pointerEvents = 'none';
-				miniClone.querySelectorAll('button, input').forEach(el => el.remove());
-				loupeViewport.appendChild(miniClone);
-			}
 		};
 
-		// Update touch loupe position and content based on what's under the pin
+		// Update touch loupe - shows magnified view of what's under the pin
 		const updateTouchLoupe = (touchX, touchY, pinCenterX, pinCenterY) => {
 			if (!touchLoupe || !loupeViewport || !loupeClone) return;
 
-			// Position loupe above the finger
+			// Position loupe above the finger (so thumb doesn't cover it)
 			const loupeX = touchX;
 			const loupeY = touchY - 140;
 			touchLoupe.style.left = loupeX + 'px';
 			touchLoupe.style.top = Math.max(10, loupeY) + 'px';
 
-			// Calculate where to position the clone so pinCenterX/Y appears at loupe center
-			// The pin position is in document coordinates, we need to translate the clone
-			const contentWrapper = document.querySelector('.directory-listing');
-			if (!contentWrapper) return;
+			// Convert pin document coords to viewport coords
+			const viewPinX = pinCenterX - window.scrollX;
+			const viewPinY = pinCenterY - window.scrollY;
 
-			const contentRect = contentWrapper.getBoundingClientRect();
-			const contentDocX = contentRect.left + window.scrollX;
-			const contentDocY = contentRect.top + window.scrollY;
-
-			// Pin position relative to content
-			const relX = pinCenterX - contentDocX;
-			const relY = pinCenterY - contentDocY;
-
-			// Center of loupe
+			// The clone needs to be translated so that the point (viewPinX, viewPinY)
+			// appears at the center of the loupe
 			const loupeCenterX = LOUPE_SIZE / 2;
 			const loupeCenterY = LOUPE_SIZE / 2;
 
-			// Translate clone so pin position is at center, accounting for scale
-			const translateX = loupeCenterX - (relX * LOUPE_SCALE);
-			const translateY = loupeCenterY - (relY * LOUPE_SCALE);
+			// Account for scale: we scale first, then translate
+			// So the translation needs to position the scaled content correctly
+			const translateX = loupeCenterX / LOUPE_SCALE - viewPinX;
+			const translateY = loupeCenterY / LOUPE_SCALE - viewPinY;
 
-			loupeClone.style.transform = `translate(${translateX}px, ${translateY}px) scale(${LOUPE_SCALE})`;
-
-			// Update mini player clone position if it exists
-			const miniClone = loupeViewport.querySelector('.loupe-mini-player');
-			if (miniClone && !miniPlayer.classList.contains('hidden')) {
-				const miniRect = miniPlayer.getBoundingClientRect();
-				let miniDocX, miniDocY;
-
-				if (isPinned) {
-					miniDocX = parseFloat(miniPlayer.style.left) || 0;
-					miniDocY = parseFloat(miniPlayer.style.top) || 0;
-				} else {
-					miniDocX = miniRect.left + window.scrollX;
-					miniDocY = miniRect.top + window.scrollY;
-				}
-
-				const miniRelX = pinCenterX - miniDocX;
-				const miniRelY = pinCenterY - miniDocY;
-				const miniTransX = loupeCenterX - (miniRelX * LOUPE_SCALE);
-				const miniTransY = loupeCenterY - (miniRelY * LOUPE_SCALE);
-
-				miniClone.style.transform = `translate(${miniTransX}px, ${miniTransY}px) scale(${LOUPE_SCALE})`;
-				miniClone.style.left = '0';
-				miniClone.style.top = '0';
-				miniClone.style.right = 'auto';
-				miniClone.style.bottom = 'auto';
-				miniClone.style.position = 'absolute';
-			}
+			loupeClone.style.transform = `scale(${LOUPE_SCALE}) translate(${translateX}px, ${translateY}px)`;
 
 			// Detect what's under the pin for label and border color
 			let targetType = 'none';
@@ -3215,7 +3173,6 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		const hideTouchLoupe = () => {
 			if (touchLoupe) {
 				touchLoupe.classList.add('hidden');
-				// Clean up clone
 				if (loupeViewport) loupeViewport.innerHTML = '';
 				loupeClone = null;
 			}
