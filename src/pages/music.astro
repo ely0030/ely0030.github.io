@@ -1330,7 +1330,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		// When audio ends, auto-play next track (or loop if loop mode active)
 		audioPlayer.addEventListener('ended', () => {
 			// Check for queued track first (pinned a different track on table)
-			if (queuedLoopRow) {
+			// Validate row still exists in DOM before using
+			if (queuedLoopRow && document.contains(queuedLoopRow)) {
 				const rowToPlay = queuedLoopRow;
 				queuedLoopRow = null;  // Clear queue - next time it will loop
 				hideQueuedTrack();  // Hide the "next up" indicator
@@ -1345,18 +1346,22 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					}
 				}, 50);
 				return;
+			} else if (queuedLoopRow) {
+				// Row was deleted from DOM - clear stale reference
+				queuedLoopRow = null;
+				hideQueuedTrack();
 			}
 
 			// Check for queued artist (pinned a different artist on table)
 			if (queuedLoopArtist) {
-				const artistToLoop = queuedLoopArtist;
+				const artistToLoop = queuedLoopArtist.trim();  // Normalize whitespace
 				queuedLoopArtist = null;  // Clear queue
 				hideQueuedTrack();
 				// Find first track by this artist
 				const allRows = getAllTrackRows();
 				const artistTracks = allRows.filter(row => {
 					const artistEl = row.querySelector('.track-artist');
-					return artistEl && artistEl.textContent === artistToLoop;
+					return artistEl && artistEl.textContent.trim() === artistToLoop;
 				});
 				if (artistTracks.length > 0) {
 					playRowWithoutDeactivatingLoop(artistTracks[0]);
@@ -1378,10 +1383,10 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			// Artist loop mode: play next track by the same artist
 			if (artistLoopMode && loopArtist) {
 				const allRows = getAllTrackRows();
-				// Find all tracks by this artist
+				// Find all tracks by this artist (trim for consistent matching)
 				const artistTracks = allRows.filter(row => {
 					const artistEl = row.querySelector('.track-artist');
-					return artistEl && artistEl.textContent === loopArtist;
+					return artistEl && artistEl.textContent.trim() === loopArtist.trim();
 				});
 
 				if (artistTracks.length > 0) {
@@ -1610,7 +1615,8 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 
 		miniNextBtn.addEventListener('click', () => {
 			// If there's a queued track (pinned on table), skip to that
-			if (queuedLoopRow) {
+			// Validate row still exists in DOM before using
+			if (queuedLoopRow && document.contains(queuedLoopRow)) {
 				const rowToPlay = queuedLoopRow;
 				queuedLoopRow = null;
 				hideQueuedTrack();
@@ -1624,18 +1630,22 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 					}
 				}, 50);
 				return;
+			} else if (queuedLoopRow) {
+				// Row was deleted from DOM - clear stale reference
+				queuedLoopRow = null;
+				hideQueuedTrack();
 			}
 
 			// If there's a queued artist (pinned on table), skip to that artist
 			if (queuedLoopArtist) {
-				const artistToLoop = queuedLoopArtist;
+				const artistToLoop = queuedLoopArtist.trim();  // Normalize whitespace
 				queuedLoopArtist = null;
 				hideQueuedTrack();
 				// Find first track by this artist
 				const allRows = getAllTrackRows();
 				const artistTracks = allRows.filter(row => {
 					const artistEl = row.querySelector('.track-artist');
-					return artistEl && artistEl.textContent === artistToLoop;
+					return artistEl && artistEl.textContent.trim() === artistToLoop;
 				});
 				if (artistTracks.length > 0) {
 					playRowWithoutDeactivatingLoop(artistTracks[0]);
@@ -1646,9 +1656,10 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				return;
 			}
 
-			// If in track loop mode, just replay the same track
+			// If in track loop mode, just replay the same track (reset time, don't reload src)
 			if (loopMode && currentRow) {
-				playRowWithoutDeactivatingLoop(currentRow);
+				audioPlayer.currentTime = 0;
+				audioPlayer.play();
 				return;
 			}
 
@@ -1657,7 +1668,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 				const allRows = getAllTrackRows();
 				const artistTracks = allRows.filter(row => {
 					const artistEl = row.querySelector('.track-artist');
-					return artistEl && artistEl.textContent === loopArtist;
+					return artistEl && artistEl.textContent.trim() === loopArtist.trim();
 				});
 				if (artistTracks.length > 0 && currentRow) {
 					const currentIndex = artistTracks.indexOf(currentRow);
@@ -1679,6 +1690,29 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		});
 
 		miniPrevBtn.addEventListener('click', () => {
+			// If in track loop mode, just replay the same track
+			if (loopMode && currentRow) {
+				audioPlayer.currentTime = 0;
+				audioPlayer.play();
+				return;
+			}
+
+			// If in artist loop mode, cycle through that artist's tracks only
+			if (artistLoopMode && loopArtist) {
+				const allRows = getAllTrackRows();
+				const artistTracks = allRows.filter(row => {
+					const artistEl = row.querySelector('.track-artist');
+					return artistEl && artistEl.textContent.trim() === loopArtist.trim();
+				});
+				if (artistTracks.length > 0 && currentRow) {
+					const currentIndex = artistTracks.indexOf(currentRow);
+					const prevIndex = (currentIndex - 1 + artistTracks.length) % artistTracks.length;
+					playRowWithoutDeactivatingLoop(artistTracks[prevIndex]);
+				}
+				return;
+			}
+
+			// Normal prev - go to previous track globally
 			const allRows = getAllTrackRows();
 			if (currentRow) {
 				const currentIndex = allRows.indexOf(currentRow);
@@ -2872,7 +2906,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		const activateArtistLoopMode = (artistName = null) => {
 			artistLoopMode = true;
 			loopMode = false;  // Only one loop mode at a time
-			loopArtist = artistName || miniTrackArtistEl.textContent;
+			loopArtist = (artistName || miniTrackArtistEl.textContent).trim();  // Normalize whitespace
 
 			// Restore plain text for track name (in case it had extension span)
 			miniTrackNameEl.textContent = getPlainTrackName();
@@ -2880,7 +2914,7 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 			// Highlight ALL matching artist names in the table
 			const allArtists = document.querySelectorAll('tr.file .track-artist');
 			allArtists.forEach(el => {
-				if (el.textContent === loopArtist) {
+				if (el.textContent.trim() === loopArtist) {
 					el.classList.add('pinned-loop');
 				}
 			});

@@ -250,13 +250,19 @@ Pinning a *different* track/artist on table queues it instead of playing immedia
 
 **Why separate elements**: Can't move one element dynamically - simpler to have two and show/hide.
 
-**Next button behavior**:
+**Next/Prev button behavior** (both identical):
 - Queued track → plays queued track, activates track loop
 - Queued artist → plays first track by artist, activates artist loop
 - In track loop mode → replays same track
 - In artist loop mode → cycles through same artist's tracks only
 
 Loop symbol hidden while queued (appears after transition).
+
+### Robustness
+
+**DOM validation**: Before using `queuedLoopRow`, check `document.contains(queuedLoopRow)`. Rows can be deleted from table while queued.
+
+**Artist name normming**: All artist comparisons use `.trim()`. Whitespace differences between mini player and table would break matching otherwise.
 
 ## Pin Return from Table
 
