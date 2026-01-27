@@ -388,3 +388,39 @@ All touchmove handlers check `if (!e.touches.length) return` to prevent crashes 
 min-width: 44px;  /* iOS accessibility minimum */
 min-height: 44px;
 ```
+
+**Note**: 44px touch targets are mobile-only (`@media max-width: 1000px`). Applying globally breaks desktop button layout.
+
+## Browser Integration (line ~1816-1920)
+
+### Document Title
+Shows `ely0030 | Song Name` when playing, reverts to original on pause.
+
+`stripExtension()` removes `.mp3` etc. from display.
+
+### Media Session API
+Native OS media controls (lockscreen, media keys, car displays).
+
+```javascript
+navigator.mediaSession.metadata = new MediaMetadata({
+    title: cleanName,
+    artist: trackArtist,
+    album: 'ely0030 | Music'
+});
+navigator.mediaSession.setActionHandler('play', ...);
+navigator.mediaSession.setActionHandler('nexttrack', ...);
+```
+
+Hooks into `miniPrevBtn.click()` / `miniNextBtn.click()` so all existing logic (loop mode, queued tracks) works.
+
+### Favicon Pulse
+Canvas-based animation. Draws favicon at oscillating opacity (0.7-1.0) using `globalAlpha`.
+
+**Why canvas**: Can't animate PNG favicon directly. Canvas lets us redraw with modified opacity and convert to data URL.
+
+```javascript
+faviconCtx.globalAlpha = 0.7 + 0.3 * Math.sin(phase);
+link.href = faviconCanvas.toDataURL('image/png');
+```
+
+Restores original favicon on pause to prevent memory leak from continuous data URL generation.
