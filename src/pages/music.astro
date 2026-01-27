@@ -1814,91 +1814,110 @@ tracks.sort((a, b) => a.name.localeCompare(b.name));
 		});
 
 		// ========== BROWSER INTEGRATION ==========
-		// 1. Document title with current track
-		const baseTitle = 'ely0030 | Music';
-		const updateDocumentTitle = (isPlaying = false) => {
-			if (currentRow) {
-				const trackName = currentRow.querySelector('.track-name')?.textContent || '';
-				const trackArtist = currentRow.querySelector('.track-artist')?.textContent || '';
-				const icon = isPlaying ? '▶' : '⏸';
-				document.title = `${baseTitle} ${icon} ${trackName} - ${trackArtist}`;
-			} else {
-				document.title = baseTitle;
-			}
+		// Document title, Media Session API, and favicon animation
+
+		const originalTitle = document.title;
+		const originalFavicon = document.querySelector('link[rel="icon"][sizes="32x32"]')?.href || '/favicons/favicon-32x32.png';
+		let faviconAnimationId = null;
+
+		// Strip file extension from track name
+		const stripExtension = (filename) => {
+			return filename.replace(/\.[^/.]+$/, '');
 		};
 
-		audioPlayer.addEventListener('play', () => updateDocumentTitle(true));
-		audioPlayer.addEventListener('pause', () => updateDocumentTitle(false));
-		audioPlayer.addEventListener('ended', () => { document.title = baseTitle; });
+		// Update document title with current track
+		const updateDocumentTitle = (isPlaying) => {
+			if (!currentRow || !isPlaying) {
+				document.title = originalTitle;
+				return;
+			}
+			const trackName = currentRow.querySelector('.track-name')?.textContent || '';
+			const trackArtist = currentRow.querySelector('.track-artist')?.textContent || '';
+			const cleanName = stripExtension(trackName);
+			document.title = `ely0030 | Music | ${cleanName} - ${trackArtist}`;
+		};
 
-		// 2. Media Session API (native OS controls)
-		if ('mediaSession' in navigator) {
-			const updateMediaSession = () => {
-				if (currentRow) {
-					const trackName = currentRow.querySelector('.track-name')?.textContent || 'Unknown';
-					const trackArtist = currentRow.querySelector('.track-artist')?.textContent || 'Unknown';
-					navigator.mediaSession.metadata = new MediaMetadata({
-						title: trackName.replace('.mp3', ''),
-						artist: trackArtist,
-						album: 'ely0030 Music'
-					});
-				}
-			};
+		// Media Session API - native OS media controls
+		const updateMediaSession = () => {
+			if (!('mediaSession' in navigator) || !currentRow) return;
 
-			audioPlayer.addEventListener('play', updateMediaSession);
+			const trackName = currentRow.querySelector('.track-name')?.textContent || '';
+			const trackArtist = currentRow.querySelector('.track-artist')?.textContent || '';
+			const cleanName = stripExtension(trackName);
+
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: cleanName,
+				artist: trackArtist,
+				album: 'ely0030 | Music'
+			});
 
 			navigator.mediaSession.setActionHandler('play', () => audioPlayer.play());
 			navigator.mediaSession.setActionHandler('pause', () => audioPlayer.pause());
 			navigator.mediaSession.setActionHandler('previoustrack', () => miniPrevBtn.click());
 			navigator.mediaSession.setActionHandler('nexttrack', () => miniNextBtn.click());
-		}
+		};
 
-		// 3. Animated favicon when playing
-		const originalFavicon = document.querySelector('link[rel="icon"]')?.href || '/favicon.svg';
-		let faviconAnimationId = null;
-		const faviconFrames = ['🎵', '🎶'];
-		let faviconFrame = 0;
+		// Favicon pulse animation when playing
+		const faviconCanvas = document.createElement('canvas');
+		faviconCanvas.width = 32;
+		faviconCanvas.height = 32;
+		const faviconCtx = faviconCanvas.getContext('2d');
+		const faviconImg = new Image();
+		faviconImg.src = originalFavicon;
 
+		let faviconPhase = 0;
 		const animateFavicon = () => {
-			const canvas = document.createElement('canvas');
-			canvas.width = 32;
-			canvas.height = 32;
-			const ctx = canvas.getContext('2d');
-			ctx.font = '28px serif';
-			ctx.textAlign = 'center';
-			ctx.textBaseline = 'middle';
-			ctx.fillText(faviconFrames[faviconFrame], 16, 18);
-			faviconFrame = (faviconFrame + 1) % faviconFrames.length;
-
-			let favicon = document.querySelector('link[rel="icon"]');
-			if (!favicon) {
-				favicon = document.createElement('link');
-				favicon.rel = 'icon';
-				document.head.appendChild(favicon);
+			if (!faviconImg.complete) {
+				faviconAnimationId = requestAnimationFrame(animateFavicon);
+				return;
 			}
-			favicon.href = canvas.toDataURL();
+
+			faviconPhase += 0.05;
+			const pulse = 0.7 + 0.3 * Math.sin(faviconPhase); // Oscillate between 0.7 and 1.0
+
+			faviconCtx.clearRect(0, 0, 32, 32);
+			faviconCtx.globalAlpha = pulse;
+			faviconCtx.drawImage(faviconImg, 0, 0, 32, 32);
+
+			const link = document.querySelector('link[rel="icon"][sizes="32x32"]');
+			if (link) {
+				link.href = faviconCanvas.toDataURL('image/png');
+			}
+
+			faviconAnimationId = requestAnimationFrame(animateFavicon);
 		};
 
 		const startFaviconAnimation = () => {
 			if (!faviconAnimationId) {
+				faviconPhase = 0;
 				animateFavicon();
-				faviconAnimationId = setInterval(animateFavicon, 500);
 			}
 		};
 
 		const stopFaviconAnimation = () => {
 			if (faviconAnimationId) {
-				clearInterval(faviconAnimationId);
+				cancelAnimationFrame(faviconAnimationId);
 				faviconAnimationId = null;
 				// Restore original favicon
-				let favicon = document.querySelector('link[rel="icon"]');
-				if (favicon) favicon.href = originalFavicon;
+				const link = document.querySelector('link[rel="icon"][sizes="32x32"]');
+				if (link) link.href = originalFavicon;
 			}
 		};
 
-		audioPlayer.addEventListener('play', startFaviconAnimation);
-		audioPlayer.addEventListener('pause', stopFaviconAnimation);
-		audioPlayer.addEventListener('ended', stopFaviconAnimation);
+		// Hook into play/pause events
+		audioPlayer.addEventListener('play', () => {
+			updateDocumentTitle(true);
+			updateMediaSession();
+			startFaviconAnimation();
+		});
+		audioPlayer.addEventListener('pause', () => {
+			updateDocumentTitle(false);
+			stopFaviconAnimation();
+		});
+		audioPlayer.addEventListener('ended', () => {
+			// Don't reset title on ended - next track will update it
+			// stopFaviconAnimation handled by pause event
+		});
 
 		// Mini player controls
 		miniPlayBtn.addEventListener('click', () => {
