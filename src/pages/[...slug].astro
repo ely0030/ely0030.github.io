@@ -9,8 +9,8 @@ export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ id, data }) => {
     const idLower = id.toLowerCase();
     const isInPrivateFolder = idLower.includes('/private/') || idLower.startsWith('private/');
-    const isPrivatePost = data.private === true;
-    return !isInPrivateFolder && !isPrivatePost;
+    const isHiddenPrivate = data.private === true && !data.passwordHash;
+    return !isInPrivateFolder && !isHiddenPrivate;
   });
   return posts.map((post) => ({ params: { slug: post.id }, props: post }));
 }
@@ -23,14 +23,12 @@ const hash = post.data.passwordHash;
 
 ---
 
-{isPrivate ? (
-  <PasswordGate hash={hash}>
-    <BlogPost {...post.data}>
+<BlogPost {...post.data}>
+  {isPrivate ? (
+    <PasswordGate hash={hash}>
       <Content />
-    </BlogPost>
-  </PasswordGate>
-) : (
-  <BlogPost {...post.data}>
+    </PasswordGate>
+  ) : (
     <Content />
-  </BlogPost>
-)}
+  )}
+</BlogPost>

@@ -9,8 +9,8 @@ import { getCollection } from 'astro:content';
 const posts = (await getCollection('blog', ({ id, data }) => {
 	const idLower = id.toLowerCase();
 	const isInPrivateFolder = idLower.includes('/private/') || idLower.startsWith('private/');
-	const isPrivatePost = data.private === true;
-	return !(isInPrivateFolder || isPrivatePost);
+	const isHiddenPrivate = data.private === true && !data.passwordHash;
+	return !(isInPrivateFolder || isHiddenPrivate);
 }))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
@@ -83,8 +83,13 @@ const sortedCategories = Object.keys(postsByCategory).sort();
 								<h2>{category}</h2>
 								<ul>
 									{categoryPosts.map((post) => (
-										<li>
-											<a href={post.isArchived ? `/${post.id}.html` : `/${post.id}/`}>{post.data.title}</a>
+										<li class={`post-item ${post.data.passwordHash ? 'has-lock' : ''}`}>
+											{post.data.passwordHash ? (
+												<a href={`/${post.id}/`} class="private-link" data-hash={post.data.passwordHash}>{post.data.title}</a>
+											) : (
+												<a href={post.isArchived ? `/${post.id}.html` : `/${post.id}/`}>{post.data.title}</a>
+											)}
+											{post.data.passwordHash && <span class="lock" aria-label="Private">🔒</span>}
 										</li>
 									))}
 								</ul>
@@ -135,10 +140,162 @@ const sortedCategories = Object.keys(postsByCategory).sort();
 						text-decoration: none;
 					}
 				</style>
+				<style is:global>
+					.post-item {
+						position: relative;
+					}
+					.lock {
+						font-size: 0.85em;
+						opacity: 0;
+						transition: opacity 0.2s ease;
+						user-select: none;
+						margin-left: 0.4em;
+					}
+					.private-link:hover ~ .lock,
+					.post-item.has-active-form .lock {
+						opacity: 0.9;
+					}
+					.inline-pw-form {
+						display: inline-flex;
+						align-items: center;
+						gap: 0.25em;
+						height: 1.4em;
+						opacity: 0;
+						transform: translateY(-0.2em);
+						transition: opacity 0.3s ease, transform 0.3s ease;
+					}
+					.post-item.has-active-form .inline-pw-form {
+						opacity: 1;
+						transform: translateY(0);
+					}
+					.inline-pw-form input {
+						height: 1.4em;
+						box-sizing: border-box;
+						line-height: 1;
+						padding: 2px 4px;
+						border: 1px solid #ccc;
+						outline: none;
+						font-size: inherit;
+						font-family: inherit;
+					}
+					.private-link:focus {
+						outline: none;
+					}
+					.lock.unlocking {
+						transform: translateY(-1px);
+						transition: transform 0.08s ease-out;
+					}
+					@keyframes shakeError {
+						0%   { transform: translateX(0); }
+						20%  { transform: translateX(-3px); }
+						40%  { transform: translateX(3px); }
+						60%  { transform: translateX(-3px); }
+						80%  { transform: translateX(3px); }
+						100% { transform: translateX(0); }
+					}
+					.lock.error {
+						animation: shakeError 0.5s cubic-bezier(0.36,0.07,0.19,0.97) forwards;
+					}
+				</style>
 			</div>
 			<aside class="sidenotes-area">
 				{/* Sidenotes will go here on relevant pages */}
 			</aside>
 		</div>
+		<script>
+			import { sha256 } from 'https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/+esm';
+
+			let activeLink = null;
+			let originalHTML = null;
+			let activeLi = null;
+
+			function restore() {
+				if (!activeLi) return;
+				if (originalHTML) {
+					const tempDiv = document.createElement('div');
+					tempDiv.innerHTML = originalHTML;
+					const restoredLink = tempDiv.firstElementChild;
+					const form = activeLi.querySelector('.inline-pw-form');
+					if (form) {
+						form.replaceWith(restoredLink);
+					}
+				}
+				activeLi.classList.remove('has-active-form');
+				activeLink = null;
+				originalHTML = null;
+				activeLi = null;
+			}
+
+			document.addEventListener('click', (e) => {
+				const link = e.target.closest('.private-link');
+				if (link) {
+					e.preventDefault();
+					const hash = link.dataset.hash;
+					const li = link.closest('.post-item');
+					const lock = li.querySelector('.lock');
+					const slug = new URL(link.href).pathname;
+
+					const saved = localStorage.getItem('pw:' + slug);
+					if (saved === hash) {
+						link.style.pointerEvents = 'none';
+						lock.style.opacity = '0.9';
+						setTimeout(() => {
+							lock.textContent = '🔓';
+							lock.classList.add('unlocking');
+						}, 120);
+						setTimeout(() => { window.location.href = link.href; }, 350);
+						return;
+					}
+
+					if (activeLink === link) return;
+					restore();
+
+					activeLink = link;
+					activeLi = li;
+					originalHTML = link.outerHTML;
+
+					const form = document.createElement('form');
+					form.className = 'inline-pw-form';
+					const input = document.createElement('input');
+					input.type = 'password';
+					input.placeholder = 'Password';
+					input.autocomplete = 'off';
+					input.style.outline = 'none';
+					form.appendChild(input);
+
+					link.replaceWith(form);
+					li.classList.add('has-active-form');
+					lock.style.opacity = '0.9';
+
+					requestAnimationFrame(() => input.focus());
+
+					form.addEventListener('submit', (ev) => {
+						ev.preventDefault();
+						const pw = input.value;
+						if (!pw) return;
+						const digest = sha256(pw);
+						if (digest === hash) {
+							localStorage.setItem('pw:' + slug, hash);
+							setTimeout(() => {
+								lock.textContent = '🔓';
+								lock.classList.add('unlocking');
+							}, 120);
+							setTimeout(() => { window.location.href = slug; }, 350);
+						} else {
+							lock.classList.add('error');
+							setTimeout(() => { lock.classList.remove('error'); }, 500);
+							input.value = '';
+							input.focus();
+						}
+					});
+					return;
+				}
+
+				// Click outside - dismiss active form
+				if (activeLi && !activeLi.contains(e.target)) {
+					restore();
+				}
+			});
+		</script>
 	</body>
 </html>

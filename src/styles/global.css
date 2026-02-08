@@ -774,20 +774,20 @@ figcaption {
 
 /* Literature-specific link styling: softer, typographic underlines */
 body.literature .prose a {
-  color: #0647b9;
+  color: #0066CC;
   border-bottom: none;
   text-decoration: underline;
   text-decoration-thickness: 0.06em;
   text-underline-offset: 2px;
-  text-decoration-color: rgba(6, 71, 185, 0.55);
+  text-decoration-color: rgba(0, 102, 204, 0.55);
   transition: text-decoration-color 0.2s ease, color 0.2s ease;
 }
 body.literature .prose a:hover {
-  color: #003f9e;
-  text-decoration-color: rgba(0, 63, 158, 0.8);
+  color: #0066CC;
+  text-decoration-color: rgba(0, 102, 204, 0.8);
 }
 body.literature .prose a:visited {
-  color: #4a70a8;
+  color: #0066CC;
   text-decoration-color: rgba(74, 112, 168, 0.55);
 }
 
@@ -1749,7 +1749,7 @@ body.literature .prose h6 {
 
 /* Links - minimal like literature.bio */
 body.literature .prose a {
-  color: #0000EE;
+  color: #0066CC;
   text-decoration: none;
 }
 
@@ -2671,14 +2671,14 @@ body.notepad main {
   margin: 0;
 }
 
-/* Password Page Deep Blue Theme */
+/* Password Page */
 .protected-content {
   width: 100%;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #002147;
+  background-color: #fff;
   position: fixed;
   top: 0;
   left: 0;
@@ -2686,15 +2686,12 @@ body.notepad main {
 }
 
 body:has(.protected-content) {
-  background-color: #002147;
+  background-color: #fff;
   overflow: hidden;
 }
 
 .protected-content .centered-form {
   text-align: center;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 30px 40px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .protected-content .pw-form {
@@ -2709,7 +2706,7 @@ body:has(.protected-content) {
 .protected-content .back-link {
   font-size: 1.2em;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: #333;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
   display: flex;
   align-items: center;
@@ -2718,32 +2715,31 @@ body:has(.protected-content) {
 }
 
 .protected-content .back-link:hover {
-  color: #ffffff;
+  color: #000;
 }
 
 .protected-content input[type="password"] {
   font-size: 0.9em;
   padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #000;
   width: 180px;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: border-color 0.2s;
 }
 
 .protected-content input[type="password"]:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: #999;
 }
 
 .protected-content input[type="password"]::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: #999;
 }
 
 .protected-content .error-message {
   margin: 0;
-  color: #ff9999;
+  color: #c00;
   font-size: 0.85em;
 }
 
