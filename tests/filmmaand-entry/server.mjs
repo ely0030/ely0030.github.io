@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {createApi} from '../../filmmaand-server/api.mjs';
+import entryHandler from '../../filmmaand-server/handler.mjs';
 import {emptyState,openState} from '../../filmmaand-server/state.mjs';
 import {createMail} from '../../filmmaand-server/mail.mjs';
 import {createPlanningService} from '../../filmmaand-server/runtime/planning/service.mjs';
@@ -20,7 +21,8 @@ http.createServer(async(req,res)=>{try{
  if(url.pathname==='/__fixture/expire'&&req.method==='POST'){store.data.auth.sessions.forEach(s=>s.expires_at='2000-01-01T00:00:00Z');store.data.auth.rate_limits=[];res.end('{}');return;}
  const request=new Request(url,{method:req.method,headers:req.headers,...(body.length?{body}:{} )});
  if(url.pathname.startsWith('/filmmaand/api/')){const response=await api(request,{ip:'isolated-entry'});res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;}
- if(url.pathname==='/filmmaand/'||url.pathname==='/filmmaand/agenda/'){res.writeHead(302,{Location:'/filmmaand/program/'});res.end();return;}
+ if(['/filmmaand','/filmmaand/'].includes(url.pathname)){const r=await entryHandler(request,{});res.writeHead(r.status,Object.fromEntries(r.headers));res.end();return;}
+ if(['/filmmaand/agenda','/filmmaand/agenda/','/filmmaand/agenda/index.html'].includes(url.pathname)){res.writeHead(301,{Location:'/filmmaand/program/'+url.search});res.end();return;}
  let path=url.pathname.replace('/filmmaand/program/','/filmmaand/agenda/');if(path.endsWith('/'))path+='index.html';const file=resolve(root,'.'+path);if(!file.startsWith(root+'/'))throw Error('path');if(process.env.ENTRY_DELAY_ART==='1'&&/\/(artwork|catalogue-base)\.js$/.test(path))await new Promise(r=>setTimeout(r,1500));let data=await readFile(file);if(process.env.ENTRY_LOCK_ONLY==='1'&&/\/site\/access\.(?:js|css)$/.test(path))data=execFileSync('git',['show','47b453e:public'+path]);if(process.env.ENTRY_LOCK_ONLY==='1'&&/\/(?:site\/(?:shell|first-visit|availability-intro)|identity\/profile-menu|films\/next-round)\.(?:js|css)$/.test(path))data=execFileSync('git',['show','29f10dff89353e5fd67bd4181387e162b6a6fd06:public'+path]);
  if(process.env.ENTRY_DELAY_ART==='1'&&extname(file)==='.html')data=Buffer.from(data.toString().replace('<head>','<head><script>window.__entryTimings={};const proofObserver=new MutationObserver(()=>{if(document.querySelector(".account-unlock[open]")){window.__entryTimings.prompt=performance.now();proofObserver.disconnect()}});proofObserver.observe(document,{subtree:true,childList:true,attributes:true});</script>'));
  const kind=/^\/filmmaand\/(films|stemmen)\/(?:index.html)?$/.exec(url.pathname)?.[1];if(kind){const r=await api(new Request(origin+'/filmmaand/api/auth/session',{headers:req.headers}),{ip:'isolated-entry'});if(!(await r.json()).participant?.onboarded)data=Buffer.from(data.toString().replace('<html','<html data-account-locked="'+kind+'"').replace(/<script\b[^>]*src=["'][^"']*\/(?:picker\/picker|stemmen\/stemmen|site\/first-visit|site\/vote-event)\.js["'][^>]*><\/script>/g,''));}

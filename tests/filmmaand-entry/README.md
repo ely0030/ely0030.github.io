@@ -26,3 +26,7 @@ The initial fixture had an unfrozen, derived ballot; its first liked films enter
 - The approved r19 `films/next-round.js/css` are copied byte-for-byte; ranking and voting semantics are untouched.
 - Access render helpers, early artwork promise and CSS retain the reviewed lock fixes. New fresh-login routing and recovery guards are the separate full-entry change.
 - Browser proof covers real mouse drag and mobile keyboard input; no new automated touch-gesture proof is claimed.
+
+### Captain route/static-HTML integration check
+
+Applied captain f2178f1 and 8cfaec0 as 948a8bd and 1c0612f in this isolated worktree. The fixture now invokes the real entry handler for root redirects and mirrors the three exact Netlify legacy redirects. Seven focused tests passed. Browser checks confirmed Programma first in header and footer, logo `/filmmaand/program/`, correct active Programma item, legacy agenda/index query preservation, and protected Films retaining the login lock. HTTP checks confirmed root 302→Programma, edit/thanks 302→Stemmen, and all three legacy Agenda variants 301→Programma. No additional personal writes were needed for this static/route-only delta.
