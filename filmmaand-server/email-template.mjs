@@ -1,7 +1,7 @@
-/** Pure login email renderer. Recommended editorial direction; no remote assets or tracking. */
-export function renderLoginCodeEmail(input) { return render(input, 'editorial'); }
+/** Pure login email renderer. Approved B programme direction; no remote assets or tracking. */
+export function renderLoginCodeEmail(input) { return render(input, 'programme'); }
 /** Review-only alternative. Production callers retain renderLoginCodeEmail. */
-export function renderAlternateLoginCodeEmail(input) { return render(input, 'programme'); }
+export function renderAlternateLoginCodeEmail(input) { return render(input, 'editorial'); }
 
 function render({code, expiresAt}, direction) {
   if (typeof code !== 'string' || !/^\d{6}$/.test(code)) throw new TypeError('Expected a six-digit login code.');
