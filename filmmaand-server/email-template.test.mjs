@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {renderLoginCodeEmail} from './email-template.mjs';
+import {renderLoginCodeEmail,renderAlternateLoginCodeEmail} from './email-template.mjs';
 
 test('code remains copyable with leading zeroes and actual expiry in both parts', () => {
   const result = renderLoginCodeEmail({code:'012345',expiresAt:'2026-09-07T12:10:00.000Z'});
@@ -24,4 +24,15 @@ test('invalid or HTML-bearing codes and invalid expiries fail before interpolati
     assert.throws(() => renderLoginCodeEmail({code,expiresAt:'2026-09-07T12:10:00Z'}),TypeError);
   }
   assert.throws(() => renderLoginCodeEmail({code:'123456',expiresAt:'invalid'}),TypeError);
+});
+
+test('review alternative preserves the same transactional content without external dependencies', () => {
+  const input = {code:'012345',expiresAt:'2026-09-07T12:10:00.000Z'};
+  const primary = renderLoginCodeEmail(input);
+  const alternative = renderAlternateLoginCodeEmail(input);
+  assert.equal(alternative.text,primary.text);
+  assert.equal(alternative.subject,primary.subject);
+  assert.match(alternative.html,/012345/);
+  assert.match(alternative.html,/7 september om 14:10/);
+  assert.doesNotMatch(alternative.html,/<(?:img|script|svg|a)\b|https?:|@import/i);
 });
