@@ -18,10 +18,11 @@ async function initialize(){
 }
 export default async function handler(request,context){
  try{
-  const {api,mail}=await(instance||=(initialize().catch(e=>{instance=null;throw e}))),url=new URL(request.url);
+  const url=new URL(request.url);
+  if(url.pathname==='/filmmaand'||url.pathname==='/filmmaand/')return Response.redirect(url.origin+'/filmmaand/'+(url.searchParams.has('edit')||url.searchParams.get('screen')==='thanks'?'stemmen/':'program/')+url.search,302);
+  const {api,mail}=await(instance||=(initialize().catch(e=>{instance=null;throw e})));
   // Every real invocation can rescue a committed but unacknowledged send; no background timer reliance.
   try{await mail.drain()}catch{/* Current request reports its own delivery failures. */}
-  if(url.pathname==='/filmmaand'||url.pathname==='/filmmaand/')return Response.redirect(url.origin+'/filmmaand/'+(url.searchParams.has('edit')||url.searchParams.get('screen')==='thanks'?'stemmen/':'films/')+url.search,302);
   const kind=/^\/filmmaand\/(films|stemmen)\/(?:index.html)?$/.exec(url.pathname)?.[1];
   if(kind){
    const session=await api(new Request(url.origin+'/filmmaand/api/auth/session',{headers:request.headers}),context);const state=await session.json();let html=await readFile(new URL('./runtime/public/'+kind+'/index.html',import.meta.url),'utf8');

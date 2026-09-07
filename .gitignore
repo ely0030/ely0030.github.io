@@ -127,3 +127,6 @@ certs/
 filmmaand-server/data/
 filmmaand-server/node_modules/
 .netlify/
+
+# Generated canonical programme document
+/public/filmmaand/program/

@@ -1,5 +1,5 @@
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, readFile, rename, rm } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, copyFile } from 'node:fs/promises';
 import { createGunzip } from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
 import { createHash } from 'node:crypto';
@@ -22,3 +22,7 @@ for (const [name, expected] of Object.entries(manifest)) {
     console.log(`Prepared ${name} (${bytes} bytes, verified)`);
   } finally { await rm(temporary, { force: true }); }
 }
+
+// Public programme keeps its existing assets; only its canonical document route changes.
+await mkdir(new URL('public/filmmaand/program/', root), {recursive:true});
+await copyFile(new URL('public/filmmaand/agenda/index.html', root),new URL('public/filmmaand/program/index.html', root));
