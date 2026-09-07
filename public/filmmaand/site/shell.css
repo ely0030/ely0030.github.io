@@ -93,3 +93,6 @@ body.site-stemmen .site-shell-strip{display:none!important}
 @media(max-width:650px){.site-agenda #agenda .ag-next[aria-busy="true"]{min-height:420px}}
 
 html:has(>body.site-standalone){scrollbar-gutter:stable}
+
+/* Start the mobile page at the banner; edition metadata stays in the desktop header. */
+@media(max-width:650px){.site-shell-header .site-edition-strip{display:none}}
