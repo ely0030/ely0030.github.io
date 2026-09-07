@@ -30,3 +30,7 @@ The initial fixture had an unfrozen, derived ballot; its first liked films enter
 ### Captain route/static-HTML integration check
 
 Applied captain f2178f1 and 8cfaec0 as 948a8bd and 1c0612f in this isolated worktree. The fixture now invokes the real entry handler for root redirects and mirrors the three exact Netlify legacy redirects. Seven focused tests passed. Browser checks confirmed Programma first in header and footer, logo `/filmmaand/program/`, correct active Programma item, legacy agenda/index query preservation, and protected Films retaining the login lock. HTTP checks confirmed root 302→Programma, edit/thanks 302→Stemmen, and all three legacy Agenda variants 301→Programma. No additional personal writes were needed for this static/route-only delta.
+
+### Explicit calendar dismissal
+
+On the isolated real controller, selected 12 September, clicked outside at (5,5), then pressed Escape. The active calendar stayed open, the day remained selected, and focus moved to Later. Clicking Later closed the modal and retained `availabilityDraft.dates=["2026-09-12"]`. Reopened, expired the fixture session and attempted Save: the recovery action opened the real login dialog. After a new local code login, the calendar reopened with the selection intact; explicit Save persisted that date and closed successfully. Only the active-calendar cancel handler changed; login/error dialogs and explicit close/save controls remain independent.
