@@ -96,3 +96,6 @@
 #films #home-picker .fr-personal{border-top:1px solid #eaeae5;padding-top:25px}
 #films #home-picker .fr-status{color:#999;font-size:9px}
 @media(prefers-reduced-motion:reduce){#films #home-picker .fr-result-film,#films #home-picker .fr-result-cover{transition:none}}
+
+/* Full film/theme titles; the ranking rail measures its tallest item. */
+#films #home-picker button.fr-film-title,#films #home-picker button.fr-lineup-title{max-height:none;height:auto;overflow:visible;white-space:normal;overflow-wrap:anywhere;-webkit-line-clamp:unset}
