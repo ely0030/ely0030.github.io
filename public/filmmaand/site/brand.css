@@ -1,0 +1,4 @@
+/* Selected Interval symbol; lettering and moire artwork remain unchanged. */
+.fm-brand-symbol{display:inline-block;width:.72em;height:.72em;margin-right:.22em;vertical-align:baseline;background:currentColor;mask:url('/filmmaand/site/icons/interval.svg') center/contain no-repeat;-webkit-mask:url('/filmmaand/site/icons/interval.svg') center/contain no-repeat;flex-shrink:0}
+.login-modal #login-heading::before,.account-unlock h2::before{content:"";display:block;width:26px;height:26px;margin:0 0 16px;background:currentColor;mask:url('/filmmaand/site/icons/interval.svg') center/contain no-repeat;-webkit-mask:url('/filmmaand/site/icons/interval.svg') center/contain no-repeat}
+.account-unlock h2::before{margin:0 auto 16px}

@@ -20,7 +20,7 @@ function render({code, expiresAt}, direction) {
   const sans = 'Arial,Helvetica,sans-serif';
   const editorial = `
     <tr><td style="padding:0 0 26px;border-bottom:1px solid #d9d9d2;">
-      <p style="margin:0;font-family:${serif};font-size:30px;line-height:38px;font-weight:400;letter-spacing:-1.1px;color:#20221e;">Alec Filmmaand</p>
+      <p style="margin:0;font-family:${serif};font-size:30px;line-height:38px;font-weight:400;letter-spacing:-1.1px;color:#20221e;"><img src="https://ely0030.xyz/filmmaand/site/icons/interval-black-48.png" width="24" height="24" alt="" style="display:inline-block;width:24px;height:24px;vertical-align:middle;margin:0 10px 3px 0;border:0;">Alec Filmmaand</p>
     </td></tr>
     <tr><td style="padding:36px 0 0;">
       <h1 style="margin:0 0 18px;font-family:${serif};font-size:38px;line-height:44px;font-weight:400;letter-spacing:-1.5px;">Je inlogcode</h1>
@@ -33,7 +33,7 @@ function render({code, expiresAt}, direction) {
   const programme = `
     <tr><td style="padding:0 0 22px;border-bottom:3px solid #20221e;">
       <img src="https://ely0030.xyz/filmmaand/site/email/afm-moire.png" width="500" height="95" alt="AFM — Filmmaand" style="display:block;width:100%;max-width:500px;height:auto;border:0;margin:0 0 20px;background-color:#202622;color:#ffffff;font:17px Arial,Helvetica,sans-serif;">
-      <p style="margin:0;font-family:${sans};font-size:17px;line-height:22px;font-weight:700;letter-spacing:-0.3px;">ALEC FILMMAAND</p>
+      <p style="margin:0;font-family:${sans};font-size:17px;line-height:22px;font-weight:700;letter-spacing:-0.3px;"><img src="https://ely0030.xyz/filmmaand/site/icons/interval-black-48.png" width="24" height="24" alt="" style="display:inline-block;width:24px;height:24px;vertical-align:middle;margin:0 10px 3px 0;border:0;">ALEC FILMMAAND</p>
     </td></tr>
     <tr><td style="padding:34px 0 0;">
       <h1 style="margin:0 0 18px;font-family:${sans};font-size:26px;line-height:32px;font-weight:400;letter-spacing:-0.7px;">Je inlogcode</h1>

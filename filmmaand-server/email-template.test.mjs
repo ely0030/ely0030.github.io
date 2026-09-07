@@ -17,11 +17,13 @@ test('code remains copyable with leading zeroes and actual expiry in both parts'
 test('the static first-party banner has text fallback and no dynamic or tracking URL', () => {
   const {html} = renderLoginCodeEmail({code:'012345',expiresAt:'2026-09-07T12:10:00Z'});
   const images = html.match(/<img\b[^>]*>/g) || [];
-  assert.equal(images.length,1);
+  assert.equal(images.length,2);
   assert.match(images[0],/src="https:\/\/ely0030\.xyz\/filmmaand\/site\/email\/afm-moire\.png"/);
   assert.match(images[0],/alt="AFM — Filmmaand"/);
   assert.match(images[0],/width="500" height="95"/);
-  const withoutImage=html.replace(images[0],'');
+  assert.ok(images[1].includes('src="https://ely0030.xyz/filmmaand/site/icons/interval-black-48.png"'));
+  assert.ok(images[1].includes('alt=""'));
+  const withoutImage=images.reduce((body,image)=>body.replace(image,''),html);
   assert.match(withoutImage,/>ALEC FILMMAAND<\/p>/);
   assert.match(withoutImage,/012345/);
   assert.match(withoutImage,/7 september om 14:10/);
@@ -40,7 +42,7 @@ test('invalid or HTML-bearing codes and invalid expiries fail before interpolati
   assert.throws(() => renderLoginCodeEmail({code:'123456',expiresAt:'invalid'}),TypeError);
 });
 
-test('review alternative preserves the same transactional content without external dependencies', () => {
+test('review alternative preserves transactional content and only the fixed logo dependency', () => {
   const input = {code:'012345',expiresAt:'2026-09-07T12:10:00.000Z'};
   const primary = renderLoginCodeEmail(input);
   const alternative = renderAlternateLoginCodeEmail(input);
@@ -48,5 +50,8 @@ test('review alternative preserves the same transactional content without extern
   assert.equal(alternative.subject,primary.subject);
   assert.match(alternative.html,/012345/);
   assert.match(alternative.html,/7 september om 14:10/);
-  assert.doesNotMatch(alternative.html,/<(?:img|script|svg|a)\b|https?:|@import/i);
+  const logo=alternative.html.match(/<img[^>]+>/g)||[];
+  assert.equal(logo.length,1);
+  assert.ok(logo[0].includes('src="https://ely0030.xyz/filmmaand/site/icons/interval-black-48.png"'));
+  assert.doesNotMatch(alternative.html.replace(logo[0],''),/<(?:img|script|svg|a)\b|https?:|@import/i);
 });
