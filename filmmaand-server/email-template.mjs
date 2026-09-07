@@ -1,4 +1,4 @@
-/** Pure login email renderer. Approved B programme direction; no remote assets or tracking. */
+/** Pure login email renderer. Approved B with a static first-party AFM banner; no tracking. */
 export function renderLoginCodeEmail(input) { return render(input, 'programme'); }
 /** Review-only alternative. Production callers retain renderLoginCodeEmail. */
 export function renderAlternateLoginCodeEmail(input) { return render(input, 'editorial'); }
@@ -32,6 +32,7 @@ function render({code, expiresAt}, direction) {
     <tr><td style="padding:32px 0 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:20px 0 0;border-top:1px solid #d9d9d2;"><p style="margin:0;font-size:12px;line-height:20px;color:#6b6c67;">${safety}</p></td></tr></table></td></tr>`;
   const programme = `
     <tr><td style="padding:0 0 22px;border-bottom:3px solid #20221e;">
+      <img src="https://ely0030.xyz/filmmaand/site/email/afm-moire.png" width="500" height="95" alt="AFM — Filmmaand" style="display:block;width:100%;max-width:500px;height:auto;border:0;margin:0 0 20px;background-color:#202622;color:#ffffff;font:17px Arial,Helvetica,sans-serif;">
       <p style="margin:0;font-family:${sans};font-size:17px;line-height:22px;font-weight:700;letter-spacing:-0.3px;">ALEC FILMMAAND</p>
     </td></tr>
     <tr><td style="padding:34px 0 0;">

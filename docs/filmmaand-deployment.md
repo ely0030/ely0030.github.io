@@ -29,7 +29,7 @@ Plans, account data, avatar ownership, receipts and the temporary email outbox s
 
 Resend delivery happens only after the outbox commit and uses a stable idempotency key. Retry preserves the original code, content and expiry. Login cookies are HttpOnly, Secure and scoped to `/filmmaand/`. No development inbox or test-login helper is deployed.
 
-The new email template has HTML and equivalent plain text, an actual expiry, and no remote assets or tracking links. Authentication and template quality do not guarantee inbox placement; the first setup message reached Gmail Spam.
+The new email template has HTML and equivalent plain text, an actual expiry, and one static first-party AFM banner image. It contains no tracking links. Authentication and template quality do not guarantee inbox placement; the first setup message reached Gmail Spam.
 
 ## Demo data and launch evidence
 

@@ -11,7 +11,21 @@ test('code remains copyable with leading zeroes and actual expiry in both parts'
     assert.match(part,/Nederlandse tijd/);
     assert.match(part,/één keer/);
   }
-  assert.doesNotMatch(result.html,/<(?:img|script|a)\b|https?:|@import/i);
+  assert.doesNotMatch(result.html,/<(?:script|svg|canvas|a)\b|@import/i);
+});
+
+test('the static first-party banner has text fallback and no dynamic or tracking URL', () => {
+  const {html} = renderLoginCodeEmail({code:'012345',expiresAt:'2026-09-07T12:10:00Z'});
+  const images = html.match(/<img\b[^>]*>/g) || [];
+  assert.equal(images.length,1);
+  assert.match(images[0],/src="https:\/\/ely0030\.xyz\/filmmaand\/site\/email\/afm-moire\.png"/);
+  assert.match(images[0],/alt="AFM — Filmmaand"/);
+  assert.match(images[0],/width="500" height="95"/);
+  const withoutImage=html.replace(images[0],'');
+  assert.match(withoutImage,/>ALEC FILMMAAND<\/p>/);
+  assert.match(withoutImage,/012345/);
+  assert.match(withoutImage,/7 september om 14:10/);
+  assert.doesNotMatch(withoutImage,/https?:|<img\b/);
 });
 
 test('expiry observes Dutch winter time independently of host timezone', () => {
