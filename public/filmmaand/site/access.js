@@ -9,6 +9,7 @@ window.addEventListener('filmmaand-login-complete',()=>{if(kind)pendingUnlock=tr
 window.addEventListener('filmmaand-availability-intro-closed',e=>{if(pendingUnlock&&['saved','continue','later'].includes(e.detail?.reason)){pendingUnlock=false;location.reload()}});
 
 let prompt=null;window.addEventListener('filmmaand-login-complete',()=>{if(!kind||!prompt)return;prompt.close();prompt.remove();prompt=null;for(const n of document.querySelectorAll('.account-background')){n.inert=false;n.classList.remove('account-background');}});
+const artworkReady=document.readyState==='complete'?Promise.resolve():new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
 const el=(tag,cls,value)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(value)n.textContent=value;return n};
 function cover(o){const img=el('img');img.src=o.image?.url||window.catalogArtwork?.[o.id]||o.movie?.poster||'';img.alt='';img.decoding='async';return img;}
 function renderPreview(main,plan){
@@ -38,7 +39,7 @@ async function ready(){
  for(const child of document.body.children)if(!['SCRIPT','LINK','STYLE'].includes(child.tagName)){child.inert=true;child.classList.add('account-background');}
  prompt=el('dialog','account-unlock');const heading=el('h2','',kind==='films'?'Ontdek jouw volgende film':'Welke film kies jij?');heading.id='account-unlock-title';prompt.setAttribute('aria-labelledby',heading.id);
  const login=el('button','','Inloggen');login.type='button';login.onclick=()=>window.dispatchEvent(new CustomEvent('filmmaand-login-required',{detail:{source:kind}}));const back=el('a','','Bekijk het programma');back.href=prefix+'/agenda/';prompt.append(heading,login,back);prompt.addEventListener('keydown',e=>{if(e.key!=='Tab')return;e.preventDefault();const nodes=[login,back],i=nodes.indexOf(document.activeElement);nodes[(i+(e.shiftKey?-1:1)+nodes.length)%nodes.length].focus({preventScroll:true});});prompt.addEventListener('cancel',e=>{e.preventDefault();location.assign(back.href)});document.body.append(prompt);prompt.showModal();
- try{const response=await fetch(prefix+'/api/plans/home-picker-lab',{cache:'no-store'});if(!response.ok)throw Error('public plan');renderPreview(main,await response.json());}catch{main.replaceChildren(el('p','account-preview-error','De films konden niet worden geladen.'));main.removeAttribute('aria-busy');}
+ try{const response=await fetch(prefix+'/api/plans/home-picker-lab',{cache:'no-store'});if(!response.ok)throw Error('public plan');const plan=await response.json();await artworkReady;renderPreview(main,plan);}catch{main.replaceChildren(el('p','account-preview-error','De films konden niet worden geladen.'));main.removeAttribute('aria-busy');}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>void ready(),{once:true});else void ready();
 })();
