@@ -96,3 +96,6 @@ html:has(>body.site-standalone){scrollbar-gutter:stable}
 
 /* Start the mobile page at the banner; edition metadata stays in the desktop header. */
 @media(max-width:650px){.site-shell-header .site-edition-strip{display:none}}
+
+/* Mobile masthead animates without a slider or touch interception. */
+@media(max-width:650px){.site-shell-header #festival-moire{pointer-events:none}.site-shell-header #festival-moire .os-range{display:none}}
