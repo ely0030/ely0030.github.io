@@ -27,3 +27,11 @@ Why it’s important
 Gotchas
 - Any future changes to `body.literature2 .layout-wrapper` padding/offset will shift homepage nav; keep this in sync with desired index alignment.
 - Do not switch homepage to `literature` or `literature3` classes; those hide the sidebar and would remove nav.
+
+Article Template Experiment — Asterisk-style long-form page
+
+- Handoff doc: `docs/asterisk-article-template.md`
+- Page: `src/pages/asterisk-article-copy.astro`
+- Route: `/asterisk-article-copy/`
+- Purpose: standalone magazine-style article template with original placeholder content, inspired by Asterisk's article layout behavior.
+- Key behaviors: large blue serif opener, narrow heavy prose column, progress rail, generated chapter markers, desktop side footnotes, mobile footnote popovers, newsletter blocks, author footer, prev/next, tags, related rows.

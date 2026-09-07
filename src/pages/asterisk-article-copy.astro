@@ -1,0 +1,1034 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+
+const title = 'Magazine Article Template';
+const description = 'A standalone magazine-style article template with placeholder editorial content.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} image="/blog-placeholder-2.jpg" />
+  </head>
+  <body class="article-copy">
+    <header class="copy-header">
+      <a class="copy-mark" href="/" aria-label="Home">*</a>
+      <button class="menu-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="main-menu" aria-label="Primary">
+        <div class="menu-inner">
+          <a href="/" class="menu-link active">All Notes</a>
+          <a href="/about/" class="menu-link">Contributors</a>
+          <a href="/page-types/" class="menu-link">About</a>
+          <a href="/tweets/" class="menu-link">Notes</a>
+          <a href="/music/" class="menu-link">Archive</a>
+          <aside class="newsletter-card">
+            <form class="newsletter-form">
+              <p>Sign up for essays, interviews, and notes from the desk.</p>
+              <div>
+                <input type="email" name="email" placeholder="Your email address" required />
+                <button type="submit">Sign up</button>
+              </div>
+              <small class="form-status" aria-live="polite"></small>
+            </form>
+          </aside>
+          <div class="menu-footer">
+            <a href="/">Sign in</a>
+            <a href="/">Privacy Policy</a>
+            <span>2026</span>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="post-shell">
+      <div class="progress-rail" aria-hidden="true">
+        <div class="progress-bar"></div>
+        <div class="chapter-indicators"></div>
+      </div>
+
+      <header class="opener">
+        <p class="issue-label">Issue 00 / Field Notes</p>
+        <h1>Why This Article Layout Works So Well</h1>
+        <p class="authors"><span>Author Name</span></p>
+      </header>
+
+      <section class="content">
+        <div class="intro">
+          <p>
+            A precise article page needs a strong opening, steady prose rhythm, room for visual interruption,
+            and enough navigational hardware to keep a long read from becoming shapeless.
+          </p>
+        </div>
+
+        <div class="content-blocks">
+          <div class="text-container">
+            <div class="text">
+              <p>
+                The first section starts without decoration. It gives the reader a clean run of paragraphs before
+                any secondary system asks for attention. Links, emphasis, footnotes, images, and newsletter modules
+                all need to sit inside the article without changing the basic measure of the text.
+              </p>
+              <p>
+                This template keeps the text column narrow enough for comfort, but the page itself remains wide.
+                That extra width gives the progress rail, chapter marks, and notes a place to live.
+              </p>
+              <p>
+                The visual language is editorial rather than dashboard-like: cream paper, black text, blue accents,
+                large italic serif display type, compact sans-serif utilities, and very thin dividing rules.
+              </p>
+            </div>
+
+            <div class="image-block">
+              <figure>
+                <img src="/blog-placeholder-2.jpg" alt="Abstract placeholder landscape" />
+                <figcaption>
+                  <small>Local placeholder image</small>
+                </figcaption>
+              </figure>
+            </div>
+
+            <div class="heading">
+              <h2>Designing the Opener</h2>
+            </div>
+            <div class="text">
+              <p>
+                A large opener works best when it is a little wider than the body text. It makes the article feel
+                like a magazine piece while keeping the actual reading column restrained.
+              </p>
+              <p>
+                The author line inherits the same display type as the headline, which makes the byline part of the
+                opening composition instead of a small metadata afterthought.
+              </p>
+              <p>
+                In the reference pattern, section headings also become waypoints. This copy builds markers from the
+                second-level headings and places them on the left rail after the reader begins scrolling.
+              </p>
+            </div>
+
+            <div class="heading">
+              <h2>Notes and Margins</h2>
+            </div>
+            <div class="text">
+              <p>
+                Footnotes can be more useful when they appear beside the relevant line on wide screens. On smaller
+                screens, the same notes become tap-to-open popovers so they do not break the reading flow
+                <sup class="footnote"><a href="#fn-1" id="fnref-1">1</a></sup>.
+              </p>
+              <p>
+                The note rail is positioned relative to the content area, not the viewport. That keeps each note near
+                the reference that summoned it and avoids a separate endnotes-only experience.
+              </p>
+              <p>
+                External links can be marked in script, progress can be updated on scroll, and the layout still
+                degrades to a readable article if JavaScript is unavailable.
+              </p>
+            </div>
+
+            <aside class="newsletter-card padded">
+              <form class="newsletter-form">
+                <p>Get the next article when it is published.</p>
+                <div>
+                  <input type="email" name="email" placeholder="Your email address" required />
+                  <button type="submit">Sign up</button>
+                </div>
+                <small class="form-status" aria-live="polite"></small>
+              </form>
+            </aside>
+
+            <div class="heading">
+              <h2>Interruptions That Hold Shape</h2>
+            </div>
+            <div class="text">
+              <p>
+                Long essays benefit from deliberate interruptions. A figure, a pull quote, a subscription module,
+                or a ruled list can reset attention without turning the page into a stack of cards.
+              </p>
+              <blockquote>
+                <p>A good article layout gives the reader landmarks without shouting over the prose.</p>
+              </blockquote>
+              <p>
+                The surrounding whitespace does most of the work. Every module returns to the same text width, so the
+                reader never has to relearn where the article lives.
+              </p>
+            </div>
+
+            <div class="heading">
+              <h2>Footer Systems</h2>
+            </div>
+            <div class="text">
+              <p>
+                The bottom of the article gathers everything that would be distracting at the top: author biography,
+                publication date, previous and next links, tags, and a compact list of related articles.
+              </p>
+              <p>
+                The related rows are intentionally plain. Thin borders, mixed title weights, and right-aligned authors
+                are enough to make the list scannable without turning it into a visual gallery
+                <sup class="footnote"><a href="#fn-2" id="fnref-2">2</a></sup>.
+              </p>
+            </div>
+          </div>
+
+          <div class="notes-container" aria-label="Footnotes">
+            <ol class="footnotes-list">
+              <li id="fn-1">
+                Wide-screen notes are placed alongside the paragraph that references them. On mobile, tapping the
+                number opens this note as a small overlay.
+                <button type="button" class="close-note" aria-label="Close footnote">x</button>
+              </li>
+              <li id="fn-2">
+                This related-list treatment is structural only. Replace every title and author with real article
+                data when adapting the template.
+                <button type="button" class="close-note" aria-label="Close footnote">x</button>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <footer class="article-footer">
+        <ul class="author-list">
+          <li>
+            <p>
+              <strong>Author Name</strong> writes essays about interfaces, archives, reading systems, and the
+              small decisions that make long documents easier to finish.
+            </p>
+            <ul class="author-articles">
+              <li><a href="/">Earlier Essay, Issue 00</a></li>
+              <li><a href="/">Another Article, Issue 00</a></li>
+            </ul>
+          </li>
+        </ul>
+
+        <aside class="newsletter-card padded">
+          <form class="newsletter-form">
+            <p>Sign up for future essays and project notes.</p>
+            <div>
+              <input type="email" name="email" placeholder="Your email address" required />
+              <button type="submit">Sign up</button>
+            </div>
+            <small class="form-status" aria-live="polite"></small>
+          </form>
+        </aside>
+
+        <p class="published">Published <time datetime="2026-06">June 2026</time></p>
+        <p>Have something to say? Email <a href="mailto:hello@example.com">hello@example.com</a>.</p>
+      </footer>
+
+      <section class="prev-next" aria-label="Previous and next articles">
+        <div>
+          <a href="/"><strong>Previous</strong><br />A Compact Archive Page</a>
+        </div>
+        <div>
+          <a href="/"><strong>Next</strong><br />A Better Reading Queue</a>
+        </div>
+      </section>
+
+      <section class="see-also">
+        <h2>See also</h2>
+        <div class="article-tags" aria-label="Tags">
+          <span>design</span>
+          <span>reading</span>
+          <span>systems</span>
+        </div>
+        <ul class="related">
+          <li>
+            <h3 class="sans italic"><a href="/">How to Lay Out a Long Note</a></h3>
+            <p>Editor One</p>
+          </li>
+          <li>
+            <h3><a href="/">Small Type, Big Pages</a></h3>
+            <p>Editor Two</p>
+          </li>
+          <li>
+            <h3><a href="/">The Work of Margins</a></h3>
+            <p>Editor Three</p>
+          </li>
+          <li>
+            <h3 class="sans"><a href="/">A Quiet Table of Contents</a></h3>
+            <p>Editor Four</p>
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <style is:global>
+      body.article-copy {
+        --copy-black: #070707;
+        --copy-blue: #2f95d4;
+        --copy-blue-soft: #b7d9ec;
+        --copy-cream: #fbfaf3;
+        --copy-rule: #111;
+        --copy-muted: #6c6b66;
+        --copy-text-width: 750px;
+        --copy-pad: 32px;
+        --copy-pad-lg: 80px;
+        --copy-display: CopyArticleDisplay, Georgia, 'Times New Roman', serif;
+        --copy-serif: Georgia, 'Times New Roman', serif;
+        --copy-sans: Atkinson, Arial, Helvetica, sans-serif;
+        margin: 0;
+        background: var(--copy-cream);
+        color: var(--copy-black);
+        font-family: var(--copy-serif);
+        font-size: 18px;
+      }
+
+      @font-face {
+        font-family: CopyArticleDisplay;
+        src: url('/fonts/DEMO-caslongrad.otf') format('opentype');
+        font-weight: 400 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      body.article-copy a {
+        color: inherit;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.16em;
+      }
+
+      body.article-copy .copy-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 80;
+        min-height: 62px;
+        padding: 8px var(--copy-pad);
+        font-family: var(--copy-sans);
+      }
+
+      body.article-copy .copy-mark {
+        display: inline-flex;
+        width: 42px;
+        height: 42px;
+        align-items: center;
+        justify-content: center;
+        color: var(--copy-blue);
+        font-family: var(--copy-display);
+        font-size: 52px;
+        font-weight: 700;
+        line-height: 1;
+        text-decoration: none;
+        opacity: 0.84;
+      }
+
+      body.article-copy .menu-toggle {
+        position: fixed;
+        top: 16px;
+        right: 18px;
+        z-index: 120;
+        display: grid;
+        gap: 5px;
+        width: 42px;
+        height: 42px;
+        padding: 10px;
+        border: 1px solid rgba(7, 7, 7, 0.32);
+        border-radius: 0;
+        background: rgba(251, 250, 243, 0.84);
+        cursor: pointer;
+      }
+
+      body.article-copy .menu-toggle span {
+        display: block;
+        height: 2px;
+        background: var(--copy-black);
+      }
+
+      body.article-copy .main-menu {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        background: rgba(250, 248, 240, 0.98);
+      }
+
+      body.article-copy.menu-open .main-menu {
+        display: block;
+      }
+
+      body.article-copy .menu-inner {
+        width: min(460px, calc(100vw - 40px));
+        min-height: 100%;
+        padding: 72px 24px 24px;
+        border-right: 1px solid var(--copy-rule);
+        background: var(--copy-cream);
+      }
+
+      body.article-copy .menu-link {
+        display: block;
+        padding: 0.08em 0;
+        font-size: clamp(34px, 6vw, 70px);
+        font-weight: 700;
+        line-height: 0.95;
+        text-decoration: none;
+      }
+
+      body.article-copy .menu-link.active,
+      body.article-copy .menu-link:hover {
+        color: var(--copy-blue);
+      }
+
+      body.article-copy .menu-footer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+        font-size: 13px;
+      }
+
+      body.article-copy .post-shell {
+        position: relative;
+        padding: 0 var(--copy-pad) 80px;
+      }
+
+      body.article-copy .opener {
+        width: min(920px, calc(100vw - 2 * var(--copy-pad)));
+        margin: 0 auto 42px;
+        padding-top: 4px;
+        color: var(--copy-blue);
+      }
+
+      body.article-copy .issue-label {
+        margin: 0 0 10px;
+        font-family: var(--copy-sans);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      body.article-copy h1 {
+        max-width: 1030px;
+        margin: 0;
+        font-family: var(--copy-display);
+        font-size: clamp(58px, 8.2vw, 112px);
+        font-style: italic;
+        font-weight: 600;
+        line-height: 0.9;
+        letter-spacing: 0;
+      }
+
+      body.article-copy .authors {
+        margin: 10px 0 0;
+        font-family: var(--copy-display);
+        font-size: clamp(48px, 6.7vw, 96px);
+        font-weight: 400;
+        line-height: 0.92;
+        letter-spacing: 0;
+      }
+
+      body.article-copy .content {
+        position: relative;
+      }
+
+      body.article-copy .intro,
+      body.article-copy .text p,
+      body.article-copy .heading h2,
+      body.article-copy blockquote,
+      body.article-copy .newsletter-card,
+      body.article-copy .image-block figure {
+        width: min(var(--copy-text-width), calc(100vw - 2 * var(--copy-pad)));
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      body.article-copy .intro {
+        margin-bottom: 42px;
+        color: var(--copy-blue);
+        font-family: var(--copy-display);
+        font-size: clamp(30px, 3.55vw, 39px);
+        font-weight: 400;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      body.article-copy .intro p {
+        margin: 0;
+      }
+
+      body.article-copy .content-blocks {
+        position: relative;
+      }
+
+      body.article-copy .text p {
+        margin-top: 0;
+        margin-bottom: 1.28em;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.34;
+        font-feature-settings: "onum" 1;
+      }
+
+      body.article-copy .heading h2 {
+        margin-top: 2.4em;
+        margin-bottom: 0.7em;
+        color: var(--copy-blue);
+        font-family: var(--copy-display);
+        font-size: clamp(34px, 4vw, 50px);
+        font-weight: 400;
+        line-height: 1.12;
+      }
+
+      body.article-copy .image-block {
+        padding: 24px 0 10px;
+      }
+
+      body.article-copy .image-block img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        filter: saturate(0.85) contrast(1.04);
+      }
+
+      body.article-copy figcaption {
+        margin-top: 8px;
+        font-family: var(--copy-sans);
+        font-size: 12px;
+        color: var(--copy-muted);
+      }
+
+      body.article-copy blockquote {
+        box-sizing: border-box;
+        margin-top: 28px;
+        margin-bottom: 28px;
+        padding: 0 32px;
+        border-left: 1px solid var(--copy-rule);
+        color: var(--copy-blue);
+        font-family: var(--copy-display);
+        font-size: clamp(26px, 3vw, 38px);
+        line-height: 1.16;
+      }
+
+      body.article-copy blockquote p {
+        margin: 0;
+      }
+
+      body.article-copy .newsletter-card {
+        box-sizing: border-box;
+        margin-top: 34px;
+        margin-bottom: 34px;
+        padding: 18px 0;
+        border-top: 1px solid var(--copy-rule);
+        border-bottom: 1px solid var(--copy-rule);
+        font-family: var(--copy-sans);
+      }
+
+      body.article-copy .newsletter-card p {
+        margin: 0 0 12px;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+
+      body.article-copy .newsletter-form div {
+        display: flex;
+        border: 1px solid var(--copy-rule);
+      }
+
+      body.article-copy .newsletter-form input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        border-radius: 0;
+        padding: 12px;
+        background: var(--copy-cream);
+        color: var(--copy-black);
+        font: inherit;
+      }
+
+      body.article-copy .newsletter-form button {
+        border: 0;
+        border-left: 1px solid var(--copy-rule);
+        border-radius: 0;
+        padding: 0 16px;
+        background: var(--copy-blue);
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      body.article-copy .form-status {
+        display: block;
+        min-height: 1.2em;
+        margin-top: 8px;
+        color: var(--copy-blue);
+        font-size: 12px;
+      }
+
+      body.article-copy sup.footnote {
+        font-family: var(--copy-sans);
+        font-size: 0.62em;
+        font-weight: 700;
+        color: var(--copy-blue);
+      }
+
+      body.article-copy sup.footnote a {
+        text-decoration: none;
+      }
+
+      body.article-copy .notes-container {
+        position: absolute;
+        top: 0;
+        left: calc(50vw + var(--copy-text-width) / 2 + 32px);
+        width: min(280px, calc(50vw - var(--copy-text-width) / 2 - 64px));
+      }
+
+      body.article-copy .footnotes-list {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      body.article-copy .footnotes-list li {
+        position: absolute;
+        opacity: 0;
+        font-family: var(--copy-sans);
+        font-size: 12px;
+        line-height: 1.42;
+        transition: opacity 0.2s ease;
+      }
+
+      body.article-copy .footnotes-list li::marker {
+        color: var(--copy-blue);
+        font-weight: 700;
+      }
+
+      body.article-copy .close-note {
+        display: none;
+      }
+
+      body.article-copy .article-footer,
+      body.article-copy .prev-next,
+      body.article-copy .see-also {
+        width: min(var(--copy-text-width), calc(100vw - 2 * var(--copy-pad)));
+        margin-left: auto;
+        margin-right: auto;
+        font-family: var(--copy-sans);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      body.article-copy .article-footer {
+        margin-top: 42px;
+        padding: 28px 0;
+        border-top: 1px solid var(--copy-rule);
+        border-bottom: 1px solid var(--copy-rule);
+      }
+
+      body.article-copy .author-list,
+      body.article-copy .author-articles,
+      body.article-copy .related {
+        list-style: none;
+        padding: 0;
+      }
+
+      body.article-copy .author-list,
+      body.article-copy .author-list p,
+      body.article-copy .published {
+        margin: 0 0 12px;
+      }
+
+      body.article-copy .author-articles {
+        margin: 0 0 22px;
+      }
+
+      body.article-copy .author-articles li {
+        display: inline;
+        margin-right: 12px;
+      }
+
+      body.article-copy .author-articles li::before {
+        content: "-> ";
+        color: var(--copy-blue);
+      }
+
+      body.article-copy .prev-next {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        margin-top: 32px;
+        margin-bottom: 36px;
+      }
+
+      body.article-copy .prev-next div:last-child {
+        text-align: right;
+      }
+
+      body.article-copy .prev-next a {
+        text-decoration: none;
+      }
+
+      body.article-copy .see-also h2 {
+        margin: 0;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+
+      body.article-copy .article-tags {
+        margin-bottom: 16px;
+        font-weight: 700;
+      }
+
+      body.article-copy .article-tags span:not(:last-child)::after {
+        content: ", ";
+      }
+
+      body.article-copy .related {
+        margin: 0;
+      }
+
+      body.article-copy .related li {
+        position: relative;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 18px;
+        align-items: center;
+        padding: 12px 0;
+        border-top: 1px solid var(--copy-rule);
+      }
+
+      body.article-copy .related li:last-child {
+        border-bottom: 1px solid var(--copy-rule);
+      }
+
+      body.article-copy .related li:hover {
+        color: var(--copy-blue);
+      }
+
+      body.article-copy .related h3 {
+        margin: 0;
+        font-family: var(--copy-display);
+        font-size: clamp(28px, 4vw, 42px);
+        line-height: 1;
+      }
+
+      body.article-copy .related h3.sans {
+        font-family: var(--copy-sans);
+        letter-spacing: 0;
+      }
+
+      body.article-copy .related h3.italic {
+        font-style: italic;
+      }
+
+      body.article-copy .related a {
+        text-decoration: none;
+      }
+
+      body.article-copy .related a::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+      }
+
+      body.article-copy .related p {
+        margin: 0;
+        text-align: right;
+      }
+
+      body.article-copy .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 70;
+        width: 32px;
+        height: 0;
+        background: var(--copy-blue);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+
+      body.article-copy .chapter-indicators a {
+        position: fixed;
+        left: 0;
+        z-index: 71;
+        display: flex;
+        align-items: center;
+        width: min(340px, 28vw);
+        color: var(--copy-black);
+        font-family: var(--copy-sans);
+        font-size: 12px;
+        text-decoration: none;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+      }
+
+      body.article-copy .chapter-indicators .dot {
+        width: 46px;
+        height: 12px;
+        border-bottom: 1px solid var(--copy-black);
+      }
+
+      body.article-copy .chapter-indicators .label {
+        opacity: 0;
+        margin-left: 8px;
+        transition: opacity 0.2s ease;
+      }
+
+      body.article-copy.progress-visible .progress-bar {
+        opacity: 1;
+      }
+
+      body.article-copy.progress-visible .chapter-indicators a {
+        transform: translateX(0);
+      }
+
+      body.article-copy .chapter-indicators a:hover .label {
+        opacity: 1;
+      }
+
+      @media (max-width: 1300px) {
+        body.article-copy {
+          --copy-text-width: 58vw;
+        }
+
+        body.article-copy .opener {
+          width: min(860px, calc(100vw - 2 * var(--copy-pad)));
+        }
+      }
+
+      @media (max-width: 1024px) {
+        body.article-copy {
+          --copy-text-width: 64vw;
+        }
+
+        body.article-copy .notes-container {
+          left: 0;
+          width: 100%;
+          max-width: none;
+        }
+
+        body.article-copy .footnotes-list li {
+          display: none;
+          position: fixed;
+          left: 20px !important;
+          right: 20px;
+          bottom: 20px;
+          top: auto !important;
+          z-index: 130;
+          box-sizing: border-box;
+          width: auto;
+          max-width: 560px;
+          padding: 18px 44px 18px 22px;
+          border: 1px solid var(--copy-rule);
+          background: var(--copy-cream);
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+          opacity: 1;
+        }
+
+        body.article-copy .footnotes-list li.show {
+          display: block;
+        }
+
+        body.article-copy .close-note {
+          position: absolute;
+          top: 8px;
+          right: 10px;
+          display: block;
+          border: 0;
+          background: transparent;
+          color: var(--copy-blue);
+          font-family: var(--copy-sans);
+          font-size: 18px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+      }
+
+      @media (max-width: 768px) {
+        body.article-copy {
+          --copy-pad: 20px;
+          --copy-text-width: none;
+          font-size: 17px;
+        }
+
+        body.article-copy .post-shell {
+          padding-top: 0;
+        }
+
+        body.article-copy .menu-inner {
+          width: 100%;
+          border-right: 0;
+        }
+
+        body.article-copy .opener {
+          margin-top: 4px;
+        }
+
+        body.article-copy .newsletter-form div {
+          display: block;
+        }
+
+        body.article-copy .newsletter-form input,
+        body.article-copy .newsletter-form button {
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        body.article-copy .newsletter-form button {
+          border-top: 1px solid var(--copy-rule);
+          border-left: 0;
+          padding: 12px;
+        }
+
+        body.article-copy .progress-bar {
+          width: 10px;
+        }
+
+        body.article-copy .chapter-indicators {
+          display: none;
+        }
+
+        body.article-copy .prev-next,
+        body.article-copy .related li {
+          grid-template-columns: 1fr;
+        }
+
+        body.article-copy .prev-next div:last-child,
+        body.article-copy .related p {
+          text-align: left;
+        }
+      }
+    </style>
+
+    <script>
+      const body = document.body;
+      const menuToggle = document.querySelector('.menu-toggle');
+      const progressBar = document.querySelector('.progress-bar');
+      const chapterIndicators = document.querySelector('.chapter-indicators');
+      const content = document.querySelector('.content');
+      const contentBlocks = document.querySelector('.content-blocks');
+      const footnoteLinks = [...document.querySelectorAll('sup.footnote a[href^="#fn-"]')];
+      const footnotes = new Map(
+        [...document.querySelectorAll('.footnotes-list li[id^="fn-"]')].map((note) => [note.id, note])
+      );
+      const mobileMq = window.matchMedia('(max-width: 1024px)');
+
+      menuToggle?.addEventListener('click', () => {
+        const isOpen = body.classList.toggle('menu-open');
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+      });
+
+      document.querySelectorAll('.newsletter-form').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const status = form.querySelector('.form-status');
+          if (status) status.textContent = 'Signed up locally for this template.';
+          form.reset();
+        });
+      });
+
+      const slugify = (text) =>
+        text
+          .toString()
+          .normalize('NFKD')
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/[^\w-]+/g, '')
+          .replace(/-+/g, '-');
+
+      const elementProgress = (element) => {
+        const pageHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const offsetTop = element.getBoundingClientRect().top + window.scrollY;
+        return pageHeight > 0 ? (offsetTop / pageHeight) * 100 : 0;
+      };
+
+      const buildChapterMarkers = () => {
+        if (!chapterIndicators || !content) return;
+        chapterIndicators.innerHTML = '';
+
+        content.querySelectorAll('h2').forEach((heading) => {
+          if (!heading.id) heading.id = slugify(heading.textContent || '');
+
+          const link = document.createElement('a');
+          link.href = `#${heading.id}`;
+          link.style.top = `${elementProgress(heading)}%`;
+          link.innerHTML = `<span class="dot"></span><span class="label">${heading.textContent}</span>`;
+          chapterIndicators.appendChild(link);
+        });
+      };
+
+      const closeFootnotes = () => {
+        footnotes.forEach((note) => note.classList.remove('show'));
+      };
+
+      const positionFootnotes = () => {
+        if (!contentBlocks || mobileMq.matches) return;
+        const contentTop = contentBlocks.getBoundingClientRect().top + window.scrollY;
+        let previousBottom = 0;
+
+        footnoteLinks.forEach((link) => {
+          const note = footnotes.get(link.hash.slice(1));
+          if (!note) return;
+
+          let top = link.getBoundingClientRect().top + window.scrollY - contentTop;
+          if (top < previousBottom) top = previousBottom + 16;
+          note.style.top = `${top}px`;
+          note.style.opacity = '1';
+          previousBottom = top + note.getBoundingClientRect().height;
+        });
+      };
+
+      footnoteLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+          if (!mobileMq.matches) return;
+          event.preventDefault();
+          closeFootnotes();
+          footnotes.get(link.hash.slice(1))?.classList.add('show');
+        });
+      });
+
+      document.querySelectorAll('.close-note').forEach((button) => {
+        button.addEventListener('click', () => closeFootnotes());
+      });
+
+      contentBlocks?.querySelectorAll('a[href]').forEach((link) => {
+        try {
+          const url = new URL(link.href, window.location.origin);
+          if (url.hostname !== window.location.hostname) {
+            link.target = '_blank';
+            link.rel = 'noreferrer noopener';
+          }
+        } catch {
+          // Ignore malformed hrefs.
+        }
+      });
+
+      let ticking = false;
+      const updateProgress = () => {
+        if (ticking) return;
+        ticking = true;
+
+        requestAnimationFrame(() => {
+          const pageHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const percent = pageHeight > 0 ? (window.scrollY / pageHeight) * 100 : 0;
+          if (progressBar) progressBar.style.height = `${percent}%`;
+          body.classList.toggle('progress-visible', window.scrollY > 300);
+          ticking = false;
+        });
+      };
+
+      const refreshLayout = () => {
+        buildChapterMarkers();
+        positionFootnotes();
+        updateProgress();
+      };
+
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', refreshLayout);
+      mobileMq.addEventListener('change', () => {
+        closeFootnotes();
+        refreshLayout();
+      });
+      window.addEventListener('load', refreshLayout);
+      refreshLayout();
+    </script>
+  </body>
+</html>
