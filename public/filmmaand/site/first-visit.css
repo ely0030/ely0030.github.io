@@ -37,3 +37,6 @@
 .ac-grid.tour-action{animation:none;outline:none!important}.ac-grid.tour-action [data-day]:not(:disabled){animation:tour-day-invite 2.8s ease-in-out infinite}.ac-grid.tour-action [data-day]:hover,.ac-grid.tour-action [data-day]:focus-visible{animation:none}
 @keyframes tour-day-invite{0%,60%,100%{transform:translateY(0)}75%{transform:translateY(-1px)}}
 @media(prefers-reduced-motion:reduce){.ac-grid.tour-action [data-day]:not(:disabled){animation:none}}
+
+/* Keep the actual drag rail still; moving its container fights pointer geometry. */
+.fr-order.tour-action,.hp-rail.tour-action{animation:none}

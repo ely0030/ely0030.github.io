@@ -1,14 +1,32 @@
-/* Account actions stay on their current page; Programma remains public. */
-(()=>{'use strict';window.filmmaandRequireAccount=true;
-const prefix=location.pathname.startsWith('/filmmaand/')?'/filmmaand':'',kind=document.documentElement.dataset.accountLocked;
-let pendingUnlock=false;
-window.addEventListener('filmmaand-session',e=>{if(!kind&&/^\/(?:filmmaand\/)?(?:films|stemmen)\/(?:index.html)?$/.test(location.pathname)&&!e.detail?.participant?.id)location.reload()});
+/* Public-only locked composition. Personal controllers remain server gated. */
+(()=>{'use strict';
+window.filmmaandRequireAccount=true;
+const prefix='/filmmaand',kind=document.documentElement.dataset.accountLocked;
+const storagePrefix='filmmaand-checkin-v1:/filmmaand/api:home-picker-lab:';
+const read=key=>{try{return JSON.parse(localStorage.getItem(storagePrefix+key)||'null')}catch{return null}};
 const account=()=>{const p=window.filmmaandSession?.participant;return !!p?.id&&p.onboarded&&!p.cached};
+window.filmmaandHasPendingEntryAction=()=>{
+ if(['receipt','voteReceipt','availabilityReceipt','nightProposalReceipt','stemmenSuggestionReceipt','suggestionReceipt'].some(k=>read(k)))return true;
+ const s=window.checkinState?.();
+ if(s?.pending)return true;
+ if(s?.draft&&s?.own){for(const k of ['choices','dates','rankingOrder'])if(JSON.stringify(s.draft[k]||[])!==JSON.stringify(s.own[k]||[]))return true;}
+ return false;
+};
 window.requestFilmmaandParticipation=intent=>{if(account())return true;window.filmmaandAttendanceIntent=intent||null;window.dispatchEvent(new CustomEvent('filmmaand-login-required',{detail:{source:'participation'}}));return false};
-window.addEventListener('filmmaand-login-complete',()=>{if(kind)pendingUnlock=true});
-window.addEventListener('filmmaand-availability-intro-closed',e=>{if(pendingUnlock&&['saved','continue','later'].includes(e.detail?.reason)){pendingUnlock=false;location.reload()}});
-
-let prompt=null;window.addEventListener('filmmaand-login-complete',()=>{if(!kind||!prompt)return;prompt.close();prompt.remove();prompt=null;for(const n of document.querySelectorAll('.account-background')){n.inert=false;n.classList.remove('account-background');}});
+let navigating=false,prompt=null;
+async function afterLogin(e){
+ if(navigating)return;
+ if(!account())await window.filmmaandSession?.refresh?.();
+ if(!account()||navigating)return;
+ const recovery=e.detail?.recovery||window.filmmaandHasPendingEntryAction();
+ // A server-locked document has no personal controller. Reload only this recovery
+ // route to let its canonical controller replay the exact saved receipt.
+ if(recovery){if(kind){navigating=true;location.reload()}return;}
+ if(document.querySelector('.availability-intro[open]'))return;
+ navigating=true;location.assign(prefix+'/films/');
+}
+window.addEventListener('filmmaand-login-complete',afterLogin);
+window.addEventListener('filmmaand-session',e=>{if(!kind&&/\/(films|stemmen)\//.test(location.pathname)&&!e.detail?.participant?.id&&!window.filmmaandHasPendingEntryAction()&&!document.querySelector('.identity-overlay[open]'))location.reload()});
 const artworkReady=document.readyState==='complete'?Promise.resolve():new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
 const el=(tag,cls,value)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(value)n.textContent=value;return n};
 function cover(o){const img=el('img');img.src=o.image?.url||window.catalogArtwork?.[o.id]||o.movie?.poster||'';img.alt='';img.decoding='async';return img;}
