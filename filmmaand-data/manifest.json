@@ -1,0 +1,12 @@
+{
+  "movie-catalogue.sqlite": {
+    "sha256": "912ae1acd1a9f116b8a2c8a486296d10b1951dca69316abe1fa33ecd9464dc1a",
+    "bytes": 150925312,
+    "compressedBytes": 59211092
+  },
+  "movie-credits.sqlite": {
+    "sha256": "a4691cfa1c44f36a10ce886319e0004d781db3423ae5891d7c97d738c5b8cb2f",
+    "bytes": 24420352,
+    "compressedBytes": 9783752
+  }
+}

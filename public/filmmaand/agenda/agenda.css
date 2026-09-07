@@ -1,0 +1,249 @@
+/* Agenda: the shared picker calendar, with room for the programme and friends. */
+#agenda{margin:0 4vw;padding:28px 0 48px;color:#191919;font:13px/1.6 Everett,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+#agenda *{box-sizing:border-box}
+#agenda img{display:block}
+#agenda [hidden]{display:none!important}
+#agenda button{font:inherit;cursor:pointer;color:inherit}
+#agenda button:focus-visible,#agenda a:focus-visible{outline:2px solid #394933;outline-offset:4px}
+#agenda button:disabled{cursor:default}
+.ag-kicker{display:block;font:400 10px/1.4 Everett,Arial,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:#777}
+.ag-next-top{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px}
+.ag-preview-link{font-size:12px;color:#666;text-underline-offset:4px}
+.ag-next-row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center;gap:clamp(28px,5vw,76px);padding-bottom:32px;border-bottom:1px solid #deded8}
+.ag-next-row:not(:has(.ag-next-visual)){display:block;padding:20px 0 32px}
+#agenda .ag-next-visual{position:relative;display:block;width:100%;height:240px;padding:0;border:0;background:#eeeee9;text-align:left;overflow:hidden}
+.ag-next-still{width:100%;height:100%;object-fit:cover}
+.ag-next-poster{position:absolute;right:20px;bottom:0;width:92px;height:138px;object-fit:cover;border:3px solid white;box-shadow:0 3px 16px #0003}
+.ag-next-text{min-width:0}
+.ag-next-title{font:400 clamp(30px,3.4vw,49px)/1.06 'Canela Trial',Georgia,serif;letter-spacing:-.03em;margin:10px 0 14px;text-wrap:balance}
+.ag-next-when{font-size:14px;margin:0 0 12px;text-transform:none}
+.ag-next-films{font-size:12px;line-height:1.65;color:#777;max-width:56ch;margin:0}
+#agenda .ag-open-night{border:0;border-bottom:1px solid #777;background:none;padding:5px 0;margin-top:18px;font-size:12px}
+.ag-month{margin-top:26px}
+.ag-demo-note{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 22px;font-size:12px;color:#666}
+.ag-demo-tag{display:inline-block;border:1px solid #777;padding:3px 7px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#191919}
+.ag-demo-off{color:#191919;text-underline-offset:3px}
+.ag-legend{display:flex;align-items:center;gap:24px;flex-wrap:wrap;color:#777;font-size:11px;margin-bottom:12px}
+.ag-legend-own,.ag-legend-film{display:inline-flex;align-items:center;gap:8px}
+.ag-legend-own:before{content:'';width:11px;height:11px;background:#eef2e9;border:1.5px solid #394933;border-radius:2px}
+.ag-legend-film:before{content:'';width:11px;height:11px;background:#191919;border-radius:2px}
+#agenda .pa-calendar{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px;align-items:start}
+#agenda .ac-header{grid-column:1/-1;order:0;margin:8px 0 16px;align-items:baseline}
+#agenda .ac-header h3{font:400 clamp(28px,3vw,40px)/1.08 'Canela Trial',Georgia,serif!important;letter-spacing:-.025em}
+#agenda .ac-month-nav:not(:has(button:not(:disabled))){display:none}
+#agenda .ac-hint{order:1;grid-column:1;margin:0 0 22px;min-height:0;font-size:12px;color:#777;max-width:60ch}
+#agenda .ac-actions{order:1;grid-column:2;gap:22px;padding:0;border:0;white-space:nowrap}
+#agenda .ac-actions button{font-size:12px;padding:0}
+#agenda .ac-grid{order:2;grid-column:1/-1;gap:0 8px;border:0}
+#agenda .ac-grid>*{border:0;background:white}
+#agenda .ac-large .ac-weekday{padding:8px 10px 14px;font-size:10px;color:#92958d;text-transform:none;letter-spacing:.02em}
+#agenda .ac-large .ac-cell{min-height:146px;border-top:1px solid #e5e6df}
+#agenda .ac-large .ac-day{min-height:146px;padding:12px 10px;font:400 23px/1 'Canela Trial',Georgia,serif;border-radius:3px;background:#fff;color:#191919;transition:background .15s}
+#agenda .ac-large .ac-day:hover:not(:disabled){background:#f6f7f3}
+#agenda .ac-large .ac-day.selected{background:#eef2e9;color:#243021;box-shadow:inset 0 0 0 1.5px #394933}
+#agenda .ac-large .ac-day.selected:after{content:'✓';position:absolute;right:10px;top:12px;font:12px/1 Everett,Arial,sans-serif;color:#394933}
+#agenda .ac-large .ac-day.elapsed{background:#fff;color:#b9bcb4;opacity:1!important}
+#agenda .ac-large .ac-day.elapsed.selected{background:#f7f8f5;box-shadow:inset 0 0 0 1px #d7dacf}
+#agenda .ac-large .ac-day-extra{padding:12px 10px}
+#agenda .ac-summary{order:3;grid-column:1/-1;margin-top:18px;gap:8px;padding-top:16px;border-top:1px solid #deded8}
+#agenda .ac-summary>strong{font-size:12px;color:#6f7967}
+#agenda .ac-range-chip{background:#f7f9f4;border:1px solid #dde1d5;border-radius:3px;font-size:11px;padding:7px 10px}
+#agenda .ac-event{display:none}
+#agenda .pa-message{font:12px/1.6 Everett,Arial,sans-serif;color:#666;margin:14px 0 0}
+#agenda .pa-actions{position:sticky;bottom:14px;z-index:5;display:flex;justify-content:flex-end;gap:16px;align-items:center;margin-top:12px;pointer-events:none}
+#agenda .pa-actions>*{pointer-events:auto}
+#agenda .pa-button{background:#263322;border:1px solid #263322;border-radius:3px;padding:13px 20px;font-size:12px;box-shadow:0 3px 12px #fff;color:white}
+#agenda .pa-picker-link{color:#191919}
+.ag-cell{display:flex;flex-direction:column;height:100%;padding-top:29px;gap:10px}
+#agenda .ag-night{display:flex;align-items:center;gap:8px;width:100%;background:#f5f5f1;border:0;border-radius:3px;padding:5px;text-align:left;color:#191919;min-width:0}
+.ag-night-poster{width:25px;height:38px;flex:none;object-fit:cover}
+.ag-night-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ag-night-title{font-size:11px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ag-night-time{font-size:9px;color:#777}
+#agenda .ag-night:hover,#agenda .ag-night[aria-expanded=true]{background:#e9ede3}
+.ag-night-mobile{display:none}
+#agenda .ag-crowd,#agenda .ag-crowd-mini{border:0;background:transparent;cursor:pointer;color:inherit;text-align:left;padding:2px 0;margin-top:auto}
+.ag-crowd{display:flex;flex-wrap:wrap;gap:4px}
+#agenda .ag-crowd .battle-person{width:22px;height:22px;flex:none;margin:0;border-radius:4px;box-shadow:0 0 0 1px #fff,0 0 0 1.5px #0002;background:#fff}
+#agenda .battle-person img{object-fit:contain;width:100%;height:100%;border-radius:3px}
+#agenda .battle-own{outline:1.5px solid #394933;outline-offset:2px}
+.ag-person-initial{display:grid;place-items:center;width:100%;height:100%;font:11px/1 Everett,Arial,sans-serif;color:#394933;background:#eef2e9;border-radius:3px}
+#agenda .battle-more{display:grid;place-items:center;background:#f1f3ec;font:9px/1 Everett,Arial,sans-serif;color:#666}
+.ag-elapsed .battle-person,.ag-elapsed .ag-night-poster{filter:grayscale(1) brightness(1.05)}
+.ag-crowd-mini{display:none}
+/* Native dialog supplies focus containment, Escape, and an inert background. */
+#agenda .ag-detail{width:min(680px,calc(100% - 40px));max-height:calc(100dvh - 48px);padding:0;margin:auto;overflow:auto;overscroll-behavior:contain;background:#fff;color:#191919;border:0;border-radius:5px;box-shadow:0 24px 90px #0004}
+.ag-detail::backdrop{background:#19191970}
+#agenda .ag-detail-close{position:sticky;float:right;top:14px;margin:14px 14px -48px 0;z-index:3;border:1px solid #deded8;background:#fff;padding:8px 12px;border-radius:3px;font-size:12px}
+.ag-detail-visual{position:relative;width:100%;height:240px;background:#eef0e9;overflow:hidden}
+.ag-detail-still{width:100%;height:100%;object-fit:cover}
+.ag-detail-poster{position:absolute;right:28px;bottom:0;width:96px;height:144px;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 12px #0003}
+.ag-detail-body{padding:28px 32px 32px}
+.ag-detail-title{font:400 34px/1.08 'Canela Trial',Georgia,serif;letter-spacing:-.025em;margin:9px 0 12px;text-wrap:balance}
+.ag-detail-when{font-size:13px;margin:0 0 20px;color:#666;text-transform:none}
+.ag-detail-count{font-size:11px;color:#777;margin:0 0 7px}
+.ag-detail-films{list-style:none;margin:0;padding:0;border-top:1px solid #e5e6df}
+.ag-detail-films li{display:flex;justify-content:space-between;align-items:baseline;gap:14px;font-size:12px;padding:9px 0;border-bottom:1px solid #e5e6df}
+.ag-film-director{color:#777;font-size:11px}
+.ag-detail-synopsis{font-size:13px;line-height:1.75;margin:18px 0;color:#555}
+.ag-detail-sub{font:400 22px/1.2 'Canela Trial',Georgia,serif;margin:26px 0 16px}
+.ag-detail-names{font-size:12px;color:#777}
+.ag-roster-label{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#777;margin:18px 0 10px}
+.ag-people-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}
+.ag-people-row{display:flex;align-items:center;gap:10px;font-size:13px;min-width:0}
+.ag-people-row .battle-person{width:30px;height:30px;flex:none;background:#fff}
+#agenda .ag-own-toggle{margin-top:26px;padding:11px 16px;background:#fff;border:1px solid #394933;border-radius:3px;color:#394933}
+#agenda .ag-own-toggle[aria-pressed=true]{background:#eef2e9}
+#agenda .ag-own-toggle:disabled{opacity:.5}
+.ag-own-note{font-size:11px;color:#777;margin:9px 0 0}
+.ag-message{padding:40px 0;color:#777}
+#agenda .ag-retry{border:0;background:none;text-decoration:underline}
+@media(max-width:1000px){.ag-next-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:30px}#agenda .ac-hint{grid-column:1/-1}#agenda .ac-actions{grid-column:1/-1;margin:0 0 16px}.ag-crowd{gap:3px}#agenda .ag-crowd .battle-person{width:18px;height:18px}}
+@media(max-width:650px){
+ #agenda{margin:0 6vw;padding-top:22px}
+ .ag-next-top{margin-bottom:18px}.ag-next-row{grid-template-columns:1fr;gap:22px;padding-bottom:26px}#agenda .ag-next-visual{height:180px}.ag-next-poster{width:72px;height:108px;right:18px}.ag-next-title{font-size:32px}.ag-next-when{font-size:13px}.ag-next-films{font-size:12px}
+ .ag-legend{font-size:10px;gap:12px}.ag-legend span:last-child{flex-basis:100%}
+ #agenda .ac-grid{gap:0 3px}#agenda .ac-large .ac-weekday{padding:6px 3px 12px}#agenda .ac-large .ac-cell,#agenda .ac-large .ac-day{min-height:92px}#agenda .ac-large .ac-day{padding:7px 5px;font-size:17px}#agenda .ac-large .ac-day.selected:after{right:4px;top:8px;font-size:9px}#agenda .ac-large .ac-day-extra{padding:6px 4px}
+ .ag-cell{padding-top:24px;gap:5px}#agenda .ag-night{padding:3px 0;justify-content:center;gap:0;background:#e9ece4}#agenda .ag-night-poster,.ag-night-text{display:none}.ag-night-mobile{display:block;font-size:9px}.ag-crowd{display:none}.ag-crowd-mini{display:flex;gap:4px;align-items:center;min-height:20px}.ag-crowd-mini .battle-person{width:12px;height:12px;flex:none;box-shadow:none;border-radius:2px}.ag-mini-count{font-size:9px;color:#777}.ag-crowd-mini .battle-name{display:none!important}
+ #agenda .pa-actions{bottom:12px}#agenda .pa-button{width:100%}
+ #agenda .ag-detail{width:calc(100% - 24px);max-height:calc(100dvh - 24px)}.ag-detail-visual{height:180px}.ag-detail-poster{width:72px;height:108px;right:18px}.ag-detail-body{padding:24px 20px}.ag-detail-title{font-size:29px}.ag-people-list{gap:14px}.ag-people-row{font-size:12px}.ag-detail-films li{flex-wrap:wrap;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){#agenda *,#agenda *::before,#agenda *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Let dates with multiple planned screenings grow instead of overlapping their crowd. */
+#agenda .ac-large .ac-cell{display:grid;grid-template-columns:minmax(0,1fr)}
+#agenda .ac-large .ac-day-extra{position:relative;min-height:146px}
+#agenda .ag-cell{min-height:122px}
+@media(max-width:650px){#agenda .ac-large .ac-day-extra{min-height:92px}#agenda .ag-cell{min-height:80px}}
+/* Approved programme A: date first; the same calendar at two scales. */
+#agenda{max-width:1200px;margin:0 auto;padding:32px 40px 50px}
+.ag-page-top{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:25px}
+.ag-page-title{font:400 48px/1.1 'Canela Trial',Georgia,serif;letter-spacing:-.035em;margin:0}
+.ag-tabs{display:flex;gap:28px;border-bottom:1px solid #dce0d5;margin-bottom:30px}
+#agenda .ag-tabs button{border:0;border-bottom:2px solid transparent;background:none;padding:0 0 16px;font-size:13px;color:#747b6e}
+#agenda .ag-tabs button[aria-selected=true]{color:#191919;border-bottom-color:#191919}
+.ag-month{margin:0}.ag-empty{padding:24px 0 50px}.ag-empty h2{font:32px 'Canela Trial',Georgia,serif}
+.ag-programme-event{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 224px;column-gap:32px;row-gap:24px;padding-bottom:32px;margin-bottom:32px;border-bottom:1px solid #d2d8cb}
+.ag-programme-date{grid-column:1 / -1;font:400 36px/1.15 'Canela Trial',Georgia,serif;letter-spacing:-.025em;color:#191919;margin:0}
+#agenda .ag-programme-visual{display:block;padding:0;border:0;background:#eff0ec;width:100%;aspect-ratio:1.8;overflow:hidden;align-self:start}
+.ag-programme-visual img{width:100%;height:100%;object-fit:cover}.ag-art-fallback{display:grid;place-items:center;height:100%;font:25px 'Canela Trial',Georgia,serif;padding:24px}
+.ag-programme-copy{min-width:0}.ag-programme-title{font:400 32px/1.1 'Canela Trial',Georgia,serif;letter-spacing:-.025em;margin:0 0 18px}
+.ag-programme-films{list-style:none;margin:0;padding:0;font-size:12px;color:#62685b;line-height:1.8}
+.ag-programme-people{display:flex;flex-wrap:wrap;gap:4px;margin-top:24px}
+#agenda .ag-person-button{padding:0;border:0;background:#fff;width:27px;height:28px;position:relative}
+.ag-person-button .battle-person{display:block;position:relative;width:100%;height:100%;background:#fff;border-radius:3px}
+.ag-person-button .battle-name{display:none;position:absolute;bottom:calc(100% + 8px);left:0;white-space:nowrap;padding:6px 8px;background:#263723;color:#fff;font:11px Arial;z-index:4}
+.ag-person-button:hover .battle-name,.ag-person-button:focus-visible .battle-name{display:block}
+#agenda .ag-programme-own{border:0;background:none;padding:8px 0;min-height:40px;color:#24543b;font-size:11px}.ag-example{font-size:10px;color:#71786a;display:block;margin-bottom:8px}
+/* Both sizes share fills, square tiles, top rules, type and event treatment. */
+#agenda .ac-large .ac-grid{gap:3px;border:0}
+#agenda .ac-large .ac-cell{border-top:1px solid #dfe2db}
+#agenda .ac-large .ac-day{background:#f7f8f5;color:#465040;border-radius:0}
+#agenda .ac-large .ac-day.selected{background:#dfebdf;color:#173f2a;box-shadow:inset 0 0 0 1px #93b29a}
+#agenda .ac-large .ac-day.selected:after{display:none}
+#agenda .ac-large .ac-day.elapsed{background:#eff0ed;color:#777f70}
+#agenda .ac-large .ac-day.has-event{color:#bd3930;box-shadow:inset 0 0 0 1px #bd3930}
+#agenda .ac-large .ac-day.has-event.selected{background:#dfebdf;color:#bd3930;box-shadow:inset 0 0 0 1px #bd3930}
+#agenda .ag-mini-calendar .ac-month-nav,#agenda .ag-mini-calendar .ac-hint,#agenda .ag-mini-calendar .ac-actions,#agenda .ag-mini-calendar .ac-summary,#agenda .ag-mini-calendar .ac-event{display:none!important}
+#agenda .ag-mini-calendar .ac-header{margin:0 0 13px}
+#agenda .ag-mini-calendar .ac-header h3{font:400 16px/1.2 'Canela Trial',Georgia,serif!important}
+#agenda .ag-mini-calendar .ac-grid{gap:2px}
+#agenda .ag-mini-calendar .ac-cell,#agenda .ag-mini-calendar .ac-day{min-height:33px}
+#agenda .ag-mini-calendar .ac-day{font:400 14px/1 'Canela Trial',Georgia,serif;padding:6px 5px}
+#agenda .ag-mini-calendar .ac-day-extra{display:none}
+#agenda .ag-mini-calendar .ac-weekday{padding:4px 2px 7px;font-size:9px}
+#agenda .ag-mini-calendar .ac-day:disabled{opacity:1}
+@media(max-width:1000px) and (min-width:701px){#agenda{padding-left:24px;padding-right:24px}.ag-programme-event{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 190px;gap:22px}.ag-programme-title{font-size:28px}}
+@media(max-width:700px){#agenda{padding:25px 20px 40px}.ag-page-title{font-size:40px}.ag-preview-link{font-size:10px}.ag-programme-event{grid-template-columns:minmax(0,1fr) 175px;gap:20px 18px}.ag-programme-date{font-size:29px}.ag-programme-visual{grid-column:1 / -1}.ag-programme-title{font-size:25px}.ag-programme-films{font-size:11px}.ag-programme-people{gap:3px}#agenda .ag-person-button{width:23px;height:26px}#agenda .ag-mini-calendar .ac-cell,#agenda .ag-mini-calendar .ac-day{min-height:28px}#agenda .ag-mini-calendar .ac-day{font-size:12px;padding:5px 3px}#agenda .ag-mini-calendar .ac-header h3{font-size:15px!important}.ag-programme-own{font-size:10px}.ag-demo-note{font-size:11px}}
+@media(max-width:360px){.ag-programme-event{grid-template-columns:minmax(0,1fr) 160px;column-gap:12px}.ag-programme-title{font-size:23px}}
+/* Miniature uses Home's default picker (no ac-large variant). Scale only. */
+#agenda .ag-mini-calendar{zoom:.8;font:12px/1.5 Everett,Arial,sans-serif;color:#262b23}
+#agenda .ag-mini-calendar .ac-header{display:flex;margin:0 0 20px;align-items:center;gap:20px}
+#agenda .ag-mini-calendar .ac-header h3{font:300 23px/1.1 'Canela Trial',Georgia,serif!important;letter-spacing:normal}
+#agenda .ag-mini-calendar .ac-month-nav{display:flex!important;gap:12px}
+#agenda .ag-mini-calendar .ac-month-nav button{padding:4px;background:none;border:0;font-size:19px}
+#agenda .ag-mini-calendar .ac-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px 0;border:0;text-align:center}
+#agenda .ag-mini-calendar .ac-weekday{padding:0 0 12px;font-size:10px;color:#93968e}
+#agenda .ag-mini-calendar .ac-day{position:relative;height:44px;min-height:0;border:0;background:transparent;border-radius:3px;padding:0;font:12px/1.5 Everett,Arial,sans-serif;color:#262b23;box-shadow:none;cursor:crosshair}
+#agenda .ag-mini-calendar .ac-day:hover:not(:disabled){background:#eef0e9}
+#agenda .ag-mini-calendar .ac-day.selected{background:#394933;color:#fff}
+#agenda .ag-mini-calendar .ac-day.selected:hover:not(:disabled){background:#526547}
+#agenda .ag-mini-calendar .ac-day.joins-left{border-top-left-radius:0;border-bottom-left-radius:0}
+#agenda .ag-mini-calendar .ac-day.joins-right{border-top-right-radius:0;border-bottom-right-radius:0}
+#agenda .ag-mini-calendar .ac-day.elapsed{color:#aaada7;background:#f5f5f2;opacity:.65!important}
+#agenda .ag-mini-calendar .ac-day:disabled{opacity:.35;cursor:default}
+#agenda .ag-mini-calendar .ac-day.preview:not(.selected){background:#e4e9df}
+#agenda .ag-mini-calendar .ac-event-dot{background:#bd3930}
+#agenda .ag-mini-calendar .ac-day.selected>.ac-event-dot{background:#ffd0c9}
+#agenda .ag-mini-calendar .ac-actions{display:flex!important;gap:22px;border:0;padding:10px 0 0;margin:0}
+#agenda .ag-mini-calendar .ac-actions button{font-size:11px;padding:5px 0}
+#agenda .ag-shared-save{margin-top:15px}
+@media(max-width:700px){#agenda .ag-mini-calendar{zoom:.72}#agenda .ag-mini-calendar .ac-header h3{font-size:21px!important}#agenda .ag-mini-calendar .ac-month-nav{gap:4px}}
+#agenda .ag-mini-calendar .pa-actions{position:static;display:block;margin-top:9px}
+#agenda .ag-mini-calendar .pa-button{width:100%;padding:11px 12px;font-size:12px;box-shadow:none}
+#agenda .ag-mini-calendar .pa-message{font-size:12px;line-height:1.5;margin:10px 0 0}
+/* Direct attendance choices edit the same available-date selection. */
+.ag-attendance{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+#agenda .ag-attendance-button{min-height:42px;border:1px solid #c8d0c2;background:white;border-radius:4px;padding:10px 13px;font-size:12px;text-align:center;line-height:1.25}
+#agenda .ag-attend-yes{color:#29482d;border-color:#7f9878}
+#agenda .ag-attend-yes[aria-pressed=true]{background:#394933;color:white;border-color:#394933}
+#agenda .ag-attend-no{color:#545d4f}
+#agenda .ag-attendance-button:hover:not(:disabled){border-color:#394933;background:#f0f3eb}
+#agenda .ag-attend-yes[aria-pressed=true]:hover:not(:disabled){background:#526547}
+#agenda .ag-attendance-button:disabled{opacity:.45}
+@media(max-width:700px){.ag-attendance{gap:7px;margin-top:16px}#agenda .ag-attendance-button{width:100%;font-size:11px;min-height:44px;padding:10px 8px}}
+/* Full calendar: approved C month + selected-day view. */
+.ag-month{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:32px;align-items:start}
+.ag-host{min-width:0}.ag-day-pane{border-left:1px solid #dde2d6;padding-left:27px;position:sticky;top:24px;min-width:0}
+.ag-day-title{font:400 28px/1.12 'Canela Trial',Georgia,serif;margin:3px 0 24px;letter-spacing:-.02em}
+.ag-day-empty{font-size:12px;color:#727b69;margin-bottom:24px}
+.ag-day-film{display:flex;gap:15px;margin-bottom:22px;align-items:flex-start}
+.ag-day-film>img{width:78px;height:117px;object-fit:cover;flex:none}
+.ag-day-film h3{font:400 22px/1.1 'Canela Trial',Georgia,serif;margin:0 0 9px}.ag-day-film p{font-size:12px;margin:0 0 9px}
+.ag-day-film .ag-programme-films{font-size:10px}
+.ag-day-people{display:grid;grid-template-columns:1fr 1fr;gap:13px 12px;margin:25px 0}
+.ag-day-person{display:flex;align-items:center;gap:8px;font-size:11px;min-width:0}.ag-day-person .battle-person{display:block;flex:none;width:28px;height:28px;position:relative;background:#fff}.ag-day-person .battle-name{display:none}
+.ag-day-pane .ag-attendance{padding-top:18px;border-top:1px solid #e0e4db}
+#agenda .ag-preview-link{display:inline-block;border:1px solid #cbd3c4;border-radius:4px;padding:9px 13px;text-decoration:none;color:#3d4c35;font-size:12px;white-space:nowrap}
+#agenda .ag-host .pa-calendar{display:block}#agenda .ag-host .ac-header{margin:0 0 20px}#agenda .ag-host .ac-header h3{font-size:30px!important}
+#agenda .ag-host .ac-hint{margin:15px 0 10px;font-size:11px}#agenda .ag-host .ac-actions{margin:0 0 16px}
+#agenda .ag-host .ac-large .ac-cell,#agenda .ag-host .ac-large .ac-day,#agenda .ag-host .ac-large .ac-day-extra{min-height:112px}
+#agenda .ag-host .ag-cell{min-height:88px;padding-top:26px;gap:6px}
+#agenda .ag-host .ag-night{padding:0;background:none}.ag-host .ag-night-poster{display:none}.ag-host .ag-night-time{display:none}.ag-host .ag-night-title{font-size:9px;line-height:1.2;text-decoration:underline;text-underline-offset:2px}
+#agenda .ag-host .ag-crowd .battle-person{width:19px;height:19px}.ag-host .ag-crowd{gap:3px}
+#agenda .ag-host .ac-large .ac-day.ag-inspected{outline:2px solid #263225;outline-offset:-2px}
+@media(max-width:1000px) and (min-width:701px){.ag-month{grid-template-columns:minmax(0,1fr) 235px;gap:22px}.ag-day-pane{padding-left:18px}.ag-day-title{font-size:25px}.ag-day-film{display:block}.ag-day-film>img{margin-bottom:14px}}
+@media(max-width:700px){.ag-month{grid-template-columns:1fr;gap:25px}.ag-day-pane{position:static;border-left:0;border-top:1px solid #dce1d5;padding:24px 0 0}.ag-day-film{display:flex}.ag-day-people{grid-template-columns:1fr 1fr}.ag-day-pane .ag-attendance-button{width:auto!important;flex:1}#agenda .ag-host .ac-large .ac-cell,#agenda .ag-host .ac-large .ac-day,#agenda .ag-host .ac-large .ac-day-extra{min-height:86px}#agenda .ag-host .ag-cell{min-height:70px;padding-top:23px}.ag-day-title{font-size:29px}.ag-host .ag-night-mobile{font-size:8px}#agenda .ag-preview-link{padding:8px 10px;font-size:11px}}
+#agenda .ag-host .ag-night-poster{display:none}
+@media(max-width:700px){#agenda .ag-host .ag-crowd-mini .battle-person{width:18px;height:18px}}
+/* Approved C: a lasting check and Nice, with one brief local confetti burst. */
+.ag-attendance-confirmation{visibility:hidden;opacity:0;display:flex;align-items:center;gap:13px;position:relative;margin-top:23px;min-height:42px;color:#2d5135;font:400 29px/1.15 Canela,Georgia,serif;pointer-events:none}
+.ag-attendance-confirmation.is-attending{visibility:visible;opacity:1}
+.ag-confirmation-check{display:grid;place-items:center;flex:none;width:42px;height:42px;background:#394933;color:#fff;border-radius:50%;font:27px/1 Arial,sans-serif}
+.ag-attendance-confirmation.is-celebrating .ag-confirmation-check{animation:ag-check-pop .6s cubic-bezier(.2,.8,.3,1) var(--celebration-elapsed,0ms) both}
+.ag-attendance-confirmation.is-celebrating .ag-confirmation-text{animation:ag-welcome-in .45s ease-out calc(80ms + var(--celebration-elapsed,0ms)) both}
+.ag-celebration-burst{position:absolute;left:21px;top:21px;width:0;height:0;pointer-events:none}
+.ag-celebration-burst i{position:absolute;left:-2px;top:-3px;width:4px;height:7px;background:#587742;border-radius:1px;animation:ag-little-burst .85s ease-out calc(var(--delay) + var(--celebration-elapsed,0ms)) both}
+.ag-celebration-burst i:nth-child(3n){background:#b87537}.ag-celebration-burst i:nth-child(3n+1){background:#9c3e35}
+@keyframes ag-check-pop{0%{transform:scale(.45) rotate(-16deg);opacity:0}55%{transform:scale(1.15) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes ag-welcome-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ag-little-burst{0%{transform:rotate(var(--angle)) translateY(-8px) rotate(0);opacity:0}12%{opacity:1}100%{transform:rotate(var(--angle)) translateY(calc(-1 * var(--distance))) rotate(110deg);opacity:0}}
+@media(max-width:700px){.ag-attendance-confirmation{font-size:22px;gap:8px;min-height:30px}.ag-confirmation-check{width:30px;height:30px;font-size:21px}.ag-celebration-burst{left:15px;top:15px}}
+@media(prefers-reduced-motion:reduce){.ag-attendance-confirmation .ag-confirmation-check,.ag-attendance-confirmation .ag-confirmation-text{animation:none!important}.ag-celebration-burst{display:none}}
+
+/* Reserve the own-avatar slot and decode its artwork before selection. */
+.ag-own-attendee{visibility:hidden;opacity:0;pointer-events:none}.ag-own-attendee.is-attending{visibility:visible;opacity:1;pointer-events:auto}
+.ag-arriving{animation:ag-avatar-arrive .65s cubic-bezier(.2,.75,.3,1) var(--arrival-elapsed,0ms) both}
+@keyframes ag-avatar-arrive{0%{opacity:0;transform:translateY(9px) scale(.75)}65%{opacity:1;transform:translateY(-1px) scale(1.06)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.ag-arriving{animation:none!important}}
+
+/* Keep a readable first-load surface while independent requests settle. */
+.ag-loading{color:#747b6e;font-size:13px;margin:22px 0;min-height:120px}.ag-month>.ag-loading{grid-column:1/-1}.ag-loading[hidden]{display:none}
+
+.ag-calendar-options{grid-column:1/-1;display:flex;align-items:center;gap:9px;font-size:12px;color:#46533e;cursor:pointer}.ag-calendar-options input{accent-color:#394933;width:16px;height:16px;margin:0}.ag-calendar-options:focus-within{outline:2px solid #394933;outline-offset:5px;width:fit-content}
+
+/* Co-leading films share the image; no arbitrary winner or blank tie card. */
+.ag-tie-art{position:relative;width:100%;height:100%;overflow:hidden;background:#242820}
+.ag-tie-art>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ag-programme-visual>.ag-tie-art{aspect-ratio:1.8}
+.ag-day-film>.ag-tie-art{width:78px;height:117px;flex:none}
+.ag-detail>.ag-tie-art.ag-detail-visual{height:auto;aspect-ratio:1.8}

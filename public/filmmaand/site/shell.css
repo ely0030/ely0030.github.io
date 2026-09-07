@@ -1,0 +1,95 @@
+/* Shared local site conventions; prototype pages remain isolated below the header. */
+.site-shell-header{margin:0;padding:0 4vw;font-family:Arial,sans-serif}.site-shell-header .masthead{display:flex;position:relative;isolation:isolate;height:clamp(230px,23vw,330px);margin:0 -4vw;padding:0 4vw 30px;align-items:flex-end;overflow:hidden;background:#202622}.site-shell-header .wordmark{color:white;font:400 clamp(58px,7.1vw,102px)/1.08 'Canela Trial',Georgia,serif;letter-spacing:-.035em;text-decoration:none;padding-bottom:4px}.site-shell-header #festival-moire{position:absolute;inset:0;height:100%;z-index:-2;overflow:hidden}.site-shell-header #festival-moire .os-study{position:absolute;top:-12.5%;left:0;width:100%;height:138.889%;min-height:0}.site-shell-header .navigation{display:flex!important;align-items:center!important;gap:22px;min-height:64px;border:0;border-bottom:1px solid #deded8;margin:0;padding:0}.site-shell-header .navigation>nav{display:flex!important;gap:30px;align-items:center;margin:0;padding:0;border:0;flex:1}.site-shell-header .navigation>nav>a{display:block!important;font:12px Arial,sans-serif;color:#333;text-decoration:none;padding:24px 0;white-space:nowrap}.site-shell-header .navigation>nav>a[aria-current=page]{color:#111;text-decoration:underline;text-underline-offset:8px}.site-shell-header .navigation .search-button{padding:10px 0;margin:0;background:transparent;border:0;color:#222;cursor:pointer}.site-shell-header .navigation .search-button svg{stroke:currentColor;fill:none;display:block}.site-shell-header .profile-menu{margin-left:0}.site-dev{position:relative;flex-shrink:0;font:11px Arial,sans-serif;color:#777;z-index:70}.site-dev>summary{cursor:pointer;list-style:none;padding:12px 0}.site-dev>summary:after{content:' ⌄'}.site-dev-links{position:absolute;right:0;top:40px;width:210px;background:white;border:1px solid #e2e2dc;padding:9px;box-shadow:0 12px 30px #0001;border-radius:5px}.site-dev-links a{display:block;padding:11px;color:#333;text-decoration:none;font-size:12px}.site-dev-links a:hover{background:#f5f5f1}.site-dev-links small{display:block;color:#888;padding:11px 11px 5px;font-size:10px}.site-footer{display:flex;justify-content:space-between;gap:24px;margin:55px 4vw 25px;padding:20px 0;border-top:1px solid #ddd;font:11px/1.6 Arial,sans-serif;color:#777}.site-footer a{color:#333;text-decoration:none}.site-preview-warning{margin:20px 4vw 0;padding:12px 16px;border:1px solid #dfb57d;color:#654320;background:#fffaf2;font:12px/1.5 Arial,sans-serif}.site-preview-warning a{color:inherit;text-decoration:underline}.site-finale .mast,.site-finale>nav,.site-finale>footer{display:none}.site-finale #notice{margin-top:22px}.site-finale .site-footer{display:flex}.site-finale .heading{margin-top:0}.site-shell-header button:focus-visible,.site-shell-header a:focus-visible,.site-dev summary:focus-visible{outline:2px solid #222;outline-offset:4px}
+@media(max-width:650px){.site-shell-header{padding:0 6vw}.site-shell-header .masthead{margin:0 -6vw;padding:0 6vw 24px;height:230px}.site-shell-header .wordmark{font-size:clamp(43px,10.8vw,64px)}.site-shell-header .navigation{gap:14px;min-height:58px;flex-wrap:wrap}.site-shell-header .navigation>nav{gap:18px;flex:1}.site-shell-header .navigation>nav>a{font-size:11px;padding:21px 0}.site-dev{font-size:10px}.site-shell-header .navigation .search-button{display:none}.site-footer{margin:35px 6vw 20px;flex-wrap:wrap}.site-preview-warning{margin:16px 6vw 0}.site-dev-links{right:-35px}.site-shell-header .profile-menu-trigger{width:29px;height:29px}}
+/* Full poster artwork, consistent portrait frames, shared moving strip. */
+.site-shell-strip.running-line{display:flex!important;align-items:center;height:132px;margin:0 4vw!important;border:0;border-bottom:1px solid #deded8;overflow:hidden;gap:0}.site-shell-strip[hidden]{display:none!important}.site-shell-strip .screening-strip-label{display:none}.site-shell-strip .running-window{width:100%;overflow:hidden}.site-shell-strip .running-track{display:flex;width:max-content;animation:site-strip-scroll 75s linear infinite;gap:0}.site-shell-strip .screening-strip-group{display:flex;flex-shrink:0;gap:0}.site-shell-strip .screening-strip-item{display:flex;align-items:center;width:350px;flex:none;padding:0 24px 0 0;margin:0;gap:17px;border:0}.site-shell-strip .screening-strip-item img{display:block;width:60px;height:90px;flex:0 0 60px;object-fit:cover;object-position:center;background:transparent}.site-shell-strip .screening-strip-copy{display:flex;flex-direction:column;gap:8px;max-width:250px}.site-shell-strip .screening-strip-item strong{font:400 24px/1.12 'Canela Trial',Georgia,serif;white-space:normal;letter-spacing:-.02em;color:#222}.site-shell-strip .screening-strip-item small{font:11px/1.5 Arial,sans-serif;color:#777}.site-shell-strip .visuallyhidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}@keyframes site-strip-scroll{to{transform:translateX(-50%)}}@media(max-width:650px){.site-shell-strip.running-line{margin:0 6vw!important;height:115px}.site-shell-strip .screening-strip-item{width:285px;gap:14px;padding-right:22px}.site-shell-strip .screening-strip-item img{width:52px;height:78px;flex-basis:52px}.site-shell-strip .screening-strip-item strong{font-size:21px}.site-shell-strip .screening-strip-copy{max-width:200px}.site-shell-strip .screening-strip-item small{font-size:10px}}@media(prefers-reduced-motion:reduce){.site-shell-strip .running-track{animation:none!important}.site-shell-strip .running-window{overflow-x:auto}}
+/* Hovering or focusing the film roll holds it still so a title can be read and clicked. */
+.site-shell-strip:hover .running-track,.site-shell-strip:focus-within .running-track{animation-play-state:paused!important}
+.site-shell-strip.running-line[data-programme-phase="collecting"]{display:none!important}.site-shell-strip[data-programme-phase="collecting"] .running-track{animation-play-state:paused!important}
+/* Finale page furniture; independent of the design lab's global stylesheet. */
+.site-finale{margin:0;background:#fff;color:#20221e;font-family:Arial,sans-serif;-webkit-font-smoothing:antialiased}.site-finale *{box-sizing:border-box}.site-finale button{font-family:inherit;cursor:pointer}.site-finale a{color:inherit}.site-finale>main{margin:38px 4vw 0}.site-finale .heading{display:flex;align-items:end;justify-content:space-between;gap:22px;margin-bottom:28px}.site-finale .heading h1{font:400 clamp(40px,5.5vw,74px)/1.03 'Canela Trial',Georgia,serif;letter-spacing:-.04em;margin:0}.site-finale .eyebrow{font-size:10px;letter-spacing:.06em;margin:0 0 15px}.site-finale .total{display:flex;align-items:baseline;gap:12px;margin:0}.site-finale .total strong{font:54px/1 'Canela Trial',Georgia,serif}.site-finale .total span{font-size:11px;color:#777}.site-finale .notice{margin:18px 4vw 0;font-size:11px;line-height:1.5;color:#78745e}.site-finale .foot{display:none}.site-finale .battle-vote{color:inherit}.site-finale .battle-vote[aria-pressed=true]{color:white}.site-finale .battle-person img{display:block}.site-finale .site-footer{display:flex!important}.site-finale .vote-action{display:inline-flex;background:#222;color:white;text-decoration:none;padding:12px 18px;font-size:12px}.site-finale .empty{padding:35px 0;font-size:14px}@media(max-width:650px){.site-finale>main{margin:30px 6vw 0}.site-finale .notice{margin:16px 6vw 0}.site-finale .total{flex-direction:column;align-items:end;gap:5px}.site-finale .total strong{font-size:38px}.site-finale .total span{font-size:10px}.site-finale .heading h1{font-size:40px}}
+.site-finale.people-view .heading{display:none}
+
+.programme-strip-link{display:block;width:100%;min-width:0;color:inherit;text-decoration:none}.programme-strip-link:focus-visible{outline:2px solid #333;outline-offset:-3px}
+
+/* Shared, quiet colophon; explicit line-height keeps edition text on its baseline. */
+.site-footer{align-items:baseline;flex-wrap:wrap;gap:22px 40px;padding:28px 0 12px;margin:64px 4vw 24px;border-top:1px solid #dcdcd6;color:#71716b;font:12px/1.5 Arial,sans-serif;letter-spacing:0}
+.site-footer-edition{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.site-footer .site-footer-name{font:400 25px/1.2 'Canela Trial',Georgia,serif;letter-spacing:-.025em;color:#222}
+.site-footer-edition>span{display:block;margin:0;padding:0;font:11px/1.5 Arial,sans-serif;white-space:nowrap}
+.site-footer nav{display:flex;align-items:baseline;justify-content:flex-start;gap:12px 24px;flex-wrap:wrap;margin:0;padding:0;border:0;font:11px/1.5 Arial,sans-serif}
+.site-footer nav a{margin:0;padding:0;color:#555;text-decoration:none;white-space:nowrap}
+/* Preserve the quiet type while giving footer links a full 24px pointer target. */
+.site-footer a{display:inline-flex;align-items:center;min-height:24px}
+.site-footer a:hover{text-decoration:underline;text-underline-offset:4px}
+.site-footer a:focus-visible{outline:2px solid #222;outline-offset:5px}
+@media(max-width:650px){.site-footer{margin:42px 6vw 20px;gap:20px;padding-top:24px}.site-footer-edition{width:100%;gap:14px}.site-footer nav{gap:14px 20px}.site-footer .site-footer-name{font-size:23px}}
+
+/* A shared typographic baseline aligns the wordmark, edition and navigation. */
+.site-footer,.site-footer-edition,.site-footer nav{align-items:baseline}
+.site-footer a{display:inline-block}
+/* No optical translation: all three groups use their actual text baseline. */
+.site-footer .site-footer-name{line-height:1;transform:none}
+
+/* Task pages keep the festival identity without pushing the task below the fold. */
+.site-stemmen .site-shell-header .masthead,.site-agenda .site-shell-header .masthead{height:132px;padding-bottom:18px}
+.site-stemmen .site-shell-header .wordmark,.site-agenda .site-shell-header .wordmark{font-size:clamp(42px,4.5vw,64px);line-height:1.05}
+@media(max-width:650px){.site-stemmen .site-shell-header .masthead,.site-agenda .site-shell-header .masthead{height:112px;padding-bottom:17px}.site-stemmen .site-shell-header .wordmark,.site-agenda .site-shell-header .wordmark{font-size:clamp(35px,9vw,48px)}}
+
+/* The film roll is Home/Bedankt furniture; the Agenda's hero is the next night itself. */
+body.site-agenda .site-shell-strip{display:none!important}
+
+/* Standalone routes use the same page edge and sizing model as the Home export. */
+body.site-standalone{margin:0;background:#fff;color:#191919;-webkit-font-smoothing:antialiased}
+.site-standalone .site-shell-header,.site-standalone .site-shell-header *,.site-standalone .site-footer,.site-standalone .site-footer *{box-sizing:border-box}
+
+/* Page canvas is white across every current route; legacy --sand is not a site theme. */
+html:has(body.site-picker),body.site-picker,body.site-stemmen,body.site-agenda{background:#fff!important}
+
+/* Films is the collection: compact masthead, no voting ticker. */
+
+.site-films .site-shell-header .masthead{height:132px;min-height:0;padding-bottom:20px}
+.site-films .site-shell-header .wordmark{font-size:clamp(42px,4.5vw,64px);line-height:1.05}
+@media(max-width:650px){.site-films .site-shell-header .masthead{height:112px;padding-bottom:17px}.site-films .site-shell-header .wordmark{font-size:clamp(35px,9vw,48px)}}
+
+/* Reserve the always-present Films roll before its JS/data arrive. */
+.site-strip-placeholder{height:133px;margin:0 4vw;border-bottom:1px solid #deded8;box-sizing:border-box}
+.site-shell-strip:not([hidden]) + .site-strip-placeholder{display:none}
+@media(max-width:650px){.site-strip-placeholder{height:116px;margin:0 6vw}}
+
+/* Both voting and its thank-you state omit the roll: correct before any data arrives. */
+body.site-stemmen .site-shell-strip{display:none!important}
+
+.site-shell-strip a.screening-strip-item{color:inherit;text-decoration:none;cursor:pointer}
+.site-shell-strip a.screening-strip-item:focus-visible{outline:2px solid #222;outline-offset:-3px}
+.site-shell-strip a.screening-strip-item:hover strong{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+
+/* Quiet edition line above the moire masthead. */
+.site-shell-header .site-edition-strip{display:flex;align-items:center;justify-content:space-between;gap:20px;box-sizing:border-box;min-height:41px;margin:0 -4vw;padding:0 4vw;background:#fff;color:#777;font:11px/1.4 Arial,sans-serif;letter-spacing:.01em}
+@media(max-width:650px){.site-shell-header .site-edition-strip{margin:0 -6vw;padding:0 6vw;min-height:36px;font-size:10px;gap:12px}}
+
+.site-shell-header .site-edition-strip{justify-content:flex-start;font-weight:400;letter-spacing:0}.site-edition-notes{display:flex;align-items:center;gap:24px}.site-edition-copyright{margin-left:auto;white-space:nowrap}.site-edition-id{white-space:nowrap}
+@media(max-width:650px){.site-shell-header .site-edition-strip{flex-wrap:wrap;gap:7px 16px;padding-top:10px;padding-bottom:10px}.site-edition-notes{order:3;width:100%;gap:16px;font-size:9px}.site-edition-copyright{font-size:9px}}
+
+.site-edition-notes a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;min-height:24px;font-weight:400}.site-edition-notes a[aria-current=page]{color:#222;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px}.site-edition-notes a:hover{text-decoration:underline;text-underline-offset:5px}
+
+
+/* Actual edition, language and publisher information, not decorative revision codes. */
+.site-shell-header .site-edition-strip{display:grid;grid-template-columns:auto auto 1fr auto;column-gap:28px}.site-edition-description{text-align:center}.site-edition-language{white-space:nowrap}.site-edition-copyright{margin-left:0}
+@media(max-width:650px){.site-shell-header .site-edition-strip{grid-template-columns:auto 1fr;gap:7px 14px}.site-edition-language{text-align:right}.site-edition-description{text-align:left;font-size:9px}.site-edition-copyright{text-align:right;font-size:9px}}
+
+.site-shell-header .site-edition-strip{grid-template-columns:auto auto 1fr}.site-edition-copyright{justify-self:end}
+@media(max-width:650px){.site-shell-header .site-edition-strip{grid-template-columns:auto 1fr}.site-edition-copyright{grid-column:1 / -1}}
+
+
+/* Edition, language and placeholder address sit together at the left. */
+.site-shell-header .site-edition-strip{grid-template-columns:auto auto auto 1fr}.site-edition-address{white-space:nowrap}
+@media(max-width:650px){.site-shell-header .site-edition-strip{grid-template-columns:auto 1fr}.site-edition-address{grid-column:1 / -1}.site-edition-copyright{grid-column:1 / -1}}
+
+/* Keep the footer below the pending content, from parser HTML through controller handoff. */
+.site-agenda #agenda .ag-next[aria-busy="true"]{min-height:420px}
+.site-films #films #home-picker[aria-busy="true"]{min-height:520px}
+.site-stemmen #stemmen:has(.st-loading){min-height:max(420px,calc(100svh - 237px))}
+@media(max-width:650px){.site-agenda #agenda .ag-next[aria-busy="true"]{min-height:420px}}
+
+html:has(>body.site-standalone){scrollbar-gutter:stable}

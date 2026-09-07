@@ -1,0 +1,157 @@
+/* Approved A Cinema / C De toegift, from Bedankt studies 6a10b004 r2.
+   Full page compositions; data and native pudding remain supplied by stemmen.js. */
+#stemmen .st-bedankt{padding:0 0 56px}
+#stemmen .st-bedankt-grid{display:grid;width:100%;max-width:none;margin:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"ballot confirm" "ballot pudding";grid-template-rows:auto 1fr;column-gap:5vw;align-items:start}
+#stemmen .st-ballot{grid-area:ballot;min-width:0}
+#stemmen .st-ballot-item,#stemmen .st-card{margin:0;padding:0}
+#stemmen .st-c-panel{position:relative;min-height:680px;display:flex;align-items:flex-end;isolation:isolate;background:#251635;overflow:hidden;color:white}
+#stemmen .st-c-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
+#stemmen .st-c-shade{position:absolute;inset:0;background:linear-gradient(0deg,#080611eb,transparent 90%);z-index:-1}
+#stemmen .st-c-copy{width:100%;padding:38px}
+#stemmen .st-c-copy .st-kicker{display:block;color:#fff;font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 22px}
+#stemmen .st-ballot-title{margin:0;font:400 clamp(42px,4.9vw,76px)/1.02 'Canela Trial',Georgia,serif;letter-spacing:-.03em;color:inherit;max-width:13ch;text-wrap:balance}
+#stemmen .st-ballot-meta{font-size:11px;line-height:1.6;margin:18px 0 0;color:#ffffffc9}
+#stemmen .st-date{font:400 32px/1.15 'Canela Trial',Georgia,serif;margin:32px 0 0;color:white;letter-spacing:-.02em}
+#stemmen .st-date small{font:400 10px/1.5 Everett,Arial,sans-serif;letter-spacing:.12em;display:block;margin-bottom:10px;text-transform:uppercase}
+#stemmen .st-confirm{grid-area:confirm;min-width:0;padding-top:24px}
+#stemmen .st-check{display:block;width:40px;height:40px}
+#stemmen .st-check svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+#stemmen .st-check-ring{stroke-width:1.25;stroke-dasharray:142;stroke-dashoffset:142;animation:st-draw .55s cubic-bezier(.3,.7,.3,1) forwards}
+#stemmen .st-check-tick{stroke-width:2;stroke-dasharray:30;stroke-dashoffset:30;animation:st-draw .4s .38s cubic-bezier(.3,.7,.3,1) forwards}
+#stemmen .st-check.is-still .st-check-ring,#stemmen .st-check.is-still .st-check-tick{animation:none;stroke-dashoffset:0}
+@keyframes st-draw{to{stroke-dashoffset:0}}
+#stemmen .st-confirm-title{font:400 clamp(64px,6vw,100px)/.96 'Canela Trial',Georgia,serif;letter-spacing:-.04em;margin:28px 0;color:#20221f}
+#stemmen .st-bedankt .st-saved-choice{margin:0 0 12px;font-size:14px;line-height:1.65;font-weight:400;max-width:40ch}
+#stemmen .st-confirm-lead{font-size:12px;line-height:1.65;color:#777;max-width:44ch;margin:0}
+#stemmen .st-confirm-when{font-size:10px;line-height:1.6;color:#888;display:block;margin-top:14px}
+#stemmen .st-confirm-actions{display:flex;align-items:center;flex-wrap:wrap;gap:20px 28px;margin-top:26px}
+#stemmen .st-confirm-actions .st-button{height:50px;padding:0 24px;gap:34px;font-size:12px}
+#stemmen .st-confirm-actions .st-button+.st-button{background:none;color:#20221f;padding:0;border-bottom:1px solid #bcbfb8;height:auto;padding-block:6px}
+#stemmen .st-bedankt-pudding{grid-area:pudding;align-self:start;margin-top:14px;width:min(100%,270px)}
+#stemmen .st-bedankt-pudding-kit{display:flex;flex-direction:column}
+#stemmen .st-bedankt-pudding-kit figure{order:1;position:relative;width:100%;height:215px;margin:0;background:#fff}
+#stemmen .st-bedankt-pudding-kit canvas{display:block;width:100%;height:100%;touch-action:none;cursor:pointer}
+#stemmen .st-bedankt-pudding-kit .st-pudding-foot{order:2;display:flex;align-items:baseline;justify-content:center;gap:12px;margin:0;font-size:11px}
+#stemmen .st-bedankt-pudding-kit .st-pudding-foot button{font-size:11px;border-bottom:1px solid #9b9c96;padding:6px 0}
+#stemmen .st-bedankt-pudding-kit .st-pudding-foot button:disabled{opacity:.45}
+#stemmen .st-bedankt-pudding-kit .st-pudding-foot span{display:inline;font-size:10px;color:#888}
+/* Actual credits and supplied voters replace the study's illustrative initials. */
+#stemmen .st-c-receipt{display:flex;flex-wrap:wrap;gap:20px 32px;padding:24px 0;border-top:1px solid #deded8;margin:0;font-size:11px}
+#stemmen .st-row{display:flex;flex-direction:column;gap:8px;min-width:0;max-width:100%}
+#stemmen .st-row-key{font-size:10px;color:#888}
+#stemmen .st-row-value{font-size:11px;line-height:1.6;min-width:0}
+#stemmen .st-ticket-films{display:flex;flex-wrap:wrap;gap:16px 30px}
+#stemmen .st-ticket-films p{margin:0}
+#stemmen .st-ticket-films strong,#stemmen .st-ticket-films span{display:block;font-weight:400}
+#stemmen .st-ticket-films span{font-size:10px;color:#888;margin-top:3px}
+#stemmen .st-ticket-voters{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+#stemmen .st-ticket-voters .st-crowd{position:static;min-height:30px;gap:4px;margin:0}
+#stemmen .st-ticket-voters .battle-person{width:30px;height:32px;flex:0 0 30px;margin:0;transform:none;border-radius:4px}
+#stemmen .st-ticket-voters .battle-person img{width:100%;height:100%;object-fit:cover}
+#stemmen .st-ticket-voters>span{font-size:10px;color:#888}
+/* C: the cat shares the opening with the heading; the film runs across the page. */
+#stemmen .st-bedankt[data-layout=c] .st-bedankt-grid{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"confirm pudding" "ballot ballot";column-gap:0;row-gap:34px}
+#stemmen .st-bedankt[data-layout=c] .st-confirm{padding-top:4px}
+#stemmen .st-bedankt[data-layout=c] .st-check{display:none}
+#stemmen .st-bedankt[data-layout=c] .st-confirm-title{font-size:clamp(80px,9.3vw,150px);margin:0 0 28px;max-width:8ch;letter-spacing:-.055em}
+#stemmen .st-heading-last{display:block}
+#stemmen .st-bedankt[data-layout=c] .st-heading-first{display:block}
+#stemmen .st-bedankt[data-layout=c] .st-heading-last{display:inline}
+#stemmen .st-bedankt[data-layout=c] .st-bedankt-pudding{width:min(100%,280px);justify-self:center;align-self:end;margin:0 0 24px}
+#stemmen .st-bedankt[data-layout=c] .st-bedankt-pudding-kit figure{height:225px}
+#stemmen .st-bedankt[data-layout=c] .st-c-panel{min-height:330px}
+#stemmen .st-bedankt[data-layout=c] .st-c-copy{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 30px;padding:32px 40px}
+#stemmen .st-bedankt[data-layout=c] .st-ballot-title{font-size:64px;max-width:18ch}
+#stemmen .st-bedankt[data-layout=c] .st-c-copy .st-kicker{margin-bottom:16px}
+#stemmen .st-bedankt[data-layout=c] .st-date{grid-column:2;grid-row:1/4;align-self:end;margin:0}
+#stemmen .st-bedankt[data-layout=c] .st-c-receipt{justify-content:space-between}
+/* Comparison UI appears only when explicitly requested. */
+#stemmen .st-variants{display:flex;gap:12px;align-items:center;margin-top:20px;font-size:11px}
+#stemmen .st-variant{padding:6px 9px;color:#888;border-bottom:1px solid transparent}
+#stemmen .st-variant.is-on{color:#20221f;border-color:#20221f}
+#stemmen .st-variant-name{color:#888}
+#stemmen .st-preview-notice{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;padding:12px 16px;margin:0 0 28px;background:#f4f2eb;font:11px/1.5 Everett,Arial,sans-serif}
+#stemmen .st-preview-notice a{margin-left:auto;text-decoration:underline;color:inherit}
+@media(max-width:800px){
+ #stemmen .st-bedankt-grid,#stemmen .st-bedankt[data-layout=c] .st-bedankt-grid{display:flex;flex-direction:column;gap:0}
+ #stemmen .st-confirm{order:0;padding:0 0 28px;width:100%}
+ #stemmen .st-confirm-title{font-size:62px;margin:20px 0}
+ #stemmen .st-check{width:34px;height:34px}
+ #stemmen .st-ballot{order:1;width:100%}
+ #stemmen .st-c-panel{min-height:460px}
+ #stemmen .st-c-copy{padding:26px}
+ #stemmen .st-ballot-title{font-size:42px}
+ #stemmen .st-date{font-size:27px;margin-top:28px}
+ #stemmen .st-confirm-actions .st-button{width:auto;padding-inline:20px;gap:25px}
+ #stemmen .st-bedankt-pudding{order:1;width:min(100%,240px);align-self:center;margin:0 0 30px}
+ #stemmen .st-ballot{order:2}
+ #stemmen .st-bedankt-pudding-kit figure{height:200px}
+ #stemmen .st-bedankt[data-layout=c] .st-confirm-title{font-size:76px;max-width:8ch}
+ #stemmen .st-bedankt[data-layout=c] .st-bedankt-pudding{order:1;margin:0 0 30px}
+ #stemmen .st-bedankt[data-layout=c] .st-bedankt-pudding-kit figure{height:200px}
+ #stemmen .st-bedankt[data-layout=c] .st-ballot{order:2}
+ #stemmen .st-bedankt[data-layout=c] .st-c-panel{min-height:300px}
+ #stemmen .st-bedankt[data-layout=c] .st-c-copy{display:block;padding:26px}
+ #stemmen .st-bedankt[data-layout=c] .st-ballot-title{font-size:42px}
+ #stemmen .st-bedankt[data-layout=c] .st-date{font-size:27px;margin-top:28px}
+ #stemmen .st-preview-notice a{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){#stemmen .st-check-ring,#stemmen .st-check-tick{animation:none;stroke-dashoffset:0}}
+
+/* Faithful study placement: attendance by the confirmation, credits in a single film strip. */
+#stemmen .st-confirm-attendance:not(:empty){margin-top:24px}
+#stemmen .st-c-receipt{align-items:flex-start;gap:24px 35px}
+#stemmen .st-ticket-films{display:contents}
+#stemmen .st-ticket-films p,#stemmen .st-ticket-summary{margin:0;font-size:11px;line-height:1.6}
+#stemmen .st-ticket-films strong,#stemmen .st-ticket-summary strong{display:block;font-weight:400;font-size:12px;margin-bottom:4px}
+#stemmen .st-ticket-films span,#stemmen .st-ticket-summary span{display:block;color:#888;font-size:10px}
+#stemmen .st-ticket-voters .battle-person:nth-child(2n){transform:rotate(4deg)}
+#stemmen .st-ticket-voters .battle-person:nth-child(2n+1){transform:rotate(-4deg)}
+
+/* Final choice: A only. The desktop cat floats in the unused title-side space. */
+#stemmen .st-bedankt-grid{position:relative}
+#stemmen .st-bedankt .battle-own{outline:none}
+#stemmen .st-bedankt .battle-person:focus-visible{outline:2px solid #20221f;outline-offset:4px}
+@media(min-width:1100px){
+ #stemmen .st-bedankt-grid{grid-template-areas:"ballot confirm";grid-template-rows:auto}
+ #stemmen .st-bedankt-pudding{position:absolute;right:0;top:130px;width:170px;margin:0;grid-area:auto}
+ #stemmen .st-bedankt-pudding-kit figure{height:150px}
+ #stemmen .st-bedankt-pudding-kit .st-pudding-foot{gap:7px;flex-wrap:wrap}
+ #stemmen .st-bedankt-pudding-kit .st-pudding-foot span{display:none}
+}
+@media(min-width:1100px) and (max-width:1399px){#stemmen .st-bedankt-pudding{width:120px;top:132px}#stemmen .st-bedankt-pudding-kit figure{height:120px}}
+/* No caption or explanatory copy beside the cat. Editing controls are separate. */
+#stemmen .st-bedankt-pudding-kit .st-pudding-foot,.pudding .st-pudding-foot{display:none!important}
+.cat-layout-toolbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10000;background:#fff;color:#20221f;border:1px solid #c8c9c2;box-shadow:0 6px 25px #0002;padding:10px;display:flex;align-items:center;gap:12px;font:12px/1.4 Arial,sans-serif;max-width:calc(100vw - 24px);flex-wrap:wrap}
+.cat-layout-toolbar button{border:1px solid #ccc;background:white;color:#20221f;padding:8px 12px;font:inherit;cursor:pointer}
+.cat-layout-toolbar button:first-child{background:#20221f;color:white;border-color:#20221f}
+.cat-layout-status{font-size:10px;color:#666;min-width:110px}
+.cat-layout-overlay{position:absolute;inset:0;border:1px dashed #777;cursor:move;touch-action:none;z-index:20}
+.cat-layout-overlay[hidden]{display:none}
+.cat-layout-handle{position:absolute;right:-9px;bottom:-9px;width:24px;height:24px;border:1px solid #555;background:white;color:#20221f;cursor:nwse-resize;touch-action:none;display:grid;place-items:center;padding:0;font:16px Arial}
+.cat-layout-overlay:focus-visible,.cat-layout-handle:focus-visible{outline:2px solid #333;outline-offset:3px}
+.cat-layout-export{width:100%;min-height:150px;font:11px monospace}
+/* Chris's picked position: 2048×998 viewport, 1869px grid; x1418 y182,353×312.
+   Scale with the grid on wide desktop; smaller layouts retain collision-free placement. */
+@media(min-width:1800px){
+ #stemmen .st-bedankt-pudding{left:75.867%;right:auto;top:182px;width:18.886%;margin:0}
+ #stemmen .st-bedankt-pudding-kit figure{height:auto;aspect-ratio:353 / 312}
+}
+/* Keep the moiré masthead; the moving film strip is omitted on thank-you. */
+body:has(#stemmen .st-bedankt) .running-line{display:none!important}
+.cat-layout-angle{display:flex;align-items:center;gap:8px;font-size:11px;white-space:nowrap}
+.cat-layout-angle input{width:130px;accent-color:#20221f}
+.cat-layout-angle output{min-width:34px;text-align:right}
+#stemmen .st-confirm-actions .st-text{font-size:11px;color:#777;padding:5px 0;border-bottom:1px solid #c8c9c2}
+#stemmen .st-confirm-actions .st-text:hover{color:#20221f;border-color:#20221f}
+
+/* Equal leaders share one receipt poster; neither is presented as the winner. */
+#stemmen .st-tie-label{display:flex;align-items:center;gap:10px;margin:0 0 24px;font:12px/1.4 Everett,Arial,sans-serif;color:#fff}
+#stemmen .st-tie-symbol{display:grid;place-items:center;width:28px;height:28px;border:1px solid #ffffff80;border-radius:50%;font:20px/1 Georgia,serif}
+#stemmen .st-tie-choice{margin:0 0 20px}
+#stemmen .st-tie-title{font:400 clamp(28px,3.4vw,52px)/1.06 'Canela Trial',Georgia,serif;letter-spacing:-.025em;color:#fff;margin:0}
+#stemmen .st-tie-score{display:block;margin-top:8px;font:11px/1.4 Everett,Arial,sans-serif;color:#ffffffcf}
+#stemmen .st-confirm-attendance.is-tied{display:grid;gap:20px}
+#stemmen .st-voter-film{margin:0 0 8px;font:12px/1.4 Everett,Arial,sans-serif;color:#444}
+#stemmen .st-confirm-attendance.is-tied .st-crowd{flex-wrap:wrap;max-width:100%}
+@media(max-width:700px){#stemmen .st-tie-title{font-size:32px}#stemmen .st-tie-panel .st-c-copy{padding:26px}#stemmen .st-tie-panel{min-height:480px}}

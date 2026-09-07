@@ -1,0 +1,22 @@
+/* Small vote reminder immediately beside the account control. */
+.site-shell-header .navigation{flex-wrap:nowrap}
+.site-shell-header .site-vote-event{position:relative;display:block;flex:0 0 52px;width:52px;height:44px;margin:0 0 0 auto;padding:0;border:0;color:inherit}
+.site-shell-header .site-vote-event[hidden]{display:none}
+.site-shell-header .navigation .site-vote-event + .profile-menu{margin-left:12px}
+.site-vote-covers{position:absolute;inset:0;pointer-events:none}
+.site-vote-covers img{position:absolute;width:23px;height:34px;bottom:5px;left:var(--left);object-fit:cover;border:1px solid #ddd;border-left:2px solid #aaa;border-radius:1px;box-shadow:0 2px 3px #0002;transform:rotate(var(--angle));box-sizing:border-box}
+.site-vote-covers img:nth-child(1){--left:3px;--angle:-12deg;z-index:1}.site-vote-covers img:nth-child(2){--left:15px;--angle:0deg;z-index:3}.site-vote-covers img:nth-child(3){--left:27px;--angle:12deg;z-index:2}
+.site-vote-event.is-voted .site-vote-covers img.is-chosen{z-index:5;transform:rotate(var(--angle)) translateY(-2px)}
+.site-vote-check{position:absolute;pointer-events:none;z-index:6;left:calc(13px + var(--picked-slot)*12px);bottom:1px;display:grid;place-items:center;width:15px;height:15px;box-sizing:border-box;border:1px solid #fff;border-radius:50%;background:#315b42;color:#fff;font:11px/1 Arial,sans-serif;box-shadow:0 1px 2px #0002}
+.site-vote-check[hidden]{display:none}
+.site-vote-copy{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.site-shell-header .site-vote-action{position:absolute;inset:0;display:block;overflow:hidden;font-size:0;color:inherit;background:none;border:0;padding:0;text-decoration:none;border-radius:2px}
+.site-vote-action:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.site-vote-event:hover .site-vote-covers{transform:translateY(-1px)}
+@media(max-width:650px){.site-shell-header .navigation{gap:8px}.site-shell-header .navigation>nav{gap:14px}.site-shell-header .navigation .site-vote-event + .profile-menu{margin-left:2px}}
+body.site-stemmen:not(:has(#stemmen .st-bedankt)) .site-vote-event{display:none}
+/* One quiet invitation per tab session; confirmed choice remains the emphasis. */
+.site-vote-event.is-voted .site-vote-covers img:not(.is-chosen){opacity:.32;filter:grayscale(.45)}
+.site-vote-event.is-unvoted.is-nudging .site-vote-covers{animation:site-vote-invite 1.1s ease-in-out .8s 1;transform-origin:50% 85%}
+@keyframes site-vote-invite{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}55%{transform:rotate(4deg)}80%{transform:rotate(-2deg)}}
+@media(prefers-reduced-motion:reduce){.site-vote-event.is-unvoted.is-nudging .site-vote-covers{animation:none}.site-vote-event:hover .site-vote-covers{transform:none}}

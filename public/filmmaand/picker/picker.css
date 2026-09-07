@@ -1,0 +1,190 @@
+#home-picker{margin:48px 4vw 0;color:#191919;font:13px/1.6 Everett,Arial,sans-serif}#home-picker *{box-sizing:border-box}#home-picker button,#home-picker input{font:inherit}#home-picker button{cursor:pointer}#home-picker button:disabled{opacity:.4;cursor:default}#home-picker button:focus-visible,#home-picker input:focus-visible{outline:2px solid #42617e;outline-offset:5px}#home-picker h2{font:300 clamp(36px,4.1vw,60px)/1.08 'Canela Trial',Georgia,serif;letter-spacing:-1px;margin:20px 0}#home-picker h3{font-size:14px;font-weight:400}#home-picker .eyebrow{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:#555}#home-picker .ci-note{font-size:12px;color:#777;line-height:1.8;margin:14px 0}#home-picker .hp-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:6vw;align-items:start}#home-picker .hp-scene{height:370px;position:relative;background:#e6e4df;margin-bottom:82px}#home-picker .hp-still{width:100%;height:100%;object-fit:cover;display:block}#home-picker .hp-poster{position:absolute;right:28px;bottom:-62px;width:164px;height:245px;padding:0;border:4px solid #f4f2ee;background:#fff;box-shadow:0 7px 20px #0002;transition:transform .3s}#home-picker .hp-poster:hover{transform:translateY(-5px)}#home-picker .hp-poster:active{transform:translateY(-2px) scale(.98)}#home-picker .ci-cover{height:100%;width:100%;display:grid;place-items:center;background:#e7e1d7;overflow:hidden}#home-picker .ci-cover img{width:100%;height:100%;object-fit:cover}#home-picker .ci-cover>span{padding:14px;font:26px/1.15 'Canela Trial',Georgia,serif;text-align:left}#home-picker .hp-check,#home-picker .hp-option-check{position:absolute;right:8px;bottom:8px;background:white;color:#1c3421;box-shadow:0 2px 6px #0002;width:26px;height:26px;border-radius:50%;display:grid;place-items:center}#home-picker .hp-caption{display:flex;justify-content:space-between;gap:15px}#home-picker .hp-caption h2{font-size:38px;margin:12px 0;max-width:480px}#home-picker .hp-caption .ci-note{margin:10px 0}#home-picker .hp-arrows{display:flex;align-items:start;gap:20px}#home-picker .ci-arrow{background:none;border:0;padding:5px;font-size:24px}#home-picker .hp-dates{padding:10px 0 0 1vw}#home-picker .hp-dates>h2{margin:22px 0 20px}#home-picker .hp-dates>.ci-note{max-width:370px}#home-picker .ci-date-fields{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:25px 0}#home-picker .ci-date-fields label{padding:15px 0;font-size:10px;color:#777}#home-picker .ci-date-fields label+label{border-left:1px solid #ddd;padding-left:20px}#home-picker .ci-date-fields input{display:block;border:0;background:none;width:100%;min-width:0;margin-top:7px;font-size:14px;color:#222;padding-right:12px}#home-picker .hp-calendar h3{margin:0 0 17px}#home-picker .ci-days{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}#home-picker .ci-weekday{font-size:10px;color:#888;padding-bottom:12px}#home-picker .ci-day{border:0;background:white;height:38px;font-size:12px;transition:background .15s}#home-picker .ci-day:hover{background:#f0f0ec}#home-picker .ci-day.in-range{background:#e9ece5}#home-picker .ci-day.endpoint{background:#303c2c;color:white}#home-picker .ci-button{border:0;background:#20221f;color:#fff;padding:15px 22px;font-size:12px;transition:transform .15s,background .2s}#home-picker .ci-button:hover{background:#424a3d}#home-picker .ci-button:active{transform:scale(.98)}#home-picker .hp-add{margin-top:12px;background:none;border-bottom:1px solid #222;color:#222;padding:8px 0}#home-picker .hp-add[aria-pressed=true]{color:#3a5631}#home-picker .hp-collection{margin-top:46px;border-top:1px solid #d7d7d7;padding-top:14px}#home-picker .hp-collection-title{display:flex;align-items:center;justify-content:space-between}#home-picker .hp-rail{display:flex;overflow:auto;gap:22px;padding:18px 2px 24px;scrollbar-width:thin;scroll-snap-type:x proximity}#home-picker .hp-option{position:relative;flex:0 0 130px;border:0;background:none;padding:0;text-align:left;scroll-snap-align:start;color:#333;align-self:start}#home-picker .hp-option .ci-cover{height:192px;margin-bottom:12px;transition:transform .25s,box-shadow .25s}#home-picker .hp-option:hover .ci-cover{transform:translateY(-5px);box-shadow:0 6px 16px #0002}#home-picker .hp-option>span{font-size:11px;line-height:1.35;display:block}#home-picker .hp-option[aria-current=true] .ci-cover{outline:1px solid #444;outline-offset:4px}#home-picker .hp-option-check{top:155px;bottom:auto}#home-picker .ci-submit{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:20px;background:#fffffff5;backdrop-filter:blur(8px);border-top:1px solid #ccc;padding:22px 0}#home-picker .ci-submit strong{font-size:12px;font-weight:400}#home-picker .ci-local{font-size:10px;color:#999;margin:13px 0 25px}#home-picker .ci-error{border:1px solid #cdb5ac;padding:16px;margin-bottom:25px;color:#8f4b36}#home-picker .ci-link{border:0;background:none;border-bottom:1px solid #888;padding:5px 0;color:#333}#home-picker .ci-overview{display:grid;grid-template-columns:1fr 1fr;gap:8vw}#home-picker .ci-heading{margin:0 0 35px}#home-picker .ci-heading h1{font:300 54px/1.1 'Canela Trial',Georgia,serif;margin:15px 0}#home-picker .ci-own-film{padding:12px 0;border-bottom:1px solid #ddd}#home-picker .ci-event{margin-top:30px;background:#f3f3ef;padding:25px}#home-picker .ci-event h2{font-size:34px}#home-picker .ci-date-results{display:flex;flex-wrap:wrap;gap:8px}#home-picker .ci-result-date{border:1px solid #ddd;background:white;padding:8px;font-size:11px}#home-picker .ci-result-date.active{background:#303c2c;color:white}#home-picker .ci-tally{display:grid;grid-template-columns:1.5fr 1fr 20px;gap:14px;align-items:center;border-bottom:1px solid #eee;padding:12px 0;font-size:11px}#home-picker .ci-track{height:3px;background:#eee}#home-picker .ci-track>span{display:block;height:100%;background:#75866d}.hp-play{margin:25px 4vw 55px;border-top:1px solid #ddd;padding-top:20px}.hp-play>summary{cursor:pointer;font:12px Everett,Arial,sans-serif}.hp-play .home-secret-copy{max-width:440px;margin:25px auto}.hp-play .homepage-pudding{margin:0!important}
+@media(max-width:767px){#home-picker{margin:30px 6vw 0}#home-picker .hp-layout,#home-picker .ci-overview{grid-template-columns:1fr;gap:40px}#home-picker .hp-scene{height:235px;margin-bottom:75px}#home-picker .hp-poster{width:110px;height:165px;right:16px;bottom:-55px}#home-picker .hp-caption h2{font-size:34px}#home-picker .hp-dates{padding:25px 0 0;border-top:1px solid #ccc}#home-picker .hp-dates h2{font-size:42px}#home-picker .hp-option{flex-basis:110px}#home-picker .hp-option .ci-cover{height:163px}#home-picker .hp-option-check{top:126px}#home-picker .ci-submit{gap:15px;padding:15px 0}#home-picker .ci-submit .ci-button{max-width:175px;padding:13px 15px;font-size:11px}#home-picker .ci-submit strong{font-size:10px}#home-picker .hp-collection-title .ci-note{font-size:10px}#home-picker .ci-heading h1{font-size:40px}#home-picker .ci-day{height:42px}}
+@media(prefers-reduced-motion:reduce){#home-picker *{animation:none!important;transition:none!important}}
+
+#home-picker .ci-submit:not(.has-choices){position:static}
+
+#home-picker .ci-cover[data-id="redball"]{background:#edf0d7}#home-picker .ci-cover[data-id="redball"] img{object-fit:contain}
+
+#home-picker .hp-suggest{border-top:1px solid #ddd;padding:20px 0;margin:15px 0}#home-picker .hp-suggest>summary{cursor:pointer;font-size:12px}#home-picker .hp-suggest-form{display:grid;grid-template-columns:1fr 1.5fr auto;gap:24px;align-items:end;margin:25px 0}#home-picker .hp-suggest-form label{font-size:11px;color:#666}#home-picker .hp-suggest-form input{display:block;width:100%;min-width:0;border:0;border-bottom:1px solid #aaa;border-radius:0;padding:12px 0;background:none;color:#222}#home-picker .hp-suggest-done{font-size:12px;margin:20px 0}@media(max-width:767px){#home-picker .hp-suggest-form{grid-template-columns:1fr;gap:20px}}
+
+
+
+/* Square Red Ball artwork fills the same full-height cover frame as the other titles. */
+#home-picker .ci-cover[data-id="redball"] img{object-fit:cover;width:100%;height:100%;object-position:center}
+
+#home-picker .hp-picked{display:flex;flex-wrap:wrap;gap:10px;padding:15px 0}#home-picker .hp-picked-item{padding:9px 12px;border:1px solid #d8dcd3;background:#f7f8f4;color:#343e2d;font-size:11px}#home-picker .hp-picked-item:hover{background:#edf0e7}
+#home-picker .hp-personal-shelf{margin-top:30px;padding-top:20px;border-top:1px solid #d8ddd3}#home-picker .hp-shelf-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}#home-picker .hp-shelf-head h3{font-size:13px;margin:0}#home-picker .hp-shelf-head>span{color:#64735a;font-size:11px;background:#edf1e8;border-radius:50%;width:23px;height:23px;display:grid;place-items:center}#home-picker .hp-personal-covers{display:flex;gap:16px;overflow:auto;padding:4px 4px 13px;scrollbar-width:thin}#home-picker .hp-personal-card{position:relative;flex:0 0 85px;min-width:0}#home-picker .hp-personal-view{background:none;border:0;padding:0;color:#3e4737;text-align:left;width:100%}#home-picker .hp-personal-view .ci-cover{height:125px;box-shadow:0 3px 7px #0002}#home-picker .hp-personal-view>span{display:block;font-size:10px;line-height:1.4;margin-top:9px}#home-picker .hp-personal-view .ci-cover>span{font-size:16px;padding:8px}#home-picker .hp-personal-remove{position:absolute;top:-3px;right:-3px;width:23px;height:23px;border:1px solid #c4cdba;background:#fff;color:#32442a;border-radius:50%;font-size:16px;display:grid;place-items:center;padding:0;box-shadow:0 1px 4px #0002}#home-picker .hp-option.selected .ci-cover{outline:3px solid #617753;outline-offset:2px}#home-picker .hp-option-check{top:166px;left:0;right:0;bottom:auto;width:100%;height:26px;border-radius:0;background:#394d2e;color:white;font-size:9px;font-weight:400;box-shadow:none}#home-picker .hp-add[aria-pressed=true]{background:#edf2e7;color:#314929;border:1px solid #bdcbb2;padding:9px 13px}#home-picker .hp-suggest{display:grid;grid-template-columns:1fr 1.4fr;gap:25px 6vw;padding:36px 0;margin-top:24px}#home-picker .hp-suggest-intro h2{font-size:42px;margin:13px 0}#home-picker .hp-suggest-intro .ci-note{max-width:350px}#home-picker .hp-suggest-form{margin:0;grid-template-columns:1fr;gap:17px}#home-picker .hp-suggest-form label{font-size:11px}#home-picker .hp-suggest-form input{padding:13px 12px;border:1px solid #d9ddd3;background:#fcfcfa;margin-top:9px;font-size:13px}#home-picker .hp-suggest-form .ci-button{justify-self:start}#home-picker .hp-suggest-form>.ci-note{margin:0;font-size:10px}#home-picker .hp-suggest-done,#home-picker .hp-suggest>.ci-error,#home-picker .hp-proposals{grid-column:1/-1}#home-picker .hp-suggest-done{background:#f0f4eb;border-left:2px solid #728562;padding:15px 20px;margin:0}#home-picker .hp-proposals{border-top:1px solid #ddd;padding-top:15px}#home-picker .hp-proposals h3{font-size:12px;margin:0 0 12px;color:#7b8374}#home-picker .hp-proposal-row{display:flex;align-items:center;justify-content:space-between;gap:25px;border-bottom:1px solid #eee;padding:15px 0}#home-picker .hp-proposal-row strong{font:300 24px/1.2 'Canela Trial',Georgia,serif}#home-picker .hp-proposal-row .ci-note{margin:7px 0 0;max-width:600px}#home-picker .hp-proposal-row>.ci-link{flex-shrink:0}#home-picker .hp-proposal-row>.ci-link[aria-pressed=true]{color:#435f32;border-color:#607950}#home-picker .hp-collection-title{gap:20px;flex-wrap:wrap}#home-picker .hp-collection-title>.ci-note{margin-left:auto}
+@media(max-width:767px){#home-picker .hp-suggest{grid-template-columns:1fr;padding-top:27px;gap:18px}#home-picker .hp-suggest-intro h2{font-size:36px}#home-picker .hp-personal-card{flex-basis:77px}#home-picker .hp-personal-view .ci-cover{height:115px}#home-picker .hp-option-check{top:137px}#home-picker .hp-collection-title{gap:10px}#home-picker .hp-collection-title>.ci-link{width:100%;text-align:left}#home-picker .hp-proposal-row{gap:16px;align-items:start}#home-picker .hp-proposal-row strong{font-size:22px}#home-picker .hp-proposal-row>.ci-link{font-size:10px}}
+
+/* Browsing and expressing a preference are separate controls. */
+#home-picker .hp-option-view{display:block;width:100%;padding:0;background:none;border:0;text-align:left;color:inherit}
+#home-picker .hp-option-view>span{display:block;font-size:11px;line-height:1.35}
+#home-picker .hp-heart{display:inline-flex;align-items:center;justify-content:center;gap:9px;color:#625953;background:#fff;border:1px solid #dfd9d5;padding:10px;transition:background .18s,color .18s,transform .18s}
+#home-picker .hp-heart svg{width:19px;height:19px;overflow:visible;flex:none}
+#home-picker .hp-heart path{fill:transparent;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;transition:fill .18s}
+#home-picker .hp-heart[aria-pressed=true]{color:#a33946;background:#fff7f6;border-color:#e2babe}
+#home-picker .hp-heart[aria-pressed=true] path{fill:currentColor}
+#home-picker .hp-heart:hover:not(:disabled){background:#f9eeeb;color:#a33946}
+#home-picker .hp-heart:active:not(:disabled){transform:scale(.91)}
+#home-picker .hp-card-heart,#home-picker .hp-poster-heart{position:absolute;right:7px;top:146px;width:40px;height:40px;border-radius:50%;padding:9px;box-shadow:0 2px 8px #0002}
+#home-picker .hp-poster-heart{top:auto;bottom:8px;right:8px}
+#home-picker .hp-poster:hover,#home-picker .hp-poster:active{transform:none}
+#home-picker .hp-option.selected .ci-cover{outline:1px solid #bd7e84;outline-offset:3px}
+#home-picker .hp-add,#home-picker .hp-add[aria-pressed=true]{padding:11px 15px;border-radius:3px;font-size:12px;margin-top:12px}
+#home-picker .hp-personal-remove{width:30px;height:30px;padding:6px;top:-3px;right:-3px;border-radius:50%}
+#home-picker .hp-personal-remove svg{width:15px;height:15px}
+#home-picker .hp-proposal-heart{flex-shrink:0;font-size:11px}
+@media(max-width:767px){#home-picker .hp-card-heart{top:117px}#home-picker .hp-collection-title>.ci-note{width:100%;margin:0}#home-picker .hp-proposal-heart{font-size:10px;padding:9px;gap:6px}}
+#home-picker .hp-film-info{display:flex;align-items:start;gap:25px;justify-content:space-between;margin-top:15px}
+#home-picker .hp-film-copy{flex:1;min-width:0;max-width:430px}
+#home-picker .hp-lineup{font-size:11px;line-height:1.65;margin:0 0 10px;color:#4d4945}
+#home-picker .hp-description{font-size:12px;line-height:1.8;color:#777;margin:0}
+#home-picker .hp-preference{flex-shrink:0;max-width:180px}
+#home-picker .hp-preference .hp-add{margin:0;white-space:nowrap}
+#home-picker .hp-preference-note{display:block;font-size:10px;line-height:1.5;color:#8a817b;margin-top:9px;max-width:170px}
+@media(max-width:767px){#home-picker .hp-film-info{flex-direction:column;gap:18px}#home-picker .hp-preference{max-width:none}#home-picker .hp-preference-note{display:inline-block;margin-left:12px;max-width:155px;vertical-align:middle}}
+
+/* Programme desk: a familiar contact form, with honest public-submission copy. */
+#home-picker .hp-suggest{padding:46px 0;border-top:1px solid #bfc0ba;gap:30px 6vw}
+#home-picker .hp-contact-note{font-size:11px;line-height:1.8;color:#888;max-width:310px;margin-top:24px}
+#home-picker .hp-suggest-form textarea{display:block;width:100%;min-width:0;resize:vertical;min-height:130px;border:1px solid #d9ddd3;border-radius:0;padding:13px 12px;background:#fcfcfa;color:#222;font:13px/1.8 Everett,Arial,sans-serif;margin-top:9px}
+#home-picker .hp-suggest-form textarea:focus-visible{outline:2px solid #42617e;outline-offset:5px}
+@media(max-width:767px){#home-picker .hp-suggest{padding-top:30px}#home-picker .hp-contact-note{margin-top:14px}}
+
+#home-picker .hp-programme-intro{font-size:12px;line-height:1.8;color:#67615c;margin:0 0 17px}
+#home-picker .hp-programme-note{font-size:11px;line-height:1.7;color:#8e7768;margin:0 0 18px}
+#home-picker .hp-film-selector{display:flex;flex-wrap:wrap;gap:6px 17px;border-bottom:1px solid #dedad5;padding-bottom:12px;margin-bottom:18px}
+#home-picker .hp-film-selector button{border:0;border-bottom:1px solid transparent;background:none;padding:4px 0;text-align:left;font-size:11px;line-height:1.5;color:#96908a}
+#home-picker .hp-film-selector button[aria-pressed=true]{border-bottom-color:#3b3530;color:#28221e}
+#home-picker .hp-record-title{font:300 24px/1.2 'Canela Trial',Georgia,serif;margin:0 0 13px}
+#home-picker .hp-film-record .hp-description{font-size:13px;line-height:1.85;color:#68635e}
+#home-picker .hp-credits{display:grid;grid-template-columns:49px minmax(0,1fr);gap:8px 13px;margin:20px 0 13px;font-size:11px;line-height:1.7}
+#home-picker .hp-credits dt{color:#918980}
+#home-picker .hp-credits dd{margin:0;color:#49433e}
+/* Quiet editorial status, aligned with the poster frame. */
+#home-picker .hp-finale-stamp{position:absolute;left:-4px;right:-4px;top:-4px;z-index:2;padding:8px 6px;border-bottom:1px solid #d9d5cc;background:#f4f2ee;color:#38362f;font:400 11px/1.2 Everett,Arial,sans-serif;letter-spacing:.025em;text-align:center;white-space:nowrap}
+/* Vote action: same shell as the heart, green once cast. Finale takes the site red. */
+#home-picker .hp-vote{display:inline-flex;align-items:center;justify-content:center;gap:9px;color:#625953;background:#fff;border:1px solid #dfd9d5;border-radius:3px;padding:11px 15px;font-size:12px;white-space:nowrap;text-decoration:none;transition:background .18s,color .18s,border-color .18s,transform .18s}
+#home-picker .hp-vote svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#home-picker .hp-vote:hover:not(:disabled){background:#f2f6ef;color:#38632c;border-color:#c3d3ba}
+#home-picker .hp-vote:active:not(:disabled){transform:scale(.94)}
+#home-picker .hp-vote[aria-pressed=true]{color:#2f7d3f;background:#f0f8f1;border-color:#b3d6ba}
+#home-picker .hp-vote[aria-pressed=true] circle{fill:#dcefe0}
+#home-picker .hp-vote-finale{color:#80131f;border-color:#e6cace}
+#home-picker .hp-vote-finale:hover{background:#fdf3f4;color:#80131f;border-color:#d8adb3}
+#home-picker .hp-vote-finale.voted circle{fill:#f6e2e4}
+#home-picker .hp-film-source{font-size:10px;color:#92877e;text-decoration:none;border-bottom:1px solid #d9d1ca;padding-bottom:3px}
+#home-picker .hp-proposal-row .ci-note{white-space:pre-line}
+
+/* Film first: no separate theme essay; essential credits before the synopsis. */
+#home-picker .hp-record-title a{color:inherit;text-decoration:none}
+#home-picker .hp-record-title a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px}
+#home-picker .hp-record-meta{display:flex;align-items:start;justify-content:space-between;gap:16px;font-size:11px;line-height:1.7;color:#82776f;margin:-3px 0 18px}
+#home-picker .hp-imdb-rating{flex-shrink:0;text-decoration:none;color:#50483f;font-size:11px}
+#home-picker .hp-imdb-rating small{display:block;text-align:right;color:#aaa096;font-size:9px}
+#home-picker .hp-imdb-credit{font-size:9px;color:#a29a91;margin:0 0 20px}
+#home-picker .hp-imdb-credit a{color:inherit;text-underline-offset:2px}
+#home-picker .hp-film-byline{color:inherit;text-decoration:none}
+#home-picker a.hp-film-byline:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* Auto-save: one quiet line, plus the route to the shared standings. */
+#home-picker .hp-autosave{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:18px;margin-top:22px}
+#home-picker .hp-autosave-note{font-size:11px;line-height:1.7;color:#8a817b}
+
+/* Descriptions use the full film column; the preference control follows the description. */
+#home-picker .hp-film-info{flex-direction:column;gap:20px}
+#home-picker .hp-film-copy{max-width:none;width:100%}
+#home-picker .hp-film-record .hp-description{font-size:14px;line-height:1.85}
+#home-picker .hp-preference{max-width:none;display:flex;align-items:center;flex-wrap:wrap;gap:13px}
+#home-picker .hp-preference-note{max-width:none;margin:0}
+#home-picker .hp-suggestion-modes{display:flex;gap:24px;border-bottom:1px solid #dedbd4;margin-bottom:20px}
+#home-picker .hp-suggestion-modes button{padding:8px 0;border:0;border-bottom:1px solid transparent;background:none;color:#8c867f;font-size:12px}
+#home-picker .hp-suggestion-modes button[aria-pressed=true]{border-color:#2d2b27;color:#292723}
+#home-picker .hp-search-label{display:block;font-size:11px;color:#79736a}
+#home-picker .hp-movie-query{font-size:18px!important;background:#fff!important;padding:15px!important}
+#home-picker .hp-search-status{font-size:11px;color:#888076;line-height:1.6;margin:9px 0}
+#home-picker .hp-search-results{border:1px solid #dad6ce;max-height:365px;overflow:auto;background:#fff}
+#home-picker .hp-search-results[hidden]{display:none}
+#home-picker .hp-search-result{display:flex;align-items:center;gap:15px;width:100%;padding:16px;border:0;border-bottom:1px solid #ece9e3;background:#fff;text-align:left;color:#28241f}
+#home-picker .hp-search-result:last-child{border-bottom:0}
+#home-picker .hp-search-result:hover,#home-picker .hp-search-result[aria-selected=true]{background:#f3f1ea}
+#home-picker .hp-result-year{font-size:11px;color:#8a7f71;flex:0 0 33px}
+#home-picker .hp-result-copy{flex:1;min-width:0}
+#home-picker .hp-result-copy strong{display:block;font:300 22px/1.2 'Canela Trial',Georgia,serif}
+#home-picker .hp-result-copy small{display:block;font-size:10px;line-height:1.6;color:#8b8277;margin-top:6px}
+#home-picker .hp-result-arrow{color:#9c9286}
+#home-picker .hp-chosen-movie{border:1px solid #dcd6cc;background:#f7f5ef;padding:23px}
+#home-picker .hp-chosen-movie h3{font:300 30px/1.2 'Canela Trial',Georgia,serif;margin:10px 0}
+#home-picker .hp-chosen-movie p{font-size:11px;color:#7c7267;line-height:1.7}
+#home-picker .hp-chosen-movie .ci-link{font-size:11px;margin-right:20px}
+#home-picker .hp-recommender{display:inline-flex;align-items:center;gap:9px;font-size:11px;color:#827b72;margin-top:13px}
+#home-picker .hp-recommender img{width:30px;height:30px;object-fit:cover;border-radius:50%}
+#home-picker .hp-recommender img.is-transparent{object-fit:contain;border-radius:0}
+#home-picker .hp-option .hp-recommender{position:absolute;top:7px;left:7px;margin:0;background:#ffffffed;border-radius:50%;padding:3px;box-shadow:0 1px 5px #0002}
+#home-picker .hp-option .hp-recommender img{width:26px;height:26px}
+#home-picker .hp-option .hp-recommender span{display:none}
+@media(max-width:767px){#home-picker .hp-preference{flex-wrap:wrap;gap:8px}#home-picker .hp-preference-note{margin:0}#home-picker .hp-search-result{padding:13px;gap:10px}}
+/* Search results: recognisable film, year, filmmaker and cast. */
+.hp-search-result{align-items:center;grid-template-columns:46px minmax(0,1fr) 20px;gap:15px;min-height:94px}
+.hp-result-art{position:relative;display:flex;align-items:center;justify-content:center;width:46px;min-height:68px;background:#eeeae4;overflow:hidden}
+.hp-result-art img{width:46px;height:68px;object-fit:cover;display:block}
+.hp-result-art .hp-result-year{position:absolute;bottom:0;left:0;right:0;text-align:center;background:#f8f6f0ed;font-size:10px;padding:2px 0;color:#554d43}
+.hp-result-copy{min-width:0}.hp-result-copy small{display:block;white-space:normal}.hp-result-cast{color:#5c5852}
+.hp-chosen-poster{width:75px;height:112px;object-fit:cover;float:left;margin:0 20px 12px 0}.hp-chosen-movie:after{content:'';display:block;clear:both}.hp-movie-credit{font-size:12px!important}
+.hp-suggestion-modes{overflow-anchor:none}
+#home-picker .hp-suggestion-likes{display:block;font-size:11px;color:#827970;margin-top:8px}
+#home-picker [data-collection="suggestions"]{margin-top:30px;padding-top:25px;border-top:1px solid #dedbd4}
+/* Heart updates keep the scene and scroll anchor mounted. */
+#home-picker{overflow-anchor:none}
+#home-picker .hp-personal-shelf{min-height:270px}
+#home-picker .hp-personal-view>span{min-height:42px;max-height:42px;overflow:hidden}
+#home-picker .hp-preference-note{min-height:30px}
+#home-picker .hp-result-existing,#home-picker .hp-existing-movie{color:#58684a;font-size:11px}
+/* Confirmed screening dates only; same artwork and browsing remain available. */
+#home-picker .ci-cover.is-scheduled{position:relative}
+#home-picker .hp-scheduled-cover{position:absolute;left:8px;bottom:8px;padding:5px 8px;background:#f8f6ee;color:#42503c;font:11px/1.2 Everett,Arial,sans-serif;box-shadow:0 1px 5px #0002;white-space:nowrap}
+#home-picker .hp-scheduled-date{display:block;width:fit-content;border-top:1px solid #d8ddd3;padding-top:12px;margin:10px 0 15px;color:#526249;font:12px/1.6 Everett,Arial,sans-serif}
+.picker-transfer-gate{display:block!important;padding:48px 4vw!important;min-height:300px!important}.picker-transfer-gate h2{font:40px 'Canela Trial',Georgia,serif}.picker-transfer-gate p{font:14px/1.7 Everett,Arial,sans-serif;max-width:600px}.picker-transfer-gate button{border:1px solid #ccc;background:white;padding:12px 18px;margin:10px 14px 0 0;cursor:pointer}
+
+.hp-theme-image{display:grid;gap:12px;padding:18px 0;border-top:1px solid #dedbd5}.hp-theme-image input[type=file]{display:block;width:100%;margin-top:10px;font:inherit;font-size:13px}.hp-theme-image input::file-selector-button{border:1px solid #c8c4bd;background:#fff;padding:10px 14px;margin-right:12px;font:inherit;cursor:pointer}.hp-theme-image-preview{display:block;max-width:100%;width:180px;height:220px;object-fit:contain;background:#efede8;border-radius:2px}.hp-theme-image .ci-link{justify-self:start}
+/* Hide the native horizontal scrollbar on the cover rails and drive them with explicit
+   arrow controls instead. Appended as overrides so the base .hp-rail rule is untouched. */
+#home-picker .hp-rail{scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain}
+#home-picker .hp-rail::-webkit-scrollbar{width:0;height:0;display:none}
+#home-picker .hp-rail-nav{display:flex;align-items:center;gap:8px;margin-left:14px}
+#home-picker .hp-rail-nav[hidden]{display:none}
+#home-picker .hp-rail-arrow{width:30px;height:30px;padding:0;border:1px solid #cfcfc9;border-radius:50%;background:#fff;color:#242424;font-size:13px;line-height:1;display:grid;place-items:center;transition:background .18s,border-color .18s,transform .15s}
+#home-picker .hp-rail-arrow:hover:not(:disabled){background:#f1f1ec;border-color:#9c9c94}
+#home-picker .hp-rail-arrow:active:not(:disabled){transform:scale(.93)}
+#home-picker .hp-rail-arrow:disabled{opacity:.3;cursor:default}
+@media (max-width:760px){#home-picker .hp-rail-nav{margin-left:auto;gap:14px}
+/* Keep the 30px visual, but give thumbs a full 44px target. gap:14px makes the pitch
+   exactly 44px so adjacent hit areas meet without overlapping. */
+#home-picker .hp-rail-arrow{position:relative}
+#home-picker .hp-rail-arrow::after{content:'';position:absolute;top:50%;left:50%;width:44px;height:44px;transform:translate(-50%,-50%)}}
+
+/* Confirmed preferences, separate from the later secret ballot. */
+#home-picker .hp-supporters{position:absolute;left:20px;bottom:20px;max-width:calc(100% - 220px);z-index:2}
+#home-picker .hp-supporter-trigger{display:flex;align-items:center;gap:9px;flex-wrap:wrap;max-width:100%;min-height:44px;padding:8px 11px;border:1px solid #e4e0d8;border-radius:2px;background:#fff;color:#292821;text-align:left;box-shadow:0 1px 8px #0000000d}
+#home-picker .hp-supporter-trigger:hover{background:#f8f7f3}
+#home-picker .hp-supporter-faces{display:flex;gap:3px}
+#home-picker .hp-supporter{display:block;width:28px;height:28px;object-fit:contain;background:#f3f1ea;border:1px solid #deded8;border-radius:50%;flex-shrink:0}
+#home-picker .hp-supporter-count{font:13px/1.35 Everett,Arial,sans-serif}
+#home-picker .hp-supporter-more{margin-left:auto;color:#807b70;font-size:15px}
+#home-picker .hp-supporter-popover{position:fixed;inset:auto;margin:0;width:272px;max-width:calc(100vw - 24px);max-height:min(340px,calc(100dvh - 24px));overflow:auto;padding:12px 16px 16px;border:1px solid #dcd8cf;border-radius:3px;background:#fff;color:#292821;box-shadow:0 6px 24px #00000015;font:14px/1.5 Everett,Arial,sans-serif}
+#home-picker .hp-supporter-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e9e6df;padding-bottom:8px;margin-bottom:10px}
+#home-picker .hp-supporter-close{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border:0;background:transparent;color:#6d695f;font-size:22px}
+#home-picker .hp-supporter-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+#home-picker .hp-supporter-list li{display:flex;align-items:center;gap:10px;overflow-wrap:anywhere}
+#home-picker .hp-supporter-anonymous{margin:12px 0 0;color:#706d65;font-size:13px}
+@media(max-width:767px){#home-picker .hp-supporters{left:10px;bottom:10px;max-width:calc(100% - 146px)}#home-picker .hp-supporter-trigger{gap:6px;padding:8px 9px}#home-picker .hp-supporter{width:25px;height:25px}}
+
+/* The faces are the affordance; names appear without extra interface copy. */
+#home-picker .hp-supporter-trigger{border:0;box-shadow:none;padding:6px 9px;gap:7px}
+#home-picker .hp-supporter-trigger:hover{background:#fff}
+#home-picker .hp-supporter-popover{width:220px;padding:14px 16px;border:1px solid #e5e5e5;border-radius:0;box-shadow:0 4px 16px #0000000a}
+#home-picker .hp-supporter-heading{position:absolute;top:3px;right:3px;border:0;margin:0;padding:0}
+#home-picker .hp-supporter-close{width:28px;height:28px;font-size:18px;color:#777}
+#home-picker .hp-supporter-list{padding-right:20px;gap:8px}
+#home-picker .hp-supporter-anonymous{margin:10px 20px 0 0;color:#777;font-size:12px}

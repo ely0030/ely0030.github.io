@@ -1,0 +1,9 @@
+.os-study{position:relative;width:100%;height:100%;min-height:320px;overflow:hidden;background:#f4f2ed;touch-action:pan-y}
+.os-canvas{display:block;width:100%;height:100%;outline-offset:-6px;cursor:grab;touch-action:pan-y}
+.os-canvas:active{cursor:grabbing}.os-canvas:focus-visible{outline:1px solid #222}
+.os-control{position:absolute;right:22px;bottom:20px;z-index:2;font:400 11px/1.3 Everett,Arial,sans-serif;background:#ffffffe6;border:1px solid #ddd8d0;padding:10px 16px;color:#333;cursor:pointer}
+.os-range{position:absolute;left:26px;right:26px;bottom:20px;display:flex;align-items:center;gap:20px;font:400 10px Everett,Arial,sans-serif;color:#666}
+.os-range input{appearance:none;flex:1;height:1px;background:#aaa;accent-color:#222;cursor:ew-resize;min-width:0}
+.os-range input::-webkit-slider-thumb{appearance:none;width:28px;height:18px;border:1px solid #999;border-radius:10px;background:#f9f8f5;box-shadow:0 2px 4px #0001}
+.os-range output{min-width:25px;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.os-study{min-height:300px}.os-control{right:14px;bottom:14px;font-size:10px}.os-range{left:18px;right:18px;gap:12px}}

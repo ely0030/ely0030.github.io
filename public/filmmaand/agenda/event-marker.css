@@ -1,0 +1,5 @@
+/* Identical scheduled-night ink, including selected dates. */
+#agenda .ag-mini-calendar .ac-day>.ac-event-dot,
+#agenda .ag-mini-calendar .ac-day.selected>.ac-event-dot,
+#films #home-picker .films-calendar .ac-day>.ac-event-dot,
+#films #home-picker .films-calendar .ac-day.selected>.ac-event-dot{position:absolute;inset:-3px;width:auto;height:auto;border-radius:0;background:#a02e2b;opacity:1;pointer-events:none;z-index:2;mask:var(--event-scribble) center/100% 100% no-repeat;transform:rotate(var(--event-scribble-angle,-4deg))}

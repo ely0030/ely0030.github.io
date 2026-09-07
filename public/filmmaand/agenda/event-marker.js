@@ -1,0 +1,5 @@
+/* Shared scheduled-night marker: Amsterdam date + "|" + night.id. */
+(()=>{
+function eventScribble(key){let seed=2166136261;for(const c of key)seed=Math.imul(seed^c.charCodeAt(0),16777619)>>>0;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296},v=(a,b)=>(a+random()*(b-a)).toFixed(1);const a=`M${v(3,9)} ${v(3,12)} C${v(7,17)} ${v(11,19)} ${v(17,26)} ${v(20,29)} ${v(29,37)} ${v(30,40)}`,b=`M${v(28,37)} ${v(2,11)} C${v(22,29)} ${v(13,21)} ${v(10,19)} ${v(20,31)} ${v(3,11)} ${v(32,42)}`;const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 44"><path d="${a}" fill="none" stroke="black" stroke-width="${v(3.7,5.5)}" stroke-linecap="round"/><path d="${b}" fill="none" stroke="black" stroke-width="${v(3.3,5.2)}" stroke-linecap="round"/><path d="${a}" transform="translate(${v(-1.4,1.4)} ${v(-.8,.8)})" fill="none" stroke="black" stroke-width="1.1" stroke-linecap="round" opacity=".45"/></svg>`;return {image:'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")',rotation:v(-10,9)+'deg'}}
+window.filmmaandEventScribble=eventScribble;
+})();

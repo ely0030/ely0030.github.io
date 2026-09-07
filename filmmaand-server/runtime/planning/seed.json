@@ -1,0 +1,101 @@
+{
+  "id": "checkin-lab",
+  "title": "September bij Alec",
+  "window": {
+    "start": "2026-09-01",
+    "end": "2026-09-30"
+  },
+  "maxChoices": 17,
+  "options": [
+    {
+      "id": "blade",
+      "title": "Blade Runner 1 + 2",
+      "detail": "2 films \u00b7 ca. 4u41"
+    },
+    {
+      "id": "matrix",
+      "title": "The Matrix Trilogy",
+      "detail": "3 films \u00b7 ca. 6u43"
+    },
+    {
+      "id": "lotr",
+      "title": "The Lord of the Rings",
+      "detail": "3 films \u00b7 editie te kiezen"
+    },
+    {
+      "id": "indiana",
+      "title": "Indiana Jones Marathon",
+      "detail": "3 films \u00b7 ca. 6 uur",
+      "lineup": [
+        "Raiders of the Lost Ark",
+        "The Temple of Doom",
+        "The Last Crusade"
+      ]
+    },
+    {
+      "id": "synecdoche",
+      "title": "Synecdoche + Megalopolis",
+      "detail": "2 films \u00b7 ca. 4u22"
+    },
+    {
+      "id": "bahubali",
+      "title": "Bahubali 1 + 2",
+      "detail": "2 films \u00b7 ca. 5u26"
+    },
+    {
+      "id": "dress",
+      "title": "Dress to Impress",
+      "detail": "Roblox \u00b7 speelduur vrij"
+    },
+    {
+      "id": "redball",
+      "title": "Redball 5",
+      "detail": "Details volgen"
+    },
+    {
+      "id": "wildcard",
+      "title": "De vrije keuze",
+      "detail": "Jouw suggestie?"
+    },
+    {
+      "id": "cronenberg",
+      "title": "Cronenberg night",
+      "detail": "Selectie volgt"
+    },
+    {
+      "id": "girlboss",
+      "title": "Girlboss night",
+      "detail": "Mogelijke double bill"
+    },
+    {
+      "id": "king",
+      "title": "King of New York",
+      "detail": "Thema en pairing open"
+    },
+    {
+      "id": "twinpeaks",
+      "title": "Twin Peaks: Fire Walk with Me",
+      "detail": "Film + eventueel extra\u2019s"
+    },
+    {
+      "id": "anime",
+      "title": "Ghost in the Shell + Akira",
+      "detail": "2 films \u00b7 versies volgen"
+    },
+    {
+      "id": "lynch",
+      "title": "David Lynch night",
+      "detail": "Selectie volgt"
+    },
+    {
+      "id": "fear",
+      "title": "Fear and Loathing + \u2026",
+      "detail": "Tweede film gezocht"
+    },
+    {
+      "id": "horror",
+      "title": "Horror night",
+      "detail": "Selectie volgt"
+    }
+  ]
+}

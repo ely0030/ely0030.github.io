@@ -1,0 +1,802 @@
+{
+  "id": "home-picker-lab",
+  "title": "Alec Filmmaand",
+  "window": {
+    "start": "2026-09-01",
+    "end": "2026-09-30"
+  },
+  "maxChoices": 22,
+  "options": [
+    {
+      "id": "blade",
+      "title": "Blade Runner 1 + 2",
+      "detail": "2 films · ca. 4u41"
+    },
+    {
+      "id": "matrix",
+      "title": "The Matrix Trilogy",
+      "detail": "3 films · ca. 6u43"
+    },
+    {
+      "id": "lotr",
+      "title": "The Lord of the Rings",
+      "detail": "3 films · editie te kiezen"
+    },
+    {
+      "id": "indiana",
+      "title": "Indiana Jones Marathon",
+      "detail": "3 films · ca. 6 uur",
+      "lineup": [
+        "Raiders of the Lost Ark",
+        "The Temple of Doom",
+        "The Last Crusade"
+      ]
+    },
+    {
+      "id": "synecdoche",
+      "title": "Synecdoche + Megalopolis",
+      "detail": "2 films · ca. 4u22"
+    },
+    {
+      "id": "bahubali",
+      "title": "Bahubali 1 + 2",
+      "detail": "2 films · ca. 5u26"
+    },
+    {
+      "id": "dress",
+      "title": "Dress to Impress",
+      "detail": "Roblox · speelduur vrij"
+    },
+    {
+      "id": "redball",
+      "title": "Redball 5",
+      "detail": "Details volgen"
+    },
+    {
+      "id": "cronenberg",
+      "title": "The Fly + Videodrome",
+      "detail": "2 films · The Fly + Videodrome",
+      "lineup": [
+        "The Fly",
+        "Videodrome"
+      ]
+    },
+    {
+      "id": "girlboss",
+      "title": "Girlboss night",
+      "detail": "Mogelijke double bill"
+    },
+    {
+      "id": "king",
+      "title": "King of New York",
+      "detail": "Thema en pairing open"
+    },
+    {
+      "id": "twinpeaks",
+      "title": "Twin Peaks: Fire Walk with Me",
+      "detail": "Film + eventueel extra’s"
+    },
+    {
+      "id": "anime",
+      "title": "Ghost in the Shell + Akira",
+      "detail": "2 films · versies volgen"
+    },
+    {
+      "id": "lynch",
+      "title": "David Lynch night",
+      "detail": "Selectie volgt"
+    },
+    {
+      "id": "fear",
+      "title": "Fear and Loathing + …",
+      "detail": "Tweede film gezocht"
+    },
+    {
+      "id": "horror",
+      "title": "Horror night",
+      "detail": "Selectie volgt"
+    },
+    {
+      "id": "racing",
+      "title": "Redline + Speed Racer",
+      "detail": "2 films · Redline (2009) + Speed Racer (2008)",
+      "lineup": [
+        "Redline",
+        "Speed Racer"
+      ]
+    },
+    {
+      "id": "batman",
+      "title": "Batman Trilogy",
+      "detail": "3 films · ca. 7u36",
+      "lineup": [
+        "Batman Begins",
+        "The Dark Knight",
+        "The Dark Knight Rises"
+      ]
+    },
+    {
+      "id": "kungfupanda",
+      "title": "Kungfu Panda 1 + 2",
+      "detail": "2 films · ca. 3u02",
+      "lineup": [
+        "Kung Fu Panda",
+        "Kung Fu Panda 2"
+      ]
+    },
+    {
+      "id": "cooking",
+      "title": "Cooking Night",
+      "detail": "2 films · Chef (2014) + Ratatouille (2007) · ca. 3u45",
+      "lineup": [
+        "Chef",
+        "Ratatouille"
+      ]
+    },
+    {
+      "id": "tarkovsky",
+      "title": "Tarkovsky Classics",
+      "detail": "2 films · Solaris (1972) + Stalker (1979) · ca. 5u29",
+      "lineup": [
+        "Solaris",
+        "Stalker"
+      ]
+    },
+    {
+      "id": "suggestion-943c9a9e114d456955a2",
+      "title": "Nachttrein: Before Sunrise + Before Sunset (voorbeeld)",
+      "detail": "Voorbeeldsuggestie: twee gesprekken, twee steden, negen jaar ertussen.",
+      "kind": "suggestion",
+      "createdAt": "2026-09-07T16:17:59.277Z",
+      "recommender": {
+        "name": "Bas (voorbeeld)",
+        "avatarId": 4
+      }
+    },
+    {
+      "id": "suggestion-601bb06695c238c49fb6",
+      "title": "Perfect Days (voorbeeld)",
+      "detail": "Voorbeeldsuggestie van Fre: een kleine film over aandacht voor gewone dagen.",
+      "kind": "suggestion",
+      "createdAt": "2026-09-07T16:17:59.277Z",
+      "recommender": {
+        "name": "Fre (voorbeeld)",
+        "avatarId": 8
+      }
+    },
+    {
+      "id": "suggestion-8fdd1f078f42fe775b98",
+      "title": "Stop-motionavond: Fantastic Mr. Fox + Isle of Dogs (voorbeeld)",
+      "detail": "Voorbeeldsuggestie: twee eigenzinnige animatiefilms van Wes Anderson.",
+      "kind": "suggestion",
+      "createdAt": "2026-09-07T16:17:59.277Z",
+      "recommender": {
+        "name": "Sjoerd (voorbeeld)",
+        "avatarId": 25
+      }
+    }
+  ],
+  "responses": {
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6": {
+      "revision": 1,
+      "start": "2026-09-11",
+      "end": "2026-09-19",
+      "dates": [
+        "2026-09-11",
+        "2026-09-19"
+      ],
+      "choices": [
+        "blade",
+        "cooking",
+        "suggestion-943c9a9e114d456955a2"
+      ],
+      "name": "Bas (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "603d89c8b86383707c8f66d380bc933a77059f01782cae9727c0cded2363eccb": {
+      "revision": 1,
+      "start": "2026-09-19",
+      "end": "2026-09-26",
+      "dates": [
+        "2026-09-19",
+        "2026-09-26"
+      ],
+      "choices": [
+        "blade",
+        "matrix",
+        "cooking"
+      ],
+      "name": "Koen (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "09a64cac0b1894e0d94951732e4a730f01ae085f04beadc241c240bedf6adc2a": {
+      "revision": 1,
+      "start": "2026-09-11",
+      "end": "2026-09-19",
+      "dates": [
+        "2026-09-11",
+        "2026-09-19"
+      ],
+      "choices": [
+        "blade",
+        "lynch",
+        "suggestion-601bb06695c238c49fb6"
+      ],
+      "name": "Fre (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6": {
+      "revision": 1,
+      "start": "2026-09-19",
+      "end": "2026-09-19",
+      "dates": [
+        "2026-09-19"
+      ],
+      "choices": [
+        "blade",
+        "matrix",
+        "suggestion-943c9a9e114d456955a2"
+      ],
+      "name": "Ruben (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "a51f82ed370dbf46c9c6d78b9b7b9a00855a80c8641242a548389d1adb4870d6": {
+      "revision": 1,
+      "start": "2026-09-11",
+      "end": "2026-09-26",
+      "dates": [
+        "2026-09-11",
+        "2026-09-26"
+      ],
+      "choices": [
+        "cooking",
+        "matrix"
+      ],
+      "name": "Lucas (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "f3c09607d44227f884d55fc0f873ec036f4276d0b2262fd9548735be22b537d0": {
+      "revision": 1,
+      "start": "2026-09-19",
+      "end": "2026-09-26",
+      "dates": [
+        "2026-09-19",
+        "2026-09-26"
+      ],
+      "choices": [
+        "blade",
+        "matrix"
+      ],
+      "name": "Joeri (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d": {
+      "revision": 1,
+      "start": "2026-09-26",
+      "end": "2026-09-26",
+      "dates": [
+        "2026-09-26"
+      ],
+      "choices": [
+        "cronenberg",
+        "tarkovsky",
+        "suggestion-8fdd1f078f42fe775b98"
+      ],
+      "name": "Sjoerd (voorbeeld)",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    }
+  },
+  "receipts": {
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6:fa068ef9-eef0-45a0-9303-82a969caf7f4": {
+      "fingerprint": "8a8427ff03f1f0e7721e6d42362169c41b2cb53a72f651e3d1d60b45d6225a7a",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Bas (voorbeeld)",
+            "avatarId": 4
+          }
+        }
+      }
+    },
+    "603d89c8b86383707c8f66d380bc933a77059f01782cae9727c0cded2363eccb:87992538-4d7f-4ed1-94f1-1055a341d887": {
+      "fingerprint": "de33f59e6b5fdd9794bcc613d157ca89dc09e0a3eba6068304f54df060678587",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Koen (voorbeeld)",
+            "avatarId": 7
+          }
+        }
+      }
+    },
+    "09a64cac0b1894e0d94951732e4a730f01ae085f04beadc241c240bedf6adc2a:9d7d465f-ea85-402b-9368-93cdb0fd03d2": {
+      "fingerprint": "88c3473aed76afb4ce7e32e761b4bde421be0d179d4e24bfafb744264c9976a1",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Fre (voorbeeld)",
+            "avatarId": 8
+          }
+        }
+      }
+    },
+    "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6:b657fda7-5dda-472c-b01b-b9ae20733772": {
+      "fingerprint": "8b192e940e39e919a20c92fa2018446f961abcd1e81d9d89ceb90d4a82018620",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Ruben (voorbeeld)",
+            "avatarId": 9
+          }
+        }
+      }
+    },
+    "a51f82ed370dbf46c9c6d78b9b7b9a00855a80c8641242a548389d1adb4870d6:de8c60f8-ed44-46a9-8392-1bdfac3f0515": {
+      "fingerprint": "4e7b309f4ab4b621cdf51014e2cc054567db0885198088a01fa2fc46cf07eb44",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Lucas (voorbeeld)",
+            "avatarId": 10
+          }
+        }
+      }
+    },
+    "f3c09607d44227f884d55fc0f873ec036f4276d0b2262fd9548735be22b537d0:3056f2c8-24a2-40fc-bd5b-9931b7426ff3": {
+      "fingerprint": "8b9a3f540a4464e41d64ac5da28955d202219b7126c7e521a43a13fed4aaa565",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Joeri (voorbeeld)",
+            "avatarId": 12
+          }
+        }
+      }
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d:43b9974d-0c52-4ae6-9b9c-4a79c31f0e1c": {
+      "fingerprint": "da0c509209eb1d965ea9108fe8aef733df8610b9ce00cc8e55682a5cb073f5b6",
+      "result": {
+        "profile": {
+          "revision": 1,
+          "recommender": {
+            "name": "Sjoerd (voorbeeld)",
+            "avatarId": 25
+          }
+        }
+      }
+    },
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6:b706f2af-4c6c-4f1b-9c36-37a502689bd2": {
+      "fingerprint": "f94d807285d867c678e337285bfb4f4e4e5c1a0691c53d675de9d553d9f6c13d",
+      "result": {
+        "option": {
+          "id": "suggestion-943c9a9e114d456955a2",
+          "title": "Nachttrein: Before Sunrise + Before Sunset (voorbeeld)",
+          "detail": "Voorbeeldsuggestie: twee gesprekken, twee steden, negen jaar ertussen.",
+          "kind": "suggestion",
+          "createdAt": "2026-09-07T16:17:59.277Z",
+          "recommender": {
+            "name": "Bas (voorbeeld)",
+            "avatarId": 4
+          }
+        }
+      }
+    },
+    "09a64cac0b1894e0d94951732e4a730f01ae085f04beadc241c240bedf6adc2a:34f57751-d353-41c9-bfbb-eddd95f5350c": {
+      "fingerprint": "4fa3dc661cc763eb09384363fb0a32a93ea59f99bc66a0ef7c3301a5018d6328",
+      "result": {
+        "option": {
+          "id": "suggestion-601bb06695c238c49fb6",
+          "title": "Perfect Days (voorbeeld)",
+          "detail": "Voorbeeldsuggestie van Fre: een kleine film over aandacht voor gewone dagen.",
+          "kind": "suggestion",
+          "createdAt": "2026-09-07T16:17:59.277Z",
+          "recommender": {
+            "name": "Fre (voorbeeld)",
+            "avatarId": 8
+          }
+        }
+      }
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d:931d4c72-7545-4323-a321-9b39671be59e": {
+      "fingerprint": "dda9a52b57f52a71ca30bb19752d752637ddbd932c4107085378dc21c1882b2e",
+      "result": {
+        "option": {
+          "id": "suggestion-8fdd1f078f42fe775b98",
+          "title": "Stop-motionavond: Fantastic Mr. Fox + Isle of Dogs (voorbeeld)",
+          "detail": "Voorbeeldsuggestie: twee eigenzinnige animatiefilms van Wes Anderson.",
+          "kind": "suggestion",
+          "createdAt": "2026-09-07T16:17:59.277Z",
+          "recommender": {
+            "name": "Sjoerd (voorbeeld)",
+            "avatarId": 25
+          }
+        }
+      }
+    },
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6:1ba09069-bca3-4fc9-a19c-5420c2615978": {
+      "fingerprint": "d355337dadaefe6bccd891f950f64a7d7d0df56905d13eb84bebfd15d156d58d",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-11",
+          "end": "2026-09-19",
+          "dates": [
+            "2026-09-11",
+            "2026-09-19"
+          ],
+          "choices": [
+            "blade",
+            "cooking",
+            "suggestion-943c9a9e114d456955a2"
+          ],
+          "name": "Bas (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "603d89c8b86383707c8f66d380bc933a77059f01782cae9727c0cded2363eccb:eefa43f0-b21f-4d0e-8652-93f147523624": {
+      "fingerprint": "71a0126bdfe8e280ab06bf8eae7f8ca5560613b8b529a1d42bac82e48dfcadd1",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-19",
+          "end": "2026-09-26",
+          "dates": [
+            "2026-09-19",
+            "2026-09-26"
+          ],
+          "choices": [
+            "blade",
+            "matrix",
+            "cooking"
+          ],
+          "name": "Koen (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "09a64cac0b1894e0d94951732e4a730f01ae085f04beadc241c240bedf6adc2a:2fdd0d54-f1d6-4b9b-a230-60534baf8a18": {
+      "fingerprint": "f6b9913f8145eacfd706716a6bfb02d133c4aa1c0cb32cca8c0318cbd89d24c1",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-11",
+          "end": "2026-09-19",
+          "dates": [
+            "2026-09-11",
+            "2026-09-19"
+          ],
+          "choices": [
+            "blade",
+            "lynch",
+            "suggestion-601bb06695c238c49fb6"
+          ],
+          "name": "Fre (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6:0b53fb75-5f3f-49b0-bebd-06db301cba45": {
+      "fingerprint": "b596d669301029c413213d39ac84c1f8b367e1dd1e6b6939843b8c19ae593fe4",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-19",
+          "end": "2026-09-19",
+          "dates": [
+            "2026-09-19"
+          ],
+          "choices": [
+            "blade",
+            "matrix",
+            "suggestion-943c9a9e114d456955a2"
+          ],
+          "name": "Ruben (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "a51f82ed370dbf46c9c6d78b9b7b9a00855a80c8641242a548389d1adb4870d6:74c3fcc5-29cf-4b04-bfbe-d592f250015a": {
+      "fingerprint": "054508cb05998603b4e44a3882ac2df9310dd68a08e44983e9b51171d1efe755",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-11",
+          "end": "2026-09-26",
+          "dates": [
+            "2026-09-11",
+            "2026-09-26"
+          ],
+          "choices": [
+            "cooking",
+            "matrix"
+          ],
+          "name": "Lucas (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "f3c09607d44227f884d55fc0f873ec036f4276d0b2262fd9548735be22b537d0:e9ac7a7b-de4d-42b4-8a78-eb1c8767673e": {
+      "fingerprint": "e13a88b30a94c7041e7a76dccacaecaca37c2fc694f3c48f854ba8d17dcec07c",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-19",
+          "end": "2026-09-26",
+          "dates": [
+            "2026-09-19",
+            "2026-09-26"
+          ],
+          "choices": [
+            "blade",
+            "matrix"
+          ],
+          "name": "Joeri (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d:be0d3883-4248-4311-816d-0e9824a0c1ee": {
+      "fingerprint": "cb4cc4390dd2b6a092b332109d762fae862e23cf766b6f43975e31c3e3815f78",
+      "result": {
+        "response": {
+          "revision": 1,
+          "start": "2026-09-26",
+          "end": "2026-09-26",
+          "dates": [
+            "2026-09-26"
+          ],
+          "choices": [
+            "cronenberg",
+            "tarkovsky",
+            "suggestion-8fdd1f078f42fe775b98"
+          ],
+          "name": "Sjoerd (voorbeeld)",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        }
+      }
+    },
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6:74afcc9b-a13c-4ad1-8fa5-ef2a15d8b200": {
+      "fingerprint": "c06f6e65162494592bdf0d5dd0ac46706d12ef9a91b62d439e763580af3a7c4f",
+      "result": {
+        "own": {
+          "revision": 1,
+          "optionId": "blade",
+          "date": "2026-09-19",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        },
+        "proposals": [
+          {
+            "optionId": "blade",
+            "date": "2026-09-19",
+            "count": 1,
+            "people": [
+              {
+                "name": "Bas (voorbeeld)",
+                "avatarId": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6:a6d760a5-1bca-4f1f-a731-83897469fafb": {
+      "fingerprint": "c06f6e65162494592bdf0d5dd0ac46706d12ef9a91b62d439e763580af3a7c4f",
+      "result": {
+        "own": {
+          "revision": 1,
+          "optionId": "blade",
+          "date": "2026-09-19",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        },
+        "proposals": [
+          {
+            "optionId": "blade",
+            "date": "2026-09-19",
+            "count": 2,
+            "people": [
+              {
+                "name": "Bas (voorbeeld)",
+                "avatarId": 4
+              },
+              {
+                "name": "Ruben (voorbeeld)",
+                "avatarId": 9
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d:6d8ef8e4-62a9-4b7c-9e59-62b5286c0ca2": {
+      "fingerprint": "39d910ac1d9432239e8996abb0fe5c3a000e3b167cdad19a3ff2e75f3bea418e",
+      "result": {
+        "own": {
+          "revision": 1,
+          "optionId": "tarkovsky",
+          "date": "2026-09-26",
+          "updatedAt": "2026-09-07T16:17:59.277Z"
+        },
+        "proposals": [
+          {
+            "optionId": "blade",
+            "date": "2026-09-19",
+            "count": 2,
+            "people": [
+              {
+                "name": "Bas (voorbeeld)",
+                "avatarId": 4
+              },
+              {
+                "name": "Ruben (voorbeeld)",
+                "avatarId": 9
+              }
+            ]
+          },
+          {
+            "optionId": "tarkovsky",
+            "date": "2026-09-26",
+            "count": 1,
+            "people": [
+              {
+                "name": "Sjoerd (voorbeeld)",
+                "avatarId": 25
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "confirmation": null,
+  "version": 26,
+  "round": {
+    "shortlist": [
+      "blade",
+      "matrix",
+      "lotr"
+    ],
+    "derived": false,
+    "since": "2026-09-07T16:17:59.276Z"
+  },
+  "roundSchedule": {
+    "date": "2026-09-09"
+  },
+  "displayProfiles": {
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6": {
+      "revision": 1,
+      "recommender": {
+        "name": "Bas (voorbeeld)",
+        "avatarId": 4
+      }
+    },
+    "603d89c8b86383707c8f66d380bc933a77059f01782cae9727c0cded2363eccb": {
+      "revision": 1,
+      "recommender": {
+        "name": "Koen (voorbeeld)",
+        "avatarId": 7
+      }
+    },
+    "09a64cac0b1894e0d94951732e4a730f01ae085f04beadc241c240bedf6adc2a": {
+      "revision": 1,
+      "recommender": {
+        "name": "Fre (voorbeeld)",
+        "avatarId": 8
+      }
+    },
+    "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6": {
+      "revision": 1,
+      "recommender": {
+        "name": "Ruben (voorbeeld)",
+        "avatarId": 9
+      }
+    },
+    "a51f82ed370dbf46c9c6d78b9b7b9a00855a80c8641242a548389d1adb4870d6": {
+      "revision": 1,
+      "recommender": {
+        "name": "Lucas (voorbeeld)",
+        "avatarId": 10
+      }
+    },
+    "f3c09607d44227f884d55fc0f873ec036f4276d0b2262fd9548735be22b537d0": {
+      "revision": 1,
+      "recommender": {
+        "name": "Joeri (voorbeeld)",
+        "avatarId": 12
+      }
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d": {
+      "revision": 1,
+      "recommender": {
+        "name": "Sjoerd (voorbeeld)",
+        "avatarId": 25
+      }
+    }
+  },
+  "nightProposals": {
+    "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6": {
+      "revision": 1,
+      "optionId": "blade",
+      "date": "2026-09-19",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6": {
+      "revision": 1,
+      "optionId": "blade",
+      "date": "2026-09-19",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    },
+    "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d": {
+      "revision": 1,
+      "optionId": "tarkovsky",
+      "date": "2026-09-26",
+      "updatedAt": "2026-09-07T16:17:59.277Z"
+    }
+  },
+  "fixtureGroups": {
+    "social-friends-v1": {
+      "id": "social-friends-v1",
+      "createdAt": "2026-09-07T16:17:59.277Z",
+      "actors": [
+        {
+          "actor": "862b63951d0929487de5502d9290dd2f4d37a459f895d71b3987dab273cb05f6",
+          "name": "Bas (voorbeeld)",
+          "avatarId": 4
+        },
+        {
+          "actor": "603d89c8b86383707c8f66d380bc933a77059f01782cae9727c0cded2363eccb",
+          "name": "Koen (voorbeeld)",
+          "avatarId": 7
+        },
+        {
+          "actor": "09a64cac0b1894e0d94951732e4a730f01ae085f04beadc241c240bedf6adc2a",
+          "name": "Fre (voorbeeld)",
+          "avatarId": 8
+        },
+        {
+          "actor": "0f1ee51648710996190bdfd25900fb389d52db2d0df6d2719a149bffd2ae79b6",
+          "name": "Ruben (voorbeeld)",
+          "avatarId": 9
+        },
+        {
+          "actor": "a51f82ed370dbf46c9c6d78b9b7b9a00855a80c8641242a548389d1adb4870d6",
+          "name": "Lucas (voorbeeld)",
+          "avatarId": 10
+        },
+        {
+          "actor": "f3c09607d44227f884d55fc0f873ec036f4276d0b2262fd9548735be22b537d0",
+          "name": "Joeri (voorbeeld)",
+          "avatarId": 12
+        },
+        {
+          "actor": "8d2584f597691d8f3527013ca5a7b9ef95e32fd66a2eda4322b3a9a90e3cd82d",
+          "name": "Sjoerd (voorbeeld)",
+          "avatarId": 25
+        }
+      ],
+      "optionIds": [
+        "suggestion-943c9a9e114d456955a2",
+        "suggestion-601bb06695c238c49fb6",
+        "suggestion-8fdd1f078f42fe775b98"
+      ],
+      "dates": [
+        "2026-09-11",
+        "2026-09-19",
+        "2026-09-26"
+      ],
+      "counts": {
+        "people": 7,
+        "hearts": 19,
+        "suggestions": 3,
+        "proposals": 3
+      },
+      "label": "Names and suggestion details explicitly say voorbeeld; all actors fictional."
+    }
+  }
+}

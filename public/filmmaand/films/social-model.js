@@ -1,0 +1,28 @@
+/* Read-only derived data. Public actor flags, never name/avatar matching. */
+(function(root){
+function project(ctx,today){
+ const plan=ctx.plan,self=(plan.people||[]).find(p=>p.self),profile=ctx.ownProfile||self;
+ const people=[...(plan.people||[]).filter(p=>!p.self),...(profile?[{...profile,self:true,choices:ctx.choices,dates:ctx.dates}]:[])];
+ const count=o=>Math.max(0,(plan.optionCounts?.[o.id]||0)+(self?Number(ctx.choices.includes(o.id))-Number(self.choices?.includes(o.id)):0));
+ const fans=o=>people.filter(p=>p.choices?.includes(o.id));
+ const ranked=plan.options.filter(o=>count(o)>0).slice().sort((a,b)=>count(b)-count(a)||a.title.localeCompare(b.title,'nl'));
+ const mine=ctx.choices.map(id=>plan.options.find(o=>o.id===id)).filter(Boolean);
+ const recent=plan.options.filter(o=>o.kind==='suggestion'&&!o.recommender?.self).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')||a.title.localeCompare(b.title,'nl'));
+ const occupied=new Set((plan.programme||[]).map(n=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(n.startsAt))));
+ if(/^\d{4}-\d{2}-\d{2}$/.test(plan.round?.scheduledDate||''))occupied.add(plan.round.scheduledDate);
+ const near=[];
+ const matches=[];for(const o of plan.options){const byDate=new Map();for(const p of fans(o))for(const d of new Set(p.dates||[])){if(d<=today||d<plan.window.start||d>plan.window.end||occupied.has(d))continue;const list=byDate.get(d)||[];list.push(p);byDate.set(d,list);}for(const [date,group] of byDate){if(group.length>=2)matches.push({option:o,date,people:group});const all=fans(o);if(group.length>=2&&all.length===count(o)&&all.length-group.length===1)near.push({option:o,date,people:group,missing:all.filter(p=>!p.dates.includes(date)),total:all.length});}}
+ matches.sort((a,b)=>b.people.length-a.people.length||a.date.localeCompare(b.date)||count(b.option)-count(a.option)||a.option.title.localeCompare(b.option.title,'nl'));
+ const overlap=ranked.length>1?people.filter(p=>p.choices?.includes(ranked[0].id)&&p.choices?.includes(ranked[1].id)):[];
+ near.sort((a,b)=>b.people.length-a.people.length||a.date.localeCompare(b.date)||a.option.title.localeCompare(b.option.title,'nl'));
+ return {near,people,self,count,fans,ranked,mine,recent,matches,overlap,total:plan.options.reduce((n,o)=>n+count(o),0)};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={project};else root.FilmsSocialModel={project};
+})(typeof window==='undefined'?globalThis:window);
+/* Ranked points are separate from heart counts and the current ballot. */
+(function(root){
+ const api=typeof module!=='undefined'&&module.exports?module.exports:root.FilmsSocialModel;
+ function contribution(choices,order=[]){const liked=new Set(choices),rank=[...new Set(order)].filter(id=>liked.has(id));return Object.fromEntries([...liked].map(id=>[id,rank.indexOf(id)===0?3:rank.indexOf(id)===1?2:1]));}
+ function ranking(ctx,order=ctx.ranking?.order||[]){const next=ctx.plan.nextRound,weighted=next?.rule==='rank-3-2-1',self=(ctx.plan.people||[]).find(p=>p.self),own=weighted?contribution(ctx.choices,order):Object.fromEntries(ctx.choices.map(id=>[id,1])),saved=weighted?(next.ownPoints||contribution(self?.choices||[],self?.rankingOrder||[])):Object.fromEntries((self?.choices||[]).map(id=>[id,1]));const totals={...(weighted?next.points:ctx.plan.optionCounts)};for(const id of new Set([...Object.keys(saved),...Object.keys(own)]))totals[id]=Math.max(0,(totals[id]||0)-(saved[id]||0)+(own[id]||0));const excluded=new Set([...(ctx.plan.round?.shortlist||[]),...(ctx.plan.programme||[]).flatMap(n=>n.choices||[])]);const candidates=ctx.plan.options.map((o,i)=>({optionId:o.id,score:totals[o.id]||0,i})).filter(x=>x.score>0&&!excluded.has(x.optionId)).sort((a,b)=>b.score-a.score||a.i-b.i).slice(0,3);return {weighted,own,candidates};}
+ api.contribution=contribution;api.ranking=ranking;
+})(typeof window==='undefined'?globalThis:window);

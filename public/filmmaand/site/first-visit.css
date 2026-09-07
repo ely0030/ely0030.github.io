@@ -1,0 +1,39 @@
+.first-visit{position:fixed;right:28px;bottom:24px;z-index:10000;box-sizing:border-box;width:360px;max-width:calc(100vw - 32px);padding:23px 25px;background:#fff;color:#222;border:1px solid #ddd;border-radius:6px;box-shadow:0 8px 40px #0002;font:15px/1.5 Arial,sans-serif}
+.first-visit .tour-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.tour-progress{font-size:12px;color:#777}.first-visit .tour-skip{background:none;border:0;color:#666;font:12px Arial;padding:8px;cursor:pointer}
+.first-visit h2{font:400 29px/1.15 'Canela Trial',Georgia,serif;margin:0 0 10px}.first-visit .tour-copy{font:15px/1.5 Arial;margin:0 0 18px;color:#555}.first-visit .tour-next{width:100%;min-height:44px;padding:12px;border:0;border-radius:3px;background:#242820;color:#fff;font:14px Arial;cursor:pointer}.first-visit .tour-next:disabled{opacity:.4;cursor:default}.first-visit button:focus-visible{outline:2px solid #315b42;outline-offset:3px}
+.tour-target{outline:2px solid #50795b;outline-offset:8px;scroll-margin:60px 0 310px}.has-first-visit{padding-bottom:290px}
+@media(max-width:650px){.first-visit{left:16px;right:16px;bottom:12px;width:auto;max-width:none;padding:17px 20px}.first-visit h2{font-size:26px}.first-visit .tour-top{margin-bottom:5px}.tour-target{scroll-margin-top:30px;scroll-margin-bottom:280px}}
+/* Focused walkthrough: dim everything except the current real control. */
+.tour-shade{position:fixed;inset:0;z-index:9998;pointer-events:none}
+.tour-window{position:fixed;border-radius:7px;box-shadow:0 0 0 150vmax #121711bd;border:2px solid #d9e8cf;box-sizing:border-box;pointer-events:none}
+.tour-shield{position:fixed;pointer-events:auto;touch-action:none}
+.tour-target{outline:none}
+.first-visit{z-index:9999;box-shadow:0 16px 60px #0005;border:0;padding:26px 28px}
+.first-visit h2{font-size:32px}.first-visit .tour-copy{font-size:17px;line-height:1.5;font-weight:400;color:#343a32}.first-visit .tour-next{font-size:15px;min-height:48px}.first-visit .tour-progress{font-size:13px}
+@media(max-width:650px){.first-visit{width:calc(100% - 32px);padding:20px 22px}.first-visit h2{font-size:28px}.first-visit .tour-copy{font-size:16px}.first-visit .tour-next{min-height:44px}}
+/* Keep context legible: the section is highlighted, not cut out of the page. */
+.tour-window{box-shadow:0 0 0 150vmax #18201970;border:2px solid #f4f8f0;border-radius:10px}
+.first-visit{box-shadow:0 10px 38px #0003;padding:24px 26px}
+.first-visit .tour-up-next{font:13px/1.4 Arial,sans-serif;color:#687262;margin:14px 0 0;border-top:1px solid #e4e8e1;padding-top:12px}
+.first-visit .tour-next{margin-top:17px}.first-visit .tour-next[hidden]{display:none}
+.tour-target .hp-option-view:focus-visible,.tour-target .hp-option-view:hover,.tour-target .battle-scene:focus-visible{outline:2px solid #52704b;outline-offset:3px}
+@media(max-width:650px){.first-visit{padding:18px 21px}.first-visit .tour-up-next{font-size:12px}}
+/* The guide is visually distinct from the illuminated page content. */
+.first-visit{background:#23362b;color:#fff;border:1px solid #ffffff24;border-radius:9px;box-shadow:0 14px 42px #0004;transition:opacity .18s ease}
+.first-visit h2{color:#fff!important}.first-visit .tour-copy{color:#edf2e9!important;font-weight:400!important}.first-visit .tour-progress,.first-visit .tour-skip{color:#c5d2c2}.first-visit .tour-up-next{color:#c5d2c2;border-color:#ffffff24}.first-visit .tour-next{background:#eff4e8;color:#23362b}.first-visit button:focus-visible{outline-color:#fff}
+.tour-waiting{display:none;align-items:center;gap:9px;color:#e5f1da;font:13px/1.4 Arial;margin:14px 0 0}.is-waiting .tour-waiting{display:flex}.tour-waiting:before{content:'';width:7px;height:7px;background:#c9e5aa;border-radius:50%;animation:tour-ready 2.4s ease-in-out infinite}
+.tour-action{outline:2px solid #6e945b!important;outline-offset:3px}.tour-action:focus-visible{outline-color:#294e2e!important}
+@keyframes tour-ready{0%,100%{box-shadow:0 0 0 0 #c9e5aa30}50%{box-shadow:0 0 0 5px #c9e5aa00}}
+@media(prefers-reduced-motion:reduce){.tour-waiting:before{animation:none}.first-visit{transition:none}}
+/* Show first, then narrow to the example action. No simulated cursor. */
+.tour-shade.is-narrowing .tour-window{transition:left .28s ease,top .28s ease,width .28s ease,height .28s ease}
+.tour-action{animation:tour-choice-invite 2.6s ease-in-out infinite;transform-origin:center}
+.tour-action:hover,.tour-action:focus-visible{animation-play-state:paused}
+.first-visit.is-explaining .tour-progress{color:#d8e2d2}.first-visit.is-waiting{border-top:3px solid #bbd99e}.first-visit.is-waiting .tour-progress{color:#d9efbd}
+@keyframes tour-choice-invite{0%,55%,100%{transform:translateY(0)}68%{transform:translateY(-4px)}82%{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.tour-action{animation:none}.tour-shade.is-narrowing .tour-window{transition:none}}
+
+/* Keep the calendar grid still while individual date controls invite interaction. */
+.ac-grid.tour-action{animation:none;outline:none!important}.ac-grid.tour-action [data-day]:not(:disabled){animation:tour-day-invite 2.8s ease-in-out infinite}.ac-grid.tour-action [data-day]:hover,.ac-grid.tour-action [data-day]:focus-visible{animation:none}
+@keyframes tour-day-invite{0%,60%,100%{transform:translateY(0)}75%{transform:translateY(-1px)}}
+@media(prefers-reduced-motion:reduce){.ac-grid.tour-action [data-day]:not(:disabled){animation:none}}

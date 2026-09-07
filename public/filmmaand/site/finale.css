@@ -1,0 +1,492 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 750px){
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media (min-width: 1000px){
+
+
+}
+@media (max-width: 750px){
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+@media (prefers-reduced-motion: reduce){}
+.people-view{color: rgb(32, 32, 29);}
+.people-view .heading h1{letter-spacing: -0.035em;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.people-view .tabs{gap: 18px;}
+.people-view .tabs button{font-size: 11px;}
+@media (max-width: 750px){
+
+
+
+
+
+
+
+
+
+
+
+
+}
+@media (prefers-reduced-motion: reduce){}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.people-view .heading{margin-bottom: 25px;}
+.people-view main{margin-top: 35px;}
+.people-view .people-explainer{margin-bottom: 28px;}
+@media (min-width: 751px) and (max-width: 1050px){
+
+
+
+}
+@media (max-width: 750px){
+
+
+
+
+
+
+
+
+.people-view .heading h1{font-size: 40px;}}
+@media (prefers-reduced-motion: reduce){}
+.battle-status{display: flex; align-items: center; justify-content: space-between; padding: 15px 0px; border-top: 1px solid rgb(34, 34, 34); border-bottom: 1px solid rgb(221, 221, 221); font-size: 14px;}
+.battle-status > span::before{content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: rgb(56, 87, 58); margin-right: 10px;}
+.battle-status .vote-action{background: rgb(34, 34, 34);}
+.battle-instruction{font-size: 12px; color: rgb(119, 119, 119); margin: 20px 0px 25px;}
+.battle-arena{display: flex; gap: 5px; align-items: stretch;}
+.battle-lane{min-width: 0px; flex-basis: 18%; flex-grow: 1; transition: flex-grow 0.85s cubic-bezier(0.2, 0.75, 0.2, 1);}
+.battle-scene{height: 380px; position: relative; overflow: hidden; background: rgb(34, 34, 34);}
+.battle-still{width: 100%; height: 100%; object-fit: cover; display: block;}
+.battle-shade{position: absolute; inset: 0px; background: linear-gradient(rgba(0, 0, 0, 0.267), transparent 35%, rgba(0, 0, 0, 0.733));}
+.battle-number{position: absolute; top: 23px; left: 23px; color: rgb(255, 255, 255); display: flex; align-items: baseline; gap: 9px; text-shadow: rgba(0, 0, 0, 0.333) 0px 1px 12px;}
+.battle-number strong{font: 80px / 0.9 "Canela Trial", Georgia, serif; display: block;}
+.battle-number span{font-size: 11px;}
+.battle-title{position: absolute; left: 23px; right: 18px; bottom: 26px; color: white;}
+.battle-title h2{font: clamp(25px, 2.8vw, 40px) / 1.06 "Canela Trial", Georgia, serif; letter-spacing: -0.025em; margin: 0px 0px 10px;}
+.battle-title p{font-size: 11px; line-height: 1.5; margin: 0px; color: rgba(255, 255, 255, 0.867);}
+.battle-people{display: flex; flex-wrap: wrap; gap: 7px; position: relative; margin: -10px 15px 0px; min-height: 86px; align-content: start;}
+.battle-person{display: block; width: 36px; height: 36px; background: white; border-radius: 5px; box-shadow: rgb(255, 255, 255) 0px 0px 0px 3px; transition: transform 0.18s;}
+.battle-person img{width: 100%; height: 100%; object-fit: contain; border-radius: 4px;}
+.battle-person:hover{transform: translateY(-5px) rotate(-4deg); z-index: 2;}
+.battle-own{outline: rgb(197, 99, 52) solid 2px; outline-offset: 3px;}
+.battle-own[hidden]{display: none;}
+.battle-controls{padding: 8px 15px 15px;}
+.battle-vote{width: 100%; min-height: 45px; border: 1px solid rgb(210, 210, 206); border-radius: 4px; font-size: 12px; background: rgb(255, 255, 255); transition: background 0.18s;}
+.battle-vote:hover{background: rgb(241, 241, 237);}
+.battle-vote[aria-pressed="true"]{background: rgb(38, 60, 44); color: rgb(255, 255, 255); border-color: rgb(38, 60, 44);}
+.battle-scoreboard{font-size: 12px; line-height: 1.7; padding: 20px 0px 0px; border-top: 1px solid rgb(221, 221, 221); margin-top: 15px;}
+.battle-legend{font-size: 11px; color: rgb(119, 119, 119); line-height: 1.6; max-width: 700px;}
+.battle-private{font-size: 10px; background: white; padding: 8px;}
+.battle-rest{margin-top: 25px; font-size: 13px;}
+.battle-rest summary{cursor: pointer; padding: 15px 0px;}
+.battle-rest p{display: flex; justify-content: space-between; padding: 12px 0px; border-bottom: 1px solid rgb(238, 238, 238); margin: 0px;}
+
+@media (max-width: 750px){.battle-arena{gap: 3px;}
+.battle-scene{height: 280px;}
+.battle-lane{flex-basis: 24%;}
+.battle-number{left: 9px; top: 16px; display: block;}
+.battle-number strong{font-size: 47px;}
+.battle-number span{font-size: 9px; display: block; margin-top: 6px;}
+.battle-title{left: 9px; right: 7px; bottom: 17px;}
+.battle-title h2{font-size: 19px; overflow-wrap: anywhere;}
+.battle-title p{display: none;}
+.battle-people{margin: -9px 7px 0px; gap: 5px; min-height: 180px;}
+.battle-person{width: 26px; height: 26px; box-shadow: white 0px 0px 0px 2px;}
+.battle-controls{padding: 10px 3px;}
+.battle-vote{font-size: 10px; padding: 8px 4px; min-height: 51px;}
+.battle-status{font-size: 12px;}
+.battle-status .vote-action{font-size: 11px; padding: 12px;}
+.battle-instruction{line-height: 1.6;}
+.battle-scoreboard{font-size: 11px;}}
+@media (prefers-reduced-motion: reduce){.battle-lane,.battle-person,.battle-vote{transition: none;}}
+.battle-lane{flex-basis: 0%;}
+
+.battle-status > .finale-rule::before{display: none;}
+.battle-status{padding: 19px 0px;}
+.battle-instruction{margin: 17px 0px 22px;}
+.battle-leader{position: absolute; top: 25px; right: 18px; background: rgb(255, 255, 255); color: rgb(32, 37, 30); padding: 7px 9px; font-size: 10px; letter-spacing: 0.015em; border-radius: 3px; box-shadow: rgba(0, 0, 0, 0.067) 0px 2px 10px;}
+.battle-leader[hidden]{display: none;}
+.battle-name{display: none; position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: rgb(34, 34, 34); color: white; padding: 7px 10px; font: 11px / 1.3 Arial, sans-serif; white-space: nowrap; border-radius: 4px; pointer-events: none; z-index: 9;}
+.battle-person{position: relative;}
+.battle-person:hover,.battle-person:focus{z-index: 5;}
+.battle-person:hover .battle-name,.battle-person:focus .battle-name{display: block;}
+.battle-person:focus-visible{outline: rgb(34, 34, 34) solid 2px; outline-offset: 4px;}
+.battle-scoreboard{font-size: 12px; text-align: center; border: 0px; margin: 5px 0px 0px; padding: 8px 0px; min-height: 32px;}
+.battle-help{margin: 14px auto 0px; text-align: center; font-size: 11px; color: rgb(119, 119, 119); max-width: 580px;}
+.battle-help summary{cursor: pointer; list-style: none; text-decoration: underline; text-underline-offset: 3px;}
+.battle-help p{line-height: 1.65;}
+
+.battle-people{min-height: 82px;}
+.battle-controls{padding-top: 12px;}
+.battle-own{z-index: 4;}
+.battle-vote{min-height: 47px; font-size: 12px; font-weight: 500;}
+.battle-number{top: 29px;}
+.battle-number strong{font-size: 88px;}
+.battle-scene{height: 410px;}
+@media (max-width: 750px){.battle-leader{top: 99px; left: 8px; right: auto; font-size: 8px; padding: 5px;}
+.battle-number{top: 18px;}
+.battle-number strong{font-size: 49px;}
+.battle-scene{height: 290px;}
+.battle-people{min-height: 130px;}
+.battle-vote{font-size: 10px; min-height: 49px;}
+
+.battle-status{gap: 10px;}
+.battle-scoreboard{font-size: 11px;}
+.battle-name{white-space: normal; min-width: 65px;}}
+.battle-lane{--dim: 0;}
+.people-view .battle-still{filter: brightness(calc(1 - var(--dim))) saturate(calc(1 - var(--dim) * 1.25)); transition: filter 0.75s;}
+body.can-vote .battle-scene{cursor: pointer;}
+.people-view .battle-lane:not(.battle-leading) .battle-person:not(.battle-own){filter: grayscale(0.65) brightness(0.95); transition: filter 0.6s;}
+.people-view .battle-lane.battle-leading .battle-person{transition: filter 0.6s;}
+@media (prefers-reduced-motion: reduce){.people-view .battle-person{transition: none;}}
+.people-view .battle-vote{transition: background 0.18s, transform 0.09s, border-color 0.18s;}
+.people-view .battle-vote:active{transform: scale(0.988);}
+@media (prefers-reduced-motion: reduce){.people-view .battle-vote:active{transform: none;}}
+.fin-verdict{margin: 30px 0px 0px; padding: 28px 0px 0px; border-top: 1px solid rgb(214, 216, 208); display: flex; align-items: baseline; justify-content: space-between; gap: 26px 44px; flex-wrap: wrap;}
+.fin-verdict h2{margin: 0px; font: clamp(23px, 3vw, 38px) / 1.15 "Canela Trial", Georgia, serif; letter-spacing: -0.027em; color: rgb(22, 27, 20); max-width: 22ch; text-wrap: balance;}
+.fin-verdict p{margin: 0px; font-size: 11px; line-height: 1.65; color: rgb(130, 133, 122); max-width: 30ch;}
+@media (max-width: 750px){.fin-verdict{padding-top: 24px; gap: 14px;}
+.fin-verdict h2{max-width: none;}
+.fin-verdict p{max-width: none;}}
+@media (prefers-reduced-motion: reduce){.people-view .battle-still{transition: none;}}
+.people-view .battle-arena{align-items: flex-end;}
+.people-view .battle-scene{transition: height 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);}
+.people-view .battle-lane.battle-leading .battle-scene{height: 478px;}
+@keyframes fin-drift { 
+  0% { transform: scale(1.015) translate(0px, 0px); }
+  100% { transform: scale(1.105) translate(-1.4%, -1.1%); }
+}
+.people-view .battle-lane.battle-leading .battle-still{animation: 26s ease-in-out 0s infinite alternate none running fin-drift;}
+.people-view .battle-people{gap: 0px;}
+.people-view .battle-person{margin-right: -12px; transition: transform 0.18s, width 0.35s, height 0.35s, filter 0.6s;}
+.people-view .battle-lane.battle-leading .battle-person{width: 46px; height: 46px; margin-right: -8px;}
+.people-view .battle-person:hover,.people-view .battle-person:focus{z-index: 6;}
+@media (max-width: 750px){.people-view .battle-lane.battle-leading .battle-scene{height: 334px;}
+.people-view .battle-person{margin-right: -4px;}
+.people-view .battle-lane.battle-leading .battle-person{width: 32px; height: 32px; margin-right: -9px;}}
+@media (prefers-reduced-motion: reduce){.people-view .battle-lane.battle-leading .battle-still{animation: auto ease 0s 1 normal none running none;}
+.people-view .battle-scene,.people-view .battle-person{transition: none;}}
+.fin-seal{position: absolute; top: 16px; right: 16px; width: 128px; height: 128px; pointer-events: none; filter: drop-shadow(rgba(0, 0, 0, 0.36) 0px 1px 7px);}
+.fin-seal[hidden]{display: none;}
+.fin-seal svg{width: 100%; height: 100%; display: block; overflow: visible;}
+.fin-seal ellipse{fill: rgb(255, 255, 255); fill-opacity: 0.93;}
+.fin-seal text{fill: rgb(255, 255, 255); font-family: Arial, sans-serif; letter-spacing: 0.11em; font-weight: 700;}
+.fin-rest{margin: 38px 0px 0px; padding: 28px 0px 0px; border-top: 1px solid rgb(214, 216, 208);}
+.fin-rest-head{display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 20px;}
+.fin-rest-head h2{margin: 0px; font: clamp(20px, 2.2vw, 29px) / 1.1 "Canela Trial", Georgia, serif; letter-spacing: -0.025em; color: rgb(22, 27, 20);}
+.fin-rest-head p{margin: 0px; font-size: 11px; color: rgb(130, 133, 122); max-width: 38ch;}
+.fin-rail{display: flex; gap: 16px; overflow-x: auto; padding: 2px 0px 14px; scroll-snap-type: x;}
+.fin-rail::-webkit-scrollbar{height: 7px;}
+.fin-rail::-webkit-scrollbar-thumb{background: rgb(210, 212, 204); border-radius: 4px;}
+.fin-card{flex: 0 0 154px; scroll-snap-align: start; display: flex; flex-direction: column; min-width: 0px;}
+.fin-card-art{position: relative; aspect-ratio: 2 / 3; background: rgb(236, 234, 227); overflow: hidden; margin-bottom: 11px; display: block; width: 100%; padding: 0px; border: 0px; text-align: left; font: inherit; color: inherit;}
+.fin-card-art::before{content: ""; position: absolute; left: 0px; right: 0px; top: 0px; height: 46%; background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.28) 42%, transparent); pointer-events: none; z-index: 1;}
+.fin-card-art img{width: 100%; height: 100%; object-fit: cover; display: block; transition: filter 0.4s;}
+.fin-card.is-mine .fin-card-art{outline: rgb(38, 60, 44) solid 2px; outline-offset: -2px;}
+.fin-card-empty{position: absolute; inset: 0px; display: grid; place-items: center; text-align: center; padding: 14px 12px; font: 400 13px / 1.3 "Canela Trial", Georgia, serif; color: rgb(139, 142, 131); background: repeating-linear-gradient(135deg, rgb(242, 240, 233) 0px, rgb(242, 240, 233) 6px, rgb(236, 234, 227) 6px, rgb(236, 234, 227) 12px);}
+.fin-card h3{margin: 0px 0px 4px; font: 400 15px / 1.2 "Canela Trial", Georgia, serif; letter-spacing: -0.015em; color: rgb(22, 27, 20);}
+.fin-card-detail{margin: 0px 0px 7px; font-size: 10.5px; line-height: 1.45; color: rgb(130, 133, 122);}
+.fin-card-count{position: absolute; top: 7px; left: 11px; margin: 0px; color: rgb(255, 255, 255); display: flex; align-items: baseline; gap: 5px; text-shadow: rgba(0, 0, 0, 0.533) 0px 1px 10px; z-index: 2;}
+.fin-card-count b{font: 34px / 0.9 "Canela Trial", Georgia, serif; letter-spacing: -0.02em;}
+.fin-card-count span{font-size: 8.5px; letter-spacing: 0.04em;}
+.fin-card-count.is-zero b{font-size: 22px; opacity: 0.72;}
+.fin-card-count.is-zero span{opacity: 0.72;}
+.fin-card-vote{margin-top: auto; width: 100%; min-height: 38px; border: 1px solid rgb(210, 210, 206); border-radius: 4px; font-size: 11px; background: rgb(255, 255, 255); transition: background 0.18s, transform 0.09s, border-color 0.18s;}
+.fin-card-vote:hover{background: rgb(241, 241, 237);}
+.fin-card-vote:active{transform: scale(0.985);}
+.fin-card-vote[aria-pressed="true"]{background: rgb(38, 60, 44); color: rgb(255, 255, 255); border-color: rgb(38, 60, 44);}
+@media (max-width: 750px){.fin-seal{width: 74px; height: 74px; top: 9px; right: 6px;}
+.fin-seal text{letter-spacing: 0.06em;}
+.fin-rest{margin-top: 30px; padding-top: 22px;}
+.fin-rail{gap: 11px; margin: 0px -4vw; padding-left: 4vw; padding-right: 4vw;}
+.fin-card{flex-basis: 118px;}
+.fin-card h3{font-size: 13px;}}
+@media (prefers-reduced-motion: reduce){.fin-card-vote:active{transform: none;}}
+.people-view .battle-person{background: rgb(243, 241, 234); box-shadow: rgb(255, 255, 255) 0px 0px 0px 2px, rgba(0, 0, 0, 0.18) 0px 0px 0px 3px; margin-right: -7px;}
+.people-view .battle-lane.battle-leading .battle-person{width: 46px; height: 46px; margin-right: -8px;}
+.fin-clock{display: flex; gap: 34px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; margin: 22px 0px 4px; padding: 20px 0px; border-bottom: 1px solid rgb(228, 230, 222);}
+.fin-clock[hidden]{display: none;}
+.fin-clock-label{margin: 0px 0px 6px; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(138, 141, 130);}
+.fin-clock-time{margin: 0px; font-style: normal; font-variant: tabular-nums; font-size-adjust: none; font-language-override: normal; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-weight: normal; font-stretch: normal; font-size: clamp(30px, 4vw, 52px); line-height: 1; font-family: "Canela Trial", Georgia, serif; letter-spacing: -0.02em; color: rgb(22, 27, 20);}
+.fin-clock-side{max-width: 44ch; padding-top: 4px;}
+.fin-clock-side p{margin: 0px 0px 10px; font-size: 11px; line-height: 1.6; color: rgb(130, 133, 122);}
+.fin-skip{font-size: 11px; color: rgb(61, 91, 65); text-decoration: underline; text-underline-offset: 3px; padding: 0px;}
+.fin-skip:hover{color: rgb(32, 53, 31);}
+.fin-rest.is-round-two{margin-top: 52px; padding-top: 0px; border-top: 0px;}
+.fin-round-rule{display: flex; align-items: center; gap: 16px; margin-bottom: 26px;}
+.fin-round-rule::before,.fin-round-rule::after{content: ""; height: 1px; background: rgb(22, 27, 20); flex: 1 1 0%;}
+.fin-round-rule span{font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgb(22, 27, 20); white-space: nowrap;}
+.fin-rest-eyebrow{margin: 0px 0px 8px; font-size: 9px; letter-spacing: 0.16em; color: rgb(138, 141, 130);}
+.fin-rest-side{max-width: 40ch;}
+.fin-rest-clock{margin: 9px 0px 0px; font-size: 10px; letter-spacing: 0.03em; color: rgb(154, 156, 146);}
+.fin-rest.is-round-two .fin-card-vote[aria-pressed="true"]{background: rgb(61, 78, 107); border-color: rgb(61, 78, 107);}
+.fin-rest.is-round-two .fin-card.is-mine .fin-card-art{outline-color: rgb(61, 78, 107);}
+.fin-result{margin: 30px 0px 0px; display: grid; grid-template-columns: minmax(0px, 1.15fr) minmax(280px, 0.85fr); gap: 0px; border-top: 1px solid rgb(214, 216, 208);}
+.fin-result[hidden]{display: none;}
+.fin-result-hero{position: relative; overflow: hidden; min-height: 430px; background: rgb(17, 17, 17);}
+.fin-result-still{width: 100%; height: 100%; position: absolute; inset: 0px; object-fit: cover;}
+.fin-result-seal{top: 22px; right: 22px;}
+.fin-result-body{padding: 34px 0px 10px 44px; display: flex; flex-direction: column; align-items: flex-start;}
+.fin-result-eyebrow{margin: 0px 0px 14px; font-size: 9px; letter-spacing: 0.16em; color: rgb(138, 141, 130);}
+.fin-result-body h2{margin: 0px 0px 10px; font: clamp(28px, 3.6vw, 50px) / 1.05 "Canela Trial", Georgia, serif; letter-spacing: -0.03em; color: rgb(22, 27, 20); text-wrap: balance;}
+.fin-result-detail{margin: 0px 0px 20px; font-size: 12px; color: rgb(88, 91, 80);}
+.fin-result-tally{margin: 0px 0px 22px; font: clamp(16px, 1.8vw, 22px) / 1.3 "Canela Trial", Georgia, serif; color: rgb(61, 91, 65);}
+.fin-result-crowd{display: flex; flex-wrap: wrap; margin: 0px 0px 24px;}
+.fin-result-crowd img{width: 42px; height: 42px; object-fit: contain; display: block; border-radius: 5px; background: rgb(243, 241, 234); box-shadow: rgb(255, 255, 255) 0px 0px 0px 2px, rgba(0, 0, 0, 0.18) 0px 0px 0px 3px; margin-right: -8px;}
+.fin-result-when{margin: 0px 0px 8px; font-size: 11px; line-height: 1.6; color: rgb(130, 133, 122); max-width: 34ch;}
+.fin-result-demo{margin: 0px 0px 16px; font-size: 10px; line-height: 1.6; color: rgb(162, 164, 154); max-width: 34ch;}
+@media (max-width: 900px){.fin-result{grid-template-columns: 1fr;}
+.fin-result-hero{min-height: 260px;}
+.fin-result-body{padding: 26px 0px 6px;}}
+@media (max-width: 750px){.people-view .battle-people{gap: 6px; margin: 10px 7px 0px;}
+.people-view .battle-lane.battle-leading .battle-person{width: 30px; height: 30px; margin-right: -4px;}
+.fin-clock{gap: 18px; padding: 16px 0px; margin-top: 16px;}
+.fin-clock-side{max-width: none;}
+.fin-round-rule{gap: 11px; margin-bottom: 20px;}
+.fin-rest.is-round-two{margin-top: 38px;}
+.fin-result-crowd img{width: 30px; height: 30px; margin-right: -9px;}}
+.people-view .battle-arena[hidden]{display: none;}
+.fin-verdict[hidden]{display: none;}
+.fin-rest[hidden]{display: none;}
+.fin-card{--dim: 0;}
+.fin-card-art img{filter: brightness(calc(1 - var(--dim))) saturate(calc(1 - var(--dim) * 1.2));}
+.fin-card-seal{top: 6px; right: 6px; width: 54px; height: 54px; filter: drop-shadow(rgba(0, 0, 0, 0.45) 0px 1px 5px);}
+.fin-card-seal[hidden]{display: none;}
+.fin-card.is-lead h3{color: rgb(22, 27, 20);}
+@media (max-width: 750px){.fin-card-seal{width: 34px; height: 34px; top: 6px; right: 6px;}}
+.fin-card-crowd{display: flex; flex-wrap: wrap; margin: 0px 0px 12px; min-height: 24px;}
+.fin-card-crowd .battle-person{width: 24px; height: 24px; background: rgb(243, 241, 234); box-shadow: rgb(255, 255, 255) 0px 0px 0px 1.5px, rgba(0, 0, 0, 0.18) 0px 0px 0px 2.5px; border-radius: 4px; margin-right: -5px;}
+.fin-card-crowd .battle-person img{border-radius: 3px;}
+.fin-card-crowd .battle-own{outline-width: 2px; outline-offset: 2px;}
+.fin-card-crowd .battle-name{font-size: 10px; padding: 5px 8px;}
+.fin-rest.is-now-open .fin-round-rule::before,.fin-rest.is-now-open .fin-round-rule::after{background: rgb(61, 78, 107);}
+.fin-rest.is-now-open .fin-round-rule span{color: rgb(61, 78, 107);}
+.fin-rest.is-now-open .fin-rest-eyebrow{color: rgb(61, 78, 107);}
+.fin-rest.is-now-open .fin-rest-clock{color: rgb(61, 78, 107); font-weight: 700;}
+.people-view .heading{display: none;}
+.people-view .battle-lane .battle-scene{transition: height 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.6s;}
+.people-view .battle-lane.battle-leading .battle-scene{box-shadow: rgba(216, 171, 60, 0.54) 0px 0px 46px 3px, rgba(216, 171, 60, 0.25) 0px 0px 130px 26px;}
+.people-view .battle-lane.battle-leading .battle-scene::after{content: ""; position: absolute; inset: 0px; pointer-events: none; box-shadow: rgba(216, 171, 60, 0.45) 0px 0px 0px 2px inset, rgba(216, 171, 60, 0.65) 0px 0px 90px -26px inset;}
+.fin-card .fin-card-art{transition: box-shadow 0.5s;}
+.fin-card.is-lead .fin-card-art{box-shadow: rgba(216, 171, 60, 0.61) 0px 0px 22px 2px, rgba(216, 171, 60, 0.28) 0px 0px 58px 10px;}
+.fin-card{transition: flex-basis 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);}
+@media (prefers-reduced-motion: reduce){.fin-card,.people-view .battle-lane .battle-scene{transition: none;}}
+.fin-mypick{display: flex; align-items: center; gap: 12px; margin: 16px 0px 0px; padding: 12px 0px 0px; border-top: 1px solid rgb(228, 230, 222);}
+.fin-mypick-art{width: 38px; height: 57px; flex: 0 0 auto; background: rgb(236, 234, 227); overflow: hidden;}
+.fin-mypick-art img{width: 100%; height: 100%; object-fit: cover; display: block;}
+.fin-mypick-label{margin: 0px 0px 4px; font-size: 8.5px; letter-spacing: 0.16em; color: rgb(138, 141, 130);}
+.fin-mypick-title{margin: 0px; font: 400 15px / 1.2 "Canela Trial", Georgia, serif; letter-spacing: -0.015em; color: rgb(162, 164, 154);}
+.fin-mypick.has-pick .fin-mypick-title{color: rgb(22, 27, 20);}
+.fin-mypick:not(.has-pick) .fin-mypick-art{background: repeating-linear-gradient(135deg, rgb(242, 240, 233) 0px, rgb(242, 240, 233) 5px, rgb(232, 230, 223) 5px, rgb(232, 230, 223) 10px);}
+body.can-vote .fin-card-art:hover{filter: brightness(1.06);}
+@media (prefers-reduced-motion: reduce){body.can-vote .fin-card-art:hover{filter: none;}}
+.people-view .battle-scoreboard{position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px; min-height: 0px;}
+.fin-clock-foot{margin: 11px 0px 0px; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgb(168, 170, 160);}
+.fin-clock-side{display: flex; align-items: flex-end; padding-bottom: 6px; max-width: none;}
+.fin-verdict{padding-bottom: 2px;}
+.fin-card-vote{display: none;}
+body.can-vote .fin-card-art{cursor: pointer;}
+.fin-card-art:focus-visible{outline: rgb(38, 60, 44) solid 2px; outline-offset: 3px;}
+.fin-card-mine{margin: 0px 0px 4px; font-size: 10.5px; letter-spacing: 0.02em; color: rgb(61, 78, 107); font-weight: 700;}
+.fin-card-mine[hidden]{display: none;}
+.fin-card.is-mine .fin-card-art{outline: rgb(61, 78, 107) solid 2px; outline-offset: -2px;}
+.fin-verdict{display: none;}
+.fin-rest-head{justify-content: flex-start; gap: 44px;}
+.fin-rest-side{max-width: none; display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap;}
+.fin-rest-side > p{max-width: 38ch; margin: 0px;}
+.fin-rest-clock{margin: 7px 0px 0px;}
+.fin-mypick{margin: 0px; padding: 0px 0px 0px 44px; border-top: 0px; border-left: 1px solid rgb(228, 230, 222); align-self: stretch;}
+@media (max-width: 750px){.fin-rest-side{gap: 18px;}
+.fin-mypick{padding: 12px 0px 0px; border-left: 0px; border-top: 1px solid rgb(228, 230, 222); flex-basis: 100%;}}
+.battle-instruction[hidden]{display: none;}

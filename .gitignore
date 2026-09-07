@@ -122,3 +122,8 @@ certs/
 
 # Local Netlify folder
 .netlify
+
+# Filmmaand generated catalogue and private local runtime
+filmmaand-server/data/
+filmmaand-server/node_modules/
+.netlify/

@@ -1,0 +1,13 @@
+/* A short first-visit introduction, sharing the site typography. */
+dialog.filmmaand-welcome{box-sizing:border-box;width:460px;max-width:calc(100vw - 40px);max-height:calc(100dvh - 40px);margin:auto;padding:44px;border:0;border-radius:10px;background:#fff;color:#191919;box-shadow:0 20px 80px #0002;overflow:auto;font:16px/1.6 Everett,Arial,sans-serif;text-align:left;-webkit-font-smoothing:antialiased}
+.filmmaand-welcome *{box-sizing:border-box}
+.filmmaand-welcome::backdrop{background:#171b1940;backdrop-filter:blur(4px)}
+.filmmaand-welcome[open]{animation:filmmaand-welcome-in .2s ease-out}
+.filmmaand-welcome h2{margin:0 0 20px;font:400 42px/1.08 'Canela Trial',Georgia,serif;letter-spacing:-.03em;color:#191919}
+.filmmaand-welcome #filmmaand-welcome-intro{margin:0;color:#595b55;font-size:16px;line-height:1.65}
+.filmmaand-welcome .filmmaand-welcome-action{display:block;width:100%;min-height:52px;margin:32px 0 0;padding:14px 20px;border:0;border-radius:5px;background:#20211e;color:#fff;font:400 16px/1.5 Everett,Arial,sans-serif;cursor:pointer;transition:background .15s}
+.filmmaand-welcome .filmmaand-welcome-action:hover{background:#383a34}
+.filmmaand-welcome .filmmaand-welcome-action:focus-visible{outline:2px solid #20211e;outline-offset:4px}
+@keyframes filmmaand-welcome-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:500px){dialog.filmmaand-welcome{padding:32px 28px}.filmmaand-welcome h2{font-size:36px}}
+@media(prefers-reduced-motion:reduce){.filmmaand-welcome[open]{animation:none}.filmmaand-welcome .filmmaand-welcome-action{transition:none}}

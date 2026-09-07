@@ -1,0 +1,33 @@
+dialog.availability-intro{box-sizing:border-box;width:480px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 40px);overflow:auto;padding:32px;margin:auto;border:0;border-radius:8px;background:#fff;color:#242b21;font:14px/1.5 Everett,Arial,sans-serif;box-shadow:0 20px 80px #0002}
+.availability-intro::backdrop{background:#161b1859}
+.availability-intro h2{font:400 38px/1.12 'Canela Trial',Canela,Georgia,serif;letter-spacing:-.03em;margin:0 0 22px;outline:none}
+.availability-intro-programme:empty{display:none}.availability-intro-programme{margin-bottom:22px}.availability-intro-when{display:block;font-size:14px;font-weight:600}.availability-intro-film{margin:3px 0 0;color:#6a7164;font-size:12px}
+.availability-intro .personal-availability{margin:0}.availability-intro .ac-header{margin:0 0 16px}.availability-intro .ac-header h3{font:400 25px/1.2 'Canela Trial',Canela,Georgia,serif}.availability-intro .ac-day{min-height:40px}.availability-intro .ac-hint{font-size:11px;color:#70786a;margin:14px 0 10px}.availability-intro .ac-summary{font-size:11px}.availability-intro .ac-event{display:none}
+.availability-intro .ac-day>.ac-event-dot,.availability-intro .ac-day.selected>.ac-event-dot{position:absolute;inset:-3px;width:auto;height:auto;border-radius:0;background:#a02e2b;opacity:1;pointer-events:none;z-index:2;mask:var(--event-scribble) center/100% 100% no-repeat;transform:rotate(var(--event-scribble-angle,-4deg))}
+.availability-intro-normal-save .pa-actions{display:none}.availability-intro-quiet-message .pa-message{display:none}.availability-intro .pa-message{font-size:12px}.availability-intro .pa-picker-link{font-size:12px}
+.availability-intro-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px}.availability-intro-actions button{font:13px/1.3 Everett,Arial,sans-serif;min-height:44px;cursor:pointer}.availability-intro-later{border:0;background:none;color:#72796b;padding:10px 0}.availability-intro-next{border:1px solid #394933;border-radius:4px;background:#394933;color:white;padding:12px 22px}.availability-intro-next:disabled{opacity:.45;cursor:default}.availability-intro button:focus-visible,.availability-intro a:focus-visible{outline:2px solid #394933;outline-offset:3px}.availability-intro-loading{min-height:160px;color:#747b6e}.availability-intro-loading[hidden]{display:none}.availability-intro-error{font-size:12px}.availability-intro-retry{font:12px Arial;background:none;border:0;text-decoration:underline;padding:0;color:inherit;cursor:pointer}
+@media(max-width:500px){dialog.availability-intro{padding:25px 22px;max-height:calc(100dvh - 24px)}.availability-intro h2{font-size:34px}.availability-intro .ac-day{min-height:36px}}
+@media(prefers-reduced-motion:reduce){.availability-intro *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.availability-intro-normal-save .pa-actions:has(.pa-picker-link){display:flex}.availability-intro-normal-save .pa-actions>.pa-button{display:none}.availability-intro-retry[hidden]{display:none}
+
+/* Keep the same dialog while verified availability becomes ready. */
+.availability-intro.is-loading .availability-intro-loading{box-sizing:border-box;min-height:440px;padding-top:12px;color:#747b6e}.availability-intro-loading-label{display:block;margin-bottom:26px;font-size:12px}.availability-intro-skeleton{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;pointer-events:none}.availability-intro-skeleton i{display:block;height:40px;background:#f5f6f2;border-radius:3px}.availability-intro.is-loading .availability-intro-actions{margin-top:24px}
+@media(max-width:500px){.availability-intro.is-loading .availability-intro-loading{min-height:400px}.availability-intro-skeleton{gap:8px}.availability-intro-skeleton i{height:36px}}
+.availability-intro-tour{display:flex;align-items:center;gap:9px;margin-top:16px;color:#626b5b;font-size:12px;cursor:pointer}.availability-intro-tour input{flex:none;width:16px;height:16px;margin:0;accent-color:#394933}.availability-intro-tour input:focus-visible{outline:2px solid #394933;outline-offset:3px}
+
+/* Reserve the complete calendar surface before session, programme and fonts settle. */
+dialog.availability-intro-calendar-dialog{height:min(780px,calc(100dvh - 40px))}
+
+/* First-visit calendar: one instruction and one compact selection surface. */
+dialog.availability-intro-calendar-dialog{height:min(660px,calc(100dvh - 40px))}
+.availability-intro-calendar-dialog h2{margin-bottom:8px}
+.availability-intro-instruction{margin:0 0 24px;color:#6a7164;font-size:14px}
+.availability-intro-calendar-dialog .ac-hint,.availability-intro-calendar-dialog .ac-actions,.availability-intro-calendar-dialog .ac-summary{display:none}
+.availability-intro-calendar-dialog .availability-intro-programme{margin:18px 0 0}
+.availability-intro-calendar-dialog .availability-intro-when{font-size:12px;font-weight:400}
+.availability-intro-calendar-dialog .availability-intro-film{display:none}
+.availability-intro-calendar-dialog.is-loading .availability-intro-loading{min-height:330px;padding-top:0}
+.availability-intro-calendar-dialog .availability-intro-actions{margin-top:22px}
+@media(max-width:500px){.availability-intro-instruction{font-size:13px;margin-bottom:20px}.availability-intro-calendar-dialog.is-loading .availability-intro-loading{min-height:330px}}
+@media(max-height:700px){dialog.availability-intro-calendar-dialog{padding:22px 28px}.availability-intro-calendar-dialog h2{font-size:32px}.availability-intro-instruction{margin-bottom:16px}.availability-intro-calendar-dialog .ac-header{margin-bottom:10px}.availability-intro-calendar-dialog .ac-day{height:36px;min-height:36px}.availability-intro-calendar-dialog .ac-grid{row-gap:4px}.availability-intro-calendar-dialog .availability-intro-actions{margin-top:16px}.availability-intro-calendar-dialog .availability-intro-tour{margin-top:12px}.availability-intro-calendar-dialog.is-loading .availability-intro-loading{min-height:285px}}
