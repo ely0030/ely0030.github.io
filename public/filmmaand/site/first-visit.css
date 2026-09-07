@@ -40,3 +40,8 @@
 
 /* Keep the actual drag rail still; moving its container fights pointer geometry. */
 .fr-order.tour-action,.hp-rail.tour-action{animation:none}
+
+/* Empty hints must not leave a divider or enlarge the coach. */
+.first-visit .tour-up-next[hidden]{display:none}
+.first-visit h2:focus{outline:none}
+@media(max-width:700px){.first-visit{max-height:calc(100dvh - 32px);overflow-y:auto}}
