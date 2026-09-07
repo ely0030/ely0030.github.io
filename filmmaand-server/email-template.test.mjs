@@ -14,15 +14,14 @@ test('code remains copyable with leading zeroes and actual expiry in both parts'
   assert.doesNotMatch(result.html,/<(?:script|svg|canvas|a)\b|@import/i);
 });
 
-test('the static first-party banner has text fallback and no dynamic or tracking URL', () => {
+test('the approved header has only the Interval logo and keeps text fallback', () => {
   const {html} = renderLoginCodeEmail({code:'012345',expiresAt:'2026-09-07T12:10:00Z'});
   const images = html.match(/<img\b[^>]*>/g) || [];
-  assert.equal(images.length,2);
-  assert.match(images[0],/src="https:\/\/ely0030\.xyz\/filmmaand\/site\/email\/afm-moire\.png"/);
-  assert.match(images[0],/alt="AFM — Filmmaand"/);
-  assert.match(images[0],/width="500" height="95"/);
-  assert.ok(images[1].includes('src="https://ely0030.xyz/filmmaand/site/icons/interval-black-48.png"'));
-  assert.ok(images[1].includes('alt=""'));
+  assert.equal(images.length,1);
+  assert.ok(images[0].includes('src="https://ely0030.xyz/filmmaand/site/icons/interval-black-48.png"'));
+  assert.ok(images[0].includes('width="24" height="24"'));
+  assert.ok(images[0].includes('alt=""'));
+  assert.doesNotMatch(html,/afm-moire|site\/email\//);
   const withoutImage=images.reduce((body,image)=>body.replace(image,''),html);
   assert.match(withoutImage,/>ALEC FILMMAAND<\/p>/);
   assert.match(withoutImage,/012345/);

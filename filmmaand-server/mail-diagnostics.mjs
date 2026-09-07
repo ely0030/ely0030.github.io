@@ -9,9 +9,10 @@ export const templateFingerprint = createHash('sha256').update(JSON.stringify(
   renderLoginCodeEmail({code:'000000', expiresAt:'2000-01-01T00:00:00.000Z'}),
 )).digest('hex');
 
-export async function providerAcceptanceId(response) {
+export async function providerAcceptanceId(response,provider='resend') {
   try {
     const data = await response.json();
+    if(provider==='mailgun')return typeof data?.id==='string'&&data.id.length<=254&&/^<[a-z0-9._+-]+@[a-z0-9.-]+>$/i.test(data.id)?data.id:null;
     return typeof data?.id === 'string' && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(data.id)
       ? data.id.toLowerCase() : null;
   } catch { return null; } // A successful send must not fail because diagnostics are absent.
@@ -28,9 +29,10 @@ export function recordMailAcceptance(state, message, providerId, acceptedAt) {
   pruneMailReceipts(state, acceptedAt);
   state.mailReceipts ||= [];
   state.mailReceipts.push({
+    provider: message.provider||'resend',
     providerId,
     providerIdStatus: providerId ? 'available' : 'unavailable',
-    status: 'accepted', // Resend HTTP acceptance, not delivery or Inbox placement.
+    status: 'accepted', // Provider HTTP acceptance, not delivery or Inbox placement.
     acceptedAt,
     queuedAt: message.createdAt,
     templateFingerprint: /^[0-9a-f]{64}$/.test(message.templateFingerprint || '')

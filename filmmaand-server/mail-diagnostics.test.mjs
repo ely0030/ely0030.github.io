@@ -28,7 +28,7 @@ test('successful provider receipt survives CAS conflict, is private and contains
  const publicBody=await response.text();assert.equal(publicBody.includes(providerId),false);assert.equal(publicBody.includes(templateFingerprint),false);
  assert.equal(f.calls.length,1);assert.equal(Object.keys(f.store.data.outbox).length,0);
  assert.equal(f.store.data.mailReceipts.length,1);
- const receipt=f.store.data.mailReceipts[0];assert.deepEqual(Object.keys(receipt).sort(),['acceptedAt','providerId','providerIdStatus','queuedAt','retainUntil','status','templateFingerprint'].sort());
+ const receipt=f.store.data.mailReceipts[0];assert.deepEqual(Object.keys(receipt).sort(),['acceptedAt','provider','providerId','providerIdStatus','queuedAt','retainUntil','status','templateFingerprint'].sort());
  assert.equal(receipt.providerId,providerId);assert.equal(receipt.status,'accepted');assert.equal(receipt.templateFingerprint,templateFingerprint);
  assert.equal(Date.parse(receipt.retainUntil)-Date.parse(receipt.acceptedAt),RECEIPT_TTL_MS);
  const wire=JSON.stringify(receipt),payload=JSON.parse(f.calls[0].body),code=payload.text.match(/\b\d{6}\b/)[0];
