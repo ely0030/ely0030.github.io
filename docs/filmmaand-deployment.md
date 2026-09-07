@@ -13,8 +13,9 @@ Netlify bundles `netlify/functions/filmmaand.mjs` with its preserved `filmmaand-
 Set credentials in Netlify, never in browser code or Git:
 
 - `RESEND_API_KEY`, `AUTH_FROM=Filmmaand <login@mail.ely0030.xyz>`, `AUTH_MAILER=resend`.
-- `AUTH_MAIL_ALLOW`: explicit permitted email recipients. Initial acceptance testing uses `broodislekker@gmail.com` only.
-- `AUTH_ALLOW_LIST`: optional login guest list; acceptance previews restrict this to the same test address.
+- `AUTH_REGISTRATION=public`: explicitly opens both registration and code delivery to visitors. The legacy allowlists below are ignored only in this mode. Omit this setting for restricted acceptance previews.
+- `AUTH_MAIL_ALLOW`: permitted recipients in restricted mode; an empty list sends no mail.
+- `AUTH_ALLOW_LIST`: optional login guest list in restricted mode; configure it together with the delivery list. Public registration retains canonical per-email/IP limits, code expiry, and the durable 80/day and 2,000/month delivery caps.
 - `TMDB_READ_ACCESS_TOKEN` (or `TMDB_API_KEY`) for movie descriptions and artwork.
 - `PLANNING_ADMIN_TOKEN`: separate random organizer credential, never a browser credential.
 - `FILMMAAND_ORIGIN`: exact serving origin, normally `https://ely0030.xyz`.

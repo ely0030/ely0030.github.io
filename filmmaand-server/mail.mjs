@@ -3,10 +3,10 @@ import {createHash} from 'node:crypto';
 import {transact} from './state.mjs';
 import {renderLoginCodeEmail} from './email-template.mjs';
 const failure=()=>Object.assign(Error('De e-mail kon niet worden verzonden. Probeer het later opnieuw.'),{status:503,code:'mail_unavailable'});
-export function createMail({store,apiKey,from,allowedRecipients,fetcher=fetch,now=()=>new Date().toISOString(),enabled=false}){
+export function createMail({store,apiKey,from,allowedRecipients,allowAnyRecipient=false,fetcher=fetch,now=()=>new Date().toISOString(),enabled=false}){
  const allowed=new Set((allowedRecipients||[]).map(x=>x.trim().toLowerCase()));
  function queue(c,message){
-  if(!enabled||!apiKey||!from||!allowed.has(message.to))throw failure();
+  if(!enabled||!apiKey||!from||(!allowAnyRecipient&&!allowed.has(message.to)))throw failure();
   const rows=c.authStore.db.prepare('SELECT * FROM login_codes WHERE email=? AND consumed_at IS NULL').all(message.to);
   const row=rows.find(r=>r.code_hash===createHash('sha256').update(r.id+':'+message.code).digest('hex'));
   if(!row)throw failure();
@@ -23,7 +23,7 @@ export function createMail({store,apiKey,from,allowedRecipients,fetcher=fetch,no
    return m;
   });
   if(selected.error)throw failure();const m=selected.value;if(!m)return;
-  if(!enabled||!apiKey||!from||!allowed.has(m.to))throw failure();
+  if(!enabled||!apiKey||!from||(!allowAnyRecipient&&!allowed.has(m.to)))throw failure();
   let response;try{response=await fetcher('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json','Idempotency-Key':'filmmaand-code-'+id},body:JSON.stringify({from,to:[m.to],subject:m.subject,text:m.text,...(m.html?{html:m.html}:{})})})}catch{throw failure()}
   if(!response.ok)throw failure();
   // A lost acknowledgement leaves the exact message/key for a provider-deduplicated retry.
