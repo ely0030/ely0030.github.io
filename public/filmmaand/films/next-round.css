@@ -99,3 +99,6 @@
 
 /* Full film/theme titles; the ranking rail measures its tallest item. */
 #films #home-picker button.fr-film-title,#films #home-picker button.fr-lineup-title{max-height:none;height:auto;overflow:visible;white-space:normal;overflow-wrap:anywhere;-webkit-line-clamp:unset}
+
+/* Keep the lifted/rotated favourite inside its scroll viewport without moving the resting row. */
+#films #home-picker .fr-order{padding-top:32px;margin-top:-24px}
