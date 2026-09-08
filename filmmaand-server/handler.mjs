@@ -19,7 +19,7 @@ async function initialize(){
 export default async function handler(request,context){
  try{
   const url=new URL(request.url);
-  if(url.pathname==='/filmmaand'||url.pathname==='/filmmaand/')return Response.redirect(url.origin+'/filmmaand/'+(url.searchParams.has('edit')||url.searchParams.get('screen')==='thanks'?'stemmen/':'program/')+url.search,302);
+  if(url.pathname==='/filmmaand'||url.pathname==='/filmmaand/')return Response.redirect(url.origin+'/filmmaand/'+(url.searchParams.has('edit')||url.searchParams.get('screen')==='thanks'?'stemmen/':'programma/')+url.search,302);
   const {api,mail}=await(instance||=(initialize().catch(e=>{instance=null;throw e})));
   // Every real invocation can rescue a committed but unacknowledged send; no background timer reliance.
   try{await mail.drain()}catch{/* Current request reports its own delivery failures. */}

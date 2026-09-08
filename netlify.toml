@@ -16,18 +16,30 @@
 
 [[redirects]]
   from = "/filmmaand/agenda"
-  to = "/filmmaand/program/"
+  to = "/filmmaand/programma/"
   status = 301
   force = true
 
 [[redirects]]
   from = "/filmmaand/agenda/"
-  to = "/filmmaand/program/"
+  to = "/filmmaand/programma/"
   status = 301
   force = true
 
 [[redirects]]
   from = "/filmmaand/agenda/index.html"
-  to = "/filmmaand/program/"
+  to = "/filmmaand/programma/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/program"
+  to = "/filmmaand/programma/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/program/*"
+  to = "/filmmaand/programma/:splat"
   status = 301
   force = true

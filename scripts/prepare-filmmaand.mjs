@@ -24,5 +24,5 @@ for (const [name, expected] of Object.entries(manifest)) {
 }
 
 // Public programme keeps its existing assets; only its canonical document route changes.
-await mkdir(new URL('public/filmmaand/program/', root), {recursive:true});
-await copyFile(new URL('public/filmmaand/agenda/index.html', root),new URL('public/filmmaand/program/index.html', root));
+await mkdir(new URL('public/filmmaand/programma/', root), {recursive:true});
+await copyFile(new URL('public/filmmaand/agenda/index.html', root),new URL('public/filmmaand/programma/index.html', root));
