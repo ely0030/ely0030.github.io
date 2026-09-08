@@ -36,6 +36,8 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
    const passwordMutation=method==='POST'&&['/api/auth/password/login','/api/auth/password/set','/api/auth/invite/redeem'].includes(path);
    const inviteMutation=method==='POST'&&['/api/organizer/invites','/api/organizer/invites/revoke'].includes(path);
    if((passwordMutation||inviteMutation)&&request.headers.get('origin')!==origin)throw error(403,'csrf','Dit verzoek kwam niet van de site zelf.');
+   const passwordsEnabled=authConfig.passwordsEnabled===true;
+   if(!passwordsEnabled&&(passwordMutation||inviteMutation||path.startsWith('/api/auth/password/')||path==='/api/organizer/account'))return json(503,{error:{code:'passwords_disabled',message:'Inloggen met wachtwoord is tijdelijk niet beschikbaar.'}});
    const work=passwordWork();
    if(passwordMutation){
     const admission=await transact(store,c=>{
@@ -68,6 +70,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
     try{
+     if(path==='/api/auth/methods'&&method==='GET')return send(200,{passwordsEnabled});
      if(path==='/api/reset-generation'&&method==='GET')return send(200,{resetGeneration:generation});
      // This check is inside the durable CAS and precedes auth receipts and all domain side effects.
      // Logout remains available to old documents. Organizer mutations keep their separate secret contract.
