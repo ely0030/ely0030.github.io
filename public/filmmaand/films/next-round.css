@@ -131,7 +131,7 @@
 #films #home-picker .rank-live-delta{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#6b8b4e;vertical-align:middle}
 #films #home-picker .rank-live-delta img{width:23px;height:23px;object-fit:contain;border-radius:4px}
 #films #home-picker .rank-live-delta b{font:500 12px Arial}
-#films #home-picker .fr-supporter.is-self{display:none}
+#films #home-picker .fr-supporter.is-self{display:inline-flex;order:-1;outline:1px solid #81916f;outline-offset:1px;margin-right:3px}
 #films #home-picker .fr-supporter{width:var(--friend-point-size,18px);height:var(--friend-point-size,18px)}
 #films #home-picker .fr-supporters{align-items:flex-end}
 #films #home-picker .rank-endpoints{position:sticky;left:0;box-sizing:border-box}
