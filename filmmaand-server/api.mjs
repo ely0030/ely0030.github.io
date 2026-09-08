@@ -36,6 +36,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
    const passwordMutation=method==='POST'&&['/api/auth/password/login','/api/auth/password/set','/api/auth/invite/redeem'].includes(path);
    const inviteMutation=method==='POST'&&['/api/organizer/invites','/api/organizer/invites/revoke'].includes(path);
    if((passwordMutation||inviteMutation)&&request.headers.get('origin')!==origin)throw error(403,'csrf','Dit verzoek kwam niet van de site zelf.');
+   if(path==='/api/organizer/account'||(path==='/api/organizer/invites'&&method==='POST'&&body?.kind==='recovery'))return json(403,{error:{code:'recovery_disabled',message:'Herstel door de organisator is niet beschikbaar.'}});
    const passwordsEnabled=authConfig.passwordsEnabled===true;
    if(!passwordsEnabled&&(passwordMutation||inviteMutation||path.startsWith('/api/auth/password/')||path==='/api/organizer/account'))return json(503,{error:{code:'passwords_disabled',message:'Inloggen met wachtwoord is tijdelijk niet beschikbaar.'}});
    const work=passwordWork();
@@ -85,7 +86,6 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      if(path==='/api/organizer'&&method==='GET'){const account=organizerAccount();return send(200,{canManageRounds:true,participantId:account.participantId,resetGeneration:generation})}
      const passwords=createPasswords({store:c.authStore,auth,now,work});
      if(inviteMutation){const account=organizerAccount();router.csrf(req);if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Heropen het beheer voor dit account.');const value=path.endsWith('/revoke')?passwords.revoke(body):passwords.issue(body,account.participantId);c.state.format=2;return send(200,value);}
-     if(path==='/api/organizer/account'&&method==='GET'){organizerAccount();const email=String(url.searchParams.get('email')||'').trim().toLowerCase();const p=c.authStore.q.participantByEmail.get(email);if(!p)return send(404,{error:{code:'not_found',message:'Geen account gevonden.'}});const row=c.authStore.db.prepare('SELECT revision FROM password_credentials WHERE participant_id=?').get(p.id);return send(200,{participantId:p.id,name:p.name||null,email:p.email,credentialRevision:row?.revision||0});}
      if(path==='/api/auth/password/status'&&method==='GET')return send(200,passwords.status(router.credential(req)?.token));
      if(passwordMutation){
       let result;if(path.endsWith('/login'))result=await passwords.login(body);else if(path.endsWith('/redeem'))result=await passwords.redeem(body);else result=await passwords.set(router.credential(req)?.token,body);

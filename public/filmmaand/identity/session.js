@@ -30,7 +30,6 @@ const session={
  async redeemInvite(email,inviteToken,password){const d=await api('invite/redeem',{method:'POST',body:{email,inviteToken,password}});remember(d.participant);return participant},
  async setPassword(body){const d=await api('password/set',{method:'POST',body});remember(d.participant);return participant},
  organizer:()=>api('../organizer'),
- recoveryAccount:email=>api('../organizer/account?email='+encodeURIComponent(email)),
  issueInvite:body=>api('../organizer/invites',{method:'POST',body,headers:{'X-Filmmaand-Organizer-Id':participant?.id||''}}),
  revokeInvite:inviteToken=>api('../organizer/invites/revoke',{method:'POST',body:{inviteToken},headers:{'X-Filmmaand-Organizer-Id':participant?.id||''}}),
  requestCode:email=>api('code',{method:'POST',body:{email}}),

@@ -50,10 +50,9 @@ export function createPasswords({store,auth,now=()=>new Date().toISOString(),wor
   },
   issue(body,organizerId){
    const email=normalize(body?.email);if(!emailOk(email))fail(400,'email','Vul een geldig e-mailadres in.');
-   const kind=body?.kind||'signup';if(!['signup','recovery'].includes(kind))fail(400,'invite_kind','Ongeldige uitnodiging.');
+   const kind=body?.kind||'signup';if(kind!=='signup')fail(400,'invite_kind','Ongeldige uitnodiging.');
    const existing=person(email);
-   if(kind==='signup'&&existing)fail(409,'invite_collision','Dit e-mailadres hoort al bij een account. Gebruik inloggen of gecontroleerd accountherstel.');
-   if(kind==='recovery'&&(!existing||existing.id!==body?.participantId||body?.ownershipConfirmed!==true||!Number.isInteger(body?.expectedCredentialRevision)||(credential(existing.id)?.revision||0)!==body.expectedCredentialRevision))fail(409,'recovery_identity','Controleer de identiteit en het exacte account voordat je herstel toestaat.');
+   if(kind==='signup'&&existing)fail(409,'invite_collision','Dit e-mailadres hoort al bij een account. Log in op je bestaande account.');
    const rate=store.rateLimit('invite:organizer:'+organizerId,20,3600,at());if(!rate.allowed)fail(429,'rate_limited','Te veel uitnodigingen. Probeer later opnieuw.');
    q('DELETE FROM auth_invites WHERE expires_at<?').run(new Date(at()-30*86400000).toISOString());if(q('SELECT count(*) n FROM auth_invites').get().n>=2000)fail(503,'invite_limit','Er zijn te veel uitnodigingen opgeslagen.');
    const token=randomBytes(32).toString('base64url'),expiresAt=new Date(at()+86400000).toISOString();
@@ -67,9 +66,9 @@ export function createPasswords({store,auth,now=()=>new Date().toISOString(),wor
    const token=body?.inviteToken;if(typeof token!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(token))fail(400,'invite_invalid','Deze uitnodiging is ongeldig of verlopen.');
    const row=q('SELECT * FROM auth_invites WHERE token_hash=?').get(sha(token));
    if(!row||row.consumed_at||Date.parse(row.expires_at)<=at()||normalize(body.email)!==row.email)fail(400,'invite_invalid','Deze uitnodiging is ongeldig of verlopen.');
+   if(row.kind!=='signup')fail(403,'recovery_disabled','Herstel door de organisator is niet beschikbaar.');
    let p=person(row.email);
    if(row.kind==='signup'&&p)fail(409,'invite_collision','Dit e-mailadres hoort inmiddels bij een account. Log in of neem contact op met de organisator.');
-   if(row.kind==='recovery'&&(!p||p.id!==row.participant_id||(credential(p.id)?.revision||0)!==row.credential_revision))fail(409,'credential_changed','Dit herstelverzoek is niet meer geldig.');
    const hashed=await work.hash(body.password);
    return store.transaction(()=>{
     if(Date.parse(row.expires_at)<=at())fail(400,'invite_invalid','Deze uitnodiging is ongeldig of verlopen.');
