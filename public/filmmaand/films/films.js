@@ -170,7 +170,29 @@ window.pickerCustomScores ||= {};
     if(people.length>limit)row.append(el('span','films-avatar-more','+'+(people.length-limit)));
     return row;
   }
+  // One viewport-level label avoids the banner crop and transformed sticker parents.
+  let bannerName=null,bannerFace=null;
+  function hideBannerName(){
+    if(bannerFace){bannerFace.removeAttribute('aria-describedby');bannerFace.classList.remove('is-name-open');}
+    bannerFace=null;
+    if(bannerName){if(bannerName.hasAttribute('popover')&&bannerName.matches(':popover-open'))bannerName.hidePopover();bannerName.hidden=true;}
+  }
+  function showBannerName(face,event){
+    if(!face?.isConnected)return;
+    if(bannerFace&&bannerFace!==face){bannerFace.removeAttribute('aria-describedby');bannerFace.classList.remove('is-name-open');}
+    if(!bannerName){bannerName=el('div','films-avatar-tooltip');bannerName.id='films-banner-avatar-name';bannerName.setAttribute('role','tooltip');if(typeof bannerName.showPopover==='function')bannerName.setAttribute('popover','manual');document.body.append(bannerName);}
+    bannerFace=face;bannerName.textContent=face.getAttribute('aria-label');face.setAttribute('aria-describedby',bannerName.id);bannerName.hidden=false;
+    if(bannerName.hasAttribute('popover')&&!bannerName.matches(':popover-open'))bannerName.showPopover();
+    const box=face.getBoundingClientRect(),pointer=event&&event.pointerType!=='touch'&&(event.clientX||event.clientY),x=pointer?event.clientX:box.left+box.width/2,y=pointer?event.clientY:box.bottom;
+    const width=bannerName.offsetWidth,height=bannerName.offsetHeight,gap=12;
+    bannerName.style.left=Math.max(8,Math.min(innerWidth-width-8,x+gap))+'px';
+    bannerName.style.top=Math.max(8,Math.min(innerHeight-height-8,y+gap+height>innerHeight-8?y-height-gap:y+gap))+'px';
+  }
+  document.addEventListener('pointerdown',event=>{if(bannerFace&&!event.target.closest('.films-poster-people'))hideBannerName();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')hideBannerName();});
+  document.addEventListener('scroll',hideBannerName,true);window.addEventListener('resize',hideBannerName);
   function renderPosterSupporters(ctx){
+    hideBannerName();
     const option=ctx.plan.options[ctx.current],scene=ctx.host.querySelector('.hp-scene');
     ctx.host.querySelector('.hp-scene>.hp-supporters')?.remove();
     if(!scene)return;
@@ -179,12 +201,15 @@ window.pickerCustomScores ||= {};
     const profiled=people.filter(p=>window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId)).slice(0,total);
     const ordered=[...profiled.filter(p=>p.self),...profiled.filter(p=>!p.self)];
     const row=el('div','films-poster-people');row.setAttribute('role','group');row.setAttribute('aria-label',total+' vinden dit leuk');
-    function sticker(label,person){const face=el('span','battle-person'+(person?.self?' battle-own':''));face.tabIndex=0;face.title=label;face.setAttribute('aria-label',label);face.append(el('span','battle-name',label));return face;}
+    function sticker(label,person){const face=el('span','battle-person'+(person?.self?' battle-own':''));face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',label);face.append(el('span','battle-name',label));return face;}
     for(const person of ordered.slice(0,6)){const label=(person.self?'Jij'+(person.name?' · '+person.name:''):person.name||'Zonder naam'),face=sticker(label,person),avatar=window.filmmaandAvatarOptions.find(a=>a.id===person.avatarId),img=el('img');img.src=avatar.src;img.alt='';if(avatar.filter)img.style.filter=avatar.filter;face.append(img);row.append(face);}
     const remaining=total-Math.min(ordered.length,6);if(remaining>0){const withoutAvatar=people.filter(p=>!window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId));const labels=[...ordered.slice(6),...withoutAvatar].slice(0,remaining).map(p=>p.name||'Zonder naam'),unknown=Math.max(0,remaining-labels.length);if(unknown)labels.push(unknown+' zonder profiel');const more=sticker(labels.join(', '));more.classList.add('battle-more');more.append(document.createTextNode('+'+remaining));row.append(more);}
-    row.addEventListener('click',event=>{event.stopPropagation();const face=event.target.closest('.battle-person');if(!face)return;row.querySelectorAll('.is-name-open').forEach(n=>{if(n!==face)n.classList.remove('is-name-open')});face.classList.toggle('is-name-open');face.focus({preventScroll:true});});
-    row.addEventListener('keydown',event=>{event.stopPropagation();if(['Enter',' '].includes(event.key)){event.preventDefault();event.target.closest('.battle-person')?.click();}if(event.key==='Escape')row.querySelectorAll('.is-name-open').forEach(n=>n.classList.remove('is-name-open'));});
-    const alignName=event=>{const face=event.target.closest('.battle-person'),name=face?.querySelector('.battle-name');if(name)name.style.left=-face.offsetLeft+'px';};row.addEventListener('focusin',alignName);row.addEventListener('mouseover',alignName);
+    row.addEventListener('click',event=>{event.stopPropagation();const face=event.target.closest('.battle-person');if(!face)return;const wasOpen=face.classList.contains('is-name-open');face.focus({preventScroll:true});if(wasOpen)hideBannerName();else{showBannerName(face,event);face.classList.add('is-name-open');}});
+    row.addEventListener('keydown',event=>{event.stopPropagation();if(['Enter',' '].includes(event.key)){event.preventDefault();event.target.closest('.battle-person')?.click();}if(event.key==='Escape')hideBannerName();});
+    row.addEventListener('pointermove',event=>{if(event.pointerType!=='touch'){const face=event.target.closest('.battle-person');if(face)showBannerName(face,event);}});
+    row.addEventListener('pointerleave',()=>{if(!bannerFace?.classList.contains('is-name-open'))hideBannerName();});
+    row.addEventListener('focusin',event=>showBannerName(event.target.closest('.battle-person')));
+    row.addEventListener('focusout',event=>{if(!row.contains(event.relatedTarget))hideBannerName();});
     scene.append(row);
   }
 
@@ -269,8 +294,9 @@ window.pickerCustomScores ||= {};
     for(const section of ctx.host.querySelectorAll('.hp-collection')){
       const key=section.dataset.collection,rail=section.querySelector('.hp-rail'),top=section.querySelector('.hp-collection-title');
       if(!rail||!top||!(key in railQueries))continue;
+      if(key==='suggestions')top.querySelector('h3').textContent='Suggesties';
       const oldAdd=top.querySelector('[data-focus="open-suggestion"]');if(oldAdd)oldAdd.remove();
-      const search=el('div','films-rail-search'),label=el('label','',key==='programme'?'Zoek films & activiteiten':'Zoek voorstellen'),input=el('input');
+      const search=el('div','films-rail-search'),label=el('label','',key==='programme'?'Zoek films & activiteiten':'Zoek suggesties'),input=el('input');
       input.type='search';input.id='films-search-'+key;input.dataset.focus=input.id;input.placeholder='Zoeken';input.autocomplete='off';input.value=railQueries[key];label.htmlFor=input.id;
       const count=el('span','films-rail-count');count.setAttribute('role','status');count.setAttribute('aria-live','polite');
       const icon=el('span','films-search-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';search.append(label,icon,input,count);top.querySelector(':scope > .ci-note')?.remove();top.querySelector('h3').after(search);

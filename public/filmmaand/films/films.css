@@ -504,3 +504,17 @@
 #films #home-picker .films-calendar .ac-cell:has(.films-day-count[data-level="4"])>.ac-day:not(.selected):not(.preview):not(.preview-remove):not(.elapsed){background:#cfddbd}
 #films #home-picker .films-calendar .ac-cell:has(.films-day-count[data-level]:not([data-level="0"]))>.ac-day:not(.selected):not(.preview):not(.preview-remove):not(.elapsed):hover{filter:brightness(.97)}
 #films #home-picker .films-calendar .films-day-total{display:none}
+
+/* Selected shelf search treatment: shared alignment, icon and a quiet underline. */
+#films #home-picker .hp-collection-title{display:grid;grid-template-columns:minmax(0,260px) minmax(140px,240px) 1fr;align-items:center;gap:16px}
+#films #home-picker .hp-collection-title h3{margin:0;min-width:0}
+#films #home-picker .films-rail-search{width:100%;min-width:0;margin:0}
+#films #home-picker .films-rail-search input{width:100%;min-width:0;border:0;border-bottom:1px solid #cbd2c1;border-radius:0;background:transparent;box-shadow:none;padding:10px 8px 10px 27px;font:12px Everett,Arial,sans-serif}
+#films #home-picker .films-rail-search input:focus{outline:2px solid #4585d1;outline-offset:3px;border-bottom-color:#526547}
+#films #home-picker .films-search-icon{left:0;width:15px;height:15px;color:#77836b}
+#films #home-picker .hp-collection-title .hp-rail-nav{margin:0;justify-self:end}
+@media(max-width:767px){#films #home-picker .hp-collection-title{grid-template-columns:minmax(0,1fr) minmax(110px,135px);gap:8px 12px}#films #home-picker .hp-collection-title h3{display:flex;align-items:center;min-height:50px}#films #home-picker .hp-collection-title .hp-rail-nav{grid-column:1/-1}#films #home-picker .films-rail-search input{padding-top:9px;padding-bottom:9px}}
+/* Banner names use one viewport/top-layer tooltip, outside cropped artwork. */
+#films #home-picker .films-poster-people .battle-person .battle-name{display:none!important}
+.films-avatar-tooltip{position:fixed;inset:auto;margin:0;z-index:10000;max-width:min(240px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:hidden;width:max-content;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;pointer-events:none;background:white;color:#202820;border:1px solid #d4d8ce;border-radius:4px;padding:6px 8px;box-shadow:0 3px 12px #0002;font:11px/1.4 Arial,sans-serif;text-align:left}
+.films-avatar-tooltip[hidden]{display:none}
