@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
 import {transact} from './state.mjs';
 import {createPlanningService} from './runtime/planning/service.mjs';
@@ -10,12 +11,12 @@ const error=(status,code,message)=>Object.assign(Error(message),{status,code});
 const rewrite=(value,key='')=>typeof value==='string'&&['url','poster','backdrop','image','posterFull','metadataPoster'].includes(key)&&value.startsWith('/planning-api/images/')?'/filmmaand/api/images/'+value.slice('/planning-api/images/'.length):Array.isArray(value)?value.map(v=>rewrite(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v,k)])):value;
 const json=(status,body,headers={})=>new Response(status===204?null:JSON.stringify(rewrite(body)),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
 const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
-export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,now,avatars=loadAvatarOptions()}){
+export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,now,avatars=loadAvatarOptions()}){
  return async function handle(request,context={}){
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
   if(!url.pathname.startsWith('/filmmaand/api/'))return json(404,{error:{code:'not_found'}});
   if(request.headers.get('origin')&&request.headers.get('origin')!==origin)return json(403,{error:{code:'origin',message:'Origin niet toegestaan.'}});
-  if(method==='OPTIONS')return json(204,null,{'Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key, X-Filmmaand-Reset-Generation'});
+  if(method==='OPTIONS')return json(204,null,{'Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key, X-Filmmaand-Reset-Generation, X-Filmmaand-Organizer-Id'});
   const req={url:request.url,headers:Object.fromEntries(request.headers),socket:{remoteAddress:context.ip||'unknown'}};
   let body=null;
   try{
@@ -45,9 +46,12 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      const readOnly=['GET','HEAD'].includes(method);
      const logout=(method==='POST'&&path==='/api/auth/logout')||(method==='DELETE'&&path==='/api/auth/session');
      const organizer=method==='POST'&&/^\/api\/plans\/[a-z0-9-]+\/(round|round-date|programme|confirmation)$/.test(path);
-     if(!readOnly&&!logout&&!organizer&&generation!=='0'&&req.headers['x-filmmaand-reset-generation']!==generation){
+     const organizerCookie=organizer&&router.credential(req)?.transport==='cookie';
+     if(!readOnly&&!logout&&(!organizer||organizerCookie)&&(organizerCookie||generation!=='0')&&req.headers['x-filmmaand-reset-generation']!==generation){
       return send(409,{error:{code:'reset_generation',message:'De site is opnieuw voorbereid. Vernieuw om verder te gaan.',details:{resetGeneration:generation}}});
      }
+     const organizerAccount=()=>{const cred=router.credential(req);if(cred?.transport!=='cookie')throw error(401,'session_required','Log in met je account.');const account=auth.authenticate(cred.token);if(!account.onboarded||!Array.isArray(organizerIds)||!organizerIds.includes(account.participantId))throw error(403,'organizer_required','Dit account heeft geen beheerderstoegang.');return account;};
+     if(path==='/api/organizer'&&method==='GET'){const account=organizerAccount();return send(200,{canManageRounds:true,participantId:account.participantId,resetGeneration:generation})}
      if(path.startsWith('/api/auth/'))return await router.handle(req,{path,method,body,headers,send});
      const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
@@ -59,6 +63,14 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.
      if(!['setRound','scheduleRound','planNight','confirm'].includes(fn)){const account=auth.authenticate(token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');}
+     if(organizerCookie){
+      const account=organizerAccount();
+      if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');
+      const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
+      // A receipt belongs to the validated account, never the shared admin actor alone.
+      const scoped='organizer-'+createHash('sha256').update(JSON.stringify([account.participantId,key])).digest('hex');
+      return send(200,await service[fn](id,adminToken,scoped,body));
+     }
      return send(200,fn==='uploadImage'?await service[fn](id,token,body):await service[fn](id,token,req.headers['idempotency-key'],body));
     }catch(e){if(!e.status)throw e;if(e.details?.clear&&router.credential(req)?.transport==='cookie')headers['Set-Cookie']=router.clearCookie();return send(e.status,{error:{code:e.code,message:e.message,details:e.details}})}
    });
