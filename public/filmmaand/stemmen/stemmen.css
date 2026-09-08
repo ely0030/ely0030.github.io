@@ -570,3 +570,30 @@ body.st-cinema-result #stemmen .st-closed{color:#fff}
 @media(max-width:650px){#stemmen .st-closed{grid-template-columns:1fr;gap:36px;padding:36px 24px 56px;text-align:center;min-height:0}#stemmen .st-closed-art{max-width:185px;padding-top:0}#stemmen .st-closed-crown{font-size:34px;margin-bottom:14px}#stemmen .st-closed-kicker{margin-bottom:12px;font-size:11px}#stemmen .st-closed-title{font-size:40px;margin-bottom:18px}#stemmen .st-closed-date{font-size:22px}#stemmen .st-closed-actions{justify-content:center;gap:18px;margin-top:26px}#stemmen .st-closed-actions .st-button{font-size:13px;padding:16px 18px;gap:16px}#stemmen .st-closed-note{margin-left:auto;margin-right:auto}}
 
 #stemmen .st-closed-crown svg{display:block;width:36px;height:30px;margin:auto}
+
+/* Decided: a white record of the vote, separate from the live race. */
+#stemmen .st-vote-summary{grid-template-columns:230px minmax(0,1fr);gap:40px 72px;max-width:1000px;padding-top:48px;color:#243129}
+#stemmen .st-vote-summary .st-closed-art{max-width:205px;padding:0}
+#stemmen .st-vote-summary .st-closed-case{transform:rotate(-2deg);box-shadow:0 18px 24px #12201619;border-width:3px;border-left-width:7px}
+#stemmen .st-vote-summary .st-closed-crown{margin-bottom:18px}
+#stemmen .st-vote-summary .st-closed-title{font-size:clamp(36px,4.2vw,58px);max-width:620px}
+#stemmen .st-vote-summary .st-closed-kicker{color:#61705f;letter-spacing:.08em}
+#stemmen .st-vote-summary .st-closed-date{font-size:26px;color:#455140}
+#stemmen .st-vote-summary .st-closed-actions{margin-top:28px}
+#stemmen .st-summary-votes{grid-column:1/-1;margin-top:18px;border-top:1px solid #dfe3dc;padding-top:26px}
+#stemmen .st-summary-heading{display:flex;justify-content:space-between;align-items:baseline;gap:18px;margin-bottom:24px}
+#stemmen .st-summary-heading h2{font:normal 31px/1.1 'Canela Trial',Georgia,serif;margin:0;letter-spacing:-.025em}
+#stemmen .st-summary-heading>span{font:12px/1.4 Arial,sans-serif;color:#65705f}
+#stemmen .st-summary-results{list-style:none;margin:0;padding:0;display:grid;gap:26px}
+#stemmen .st-summary-line{display:flex;justify-content:space-between;gap:24px;align-items:baseline}
+#stemmen .st-summary-film{font:15px/1.4 Arial,sans-serif;color:#65705f}
+#stemmen .is-winner .st-summary-film{color:#233521;font-weight:600}
+#stemmen .st-summary-count{font:normal 28px/1 'Canela Trial',Georgia,serif;font-variant-numeric:tabular-nums}
+#stemmen .st-summary-track{height:3px;background:#f0f2ed;margin:11px 0 12px;overflow:hidden}
+#stemmen .st-summary-track>span{height:100%;display:block;background:#b9c2b3}
+#stemmen .is-winner .st-summary-track>span{background:#344e2d}
+#stemmen .st-summary-people{display:flex;gap:8px 20px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+#stemmen .st-summary-people li{display:flex;align-items:center;gap:8px;font:12px/1.4 Arial,sans-serif;color:#4f594b;max-width:100%;overflow-wrap:anywhere}
+#stemmen .st-summary-people img{width:28px;height:28px;object-fit:cover;border-radius:4px;background:#f2f3ef}
+#stemmen .st-summary-anonymous{color:#7c8278}
+@media(max-width:650px){#stemmen .st-vote-summary{grid-template-columns:1fr;gap:28px;padding:30px 12px 48px}#stemmen .st-vote-summary .st-closed-art{max-width:150px}#stemmen .st-vote-summary .st-closed-title{font-size:38px;margin-bottom:16px}#stemmen .st-vote-summary .st-closed-date{font-size:23px}#stemmen .st-summary-votes{text-align:left;margin-top:4px;padding-top:22px}#stemmen .st-summary-heading{margin-bottom:22px}#stemmen .st-summary-heading h2{font-size:29px}#stemmen .st-summary-heading>span{font-size:11px}#stemmen .st-summary-film{font-size:13px}#stemmen .st-summary-people{gap:8px 14px}#stemmen .st-summary-people li{font-size:11px}}
