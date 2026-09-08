@@ -10,7 +10,7 @@
   const move = (ids, id, position) => {const next=ids.filter(x=>x!==id);next.splice(Math.max(0,Math.min(next.length,position)),0,id);return next;};
   window.mountFilmsRanking = (host, ctx, {open,browse}) => {
     lastContext=ctx;lastActions={open,browse};const realPlan=ctx.plan;const tutorial=window.filmmaandTutorialRanking===true;
-    if(tutorial){const rule=ctx.plan.nextRound?.rule,own=FilmsSocialModel.contribution(ctx.choices,ctx.ranking?.order||[],rule),profile=ctx.ownProfile||(ctx.plan.people||[]).find(p=>p.self)||{name:'Jij'};ctx={...ctx,plan:{...ctx.plan,people:[{...profile,self:true,choices:[...ctx.choices],rankingOrder:[...(ctx.ranking?.order||[])]}],optionCounts:Object.fromEntries(ctx.choices.map(id=>[id,1])),round:{...ctx.plan.round,shortlist:[]},programme:[],nextRound:{...ctx.plan.nextRound,points:own,ownPoints:own}}};}
+    if(tutorial){const rule=ctx.plan.nextRound?.rule,own=FilmsSocialModel.contribution(ctx.choices,ctx.ranking?.order||[],rule),profile=ctx.ownProfile||(ctx.plan.people||[]).find(p=>p.self)||{name:'Jij'};ctx={...ctx,tutorialOwnContribution:true,plan:{...ctx.plan,people:[{...profile,self:true,choices:[...ctx.choices],rankingOrder:[...(ctx.ranking?.order||[])]}],optionCounts:Object.fromEntries(ctx.choices.map(id=>[id,1])),round:{...ctx.plan.round,shortlist:[]},programme:[],nextRound:{...ctx.plan.nextRound,points:own,ownPoints:own}}};}
 
     const previousRail=lastHost?.querySelector('.fr-order'),railScroll=previousRail?.scrollLeft||0,focused=lastHost?.contains(document.activeElement)?document.activeElement?.dataset.rankId:null;
     activeCleanup?.();mounts.get(host)?.();lastHost=host;
