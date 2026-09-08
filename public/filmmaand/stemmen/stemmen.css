@@ -508,3 +508,19 @@ body.site-stemmen{transition:none}
 #stemmen .st-dvd .st-cta.is-next:hover span{transform:translateX(2px)}
 #stemmen .st-dvd .st-result-edit{font-size:12px;color:#65705e;border-color:#9ba394;padding:8px 0}
 @media(max-width:700px){#stemmen .st-race-track{height:4px}}
+/* Selected result header: original masthead returns outside landed voting results. */
+body.site-stemmen:has(#stemmen .st-result-landed) .site-edition-strip,body.site-stemmen:has(#stemmen .st-result-landed) #festival-moire{display:none!important}
+body.site-stemmen:has(#stemmen .st-result-landed) .site-shell-header{display:flex;align-items:center;justify-content:space-between;gap:32px;padding-top:22px;padding-bottom:18px;background:transparent!important}
+body.site-stemmen:has(#stemmen .st-result-landed) .masthead{display:flex!important;margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:visible;background:transparent!important;flex-shrink:0}
+body.site-stemmen:has(#stemmen .st-result-landed) .wordmark{font-size:34px!important;line-height:1.1!important;padding:0!important;color:#272c27!important;letter-spacing:-.03em!important}
+body.site-stemmen:has(#stemmen .st-result-landed) .navigation{min-height:54px!important;background:transparent!important;border:0!important}
+body.site-stemmen:has(#stemmen .st-result-landed) .navigation>nav{justify-content:flex-end;gap:34px!important}
+
+body.site-stemmen:has(#stemmen .st-result-landed).st-cinema-result .wordmark{color:#fff!important}
+@media(max-width:650px){ body.site-stemmen:has(#stemmen .st-result-landed) .site-shell-header{padding-top:20px;padding-bottom:8px;flex-direction:column;gap:8px}body.site-stemmen:has(#stemmen .st-result-landed) .wordmark{font-size:29px!important}body.site-stemmen:has(#stemmen .st-result-landed) .navigation{min-height:44px!important}body.site-stemmen:has(#stemmen .st-result-landed) .navigation>nav{gap:30px!important}
+}
+/* Keep account access available, with less visual weight than the result. */
+body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu-trigger,body.site-stemmen:has(#stemmen .st-result-landed) .profile-login{opacity:.52;transition:opacity .18s ease}
+body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu-trigger:is(:hover,:focus-visible,[aria-expanded=true]),body.site-stemmen:has(#stemmen .st-result-landed) .profile-login:is(:hover,:focus-visible){opacity:1}
+body.site-stemmen:has(#stemmen .st-result-landed).st-cinema-result .profile-login{color:#fff}
+@media(prefers-reduced-motion:reduce){body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu-trigger,body.site-stemmen:has(#stemmen .st-result-landed) .profile-login{transition:none}}
