@@ -28,7 +28,7 @@ function position(){if(!panel||panel.hidden)return;
  const regions=[[0,0,w,top],[0,top,left,Math.max(0,bottom-top)],[right,top,w-right,Math.max(0,bottom-top)],[0,bottom,w,h-bottom]];
  shields.forEach((n,i)=>{const[x,y,width,height]=regions[i];n.style.cssText='display:block;left:'+x+'px;top:'+y+'px;width:'+Math.max(0,width)+'px;height:'+Math.max(0,height)+'px';});
  frame.style.cssText='display:block;left:'+left+'px;top:'+top+'px;width:'+(right-left)+'px;height:'+(bottom-top)+'px';
- panel.style.setProperty('--spot-left',Math.max(12,(w-panel.offsetWidth)/2)+'px');panel.style.setProperty('--spot-top',Math.max(12,h-panel.offsetHeight-16)+'px');
+ const dockLeft=left>panel.offsetWidth+40?20:(w-right>panel.offsetWidth+40?w-panel.offsetWidth-20:Math.max(12,(w-panel.offsetWidth)/2));panel.style.setProperty('--spot-left',dockLeft+'px');panel.style.setProperty('--spot-top',Math.max(12,h-panel.offsetHeight-16)+'px');
 }
 
 
@@ -52,7 +52,7 @@ function update(){queued=false;if(!panel||!state)return;
  if(part==='overview'){heading='Dit is een filmavond';description='Bovenaan lees je wat er te zien is. De posters daaronder laten je door de collectie bladeren.';focus=document.querySelector('#home-picker .hp-scene');}
  else if(part==='collection'){heading='De collectie';description='Geef een hartje aan films die je wilt zien. Je kunt er meerdere kiezen.';focus=rail?.closest('.hp-collection')||rail?.parentElement||rail;}
  else if(part==='action'){
-  heading='Kies een film';description='Tik op het hartje bij een film die je wilt zien.';awaiting=selected.length<1||!!snapshot?.pending;
+  heading='Kies drie films';description='Geef drie films een hartje. Daarna zet je jouw favoriet vooraan.';awaiting=selected.length<3||!!snapshot?.pending;
   focus=rail?.closest('.hp-collection')||rail?.parentElement||rail;clickTargets=awaiting&&rail?[...rail.querySelectorAll('.hp-heart:not(:disabled)')].filter(n=>n.getAttribute('aria-pressed')!=='true').slice(0,1):[];
 
  }
@@ -61,8 +61,8 @@ function update(){queued=false;if(!panel||!state)return;
   const id=state.likedId||chosenExample;focus=[...(rail?.querySelectorAll('.hp-option')||[])].find(n=>n.dataset.optionId===id)||rail;
  }
  else if(part==='ranking'){heading='Jouw volgorde telt';description='Dit is jouw volgorde: de eerste krijgt 3 punten, de tweede 2, de rest 1.';focus=document.querySelector('.fr-personal');}
- else if(part==='rank-action'){const draggable=[...document.querySelectorAll('.fr-order [data-rank-id]:not(:disabled)')];const canReorder=draggable.length>=2;heading=canReorder?'Sleep je favoriet vooraan':'Jouw favorieten';description=canReorder?'Pak een poster vast en sleep hem naar een andere plek.':'Hier staan je hartjes. Met twee films kun je de volgorde veranderen.';focus=document.querySelector('.fr-personal');awaiting=canReorder?(!state.done||!!snapshot?.pending):!!snapshot?.pending;clickTargets=canReorder&&awaiting?draggable.slice(0,2):[];}
- else if(part==='rank-result'){heading='Dit komt er samen uit';description='Deze volgorde wordt berekend uit ieders voorkeuren. Verplaatsen doe je bij jouw favorieten, niet hier.';focus=document.querySelector('.fr-result');}
+ else if(part==='rank-action'){const draggable=[...document.querySelectorAll('.fr-order [data-rank-id]:not(:disabled)')];const canReorder=draggable.length>=2;heading=canReorder?'Sleep je favoriet vooraan':'Jouw favorieten';description=canReorder?'Verplaats een favoriet en zie de punten in het leaderboard veranderen.':'Hier staan je favorieten en hun bijdrage aan het leaderboard.';focus=document.querySelector('.fr-ranking')||document.querySelector('.fr-personal')?.parentElement;awaiting=canReorder?(!state.done||!!snapshot?.pending):!!snapshot?.pending;clickTargets=canReorder&&awaiting?draggable.slice(0,2):[];}
+ else if(part==='rank-result'){heading='Dit komt er samen uit';description='Sleep je favorieten en bekijk direct wat dat met het leaderboard doet.';focus=document.querySelector('.fr-ranking')||document.querySelector('.fr-result')?.parentElement;}
  else if(part==='leaderboard'){heading='Leaderboard';description='Hier zie je de berekende groepsvolgorde. Die verandert door jullie hartjes en persoonlijke rangschikking.';focus=document.querySelector('.fr-result');}
  else if(part==='social'){heading='Samen ontdekken';description='Hier zie je welke films anderen leuk vinden en toevoegen.';focus=document.querySelector('.films-social-content');}
  else if(part==='suggest'){heading='Jouw eigen idee';description='Mis je een film? Zoek hem op via Film toevoegen.';focus=document.querySelector('.films-add-launcher');}
@@ -80,9 +80,9 @@ function update(){queued=false;if(!panel||!state)return;
  panel.querySelector('.tour-up-next').hidden=true;
  text(panel.querySelector('.tour-waiting'),part==='action'?(snapshot?.pending?'Even bewaren…':Math.min(selected.length,2)+' van 2 hartjes'):part==='rank-action'?(snapshot?.pending?'Even bewaren…':state.done?'Je nieuwe volgorde staat klaar.':'Jouw eerste krijgt 3 punten, je tweede 2.'):part==='rank-result'?'De hoogste scores komen bovenaan.':part==='social'?'Dit zijn jullie gedeelde voorkeuren.':'Je hebt de belangrijkste onderdelen geprobeerd.');
  next.hidden=false;let nextLabel=({action:'Verder', 'rank-action':'Verder','rank-result':'Verder',social:'Verder',planner:'Afronden'})[part]+' →';
- if(part==='action'&&awaiting){const count=Math.min(1,visibleSelected.length);nextLabel=count<1?'Geef een hartje · 0/1':'1/1 · Opslaan…';}
+ if(part==='action'&&awaiting){const count=Math.min(3,visibleSelected.length);nextLabel=count<3?'Geef 3 hartjes · '+count+'/3':'3/3 · Opslaan…';}
  if(part==='rank-action'&&awaiting){const moved=state.rankBefore&&JSON.stringify(handles())!==JSON.stringify(state.rankBefore);nextLabel=moved?'1/1 · Opslaan…':'Verplaats een poster · 0/1';}
- text(next,nextLabel);next.disabled=!focus||awaiting;panel.classList.toggle('is-waiting',awaiting);
+ const questCount=part==='action'?Math.min(3,visibleSelected.length):0;next.classList.toggle('tour-quota',part==='action');next.style.setProperty('--quest-progress',(questCount/3*100)+'%');if(part==='action'&&Number(next.dataset.questCount||0)<questCount&&!matchMedia('(prefers-reduced-motion: reduce)').matches)next.animate([{scale:1},{scale:1.025},{scale:1}],{duration:260,easing:'ease-out'});next.dataset.questCount=String(questCount);text(next,nextLabel);next.disabled=!focus||awaiting;panel.classList.toggle('is-waiting',awaiting);
 
  if(actionNodes.length!==clickTargets.length||actionNodes.some((n,i)=>n!==clickTargets[i])){clearActions();actionNodes=clickTargets;for(const n of actionNodes)n.classList.add('tour-action');}
  if(target!==focus){target?.classList.remove('tour-target');target=focus;target?.classList.add('tour-target');}
