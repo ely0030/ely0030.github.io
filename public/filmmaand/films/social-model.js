@@ -9,6 +9,11 @@ function programmeDate(n){
  const date=new Date(day+'T12:00:00Z');
  return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===day?day:'';
 }
+function completedIds(plan,instant=new Date()){
+ const today=programmeDayFormat.format(instant),known=new Set((plan.options||[]).map(o=>o.id)),done=new Set();
+ for(const night of plan.programme||[]){if(night.selection==='pending'||!Array.isArray(night.choices)||!night.choices.length)continue;if(night.startsAt!==undefined){const stamp=Date.parse(night.startsAt);if(typeof night.startsAt!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(night.startsAt)||!Number.isFinite(stamp)||new Date(stamp).toISOString().slice(0,10)!==night.startsAt.slice(0,10))continue;}const day=programmeDate(night);if(!day||day>=today)continue;for(const id of night.choices)if(known.has(id))done.add(id);}
+ return done;
+}
 function project(ctx,today){
  const plan=ctx.plan,self=(plan.people||[]).find(p=>p.self),profile=ctx.ownProfile||self;
  const people=[...(plan.people||[]).filter(p=>!p.self),...(profile?[{...profile,self:true,choices:ctx.choices,dates:ctx.dates}]:[])];
@@ -26,7 +31,7 @@ function project(ctx,today){
  near.sort((a,b)=>b.people.length-a.people.length||a.date.localeCompare(b.date)||a.option.title.localeCompare(b.option.title,'nl'));
  return {near,people,self,count,fans,ranked,mine,recent,matches,overlap,total:plan.options.reduce((n,o)=>n+count(o),0)};
 }
-if(typeof module!=='undefined'&&module.exports)module.exports={project,programmeDate};else root.FilmsSocialModel={project,programmeDate};
+if(typeof module!=='undefined'&&module.exports)module.exports={project,programmeDate,completedIds};else root.FilmsSocialModel={project,programmeDate,completedIds};
 })(typeof window==='undefined'?globalThis:window);
 /* Ranked points are separate from heart counts and the current ballot. */
 (function(root){

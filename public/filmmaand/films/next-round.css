@@ -139,3 +139,8 @@
 #films #home-picker .fr-contribution img{display:none}
 #films #home-picker .fr-contribution b{font:400 24px/1.1 Arial;letter-spacing:-.5px}
 #films #home-picker .fr-contribution{min-height:27px;gap:5px}
+
+#films #home-picker .fr-item.is-watched .fr-handle{filter:grayscale(1);opacity:.42;cursor:default}
+#films #home-picker .fr-item.is-watched .fr-position{display:none!important}
+#films #home-picker .fr-watched{position:absolute;top:calc(100% - 22px);left:0;font:10px/22px Arial;color:#929a8a}
+#films #home-picker .fr-item.is-watched{padding-bottom:28px}

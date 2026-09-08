@@ -608,3 +608,6 @@
 .site-films #films #home-picker .fs-popular .fs-rank-number{display:none!important}
 .site-films #films #home-picker .fs-popular .fs-rank-image{position:relative!important;grid-column:auto!important;grid-row:auto!important}
 .site-films #films #home-picker .fs-popular .hp-poster-score{display:none!important}
+
+#films #home-picker .friend-order-posters .is-watched .ci-cover,#films #home-picker .films-card.is-watched .ci-cover{filter:grayscale(1);opacity:.45}
+#films #home-picker .friend-watched{display:block;margin-top:10px;font:10px/23px Arial;color:#929a8a}
