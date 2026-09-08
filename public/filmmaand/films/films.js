@@ -131,7 +131,7 @@ window.pickerCustomScores ||= {};
   }
   query.addEventListener('input', filterCards);
   page.querySelector('#films-liked')?.addEventListener('change',filterCards);
-  page.addEventListener('click',event=>{const heart=event.target.closest('.hp-heart');if(heart)queueMicrotask(()=>{filterCards();if(!context)return;const id=heart.dataset.optionId,liked=heart.getAttribute('aria-pressed')==='true';context.choices=liked?[...new Set([...context.choices,id])]:context.choices.filter(x=>x!==id);refreshSocial(context);const next=context.host.querySelector('.films-next-pane');if(next){window.renderFilmsNext(next,context,{open:o=>openOption(o),browse:()=>setView('all')});renderCutoff(context);}});});
+  page.addEventListener('click',event=>{const heart=event.target.closest('.hp-heart');if(heart)queueMicrotask(()=>{filterCards();if(!context)return;const id=heart.dataset.optionId,liked=heart.getAttribute('aria-pressed')==='true';context.choices=liked?[...new Set([...context.choices,id])]:context.choices.filter(x=>x!==id);refreshSocial(context);renderRailLikers(context);const next=context.host.querySelector('.films-next-pane');if(next){window.renderFilmsNext(next,context,{open:o=>openOption(o),browse:()=>setView('all')});renderCutoff(context);}});});
   page.querySelector('.films-proposals-jump')?.addEventListener('click',()=>{addOpen=false;planningOpen=true;sideTab='social';setView('feature');applySideTab();const planning=context?.host.querySelector('.films-social-planning');if(planning)planning.open=true;context?.host.querySelector('.films-proposals')?.scrollIntoView({block:'start',behavior:'instant'});});
 
   function cardFor(option, ctx) {
@@ -188,16 +188,45 @@ window.pickerCustomScores ||= {};
     bannerName.style.left=Math.max(8,Math.min(innerWidth-width-8,x+gap))+'px';
     bannerName.style.top=Math.max(8,Math.min(innerHeight-height-8,y+gap+height>innerHeight-8?y-height-gap:y+gap))+'px';
   }
-  document.addEventListener('pointerdown',event=>{if(bannerFace&&!event.target.closest('.films-poster-people'))hideBannerName();});
+  document.addEventListener('pointerdown',event=>{if(bannerFace&&!event.target.closest('.films-poster-people,.films-tile-likers'))hideBannerName();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')hideBannerName();});
   document.addEventListener('scroll',hideBannerName,true);window.addEventListener('resize',hideBannerName);
+  function isProposer(person,option){return person.self===true&&option.recommender?.self===true;}
+  function likerPeople(ctx,option){
+    const model=FilmsSocialModel.project(ctx,new Date().toISOString().slice(0,10)),people=model.fans(option);
+    if(option.proposerOnlyLiker===true&&model.count(option)===1)return [];
+    return people;
+  }
+  function wireLikerNames(row){
+    row.addEventListener('click',event=>{event.stopPropagation();const face=event.target.closest('.battle-person');if(!face)return;const wasOpen=face.classList.contains('is-name-open');face.focus({preventScroll:true});if(wasOpen)hideBannerName();else{showBannerName(face,event);face.classList.add('is-name-open');}});
+    row.addEventListener('keydown',event=>{event.stopPropagation();if(['Enter',' '].includes(event.key)){event.preventDefault();event.target.closest('.battle-person')?.click();}if(event.key==='Escape')hideBannerName();});
+    row.addEventListener('pointermove',event=>{if(event.pointerType!=='touch'){const face=event.target.closest('.battle-person');if(face)showBannerName(face,event);}});
+    row.addEventListener('pointerleave',()=>{if(!bannerFace?.classList.contains('is-name-open'))hideBannerName();});
+    row.addEventListener('focusin',event=>showBannerName(event.target.closest('.battle-person')));
+    row.addEventListener('focusout',event=>{if(!row.contains(event.relatedTarget))hideBannerName();});
+  }
+  function renderRailLikers(ctx){
+    for(const card of ctx.host.querySelectorAll('.hp-rail .hp-option')){
+      card.querySelector('.films-tile-likers')?.remove();
+      const option=ctx.plan.options.find(o=>o.id===card.dataset.optionId);if(!option)continue;
+      const people=likerPeople(ctx,option).filter(p=>!p.self||isProposer(p,option));if(!people.length)continue;
+      const row=el('div','films-tile-likers');row.setAttribute('role','group');row.setAttribute('aria-label','Vinden dit leuk');
+      for(const p of people.slice(0,3)){
+        const face=el('button','battle-person');face.type='button';face.setAttribute('aria-label',p.self?'Jij'+(p.name?' · '+p.name:''):p.name||'Zonder naam');
+        const avatar=window.filmmaandAvatarOptions?.find(a=>a.id===p.avatarId);
+        if(avatar){const image=el('img');image.src=avatar.src;image.alt='';if(avatar.filter)image.style.filter=avatar.filter;face.append(image);}else face.append(document.createTextNode((p.name||'?').slice(0,1).toUpperCase()));row.append(face);
+      }
+      if(people.length>3){const more=el('button','battle-person films-likers-more','+'+(people.length-3));more.type='button';more.setAttribute('aria-label',people.slice(3).map(p=>p.self?'Jij':p.name||'Zonder naam').join(', '));row.append(more);}
+      wireLikerNames(row);card.append(row);
+    }
+  }
   function renderPosterSupporters(ctx){
     hideBannerName();
     const option=ctx.plan.options[ctx.current],scene=ctx.host.querySelector('.hp-scene');
     ctx.host.querySelector('.hp-scene>.hp-supporters')?.remove();
     if(!scene)return;
     const total=ctx.plan.optionCounts?.[option.id]||0;if(!total)return;
-    const people=(ctx.plan.people||[]).filter(p=>p.choices?.includes(option.id));
+    const people=likerPeople(ctx,option);if(!people.length)return;
     const profiled=people.filter(p=>window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId));
     const ordered=[...profiled.filter(p=>p.self),...profiled.filter(p=>!p.self)];
     const row=el('div','films-poster-people');row.setAttribute('role','group');row.setAttribute('aria-label',total+' vinden dit leuk');
@@ -205,12 +234,7 @@ window.pickerCustomScores ||= {};
     for(const person of ordered){const label=(person.self?'Jij'+(person.name?' · '+person.name:''):person.name||'Zonder naam'),face=sticker(label,person),avatar=window.filmmaandAvatarOptions.find(a=>a.id===person.avatarId),img=el('img');img.src=avatar.src;img.alt='';if(avatar.filter)img.style.filter=avatar.filter;face.append(img);row.append(face);}
     for(const person of people.filter(p=>!window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId))){const face=sticker(person.name||'Zonder naam',person);face.classList.add('battle-initial');face.append(document.createTextNode((person.name||'?').slice(0,1).toUpperCase()));row.append(face);}
 
-    row.addEventListener('click',event=>{event.stopPropagation();const face=event.target.closest('.battle-person');if(!face)return;const wasOpen=face.classList.contains('is-name-open');face.focus({preventScroll:true});if(wasOpen)hideBannerName();else{showBannerName(face,event);face.classList.add('is-name-open');}});
-    row.addEventListener('keydown',event=>{event.stopPropagation();if(['Enter',' '].includes(event.key)){event.preventDefault();event.target.closest('.battle-person')?.click();}if(event.key==='Escape')hideBannerName();});
-    row.addEventListener('pointermove',event=>{if(event.pointerType!=='touch'){const face=event.target.closest('.battle-person');if(face)showBannerName(face,event);}});
-    row.addEventListener('pointerleave',()=>{if(!bannerFace?.classList.contains('is-name-open'))hideBannerName();});
-    row.addEventListener('focusin',event=>showBannerName(event.target.closest('.battle-person')));
-    row.addEventListener('focusout',event=>{if(!row.contains(event.relatedTarget))hideBannerName();});
+    wireLikerNames(row);
     scene.append(row);
   }
 
@@ -249,7 +273,7 @@ window.pickerCustomScores ||= {};
     const send=form.querySelector('[data-focus="suggest-send"]');if(send&&!send.disabled&&!ctx.suggestionPending)send.textContent=form.querySelector('[data-focus="suggest-mode-theme"][aria-pressed="true"]')?'Thema toevoegen':'Film toevoegen';
     refineAddForm(form);
     const done=form.querySelector('.hp-suggest-done');
-    if(done){if(!addOpen||ctx.suggestedId===addBaseline)done.hidden=true;else{const option=ctx.plan.options.find(o=>o.id===ctx.suggestedId);if(option){const next=action('Kies een datum →','films-added-next',async()=>{await openOption(option);sideTab='availability';applySideTab();context.host.querySelector('.films-night')?.scrollIntoView({block:'start',behavior:'instant'});context.host.querySelector('.films-calendar [data-day]:not(:disabled)')?.focus({preventScroll:true});},'added-pick-date');done.append(next);}}}
+    if(done&&(!addOpen||ctx.suggestedId===addBaseline))done.hidden=true;
     if(done&&!done.hidden)form.insertBefore(done,form.querySelector('.hp-suggestion-editor'));
     ctx.host.prepend(panel);
     if(addOpen){panel.showModal();panel.scrollTop=addScroll;}
@@ -389,6 +413,22 @@ window.pickerCustomScores ||= {};
     const next=el('section','films-next-pane');next.id='films-next-pane';next.setAttribute('role','tabpanel');next.setAttribute('aria-labelledby','films-tab-next');column.prepend(bar);column.append(social,next);refreshSocial(ctx);window.renderFilmsNext(next,ctx,{open:o=>openOption(o),browse:()=>setView('all')});renderCutoff(ctx);applySideTab();
   }
 
+  const mountRanking=window.mountFilmsRanking;
+  let rankingStatusObserver=null;
+  window.mountFilmsRanking=(host,ctx,actions)=>{
+    rankingStatusObserver?.disconnect();
+    const dispose=mountRanking(host,ctx,actions),result=host.querySelector('.fr-result'),heading=result?.querySelector('h3');
+    if(heading){const hint=el('p','films-next-purpose','Voor de volgende stemronde');hint.id='films-next-purpose';heading.setAttribute('aria-describedby',hint.id);heading.title='Deze koplopers vormen de selectie voor de volgende stemronde.';heading.after(hint);}
+    const current=new Set(ctx.plan.round?.shortlist||[]);
+    for(const item of host.querySelectorAll('.fr-personal .fr-item')){
+      const handle=item.querySelector('[data-rank-id]');if(!handle||!current.has(handle.dataset.rankId)||item.classList.contains('is-watched'))continue;
+      item.classList.add('is-current-ballot');const note=el('a','films-current-ballot','In deze stemronde');note.href='/filmmaand/stemmen/';note.title='Deze film staat al in de huidige stemronde en telt niet mee voor de volgende selectie.';note.setAttribute('aria-label','In deze stemronde. Deze film telt niet mee voor de volgende selectie. Bekijk de huidige stemronde.');note.id='current-ballot-'+handle.dataset.rankId;handle.setAttribute('aria-describedby',note.id);item.querySelector('.fr-film-title')?.after(note);
+    }
+    const status=host.querySelector('.fr-status');
+    function trimSaved(){if(status?.textContent==='Opgeslagen')status.textContent='';}
+    trimSaved();const observer=new MutationObserver(trimSaved);if(status)observer.observe(status,{childList:true,characterData:true,subtree:true});rankingStatusObserver=observer;
+    return ()=>{observer.disconnect();dispose?.();};
+  };
   let cutoffClock=null;
   function renderCutoff(ctx){
     const pane=ctx?.host.querySelector('.films-next-pane'),next=ctx?.plan.nextRound;if(!pane)return;
@@ -397,7 +437,8 @@ window.pickerCustomScores ||= {};
     const state=FilmsSocialModel.cutoffState(next,cutoffClock?.value,cutoffClock?performance.now()-cutoffClock.at:0);
     pane.dataset.selectionStatus=next.status;pane.classList.toggle('has-cutoff-tie',state.frozen&&state.ties.length>0);
     const result=pane.querySelector('.fr-result');if(!result)return;
-    let status=result.querySelector('.films-cutoff');if(!status){status=el('div','films-cutoff');status.append(el('span','films-cutoff-label'),el('time','films-cutoff-time'),el('p','films-cutoff-detail'));const link=el('a','films-cutoff-current','Huidige filmavond →');link.href='/filmmaand/stemmen/';status.append(link);result.querySelector('h3').after(status);}
+    let status=result.querySelector('.films-cutoff');if(!status){status=el('div','films-cutoff');status.append(el('span','films-cutoff-label'),el('time','films-cutoff-time'),el('p','films-cutoff-detail'));const link=el('a','films-cutoff-current','Stem in de huidige ronde →');link.href='/filmmaand/stemmen/';status.append(link);(result.querySelector('.films-next-purpose')||result.querySelector('h3')).after(status);}
+    status.querySelector('.films-cutoff-current').hidden=ctx.plan.round?.status!=='open';
     const label=status.querySelector('.films-cutoff-label'),time=status.querySelector('time'),detail=status.querySelector('.films-cutoff-detail');if(label.textContent!==state.label)label.textContent=state.label;if(time.textContent!==state.time)time.textContent=state.time;time.hidden=!state.time;if(next.closesAt)time.dateTime=next.closesAt;
     if(detail.textContent!==state.detail)detail.textContent=state.detail;detail.hidden=!state.detail;
     status.title=Number.isFinite(Date.parse(next.closesAt))?'Sluit '+new Date(next.closesAt).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'';
@@ -421,6 +462,7 @@ window.pickerCustomScores ||= {};
     renderSocialTabs(ctx);
     renderAdd(ctx);
     renderRailSearch(ctx);
+    renderRailLikers(ctx);
     const displayOrder=browsingOrder(),position=displayOrder.findIndex(o=>o.id===ctx.plan.options[ctx.current]?.id),counter=ctx.host.querySelector('.hp-caption .eyebrow');
     if(counter&&position>=0)counter.textContent=String(position+1).padStart(2,'0')+' / '+displayOrder.length;
     catalogue = el('section', 'films-catalogue');
@@ -457,7 +499,7 @@ window.pickerCustomScores ||= {};
     for(const entry of entries){const row=action('','overlap-row',()=>{inspectedDate=entry.date;for(const other of section.querySelectorAll('.overlap-row'))other.setAttribute('aria-pressed',String(other===row));for(const day of calendar.querySelectorAll('[data-day]'))day.classList.toggle('overlap-inspected',day.dataset.day===entry.date);},'overlap-'+entry.date);row.setAttribute('aria-pressed',String(inspectedDate===entry.date));row.setAttribute('aria-label',dateLabel(entry.date)+' · '+entry.count+' beschikbaar');row.append(el('span','overlap-date',new Date(entry.date+'T12:00:00Z').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})),avatarRow(entry.people,entry.people.length,'overlap-faces'));const count=el('span','overlap-count',String(entry.count));count.append(el('small','','/'+Math.max(ctx.plan.responseCount||0,(ctx.plan.people||[]).length,entry.count)));row.append(count);section.append(row);}surface.append(section);
   }
   function renderSuggestionAuthors(ctx){
-    for(const card of ctx.host.querySelectorAll('.fs-new .fs-mini-card')){const key=card.querySelector('.fs-mini-open')?.dataset.focus,id=key?.replace(/^social-open-new-/,'');const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;const badge=ctx.recommenderBadge(option,true);if(badge){card.querySelector('.fs-mini-author')?.remove();card.append(badge);}}
+    for(const card of ctx.host.querySelectorAll('.fs-new .fs-mini-card')){const key=card.querySelector('.fs-mini-open')?.dataset.focus,id=key?.replace(/^social-open-new-/,'');const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;if(!likerPeople(ctx,option).length)card.querySelector('.fs-mini-stickers')?.remove();const badge=ctx.recommenderBadge(option,true);if(badge){card.querySelector('.fs-mini-author')?.remove();card.append(badge);}}
   }
   function renderFriendOrders(ctx){
     const host=ctx.host.querySelector('.films-social-content'),people=(ctx.plan.people||[]).filter(p=>!p.self&&p.rankingOrder?.some(id=>p.choices?.includes(id)&&ctx.plan.options.some(o=>o.id===id)));
