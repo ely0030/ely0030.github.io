@@ -44,14 +44,14 @@ function dateHead(ctx,w){const {el}=ctx;const p=el('p','st-date'+(w?'':' is-open
 /* What the card is about: the planned film once the night is set, until then the one winning the finale. */
 function feature(ctx){const {vote,plan}=ctx;const own=vote.own,tally=vote.final,round=vote.round;
  const programme=Array.isArray(plan.programme)?plan.programme:[];
- let night=round.planned?programme.find(n=>n.choices.some(id=>round.shortlist.includes(id))):null;
+ const decided=round.result?.choice;let night=programme.find(n=>round.id&&n.roundId===round.id)||(round.planned?programme.find(n=>n.choices.some(id=>round.shortlist.includes(id))):null);
  const lead=tally?ctx.leaders(tally):[];
- const id=night?night.choices.find(c=>ctx.option(c))||night.choices[0]:(lead[0]||own.final);
+ const id=decided||(night?night.choices.find(c=>ctx.option(c))||night.choices[0]:(lead[0]||own.final));
  const o=ctx.option(id);
- const contenders=!night&&lead.length>1?lead.map(ctx.option).filter(Boolean):[];
- return {o,contenders,mine:ctx.option(own.final),night,w:night?(when(night.startsAt)||scheduledDay(night.scheduledDate)):(scheduledDay(round.scheduledDate)||scheduledDay(plan.round?.scheduledDate)),tally,isMine:own.final===id}}
+ const contenders=!decided&&!night&&lead.length>1?lead.map(ctx.option).filter(Boolean):[];
+ return {o,contenders,decided:!!decided,mine:ctx.option(own.final),night,w:night?(when(night.startsAt)||scheduledDay(night.scheduledDate)):(scheduledDay(round.scheduledDate)||scheduledDay(plan.round?.scheduledDate)),tally,isMine:own.final===id}}
 
-const confirmationCopy=ctx=>feature(ctx).w?'De filmavond staat in het programma.':'Zodra de avond is gepland, vind je hem in het programma.';
+const confirmationCopy=ctx=>{const f=feature(ctx);return f.decided?'De stemming is afgerond. '+(f.o?f.o.title+' is gekozen.':'De keuze is gemaakt.'):f.night?'De filmavond staat in het programma.':ctx.vote.round.status==='closed'?'De stemming is gesloten. De uitslag volgt.':'De stemming loopt nog. De uitslag vind je hier zodra de keuze is gemaakt.';};
 
 /* Under the image: title, meta, the programme-note description, then the date headline and the rows. */
 function below(ctx,f,{title=true,date=true}={}){const {el}=ctx;const c=el('div','st-below');
@@ -69,7 +69,7 @@ function cardB(ctx,f){const {el}=ctx;const c=el('div','st-card is-b');const scen
 /* C — het ticket: a dark portrait panel, title and crowd on it, the description below and the date on the banner. */
 function cardC(ctx,f){const {el}=ctx;const c=el('div','st-card is-c');const panel=el('div','st-c-panel');const still=f.o?ctx.still(f.o):'';
  if(still){const img=el('img','st-c-still');img.src=still;img.alt='';img.decoding='async';panel.append(img)}
- panel.append(el('div','st-c-shade'));const copy=el('div','st-c-copy');copy.append(el('span','st-kicker',f.night?'De filmavond':f.tally&&ctx.leaders(f.tally).length>1?'Gelijk aan kop':'Voorlopig aan kop'),el('h2','st-ballot-title',f.o.title));const meta=ctx.metaOf(f.o);if(meta)copy.append(el('p','st-ballot-meta',meta));
+ panel.append(el('div','st-c-shade'));const copy=el('div','st-c-copy');copy.append(el('span','st-kicker',f.decided?'Gekozen':f.night?'De filmavond':f.tally&&ctx.leaders(f.tally).length>1?'Gelijk aan kop':'Voorlopig aan kop'),el('h2','st-ballot-title',f.o.title));const meta=ctx.metaOf(f.o);if(meta)copy.append(el('p','st-ballot-meta',meta));
  const titleNode=copy.querySelector('.st-ballot-title'),parts=f.o.title.match(/^(.*?)(\s+\d+\s*\+\s*\d+)$/);if(parts)titleNode.replaceChildren(document.createTextNode(parts[1]),el('br'),document.createTextNode(parts[2].trim()));copy.append(dateHead(ctx,f.w));panel.append(copy);const rows=el('div','st-rows st-c-receipt');if(f.night?.place)rows.append(row(ctx,'Waar',document.createTextNode(f.night.place)));const films=window.pickerProgrammeNotes?.[f.o.id]?.films||[];if(films.length){const list=el('div','st-ticket-films');for(const film of films){const line=el('p');line.append(el('strong','',film.title),el('span','',[film.year,film.director].filter(Boolean).join(' · ')));list.append(line)}rows.prepend(list);const summary=el('p','st-ticket-summary');summary.append(el('strong','',films.length===2?'Dubbele voorstelling':films.length+' films'),el('span','',ctx.metaOf(f.o)));rows.append(summary);}
  c.append(panel,rows);return c}
 
@@ -133,18 +133,18 @@ window.renderBedankt=function(ctx){
  const fill=v=>{s.dataset.layout=v;ballot.dataset.variant=v;ballot.replaceChildren(featureEntry(ctx,v));if(SHOW_NEXT)ballot.append(nextEntry(ctx));};fill(variant());
 
  const confirm=el('div','st-confirm');
- const heading=el('h1','st-confirm-title');heading.append(el('span','st-heading-first','Bedankt'),el('span','st-heading-middle',' voor'),el('span','st-heading-last',' je stem.'));confirm.append(checkMark(el,reduced),heading);
- const savedTitle=ctx.option(own.final)?.title;const saved=el('p','st-saved-choice',savedTitle?'Je stem op '+savedTitle+' is bewaard.':'Je stem is bewaard.');confirm.append(saved);
+ const heading=el('h1','st-confirm-title');if(own.final)heading.append(el('span','st-heading-first','Bedankt'),el('span','st-heading-middle',' voor'),el('span','st-heading-last',' je stem.'));else heading.append(el('span','st-heading-first','De keuze'),el('span','st-heading-last',' is gemaakt.'));const check=checkMark(el,reduced);if(!own.final)check.setAttribute('aria-label','Gekozen');confirm.append(check,heading);
+ const savedTitle=ctx.option(own.final)?.title;const saved=el('p','st-saved-choice',savedTitle?'Je stem op '+savedTitle+' is bewaard.':'Je stem is bewaard.');saved.hidden=!own.final;confirm.append(saved);
  const lead=el('p','st-confirm-lead',confirmationCopy(ctx));confirm.append(lead);
  const w=when(own.updatedAt);if(w){const t=el('time','st-confirm-when','Geregistreerd '+w.date+', '+w.time+' uur');t.dateTime=w.iso;confirm.append(t)}
 
  const pudding=el('section','st-bedankt-pudding');pudding.setAttribute('aria-label','Speel met de pudding');
  const kit=el('div','st-bedankt-pudding-kit');pudding.append(kit);
 
- const actions=el('div','st-confirm-actions');actions.append(ctx.button('Naar het programma',null,ctx.agendaHref));if(!planned)actions.append(ctx.textLink('Stem wijzigen',ctx.changeVote));
+ const actions=el('div','st-confirm-actions');const refreshActions=()=>{const r=ctx.vote.round,editable=!r.planned&&!r.result?.choice&&(!r.status||r.status==='open'),key=JSON.stringify([editable,ctx.agendaHref]);if(actions.dataset.key===key)return;actions.dataset.key=key;actions.replaceChildren(ctx.button('Bekijk het programma',null,ctx.agendaHref));if(editable)actions.append(ctx.textLink('Stem wijzigen',ctx.changeVote));};refreshActions();
 
  const attendance=el('div','st-confirm-attendance');const refreshAttendance=()=>{attendance.replaceChildren();appendVoters(ctx,attendance,feature(ctx))};refreshAttendance();confirm.append(actions,attendance);grid.append(ballot,confirm,pudding);if(ctx.preview){const preview=el('aside','st-preview-notice');preview.setAttribute('role','note');preview.append(el('strong','','Voorbeeld'),el('span','','Fictieve datum en stemmen · geen echte planning.'));const link=el('a','','Naar de echte stemming →');link.href='/filmmaand/stemmen/';preview.append(link);s.append(preview);}s.append(grid);
- s.updateBedankt=next=>{ctx=next;lead.textContent=confirmationCopy(ctx);fill(ballot.dataset.variant||variant());refreshAttendance();const title=ctx.option(ctx.vote.own.final)?.title;saved.textContent=title?'Je stem op '+title+' is bewaard.':'Je stem is bewaard.';const stamp=when(ctx.vote.own.updatedAt),node=confirm.querySelector('.st-confirm-when');if(stamp&&node){node.dateTime=stamp.iso;node.textContent='Geregistreerd '+stamp.date+', '+stamp.time+' uur';}};
+ s.updateBedankt=next=>{ctx=next;refreshActions();saved.hidden=!ctx.vote.own.final;lead.textContent=confirmationCopy(ctx);fill(ballot.dataset.variant||variant());refreshAttendance();const title=ctx.option(ctx.vote.own.final)?.title;saved.textContent=title?'Je stem op '+title+' is bewaard.':'Je stem is bewaard.';const stamp=when(ctx.vote.own.updatedAt),node=confirm.querySelector('.st-confirm-when');if(stamp&&node){node.dateTime=stamp.iso;node.textContent='Geregistreerd '+stamp.date+', '+stamp.time+' uur';}};
  queueMicrotask(()=>{if(kit.isConnected){ctx.mountPudding(kit,{copy:false});const ready=window.__homePuddingReady;window.__homePuddingReady=app=>{ready?.(app);app.uc.x=app.Y.x=5*Math.PI/180;app.uc.y=app.Y.y=5*Math.PI/180;app.Sa()};mountCatPositioner(grid,pudding)}});
  return s};
 })();
