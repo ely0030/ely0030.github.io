@@ -120,3 +120,7 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 #agenda .ag-programme-event[data-state=past] .ag-programme-title,#agenda .ag-programme-event[data-state=past] .ag-date-number{color:#73796d}
 #agenda .ag-programme-event[data-state=past] .ag-attendance-button{display:none}
 @media(max-width:800px){#agenda .ag-evening-state{font-size:9px;margin-bottom:7px;gap:5px}}
+#agenda .ag-mystery-art{position:relative;width:100%;height:100%;min-height:130px;overflow:hidden;background:repeating-linear-gradient(90deg,#d6dbca55 0 2px,#fff5 2px 7px),radial-gradient(ellipse at 25% 70%,#bfcaa1,transparent 65%),radial-gradient(ellipse at 75% 30%,#e1d8b8,transparent 60%),#e9ece0}
+#agenda .ag-mystery-art::after{content:'';position:absolute;inset:20%;border:1px solid #fff9;border-radius:50%;filter:blur(1px)}
+#agenda .ag-detail .ag-mystery-art{height:170px;margin-top:24px}
+#agenda .ag-detail .ag-mystery-note{margin-top:18px}
