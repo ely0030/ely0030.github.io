@@ -519,7 +519,7 @@ window.pickerCustomScores ||= {};
 })();
 
 (()=>{
-const host=document.querySelector('#home-picker'),tip=document.createElement('div');tip.className='calendar-face-label';tip.id='calendar-face-label';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);let active=null;
+const host=document.querySelector('#films'),tip=document.createElement('div');tip.className='calendar-face-label';tip.id='calendar-face-label';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);let active=null;
 function hide(){tip.hidden=true;active?.removeAttribute('aria-describedby');active=null}
 function show(face,event){if(!face)return;active=face;tip.textContent=face.alt||face.dataset.name||'';if(!tip.textContent)return;tip.hidden=false;face.setAttribute('aria-describedby',tip.id);const r=face.getBoundingClientRect(),x=event?.clientX??r.left,y=event?.clientY??r.bottom;tip.style.left=Math.max(8,Math.min(innerWidth-tip.offsetWidth-8,x+10))+'px';tip.style.top=Math.max(8,Math.min(innerHeight-tip.offsetHeight-8,y+12))+'px'}
 function prepare(){host.querySelectorAll('.films-calendar-faces img, .overlap-faces img').forEach(face=>{face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',face.alt);face.removeAttribute('title');face.closest('.films-day-count')?.removeAttribute('aria-hidden')})}
