@@ -335,11 +335,11 @@ window.pickerCustomScores ||= {};
     const ownPerson=ctx.ownProfile?{...ctx.ownProfile,self:true}:publicSelf;
     const maxAvailability=Math.max(1,...dates.map(effectiveCount));
     const peopleForDate=d=>[...(ctx.plan.people||[]).filter(p=>!p.self&&(p.dates||[]).includes(d)),...(ownPerson&&ctx.dates.includes(d)?[ownPerson]:[])];
-    const programme=(ctx.plan.programme||[]).filter(n=>Number.isFinite(Date.parse(n.startsAt))).slice().sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
-    const programmeDay=n=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(n.startsAt));
-    const calendarNights=programme.map(n=>({id:n.id,date:programmeDay(n),title:n.choices.map(id=>ctx.plan.options.find(o=>o.id===id)?.title||'Filmavond').join(' + ')}));
-    const scheduledDate=ctx.plan.round?.scheduledDate;
-    if(/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate||'')&&Number.isFinite(Date.parse(scheduledDate+'T12:00:00Z'))&&new Date(scheduledDate+'T12:00:00Z').toISOString().slice(0,10)===scheduledDate&&!calendarNights.some(n=>n.date===scheduledDate))calendarNights.push({id:'round-'+scheduledDate,date:scheduledDate,title:'Filmavond'});
+    const programmeDay=FilmsSocialModel.programmeDate;
+    const programme=(ctx.plan.programme||[]).filter(n=>programmeDay(n)).slice().sort((a,b)=>programmeDay(a).localeCompare(programmeDay(b)));
+    const calendarNights=programme.map(n=>({id:n.id,date:programmeDay(n),pending:n.selection==='pending',title:n.selection==='pending'?'Mysteryavond':n.choices.map(id=>ctx.plan.options.find(o=>o.id===id)?.title||'Filmavond').join(' + ')}));
+    const scheduledDate=programmeDay({scheduledDate:ctx.plan.round?.scheduledDate});
+    if(scheduledDate&&!calendarNights.some(n=>n.date===scheduledDate&&!n.pending))calendarNights.push({id:'round-'+scheduledDate,date:scheduledDate,title:'Filmavond'});
     const events=calendarNights.map(({date,title})=>({date,title}));
 
     const surface=el('section','films-night');surface.setAttribute('aria-label','Kalender en beschikbaarheid');
@@ -390,9 +390,9 @@ window.pickerCustomScores ||= {};
     context = ctx;
     if (!ctx.plan) return;
     renderPosterSupporters(ctx);
-    const selected=ctx.plan.options[ctx.current],scheduled=(ctx.plan.programme||[]).filter(n=>n.choices?.includes(selected?.id)&&Number.isFinite(Date.parse(n.startsAt))).sort((a,b)=>a.startsAt.localeCompare(b.startsAt))[0];
+    const selected=ctx.plan.options[ctx.current],scheduled=(ctx.plan.programme||[]).filter(n=>n.choices?.includes(selected?.id)&&FilmsSocialModel.programmeDate(n)).sort((a,b)=>FilmsSocialModel.programmeDate(a).localeCompare(FilmsSocialModel.programmeDate(b)))[0];
     const caption=ctx.host.querySelector('.hp-caption');ctx.host.querySelector('.films-schedule-status')?.remove();
-    if(caption){const status=el('div','films-schedule-status'+(scheduled?' is-planned':''));status.append(el('span','films-schedule-dot'));status.append(document.createTextNode(scheduled?'Gepland · '+new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long'}).format(new Date(scheduled.startsAt)):'Nog niet gepland'));caption.after(status);}
+    if(caption){const status=el('div','films-schedule-status'+(scheduled?' is-planned':''));status.append(el('span','films-schedule-dot'));status.append(document.createTextNode(scheduled?'Gepland · '+new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long'}).format(new Date(FilmsSocialModel.programmeDate(scheduled)+'T12:00:00Z')):'Nog niet gepland'));caption.after(status);}
 
     renderNight(ctx);
     renderSocialTabs(ctx);

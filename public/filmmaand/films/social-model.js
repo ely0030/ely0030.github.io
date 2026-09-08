@@ -1,5 +1,14 @@
 /* Read-only derived data. Public actor flags, never name/avatar matching. */
 (function(root){
+const programmeDayFormat=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'});
+function programmeDate(n){
+ const stamp=Date.parse(n?.startsAt);
+ if(Number.isFinite(stamp))return programmeDayFormat.format(new Date(stamp));
+ const day=n?.scheduledDate;
+ if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))return '';
+ const date=new Date(day+'T12:00:00Z');
+ return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===day?day:'';
+}
 function project(ctx,today){
  const plan=ctx.plan,self=(plan.people||[]).find(p=>p.self),profile=ctx.ownProfile||self;
  const people=[...(plan.people||[]).filter(p=>!p.self),...(profile?[{...profile,self:true,choices:ctx.choices,dates:ctx.dates}]:[])];
@@ -8,8 +17,8 @@ function project(ctx,today){
  const ranked=plan.options.filter(o=>count(o)>0).slice().sort((a,b)=>count(b)-count(a)||a.title.localeCompare(b.title,'nl'));
  const mine=ctx.choices.map(id=>plan.options.find(o=>o.id===id)).filter(Boolean);
  const recent=plan.options.filter(o=>o.kind==='suggestion'&&!o.recommender?.self).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')||a.title.localeCompare(b.title,'nl'));
- const occupied=new Set((plan.programme||[]).map(n=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(n.startsAt))));
- if(/^\d{4}-\d{2}-\d{2}$/.test(plan.round?.scheduledDate||''))occupied.add(plan.round.scheduledDate);
+ const occupied=new Set((plan.programme||[]).map(programmeDate).filter(Boolean));
+ const roundDay=programmeDate({scheduledDate:plan.round?.scheduledDate});if(roundDay)occupied.add(roundDay);
  const near=[];
  const matches=[];for(const o of plan.options){const byDate=new Map();for(const p of fans(o))for(const d of new Set(p.dates||[])){if(d<=today||d<plan.window.start||d>plan.window.end||occupied.has(d))continue;const list=byDate.get(d)||[];list.push(p);byDate.set(d,list);}for(const [date,group] of byDate){if(group.length>=2)matches.push({option:o,date,people:group});const all=fans(o);if(group.length>=2&&all.length===count(o)&&all.length-group.length===1)near.push({option:o,date,people:group,missing:all.filter(p=>!p.dates.includes(date)),total:all.length});}}
  matches.sort((a,b)=>b.people.length-a.people.length||a.date.localeCompare(b.date)||count(b.option)-count(a.option)||a.option.title.localeCompare(b.option.title,'nl'));
@@ -17,7 +26,7 @@ function project(ctx,today){
  near.sort((a,b)=>b.people.length-a.people.length||a.date.localeCompare(b.date)||a.option.title.localeCompare(b.option.title,'nl'));
  return {near,people,self,count,fans,ranked,mine,recent,matches,overlap,total:plan.options.reduce((n,o)=>n+count(o),0)};
 }
-if(typeof module!=='undefined'&&module.exports)module.exports={project};else root.FilmsSocialModel={project};
+if(typeof module!=='undefined'&&module.exports)module.exports={project,programmeDate};else root.FilmsSocialModel={project,programmeDate};
 })(typeof window==='undefined'?globalThis:window);
 /* Ranked points are separate from heart counts and the current ballot. */
 (function(root){
