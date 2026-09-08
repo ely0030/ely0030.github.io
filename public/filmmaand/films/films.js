@@ -198,12 +198,13 @@ window.pickerCustomScores ||= {};
     if(!scene)return;
     const total=ctx.plan.optionCounts?.[option.id]||0;if(!total)return;
     const people=(ctx.plan.people||[]).filter(p=>p.choices?.includes(option.id));
-    const profiled=people.filter(p=>window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId)).slice(0,total);
+    const profiled=people.filter(p=>window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId));
     const ordered=[...profiled.filter(p=>p.self),...profiled.filter(p=>!p.self)];
     const row=el('div','films-poster-people');row.setAttribute('role','group');row.setAttribute('aria-label',total+' vinden dit leuk');
     function sticker(label,person){const face=el('span','battle-person'+(person?.self?' battle-own':''));face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',label);face.append(el('span','battle-name',label));return face;}
-    for(const person of ordered.slice(0,6)){const label=(person.self?'Jij'+(person.name?' · '+person.name:''):person.name||'Zonder naam'),face=sticker(label,person),avatar=window.filmmaandAvatarOptions.find(a=>a.id===person.avatarId),img=el('img');img.src=avatar.src;img.alt='';if(avatar.filter)img.style.filter=avatar.filter;face.append(img);row.append(face);}
-    const remaining=total-Math.min(ordered.length,6);if(remaining>0){const withoutAvatar=people.filter(p=>!window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId));const labels=[...ordered.slice(6),...withoutAvatar].slice(0,remaining).map(p=>p.name||'Zonder naam'),unknown=Math.max(0,remaining-labels.length);if(unknown)labels.push(unknown+' zonder profiel');const more=sticker(labels.join(', '));more.classList.add('battle-more');more.append(document.createTextNode('+'+remaining));row.append(more);}
+    for(const person of ordered){const label=(person.self?'Jij'+(person.name?' · '+person.name:''):person.name||'Zonder naam'),face=sticker(label,person),avatar=window.filmmaandAvatarOptions.find(a=>a.id===person.avatarId),img=el('img');img.src=avatar.src;img.alt='';if(avatar.filter)img.style.filter=avatar.filter;face.append(img);row.append(face);}
+    for(const person of people.filter(p=>!window.filmmaandAvatarOptions?.some(a=>a.id===p.avatarId))){const face=sticker(person.name||'Zonder naam',person);face.classList.add('battle-initial');face.append(document.createTextNode((person.name||'?').slice(0,1).toUpperCase()));row.append(face);}
+
     row.addEventListener('click',event=>{event.stopPropagation();const face=event.target.closest('.battle-person');if(!face)return;const wasOpen=face.classList.contains('is-name-open');face.focus({preventScroll:true});if(wasOpen)hideBannerName();else{showBannerName(face,event);face.classList.add('is-name-open');}});
     row.addEventListener('keydown',event=>{event.stopPropagation();if(['Enter',' '].includes(event.key)){event.preventDefault();event.target.closest('.battle-person')?.click();}if(event.key==='Escape')hideBannerName();});
     row.addEventListener('pointermove',event=>{if(event.pointerType!=='touch'){const face=event.target.closest('.battle-person');if(face)showBannerName(face,event);}});

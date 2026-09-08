@@ -644,3 +644,10 @@
 .site-films #films #home-picker .films-scheduled-title{font:400 12px/1.35 Arial}
 .site-films #films #home-picker .fs-rail-section .fs-mini-card .fs-mini-remove{top:127px!important;right:-5px!important;bottom:auto!important}
 .site-films #films #home-picker .fs-rail-section .fs-mini-stickers{top:99px!important}
+/* Latest banner direction: every real person, with the white sticker backing restored. */
+.site-films #films #home-picker .films-poster-people{gap:3px;align-items:center}
+.site-films #films #home-picker .films-poster-people .battle-person{background:#fff;border:2px solid #fff;border-radius:6px;box-shadow:0 1px 3px #0003;box-sizing:border-box}
+.site-films #films #home-picker .films-poster-people .battle-person img{border-radius:3px}
+.site-films #films #home-picker .films-poster-people .battle-own{border-color:#4585d1;outline:none}
+.site-films #films #home-picker .films-poster-people .battle-initial{display:grid;place-items:center;font:12px Arial;color:#46503d}
+.site-films #films #home-picker .banner-like-count{margin-left:4px}
