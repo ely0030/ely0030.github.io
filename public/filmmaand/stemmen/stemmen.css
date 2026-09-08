@@ -521,3 +521,10 @@ body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu,body.site-stemme
 /* Equal tied-film panels, softly joined, under the existing cinematic shading. */
 .st-cinema-pane{position:absolute;top:0;bottom:0;background-size:cover;background-position:center}
 .st-cinema-pane.has-seam{mask-image:linear-gradient(to right,transparent,#000 6%);-webkit-mask-image:linear-gradient(to right,transparent,#000 6%)}
+
+/* One stable, server-aligned clock; the DVD arena is never rebuilt for a tick. */
+#stemmen .st-countdown{display:block;margin:14px 0 0;font:12px/1.5 Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.03em;color:#666}
+#stemmen .st-countdown[hidden]{display:none}
+.st-cinema-result #stemmen .st-countdown{color:#eee}
+/* Bedankt's optional edit button is unavailable after authoritative closure; programme link remains. */
+body.st-round-closed #stemmen .st-confirm-actions>button{display:none}

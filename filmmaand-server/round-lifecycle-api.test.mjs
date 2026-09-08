@@ -1,0 +1,19 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createApi} from './api.mjs';import {openState,emptyState} from './state.mjs';import {createPlanningService} from './runtime/planning/service.mjs';
+test('actual API enforces round ID and deadline; expired session keeps exact historical receipt recoverable',async()=>{
+ let clock='2026-09-08T12:00:00.000Z',code=null;const c=openState(emptyState());const service=createPlanningService({store:c.plans,adminToken:'admin',now:()=>clock});
+ await service.seed({id:'lifecycle-api',title:'Synthetic',window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c','d','e','f'].map(id=>({id,title:id}))});await service.setRound('lifecycle-api','admin','api-initial-round-001',{shortlist:['a','b','c']});
+ const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}},async setJSON(k,data,{onlyIfMatch}){if(String(this.etag)!==onlyIfMatch)return {modified:false};this.data=structuredClone(data);this.etag++;return {modified:true};}};c.close();
+ const api=createApi({store,blobs:{},adminToken:'admin',now:()=>clock,queueMail:async(c,m)=>{code=m.code;}});
+ const req=async(path,method='GET',body,headers={})=>{const r=await api(new Request('https://ely0030.xyz/filmmaand/api/'+path,{method,headers:{Origin:'https://ely0030.xyz',...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'synthetic'});return {status:r.status,body:await r.json(),headers:r.headers}};
+ const ch=await req('auth/code','POST',{email:'person@example.test'});assert.equal(ch.status,200);const login=await req('auth/verify','POST',{challengeId:ch.body.challengeId,code});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie').split(';')[0];
+ const ownHeaders={Cookie:cookie,'Idempotency-Key':'api-profile-proof001'};assert.equal((await req('auth/profile','PUT',{expectedRevision:0,name:'Synthetic',avatarId:4,animal:'otter'},ownHeaders)).status,200);
+ const root='plans/lifecycle-api',before=(await req(root+'/vote','GET',null,ownHeaders)).body.round;
+ const configured=await req(root+'/round','POST',{action:'deadline',expectedRoundId:before.id,expectedRevision:before.revision,closesAt:'2026-09-08T12:01:00Z'},{Authorization:'Bearer admin','Idempotency-Key':'api-deadline-proof01'});assert.equal(configured.status,200);
+ const body={roundId:before.id,expectedRevision:0,final:'a'},headers={Cookie:cookie,'Idempotency-Key':'api-vote-lost-proof1'},saved=await req(root+'/vote','PUT',body,headers);assert.equal(saved.status,200);
+ clock='2026-09-08T12:01:00.000Z';const closed=await req(root+'/vote','PUT',{...body,expectedRevision:1,final:'b'},{...headers,'Idempotency-Key':'api-vote-late-proof1'});assert.equal(closed.status,409);assert.equal(closed.body.error.code,'round_closed');assert.deepEqual((await req(root+'/vote','PUT',body,headers)).body,saved.body);
+ store.data.auth.sessions.forEach(s=>s.expires_at='2026-09-08T12:00:00Z');assert.equal((await req(root+'/vote','PUT',body,headers)).status,401);
+ // Reauthentication uses a new session; exact pending vote key/body remains unmodified.
+ clock='2026-09-08T12:02:00.000Z';const ch2=await req('auth/code','POST',{email:'person@example.test'});assert.equal(ch2.status,200);const login2=await req('auth/verify','POST',{challengeId:ch2.body.challengeId,code});assert.equal(login2.status,200);const replay=await req(root+'/vote','PUT',body,{...headers,Cookie:login2.headers.get('set-cookie').split(';')[0]});assert.equal(replay.status,200);assert.deepEqual(replay.body,saved.body);
+ const publicPlan=await req(root);assert.equal(publicPlan.body.round.status,'closed');assert.equal(publicPlan.body.round.closesAt,'2026-09-08T12:01:00.000Z');assert.equal(JSON.stringify(publicPlan.body.round).includes('Synthetic'),false);assert.equal(Object.values(store.data.plans['lifecycle-api'].data.votes)[0].revision,1);
+});
