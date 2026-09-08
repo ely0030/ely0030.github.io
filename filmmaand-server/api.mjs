@@ -15,7 +15,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
   if(!url.pathname.startsWith('/filmmaand/api/'))return json(404,{error:{code:'not_found'}});
   if(request.headers.get('origin')&&request.headers.get('origin')!==origin)return json(403,{error:{code:'origin',message:'Origin niet toegestaan.'}});
-  if(method==='OPTIONS')return json(204,null,{'Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key'});
+  if(method==='OPTIONS')return json(204,null,{'Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key, X-Filmmaand-Reset-Generation'});
   const req={url:request.url,headers:Object.fromEntries(request.headers),socket:{remoteAddress:context.ip||'unknown'}};
   let body=null;
   try{
@@ -32,11 +32,22 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
    const movie=path.match(/^\/api\/movies\/(tt\d{7,12})$/);
    if(movie&&method==='GET'){if(!movieCatalogue)throw error(503,'catalogue','De filmcatalogus is tijdelijk niet beschikbaar.');const value=movieCatalogue.details?await movieCatalogue.details(movie[1],{includeMetadata:url.searchParams.get('poster')!=='1'}):movieCatalogue.get(movie[1]);return value?json(200,{movie:value}):json(404,{error:{code:'not_found'}})}
    const result=await transact(store,async c=>{
-    const headers={};
+    const generation=c.state.resetGeneration??'0';
+    if(typeof generation!=='string'||!generation||generation.length>128)throw error(503,'reset_generation','De site wordt opnieuw voorbereid.');
+    const headers={'X-Filmmaand-Reset-Generation':generation};
     const auth=createAuthService({store:c.authStore,avatars,now,config:authConfig,mailer:{async send(message){if(!queueMail)throw error(503,'mail_unavailable','E-mail is nog niet ingesteld.');await queueMail(c,message,{plainTextTestToken:request.headers.get('x-filmmaand-plain-text-test')})}}});
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
     try{
+     if(path==='/api/reset-generation'&&method==='GET')return send(200,{resetGeneration:generation});
+     // This check is inside the durable CAS and precedes auth receipts and all domain side effects.
+     // Logout remains available to old documents. Organizer mutations keep their separate secret contract.
+     const readOnly=['GET','HEAD'].includes(method);
+     const logout=(method==='POST'&&path==='/api/auth/logout')||(method==='DELETE'&&path==='/api/auth/session');
+     const organizer=method==='POST'&&/^\/api\/plans\/[a-z0-9-]+\/(round|round-date|programme|confirmation)$/.test(path);
+     if(!readOnly&&!logout&&!organizer&&generation!=='0'&&req.headers['x-filmmaand-reset-generation']!==generation){
+      return send(409,{error:{code:'reset_generation',message:'De site is opnieuw voorbereid. Vernieuw om verder te gaan.',details:{resetGeneration:generation}}});
+     }
      if(path.startsWith('/api/auth/'))return await router.handle(req,{path,method,body,headers,send});
      const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
