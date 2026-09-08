@@ -49,7 +49,7 @@ function feature(ctx){const {vote,plan}=ctx;const own=vote.own,tally=vote.final,
  const id=night?night.choices.find(c=>ctx.option(c))||night.choices[0]:(lead[0]||own.final);
  const o=ctx.option(id);
  const contenders=!night&&lead.length>1?lead.map(ctx.option).filter(Boolean):[];
- return {o,contenders,mine:ctx.option(own.final),night,w:night?when(night.startsAt):(scheduledDay(round.scheduledDate)||scheduledDay(plan.round?.scheduledDate)),tally,isMine:own.final===id}}
+ return {o,contenders,mine:ctx.option(own.final),night,w:night?(when(night.startsAt)||scheduledDay(night.scheduledDate)):(scheduledDay(round.scheduledDate)||scheduledDay(plan.round?.scheduledDate)),tally,isMine:own.final===id}}
 
 const confirmationCopy=ctx=>feature(ctx).w?'De filmavond staat in het programma.':'Zodra de avond is gepland, vind je hem in het programma.';
 
