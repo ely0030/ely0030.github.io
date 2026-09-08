@@ -131,7 +131,7 @@ window.pickerCustomScores ||= {};
   }
   query.addEventListener('input', filterCards);
   page.querySelector('#films-liked')?.addEventListener('change',filterCards);
-  page.addEventListener('click',event=>{const heart=event.target.closest('.hp-heart');if(heart)queueMicrotask(()=>{filterCards();if(!context)return;const id=heart.dataset.optionId,liked=heart.getAttribute('aria-pressed')==='true';context.choices=liked?[...new Set([...context.choices,id])]:context.choices.filter(x=>x!==id);refreshSocial(context);const next=context.host.querySelector('.films-next-pane');if(next)window.renderFilmsNext(next,context,{open:o=>openOption(o),browse:()=>setView('all')});});});
+  page.addEventListener('click',event=>{const heart=event.target.closest('.hp-heart');if(heart)queueMicrotask(()=>{filterCards();if(!context)return;const id=heart.dataset.optionId,liked=heart.getAttribute('aria-pressed')==='true';context.choices=liked?[...new Set([...context.choices,id])]:context.choices.filter(x=>x!==id);refreshSocial(context);const next=context.host.querySelector('.films-next-pane');if(next){window.renderFilmsNext(next,context,{open:o=>openOption(o),browse:()=>setView('all')});renderCutoff(context);}});});
   page.querySelector('.films-proposals-jump')?.addEventListener('click',()=>{addOpen=false;planningOpen=true;sideTab='social';setView('feature');applySideTab();const planning=context?.host.querySelector('.films-social-planning');if(planning)planning.open=true;context?.host.querySelector('.films-proposals')?.scrollIntoView({block:'start',behavior:'instant'});});
 
   function cardFor(option, ctx) {
@@ -386,8 +386,26 @@ window.pickerCustomScores ||= {};
     const bar=el('div','films-side-bar');bar.append(tabs,add);
     const social=el('section','films-social-pane');social.id='films-social-pane';social.setAttribute('role','tabpanel');social.setAttribute('aria-labelledby','films-tab-social');social.append(el('div','films-social-content'));
     const planning=el('details','films-social-planning');planning.hidden=true;planning.open=false;planning.append(el('summary','','Een filmavond voorstellen'));planning.addEventListener('toggle',()=>{if(planning.isConnected)planningOpen=planning.open;});for(const node of [availability.querySelector('.films-night-panel'),availability.querySelector('.films-proposals')])if(node)planning.append(node);social.append(planning);
-    const next=el('section','films-next-pane');next.id='films-next-pane';next.setAttribute('role','tabpanel');next.setAttribute('aria-labelledby','films-tab-next');column.prepend(bar);column.append(social,next);refreshSocial(ctx);window.renderFilmsNext(next,ctx,{open:o=>openOption(o),browse:()=>setView('all')});applySideTab();
+    const next=el('section','films-next-pane');next.id='films-next-pane';next.setAttribute('role','tabpanel');next.setAttribute('aria-labelledby','films-tab-next');column.prepend(bar);column.append(social,next);refreshSocial(ctx);window.renderFilmsNext(next,ctx,{open:o=>openOption(o),browse:()=>setView('all')});renderCutoff(ctx);applySideTab();
   }
+
+  let cutoffClock=null;
+  function renderCutoff(ctx){
+    const pane=ctx?.host.querySelector('.films-next-pane'),next=ctx?.plan.nextRound;if(!pane)return;
+    if(!next||!['collecting','frozen'].includes(next.status)){pane.removeAttribute('data-selection-status');pane.classList.remove('has-cutoff-tie');pane.querySelector('.films-cutoff')?.remove();pane.querySelector('.films-cutoff-ties')?.remove();pane.querySelector('.films-cutoff-future')?.remove();return;}
+    const stamp=Date.parse(ctx.plan.serverTime);if(Number.isFinite(stamp)&&(!cutoffClock||cutoffClock.value!==ctx.plan.serverTime))cutoffClock={value:ctx.plan.serverTime,at:performance.now()};
+    const state=FilmsSocialModel.cutoffState(next,cutoffClock?.value,cutoffClock?performance.now()-cutoffClock.at:0);
+    pane.dataset.selectionStatus=next.status;pane.classList.toggle('has-cutoff-tie',state.frozen&&state.ties.length>0);
+    const result=pane.querySelector('.fr-result');if(!result)return;
+    let status=result.querySelector('.films-cutoff');if(!status){status=el('div','films-cutoff');status.append(el('span','films-cutoff-label'),el('time','films-cutoff-time'),el('p','films-cutoff-detail'));const link=el('a','films-cutoff-current','Huidige filmavond →');link.href='/filmmaand/stemmen/';status.append(link);result.querySelector('h3').after(status);}
+    const label=status.querySelector('.films-cutoff-label'),time=status.querySelector('time'),detail=status.querySelector('.films-cutoff-detail');if(label.textContent!==state.label)label.textContent=state.label;if(time.textContent!==state.time)time.textContent=state.time;time.hidden=!state.time;if(next.closesAt)time.dateTime=next.closesAt;
+    if(detail.textContent!==state.detail)detail.textContent=state.detail;detail.hidden=!state.detail;
+    status.title=Number.isFinite(Date.parse(next.closesAt))?'Sluit '+new Date(next.closesAt).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'';
+    let tieRow=result.querySelector('.films-cutoff-ties');if(state.frozen&&state.ties.length){const key=JSON.stringify([next.snapshot,state.ties]);if(!tieRow||tieRow.dataset.key!==key){tieRow?.remove();tieRow=el('div','films-cutoff-ties');tieRow.dataset.key=key;tieRow.setAttribute('aria-label','Gelijke stand voor de volgende selectie');for(const id of state.ties){const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;const pick=action('','films-cutoff-tie',()=>openOption(option),'cutoff-tie-'+id);pick.setAttribute('aria-label',option.title+' · '+(next.points[id]||0)+' punten · gelijke stand');pick.append(ctx.cover(option,'cutoff-tie-'+id),el('span','films-cutoff-title',option.title),el('small','',(next.points[id]||0)+' pts'));tieRow.append(pick);}result.append(tieRow);}}else tieRow?.remove();
+    let future=pane.querySelector('.films-cutoff-future');if(state.frozen&&!future){future=el('p','films-cutoff-future','Je favorieten tellen verder voor een latere selectie.');pane.querySelector('.fr-personal .fr-heading')?.after(future);}else if(!state.frozen)future?.remove();
+  }
+  window.setInterval(()=>{if(context&&!document.hidden)renderCutoff(context);},1000);
+  document.addEventListener('visibilitychange',()=>{if(context&&!document.hidden)renderCutoff(context);});
 
   function render(ctx) {
     context = ctx;

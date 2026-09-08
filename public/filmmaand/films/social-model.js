@@ -37,6 +37,20 @@ if(typeof module!=='undefined'&&module.exports)module.exports={project,programme
 (function(root){
  const api=typeof module!=='undefined'&&module.exports?module.exports:root.FilmsSocialModel;
  function contribution(choices,order=[],rule='rank-5-4-3-2-1'){const liked=new Set(choices),rank=[...new Set(order)].filter(id=>liked.has(id));return Object.fromEntries([...liked].map(id=>[id,rank.indexOf(id)>=0?Math.max(1,(rule==='rank-3-2-1'?3:5)-rank.indexOf(id)):1]));}
- function ranking(ctx,order=ctx.ranking?.order||[]){const next=ctx.plan.nextRound,weighted=['rank-3-2-1','rank-5-4-3-2-1'].includes(next?.rule),self=(ctx.plan.people||[]).find(p=>p.self),own=weighted?contribution(ctx.choices,order,next.rule):Object.fromEntries(ctx.choices.map(id=>[id,1])),saved=weighted?(next.ownPoints||contribution(self?.choices||[],self?.rankingOrder||[],next.rule)):Object.fromEntries((self?.choices||[]).map(id=>[id,1]));const totals={...(weighted?next.points:ctx.plan.optionCounts)};for(const id of new Set([...Object.keys(saved),...Object.keys(own)]))totals[id]=Math.max(0,(totals[id]||0)-(saved[id]||0)+(own[id]||0));const excluded=new Set([...(ctx.plan.round?.shortlist||[]),...(ctx.plan.programme||[]).flatMap(n=>n.choices||[])]);const candidates=ctx.plan.options.map((o,i)=>({optionId:o.id,score:totals[o.id]||0,i})).filter(x=>x.score>0&&!excluded.has(x.optionId)).sort((a,b)=>b.score-a.score||a.i-b.i).slice(0,3);return {weighted,own,candidates};}
- api.contribution=contribution;api.ranking=ranking;
+ function ranking(ctx,order=ctx.ranking?.order||[]){const next=ctx.plan.nextRound,weighted=['rank-3-2-1','rank-5-4-3-2-1'].includes(next?.rule),self=(ctx.plan.people||[]).find(p=>p.self),own=weighted?contribution(ctx.choices,order,next.rule):Object.fromEntries(ctx.choices.map(id=>[id,1])),saved=weighted?(next.ownPoints||contribution(self?.choices||[],self?.rankingOrder||[],next.rule)):Object.fromEntries((self?.choices||[]).map(id=>[id,1]));if(next?.status==='frozen'){
+ const eligible=Array.isArray(next.eligible)?next.eligible:[],ties=new Set(next.cutoffTieIds||[]),selected=new Set(next.shortlist||[]);
+ const candidates=eligible.filter(entry=>selected.has(entry.id)&&!ties.has(entry.id)).map((entry,i)=>({optionId:entry.id,score:next.points?.[entry.id]??entry.points,i}));
+ return {weighted,own,candidates,frozen:true,eligible,cutoffTieIds:[...ties],ready:next.ready===true,snapshot:next.snapshot};
+ }const totals={...(weighted?next.points:ctx.plan.optionCounts)};for(const id of new Set([...Object.keys(saved),...Object.keys(own)]))totals[id]=Math.max(0,(totals[id]||0)-(saved[id]||0)+(own[id]||0));const excluded=new Set([...(ctx.plan.round?.shortlist||[]),...(ctx.plan.programme||[]).flatMap(n=>n.choices||[])]);const candidates=ctx.plan.options.map((o,i)=>({optionId:o.id,score:totals[o.id]||0,i})).filter(x=>x.score>0&&!excluded.has(x.optionId)).sort((a,b)=>b.score-a.score||a.i-b.i).slice(0,3);return {weighted,own,candidates};}
+ function cutoffState(next,serverTime,elapsedMs=0){
+ if(!next||!['collecting','frozen'].includes(next.status))return null;
+ const frozen=next.status==='frozen',end=Date.parse(next.closesAt),server=Date.parse(serverTime),remaining=Number.isFinite(end)&&Number.isFinite(server)?end-server-Math.max(0,elapsedMs):null;
+ const eligible=Array.isArray(next.eligible)?next.eligible:[],ties=next.cutoffTieIds||[];
+ let label='Voorlopige selectie',detail='',time='';
+ if(frozen){label='Selectie vastgezet';detail=ties.length?'Gelijke stand · volgende ronde nog niet geopend':eligible.length<3?eligible.length+' van 3 kandidaten · nog niet geopend':'Volgende stemronde nog niet geopend';}
+ else if(remaining!==null){if(remaining<=0)label='Sluiting controleren…';else{label='Selectie sluit over';const seconds=Math.ceil(remaining/1000),days=Math.floor(seconds/86400);time=(days?days+'d ':'')+[Math.floor(seconds%86400/3600),Math.floor(seconds%3600/60),seconds%60].map(n=>String(n).padStart(2,'0')).join(':');}}
+ if(!frozen&&ties.length)detail=remaining!==null&&remaining<=0?'Gelijke stand':'Gelijke stand · selectie nog open';else if(!frozen&&eligible.length<3)detail=eligible.length+' van 3 kandidaten';
+ return {frozen,label,detail,time,remaining,ties,eligible,waiting:frozen};
+ }
+ api.contribution=contribution;api.ranking=ranking;api.cutoffState=cutoffState;
 })(typeof window==='undefined'?globalThis:window);

@@ -666,3 +666,17 @@
 .site-films #films #home-picker .fs-new .fs-mini-card>.hp-recommender img{width:26px;height:26px}
 .site-films #films #home-picker .fs-new .fs-mini-card>.hp-recommender span{display:none}
 .site-films #films #home-picker .fs-new .ci-cover>span.hp-poster-score,.site-films #films #home-picker .friend-order-posters .ci-cover>span.hp-poster-score{display:none!important}
+
+/* Shared server cutoff: frozen totals are immutable, personal preferences remain editable. */
+.site-films #films #home-picker .films-cutoff{display:flex;align-items:baseline;gap:7px 12px;flex-wrap:wrap;margin:10px 0 20px;color:#68715e;font:11px/1.4 Arial}
+.site-films #films #home-picker .films-cutoff-time{font:400 17px/1.2 Arial;font-variant-numeric:tabular-nums;color:#38422e}
+.site-films #films #home-picker .films-cutoff-detail{flex-basis:100%;margin:0;font:11px/1.4 Arial}
+.site-films #films #home-picker .films-cutoff-current{color:inherit;text-decoration:none;margin-left:auto;font:10px Arial}
+.site-films #films #home-picker .films-next-pane[data-selection-status=frozen] .fr-result .rank-live-delta,.site-films #films #home-picker .films-next-pane[data-selection-status=frozen] .fr-result .fr-supporters{display:none!important}
+.site-films #films #home-picker .films-next-pane.has-cutoff-tie .fr-result>.fr-empty{display:none}
+.site-films #films #home-picker .films-cutoff-ties{display:flex;gap:12px;overflow-x:auto;padding:8px 0 12px;scrollbar-width:thin}
+.site-films #films #home-picker .films-cutoff-tie{display:flex;flex-direction:column;gap:6px;flex:0 0 92px;border:0;padding:0;background:none;text-align:left;cursor:pointer;color:#45513a}
+.site-films #films #home-picker .films-cutoff-tie .ci-cover{width:92px!important;height:138px!important;min-height:0!important;aspect-ratio:2/3}
+.site-films #films #home-picker .films-cutoff-title{font:11px/1.3 Arial}
+.site-films #films #home-picker .films-cutoff-tie small{font:11px Arial;font-variant-numeric:tabular-nums}
+.site-films #films #home-picker .films-cutoff-future{font:10px/1.4 Arial;color:#8a9281;margin:0 0 12px}
