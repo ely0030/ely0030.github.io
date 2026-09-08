@@ -5,22 +5,25 @@
   const displayedPoints=new Map();
   function showPoints(score,id,target,weighted){let value=score.querySelector('.fr-score-number');if(!value){value=node('span','fr-score-number');score.replaceChildren(value,node('small','',' pts'));}const prior=displayedPoints.get(id);const from=prior?.value??target;if(prior?.frame)cancelAnimationFrame(prior.frame);const state={value:from,target,frame:0};displayedPoints.set(id,state);const start=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;function tick(now){if(!score.isConnected)return;const progress=reduced?1:Math.min(1,(now-start)/280),eased=1-Math.pow(1-progress,3);state.value=from+(target-from)*eased;value.textContent=String(Math.round(state.value));if(progress<1&&from!==target)state.frame=requestAnimationFrame(tick);else{state.value=target;value.textContent=String(target);state.frame=0;}}value.textContent=String(Math.round(from));if(from===target||reduced){value.textContent=String(target);state.value=target;}else state.frame=requestAnimationFrame(tick);}
 
-  let activeCleanup=null,lastHost=null;
+  let activeCleanup=null,lastHost=null,lastContext=null,lastActions=null;
   const node = (tag, cls, text) => {const n=document.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n;};
   const move = (ids, id, position) => {const next=ids.filter(x=>x!==id);next.splice(Math.max(0,Math.min(next.length,position)),0,id);return next;};
   window.mountFilmsRanking = (host, ctx, {open,browse}) => {
+    lastContext=ctx;lastActions={open,browse};const realPlan=ctx.plan;const tutorial=window.filmmaandTutorialRanking===true;
+    if(tutorial){const rule=ctx.plan.nextRound?.rule,own=FilmsSocialModel.contribution(ctx.choices,ctx.ranking?.order||[],rule),profile=ctx.ownProfile||(ctx.plan.people||[]).find(p=>p.self)||{name:'Jij'};ctx={...ctx,plan:{...ctx.plan,people:[{...profile,self:true,choices:[...ctx.choices],rankingOrder:[...(ctx.ranking?.order||[])]}],optionCounts:Object.fromEntries(ctx.choices.map(id=>[id,1])),round:{...ctx.plan.round,shortlist:[]},programme:[],nextRound:{...ctx.plan.nextRound,points:own,ownPoints:own}}};}
+
     const previousRail=lastHost?.querySelector('.fr-order'),railScroll=previousRail?.scrollLeft||0,focused=lastHost?.contains(document.activeElement)?document.activeElement?.dataset.rankId:null;
     activeCleanup?.();mounts.get(host)?.();lastHost=host;
     const lifecycle=new AbortController(),signal=lifecycle.signal;
     let drag=null,frame=0,disposed=false,coverSlot=0,hasReordered=false;
     const controller=ctx.ranking;
     if(!controller)throw new Error('Ranking controller required');
-    const options=new Map(ctx.plan.options.map(o=>[o.id,o])),completed=FilmsSocialModel.completedIds(ctx.plan);
+    const options=new Map(ctx.plan.options.map(o=>[o.id,o])),completed=FilmsSocialModel.completedIds(realPlan);
     let order=[...new Set([...(controller.order||[]),...ctx.choices])].filter(id=>ctx.choices.includes(id)&&options.has(id));
     host.replaceChildren();host.classList.add('fr-ranking','fr-initial-layout');
     const button=(label,cls,fn)=>{const b=node('button',cls,label);b.type='button';if(fn)b.addEventListener('click',fn,{signal});return b;};
     const picture=(id,cls)=>{const b=button('',cls,()=>open(options.get(id)));b.setAttribute('aria-label','Bekijk '+options.get(id).title);b.append(ctx.cover(options.get(id),'ranking-'+(++coverSlot)));return b;};
-    const summary=node('section','fr-result'),leaderboardTitle=node('h3','','Leaderboard');leaderboardTitle.title='De koplopers voor de volgende stemronde.';leaderboardTitle.tabIndex=0;summary.append(leaderboardTitle);
+    const summary=node('section','fr-result'),leaderboardTitle=node('h3','','Leaderboard');leaderboardTitle.title='De koplopers voor de volgende stemronde.';leaderboardTitle.tabIndex=0;summary.append(leaderboardTitle);if(tutorial)leaderboardTitle.append(node('span','fr-tutorial-label','Tutorial · alleen jouw punten'));
     const shortlist=node('div','fr-shortlist');
     const model=FilmsSocialModel.project(ctx,new Date().toISOString().slice(0,10));
     function supporters(option){const row=node('div','fr-supporters');for(const [personIndex,person] of model.fans(option).entries()){const avatar=window.filmmaandAvatarOptions?.find(a=>a.id===person.avatarId);if(!avatar)continue;const face=button('','fr-supporter'+(person.self?' is-self':''));face.dataset.personIndex=personIndex;face.setAttribute('aria-label',person.self?'Jij':person.name||'Zonder naam');const image=node('img');image.src=avatar.src;image.alt='';if(avatar.filter)image.style.filter=avatar.filter;const label=node('span','fr-supporter-name',person.self?'Jij':person.name||'Zonder naam');face.append(image,label);face.addEventListener('click',()=>{for(const other of row.children)if(other!==face)other.classList.remove('is-open');face.classList.toggle('is-open');},{signal});row.append(face);}return row;}
@@ -51,6 +54,7 @@
     const observer=new ResizeObserver(()=>{if(!drag)layout();});observer.observe(rail);for(const {item} of items.values())observer.observe(item);layout();rail.scrollLeft=railScroll;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!disposed)host.classList.remove('fr-initial-layout')}));if(focused)items.get(focused)?.handle.focus({preventScroll:true});
     const dispose=()=>{if(disposed)return;disposed=true;finish(true);if(frame)cancelAnimationFrame(frame);observer.disconnect();lifecycle.abort();};mounts.set(host,dispose);activeCleanup=dispose;return dispose;
   };
+  window.addEventListener('filmmaand-tutorial-ranking',()=>{for(const value of displayedPoints.values())if(value.frame)cancelAnimationFrame(value.frame);displayedPoints.clear();if(lastHost?.isConnected&&lastContext&&lastActions)window.mountFilmsRanking(lastHost,lastContext,lastActions);});
   const fallback=window.renderFilmsNext;
   window.renderFilmsNext=(host,ctx,actions)=>{
     if(!ctx.ranking)return fallback(host,ctx,actions);
