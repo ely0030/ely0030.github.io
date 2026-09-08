@@ -22,6 +22,13 @@ export function rankedSelection(p,excluded){
  const tiedCutoff=cutoff!==undefined&&cutoffIds.length>3-above.length;
  return {points,eligible,shortlist:eligible.slice(0,3).map(o=>o.id),cutoffTieIds:tiedCutoff?cutoffIds:[],ready:eligible.length>=3&&!tiedCutoff,snapshot:hash({roundId:p.round?.id||legacyRoundId(p),eligible})};
 }
+// Materialize before any accepted post-cutoff write; later preferences cannot rewrite this round's handoff.
+export function freezeNextSelection(p,now,excluded,{force=false}={}){
+ const r=p.round;if(!r||r.nextSelection)return false;
+ if(!force&&!r.closedAt&&!(r.closesAt&&Date.parse(now)>=Date.parse(r.closesAt)))return false;
+ r.nextSelection={...rankedSelection(p,excluded),status:'frozen',sourceRoundId:r.id||legacyRoundId(p),closesAt:r.closesAt||r.closedAt||now,frozenAt:r.closedAt||r.closesAt||now};
+ return true;
+}
 export function frozenResult(p,shortlist){
  const counts=Object.fromEntries(shortlist.map(id=>[id,0]));
  for(const vote of Object.values(p.votes||{}))if(Object.hasOwn(counts,vote.final))counts[vote.final]++;
@@ -44,7 +51,7 @@ export function guardRoundWrite(p,body,round){
 export function changeRound(p,b,{now,key,round,excluded}){
  if(!b||b.expectedRoundId!==round.id||b.expectedRevision!==round.revision)fail('round_conflict','De stemronde is elders gewijzigd.',{round});
  const ensure=()=>{p.round={...p.round,id:round.id,shortlist:[...round.shortlist],derived:p.round?.derived??true,lifecycle:true,revision:round.revision,opensAt:round.opensAt||now};return p.round;};
- const close=()=>{const r=ensure();r.closedAt=round.closedAt||now;r.finalTally??=frozenResult(p,r.shortlist);return r;};
+ const close=()=>{const r=ensure();r.closedAt=round.closedAt||now;freezeNextSelection(p,now,excluded,{force:true});r.finalTally??=frozenResult(p,r.shortlist);return r;};
  switch(b.action){
   case 'deadline':{
    if(round.status!=='open')fail('round_closed','Een gesloten stemronde kan niet opnieuw worden geopend.');
@@ -70,10 +77,10 @@ export function changeRound(p,b,{now,key,round,excluded}){
   }
   case 'open':{
    if(round.status!=='resolved')fail('round_unresolved','Rond de huidige stemming eerst expliciet af.');
-   const proposal=rankedSelection(p,excluded);
+   const proposal=p.round?.nextSelection||rankedSelection(p,excluded);
    if(b.selectionSnapshot!==proposal.snapshot)fail('ranking_changed','De ranglijst is veranderd. Controleer de nieuwe selectie.',{selection:proposal});
    const selected=b.shortlist;
-   if(!Array.isArray(selected)||selected.length!==3||new Set(selected).size!==3||selected.some(id=>!proposal.eligible.some(o=>o.id===id)))invalid('shortlist','Kies drie verschillende kandidaten met punten uit de ranglijst.');
+   if(!Array.isArray(selected)||selected.length!==3||new Set(selected).size!==3||selected.some(id=>excluded.includes(id)||!proposal.eligible.some(o=>o.id===id)))invalid('shortlist','Kies drie verschillende kandidaten met punten uit de ranglijst.');
    const cutoff=proposal.eligible[2]?.points,required=proposal.eligible.filter(o=>o.points>cutoff).map(o=>o.id),allowed=proposal.eligible.filter(o=>o.points>=cutoff).map(o=>o.id);
    if(required.some(id=>!selected.includes(id))||selected.some(id=>!allowed.includes(id)))invalid('shortlist','Behoud de hogere plaatsen en kies alleen tussen gelijkstaande kandidaten op de grens.');
    const closesAt=closingTime(b.closesAt,now),day=screeningDate(p,b.scheduledDate),old=ensure();

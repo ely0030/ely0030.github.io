@@ -40,13 +40,13 @@ test('ranked pipeline archives old votes, starts empty, and rejects stale writes
  await assert.rejects(f.service.vote(f.id,actor,f.key(),oldBody),e=>e.code==='round_changed');assert.deepEqual(await f.service.vote(f.id,actor,oldKey,oldBody),oldReceipt);assert.equal((await f.service.voteView(f.id,actor)).own.final,null);assert.deepEqual(f.store.row.responses,responses);
 });
 
-test('cutoff ties are explicit; higher places are required and stale ranking snapshots cannot open',async()=>{
+test('cutoff ties retain higher places and reject mismatched frozen snapshots',async()=>{
  const f=await fixture();await f.submit(actor,['d','e','f','g'],['d']);await f.change('close');await f.change('resolve',{choice:'a'});
  let next=(await f.service.get(f.id)).nextRound;assert.equal(next.ready,false);assert.deepEqual(next.cutoffTieIds,['e','f','g']);
  await assert.rejects(f.change('open',{selectionSnapshot:next.snapshot,shortlist:['e','f','g'],closesAt:'2026-09-09T12:00:00Z',scheduledDate:'2026-09-14'}),e=>e.code==='shortlist');
  const stale=next.snapshot;await f.submit(other,['h'],['h']);
- await assert.rejects(f.change('open',{selectionSnapshot:stale,shortlist:['d','e','f'],closesAt:'2026-09-09T12:00:00Z',scheduledDate:'2026-09-14'}),e=>e.code==='ranking_changed');
- next=(await f.service.get(f.id)).nextRound;await f.change('open',{selectionSnapshot:next.snapshot,shortlist:['d','h','g'],closesAt:'2026-09-09T12:00:00Z',scheduledDate:'2026-09-14'});assert.deepEqual((await f.current()).shortlist,['d','h','g']);
+ await assert.rejects(f.change('open',{selectionSnapshot:'mismatched-snapshot',shortlist:['d','e','f'],closesAt:'2026-09-09T12:00:00Z',scheduledDate:'2026-09-14'}),e=>e.code==='ranking_changed');
+ next=(await f.service.get(f.id)).nextRound;assert.equal(next.snapshot,stale);await f.change('open',{selectionSnapshot:next.snapshot,shortlist:['d','e','g'],closesAt:'2026-09-09T12:00:00Z',scheduledDate:'2026-09-14'});assert.deepEqual((await f.current()).shortlist,['d','e','g']);
 });
 
 test('resolve links the explicit pending screening once, requires actual tied leader, retains dates and exact admin replay',async()=>{
