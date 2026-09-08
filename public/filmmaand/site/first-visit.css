@@ -65,3 +65,10 @@ body.has-first-visit{overflow-anchor:none}.tour-target .films-add-tile.tour-acti
 .fr-tutorial-label{font:11px/1.4 Arial,sans-serif;color:#737a6c;margin:5px 0 18px}
 
 .fr-tutorial-label{display:block;margin:6px 0 0;text-transform:none;letter-spacing:0;font-weight:400}
+
+/* Keep the native drag affordance alive until actual pointer/keyboard takeover. */
+.tour-target [data-rank-id].tour-action,.tour-target [data-rank-id].tour-action:hover{animation:tour-rank-rehearsal 3.2s ease-in-out infinite!important}.tour-target .fr-item:nth-child(odd) [data-rank-id].tour-action{animation-delay:.35s!important}
+@keyframes tour-rank-rehearsal{0%,12%,100%{translate:0 0;rotate:0deg}28%,40%{translate:0 -7px;rotate:-2deg}62%,75%{translate:12px -7px;rotate:1deg}88%{translate:0 -3px;rotate:0deg}}
+.tour-modal-coach{padding:14px 18px;margin:12px 0 20px;background:#f1f2ed;border-radius:5px;color:#3f4c39}.tour-modal-coach>span{font:10px/1.4 Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}.tour-modal-coach p{font:14px/1.5 Arial,sans-serif;margin:5px 0 0}.tour-modal-target{animation:tour-field-invite 2.6s ease-in-out infinite}.tour-modal-target:focus-within{animation:none}
+@keyframes tour-field-invite{0%,65%,100%{translate:0 0}76%{translate:0 -3px}88%{translate:0 0}}
+@media(prefers-reduced-motion:reduce){.tour-target [data-rank-id].tour-action,.tour-target [data-rank-id].tour-action:hover,.tour-modal-target{animation:none!important}}
