@@ -138,3 +138,6 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 /* F02 approved: original full weekday/month label, slightly larger. */
 #agenda .ag-date-label{font-size:13px}
 @media(max-width:800px){#agenda .ag-date-label{font-size:11px}}
+
+/* Consistent weekday/month stack; keep the separating dot. */
+#agenda .ag-date-weekday,#agenda .ag-date-month{display:block}
