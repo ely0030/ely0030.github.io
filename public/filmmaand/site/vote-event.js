@@ -7,6 +7,7 @@
  let plan=null,own=null,resolved=false,generation=0,signature='',open=false,nudged=false;
  function render(){
   const ids=plan?.round?.shortlist||[],options=plan?.options||[];
+  const heading=box.querySelector('h2'),day=plan?.round?.scheduledDate;let roundLabel='De huidige stemronde';if(/^\d{4}-\d{2}-\d{2}$/.test(day||'')&&Number.isFinite(Date.parse(day+'T12:00:00Z'))&&new Date(day+'T12:00:00Z').toISOString().slice(0,10)===day)roundLabel='Filmavond '+new Date(day+'T12:00:00Z').toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long'});if(heading)heading.textContent=roundLabel;
   const planned=new Set([...(plan?.programme||[]),...(plan?.confirmation?[plan.confirmation]:[])].flatMap(n=>n.choices||[]));
   open=ids.length===3&&new Set(ids).size===3&&ids.every(id=>options.some(o=>o.id===id)&&!planned.has(id));
   box.hidden=!!plan&&!open;box.setAttribute('aria-busy',String(!plan||!resolved));
