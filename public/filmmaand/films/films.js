@@ -188,7 +188,7 @@ window.pickerCustomScores ||= {};
     bannerName.style.left=Math.max(8,Math.min(innerWidth-width-8,x+gap))+'px';
     bannerName.style.top=Math.max(8,Math.min(innerHeight-height-8,y+gap+height>innerHeight-8?y-height-gap:y+gap))+'px';
   }
-  document.addEventListener('pointerdown',event=>{if(bannerFace&&!event.target.closest('.films-poster-people,.films-tile-likers'))hideBannerName();});
+  document.addEventListener('pointerdown',event=>{if(bannerFace&&!event.target.closest('.films-poster-people,.films-tile-likers,.films-tile-likers-names'))hideBannerName();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')hideBannerName();});
   document.addEventListener('scroll',hideBannerName,true);window.addEventListener('resize',hideBannerName);
   function isProposer(person,option){return person.self===true&&option.recommender?.self===true;}
@@ -418,7 +418,7 @@ window.pickerCustomScores ||= {};
   window.mountFilmsRanking=(host,ctx,actions)=>{
     rankingStatusObserver?.disconnect();
     const dispose=mountRanking(host,ctx,actions),result=host.querySelector('.fr-result'),heading=result?.querySelector('h3');
-    if(heading){const hint=el('p','films-next-purpose','Voor de volgende stemronde');hint.id='films-next-purpose';heading.setAttribute('aria-describedby',hint.id);heading.title='Deze koplopers vormen de selectie voor de volgende stemronde.';heading.after(hint);}
+    if(heading){const hint=el('p','films-next-purpose','Voor de volgende stemronde');hint.id='films-next-purpose';heading.setAttribute('aria-describedby',hint.id);heading.title='Deze koplopers vormen de selectie voor de volgende stemronde.';const top=el('div','films-result-heading'),copy=el('div','films-result-heading-copy');result.prepend(top);copy.append(hint,heading);top.append(copy);}
     const current=new Set(ctx.plan.round?.shortlist||[]);
     for(const item of host.querySelectorAll('.fr-personal .fr-item')){
       const handle=item.querySelector('[data-rank-id]');if(!handle||!current.has(handle.dataset.rankId)||item.classList.contains('is-watched'))continue;
@@ -432,15 +432,16 @@ window.pickerCustomScores ||= {};
   let cutoffClock=null;
   function renderCutoff(ctx){
     const pane=ctx?.host.querySelector('.films-next-pane'),next=ctx?.plan.nextRound;if(!pane)return;
-    if(!next||!['collecting','frozen'].includes(next.status)){pane.removeAttribute('data-selection-status');pane.classList.remove('has-cutoff-tie');pane.querySelector('.films-cutoff')?.remove();pane.querySelector('.films-cutoff-ties')?.remove();pane.querySelector('.films-cutoff-future')?.remove();return;}
+    if(!next||!['collecting','frozen'].includes(next.status)){pane.removeAttribute('data-selection-status');pane.classList.remove('has-cutoff-tie');pane.querySelector('.films-cutoff')?.remove();pane.querySelector('.films-result-footer')?.remove();pane.querySelector('.films-cutoff-ties')?.remove();pane.querySelector('.films-cutoff-future')?.remove();return;}
     const stamp=Date.parse(ctx.plan.serverTime);if(Number.isFinite(stamp)&&(!cutoffClock||cutoffClock.value!==ctx.plan.serverTime))cutoffClock={value:ctx.plan.serverTime,at:performance.now()};
     const state=FilmsSocialModel.cutoffState(next,cutoffClock?.value,cutoffClock?performance.now()-cutoffClock.at:0);
     pane.dataset.selectionStatus=next.status;pane.classList.toggle('has-cutoff-tie',state.frozen&&state.ties.length>0);
     const result=pane.querySelector('.fr-result');if(!result)return;
-    let status=result.querySelector('.films-cutoff');if(!status){status=el('div','films-cutoff');status.append(el('span','films-cutoff-label'),el('time','films-cutoff-time'),el('p','films-cutoff-detail'));const link=el('a','films-cutoff-current','Stem in de huidige ronde →');link.href='/filmmaand/stemmen/';status.append(link);(result.querySelector('.films-next-purpose')||result.querySelector('h3')).after(status);}
-    status.querySelector('.films-cutoff-current').hidden=ctx.plan.round?.status!=='open';
-    const label=status.querySelector('.films-cutoff-label'),time=status.querySelector('time'),detail=status.querySelector('.films-cutoff-detail');if(label.textContent!==state.label)label.textContent=state.label;if(time.textContent!==state.time)time.textContent=state.time;time.hidden=!state.time;if(next.closesAt)time.dateTime=next.closesAt;
-    if(detail.textContent!==state.detail)detail.textContent=state.detail;detail.hidden=!state.detail;
+    let status=result.querySelector('.films-cutoff');if(!status){status=el('div','films-cutoff');status.append(el('span','films-cutoff-label'),el('time','films-cutoff-time'));(result.querySelector('.films-result-heading')||result).append(status);}
+    let footer=result.querySelector('.films-result-footer');if(!footer){footer=el('div','films-result-footer');footer.append(el('p','films-cutoff-detail'));const link=el('a','films-cutoff-current','Nu stemmen ↗');link.href='/filmmaand/stemmen/';link.setAttribute('aria-label','Stem in de huidige ronde');footer.append(link);result.append(footer);}
+    footer.querySelector('.films-cutoff-current').hidden=ctx.plan.round?.status!=='open';
+    const label=status.querySelector('.films-cutoff-label'),time=status.querySelector('time'),detail=footer.querySelector('.films-cutoff-detail');if(label.textContent!==state.label)label.textContent=state.label;if(time.textContent!==state.time)time.textContent=state.time;time.hidden=!state.time;if(next.closesAt)time.dateTime=next.closesAt;
+    const explanation=state.detail||'Jullie punten bepalen de selectie';if(detail.textContent!==explanation)detail.textContent=explanation;
     status.title=Number.isFinite(Date.parse(next.closesAt))?'Sluit '+new Date(next.closesAt).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'';
     let tieRow=result.querySelector('.films-cutoff-ties');if(state.frozen&&state.ties.length){const key=JSON.stringify([next.snapshot,state.ties]);if(!tieRow||tieRow.dataset.key!==key){tieRow?.remove();tieRow=el('div','films-cutoff-ties');tieRow.dataset.key=key;tieRow.setAttribute('aria-label','Gelijke stand voor de volgende selectie');for(const id of state.ties){const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;const pick=action('','films-cutoff-tie',()=>openOption(option),'cutoff-tie-'+id);pick.setAttribute('aria-label',option.title+' · '+(next.points[id]||0)+' punten · gelijke stand');pick.append(ctx.cover(option,'cutoff-tie-'+id),el('span','films-cutoff-title',option.title),el('small','',(next.points[id]||0)+' pts'));tieRow.append(pick);}result.append(tieRow);}}else tieRow?.remove();
     let future=pane.querySelector('.films-cutoff-future');if(state.frozen&&!future){future=el('p','films-cutoff-future','Je favorieten tellen verder voor een latere selectie.');pane.querySelector('.fr-personal .fr-heading')?.after(future);}else if(!state.frozen)future?.remove();
@@ -498,8 +499,12 @@ window.pickerCustomScores ||= {};
     const section=el('section','calendar-overlap');section.append(el('h3','','Meeste overlap'));
     for(const entry of entries){const row=action('','overlap-row',()=>{inspectedDate=entry.date;for(const other of section.querySelectorAll('.overlap-row'))other.setAttribute('aria-pressed',String(other===row));for(const day of calendar.querySelectorAll('[data-day]'))day.classList.toggle('overlap-inspected',day.dataset.day===entry.date);},'overlap-'+entry.date);row.setAttribute('aria-pressed',String(inspectedDate===entry.date));row.setAttribute('aria-label',dateLabel(entry.date)+' · '+entry.count+' beschikbaar');row.append(el('span','overlap-date',new Date(entry.date+'T12:00:00Z').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})),avatarRow(entry.people,entry.people.length,'overlap-faces'));const count=el('span','overlap-count',String(entry.count));count.append(el('small','','/'+Math.max(ctx.plan.responseCount||0,(ctx.plan.people||[]).length,entry.count)));row.append(count);section.append(row);}surface.append(section);
   }
+  function wireSocialLikerNames(row){
+    for(const face of row.querySelectorAll('.films-social-avatar')){face.classList.add('battle-person');face.setAttribute('role','button');face.removeAttribute('title');}
+    row.classList.add('films-tile-likers-names');wireLikerNames(row);
+  }
   function renderSuggestionAuthors(ctx){
-    for(const card of ctx.host.querySelectorAll('.fs-new .fs-mini-card')){const key=card.querySelector('.fs-mini-open')?.dataset.focus,id=key?.replace(/^social-open-new-/,'');const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;if(!likerPeople(ctx,option).length)card.querySelector('.fs-mini-stickers')?.remove();const badge=ctx.recommenderBadge(option,true);if(badge){card.querySelector('.fs-mini-author')?.remove();card.append(badge);}}
+    for(const card of ctx.host.querySelectorAll('.fs-new .fs-mini-card')){const key=card.querySelector('.fs-mini-open')?.dataset.focus,id=key?.replace(/^social-open-new-/,'');const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;if(!likerPeople(ctx,option).length)card.querySelector('.fs-mini-stickers')?.remove();const stickers=card.querySelector('.fs-mini-stickers');if(stickers){const n=stickers.querySelectorAll('.films-social-avatar').length;stickers.style.setProperty('--liker-size',(n>10?17:n>6?20:22)+'px');wireSocialLikerNames(stickers);}const badge=ctx.recommenderBadge(option,true);if(badge){card.querySelector('.fs-mini-author')?.remove();card.append(badge);}}
   }
   function renderFriendOrders(ctx){
     const host=ctx.host.querySelector('.films-social-content'),people=(ctx.plan.people||[]).filter(p=>!p.self&&p.rankingOrder?.some(id=>p.choices?.includes(id)&&ctx.plan.options.some(o=>o.id===id)));
