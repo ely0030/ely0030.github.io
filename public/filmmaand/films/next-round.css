@@ -169,3 +169,4 @@
 .site-films #films #home-picker .fr-result-film .fr-score{justify-content:flex-start;column-gap:3px}
 .site-films #films #home-picker .fr-score-number{min-width:0;width:auto;flex:0 0 auto}
 .site-films #films #home-picker .fr-score>small{flex:0 0 auto;margin:0;padding:0}
+.site-films #films #home-picker .rank-live-delta[data-points="0"] b{color:#92998b}
