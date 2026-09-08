@@ -10,7 +10,7 @@ const labelDate=(date,options={weekday:'long',day:'numeric',month:'long'})=>new 
 const validDay=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d+'T12:00:00Z'))&&new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d;
 const responseDates=r=>{if(Array.isArray(r?.dates))return r.dates.filter(validDay);if(!validDay(r?.start)||!validDay(r?.end))return[];const dates=[];for(let d=Date.parse(r.start);d<=Date.parse(r.end)&&dates.length<63;d+=864e5)dates.push(new Date(d).toISOString().slice(0,10));return dates};
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-function artwork(o){const src=o?.movie?.poster||o?.poster||window.catalogArtwork?.[o?.id];if(typeof src!=='string'||!src)return null;const img=el('img','mh-poster');img.src=src;img.alt='';img.loading='lazy';img.decoding='async';img.onerror=()=>img.replaceWith(el('span','mh-poster mh-poster-missing','Film'));return img}
+function artwork(o){const src=o?.movie?.poster||o?.poster||o?.image?.url||window.catalogArtwork?.[o?.id];if(typeof src!=='string'||!src)return null;const img=el('img','mh-poster');img.src=src;img.alt='';img.loading='lazy';img.decoding='async';img.onerror=()=>img.replaceWith(el('span','mh-poster mh-poster-missing','Film'));return img}
 function filmTitle(o){const title=o?.title||'Film',year=o?.movie?.year||o?.year;return year&&!title.includes(String(year))?title+' ('+year+')':title}
 let disposePrevious=null;
 window.mountFilmmaandAccountHome=(host,{session,portrait,onProfile,onAvatar,onLogout,onLogin})=>{
