@@ -1,22 +1,28 @@
 /** Durable private outbox. Provider delivery is outside retried state transactions. */
+import {selectPlainTextTest} from './mail-plain-text-test.mjs';
 import {createHash} from 'node:crypto';
 import {transact} from './state.mjs';
 import {renderLoginCodeEmail} from './email-template.mjs';
 import {templateFingerprint,providerAcceptanceId,pruneMailReceipts,recordMailAcceptance} from './mail-diagnostics.mjs';
 const failure=()=>Object.assign(Error('De e-mail kon niet worden verzonden. Probeer het later opnieuw.'),{status:503,code:'mail_unavailable'});
-export function createMail({store,apiKey,from,allowedRecipients,allowAnyRecipient=false,fetcher=fetch,now=()=>new Date().toISOString(),enabled=false,provider='resend',domain,apiBaseUrl='https://api.eu.mailgun.net'}){
+export function createMail({store,apiKey,from,allowedRecipients,allowAnyRecipient=false,fetcher=fetch,now=()=>new Date().toISOString(),enabled=false,provider='resend',domain,apiBaseUrl='https://api.eu.mailgun.net',plainTextTest=null}){
  const configured=provider==='resend'||(provider==='mailgun'&&['https://api.eu.mailgun.net','https://api.mailgun.net'].includes(apiBaseUrl)&&/^[a-z0-9]+(?:[.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain||''));
  const allowed=new Set((allowedRecipients||[]).map(x=>x.trim().toLowerCase()));
- function queue(c,message){
+ function queue(c,message,options={}){
   if(!configured||!enabled||!apiKey||!from||(!allowAnyRecipient&&!allowed.has(message.to)))throw failure();
   const rows=c.authStore.db.prepare('SELECT * FROM login_codes WHERE email=? AND consumed_at IS NULL').all(message.to);
   const row=rows.find(r=>r.code_hash===createHash('sha256').update(r.id+':'+message.code).digest('hex'));
   if(!row)throw failure();
   const day=now().slice(0,10),month=day.slice(0,7);c.state.mailUsage||={};
   if((c.state.mailUsage[day]||0)>=80||(c.state.mailUsage[month]||0)>=2000)throw failure();
-  c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
   pruneMailReceipts(c.state,now());
-  c.state.outbox[row.id]={provider,from,to:message.to,...renderLoginCodeEmail({code:message.code,expiresAt:row.expires_at}),expiresAt:row.expires_at,createdAt:now(),templateFingerprint};
+  const rendered=renderLoginCodeEmail({code:message.code,expiresAt:row.expires_at});
+  // Quota and rendering must succeed before consuming the one-request designation.
+  const plainText=selectPlainTextTest(c.state,{plan:plainTextTest,token:options.plainTextTestToken,to:message.to,now:now()});
+  c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
+  if(plainText)delete rendered.html;
+  const fingerprint=plainText?createHash('sha256').update(JSON.stringify((({html,...text})=>text)(renderLoginCodeEmail({code:'000000',expiresAt:'2000-01-01T00:00:00.000Z'})))).digest('hex'):templateFingerprint;
+  c.state.outbox[row.id]={provider,from,to:message.to,...rendered,expiresAt:row.expires_at,createdAt:now(),templateFingerprint:fingerprint};
  }
  async function deliver(id){
   const selected=await transact(store,c=>{

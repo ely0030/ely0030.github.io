@@ -12,7 +12,7 @@ async function initialize(){
  const catalogue=openMovieCatalogue(new URL('./data/movie-catalogue.sqlite',import.meta.url).pathname);
  const movieCatalogue=createMovieDiscovery(catalogue,{creditsPath:new URL('./data/movie-credits.sqlite',import.meta.url).pathname,artwork:JSON.parse(await readFile(new URL('./runtime/planning/movie-artwork.json',import.meta.url))),metadataToken:env.TMDB_READ_ACCESS_TOKEN||'',metadataApiKey:env.TMDB_API_KEY||''});
  const registration=registrationPolicy(env);
- const mail=createMail({store,apiKey:env.AUTH_MAILER==='mailgun'?env.MAILGUN_API_KEY:env.RESEND_API_KEY,provider:env.AUTH_MAILER,domain:env.MAILGUN_DOMAIN,apiBaseUrl:env.MAILGUN_API_BASE_URL,from:env.AUTH_FROM,allowedRecipients:registration.allowedRecipients,allowAnyRecipient:registration.allowAnyRecipient,enabled:['resend','mailgun'].includes(env.AUTH_MAILER)});
+ const mail=createMail({store,plainTextTest:{tokenSha256:env.AUTH_PLAIN_TEXT_TEST_SHA256,recipient:env.AUTH_PLAIN_TEXT_TEST_RECIPIENT,expiresAt:env.AUTH_PLAIN_TEXT_TEST_EXPIRES_AT},apiKey:env.AUTH_MAILER==='mailgun'?env.MAILGUN_API_KEY:env.RESEND_API_KEY,provider:env.AUTH_MAILER,domain:env.MAILGUN_DOMAIN,apiBaseUrl:env.MAILGUN_API_BASE_URL,from:env.AUTH_FROM,allowedRecipients:registration.allowedRecipients,allowAnyRecipient:registration.allowAnyRecipient,enabled:['resend','mailgun'].includes(env.AUTH_MAILER)});
  const api=createApi({store,blobs,movieCatalogue,programmeMovies:JSON.parse(await readFile(new URL('./runtime/planning/programme-movies.json',import.meta.url))),adminToken:env.PLANNING_ADMIN_TOKEN,origin:env.FILMMAAND_ORIGIN||'https://ely0030.xyz',authConfig:{allowList:registration.allowList},queueMail:mail.queue,deliverMail:mail.deliver});
  return {api,mail};
 }
