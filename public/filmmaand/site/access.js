@@ -13,7 +13,7 @@ window.filmmaandHasPendingEntryAction=()=>{
  return false;
 };
 window.requestFilmmaandParticipation=intent=>{if(account())return true;window.filmmaandAttendanceIntent=intent||null;window.dispatchEvent(new CustomEvent('filmmaand-login-required',{detail:{source:'participation'}}));return false};
-let navigating=false,prompt=null;
+let navigating=false,prompt=null,availabilityAccount=null;
 async function afterLogin(e){
  if(navigating)return;
  if(!account())await window.filmmaandSession?.refresh?.();
@@ -22,10 +22,24 @@ async function afterLogin(e){
  // A server-locked document has no personal controller. Reload only this recovery
  // route to let its canonical controller replay the exact saved receipt.
  if(recovery){if(kind){navigating=true;location.reload()}return;}
+ await artworkReady;
+ if(navigating||!account())return;
+ if(prompt){prompt.close();prompt.remove();prompt=null;}
+ availabilityAccount=window.filmmaandSession.participant.id;
+ if(window.openPostLoginAvailability?.(window.filmmaandSession.participant))return;
+ availabilityAccount=null;
  if(document.querySelector('.availability-intro[open]'))return;
  navigating=true;location.assign(prefix+'/films/');
 }
 window.addEventListener('filmmaand-login-complete',afterLogin);
+window.addEventListener('filmmaand-availability-intro-closed',e=>{
+ if(!availabilityAccount||navigating)return;
+ if(['account-change'].includes(e.detail?.reason)){availabilityAccount=null;return;}
+ if(!['saved','continue','later'].includes(e.detail?.reason))return;
+ const id=availabilityAccount;availabilityAccount=null;
+ if(!account()||window.filmmaandSession.participant.id!==id)return;
+ navigating=true;location.assign(prefix+'/films/');
+});
 window.addEventListener('filmmaand-session',e=>{if(!kind&&/\/(films|stemmen)\//.test(location.pathname)&&!e.detail?.participant?.id&&!window.filmmaandHasPendingEntryAction()&&!document.querySelector('.identity-overlay[open]'))location.reload()});
 const artworkReady=document.readyState==='complete'?Promise.resolve():new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
 const el=(tag,cls,value)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(value)n.textContent=value;return n};
