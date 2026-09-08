@@ -112,3 +112,26 @@
 #films #home-picker .fr-handle:disabled{cursor:default!important}
 #films #home-picker .fr-contribution{color:#536346;font-weight:500}
 @media(prefers-reduced-motion:reduce){#films #home-picker .fr-item:not(.is-dragging) .fr-handle:not(:disabled):is(:hover,:focus-visible,:active){transform:none;filter:none}}
+
+/* Approved persistent contribution and order guide. Canonical 3/2/1 values. */
+#films #home-picker .fr-position{display:flex!important;justify-content:flex-start;font-size:0!important;margin-top:10px}
+#films #home-picker .fr-position:after{display:none}
+#films #home-picker .fr-contribution{display:flex;align-items:center;gap:6px;font:500 12px/23px Arial;color:#6b8b4e}
+#films #home-picker .fr-contribution img{width:23px;height:23px;object-fit:contain;border-radius:4px}
+#films #home-picker .fr-contribution b{font:500 12px Arial}
+#films #home-picker .fr-contribution small{font:9px Arial;color:#8a967e}
+#films #home-picker .fr-film-title{min-height:32px}
+#films #home-picker .rank-direction{margin:14px 0 10px}
+#films #home-picker .rank-weight-line{display:flex;gap:14px;height:3px}
+#films #home-picker .rank-weight-line i{width:92px;flex:none}
+#films #home-picker .rank-endpoints{display:flex;justify-content:space-between;padding-top:8px;font:9px Arial;color:#929292}
+#films #home-picker .rank-browse-nav{display:flex;gap:15px;margin-left:14px}
+#films #home-picker .rank-browse-nav button{border:0;background:none;color:#8b957f;font:14px Arial;padding:3px;cursor:pointer}
+#films #home-picker .fr-score-number{font:400 29px Arial}
+#films #home-picker .rank-live-delta{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#6b8b4e;vertical-align:middle}
+#films #home-picker .rank-live-delta img{width:23px;height:23px;object-fit:contain;border-radius:4px}
+#films #home-picker .rank-live-delta b{font:500 12px Arial}
+#films #home-picker .fr-supporter.is-self{display:none}
+#films #home-picker .fr-supporter{width:var(--friend-point-size,18px);height:var(--friend-point-size,18px)}
+#films #home-picker .fr-supporters{align-items:flex-end}
+#films #home-picker .rank-endpoints{position:sticky;left:0;box-sizing:border-box}

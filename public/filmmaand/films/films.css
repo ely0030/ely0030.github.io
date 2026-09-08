@@ -518,3 +518,93 @@
 #films #home-picker .films-poster-people .battle-person .battle-name{display:none!important}
 .films-avatar-tooltip{position:fixed;inset:auto;margin:0;z-index:10000;max-width:min(240px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:hidden;width:max-content;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;pointer-events:none;background:white;color:#202820;border:1px solid #d4d8ce;border-radius:4px;padding:6px 8px;box-shadow:0 3px 12px #0002;font:11px/1.4 Arial,sans-serif;text-align:left}
 .films-avatar-tooltip[hidden]{display:none}
+
+/* Approved r27 social/calendar presentation; real production data. */
+
+#films #home-picker .films-night .ac-hint,#films #home-picker .films-night .ac-actions,#films #home-picker .films-night .ac-summary{display:none!important}
+#films #home-picker .films-calendar-faces img{pointer-events:auto;cursor:help}
+.calendar-face-label{position:fixed;z-index:12000;background:#fff;color:#34402d;border:1px solid #dce2d5;border-radius:3px;padding:6px 9px;font:11px Arial;box-shadow:0 3px 14px #0002;pointer-events:none;max-width:180px;overflow-wrap:anywhere}
+.calendar-face-label[hidden]{display:none}
+
+#films #home-picker .calendar-overlap{margin-top:24px;border-top:1px solid #dce2d5;padding-top:22px}
+#films #home-picker .calendar-overlap h3{font:400 11px Arial;letter-spacing:.06em;text-transform:uppercase;color:#68765b;margin:0 0 12px}
+#films #home-picker .overlap-row{display:grid;grid-template-columns:100px 1fr auto;gap:15px;align-items:center;width:100%;border:0;border-bottom:1px solid #edf0e8;background:none;padding:14px 0;text-align:left;cursor:pointer;color:#4e6041}
+#films #home-picker .overlap-row:hover,#films #home-picker .overlap-row[aria-expanded=true]{background:#f7f9f3}
+#films #home-picker .overlap-date{font:400 13px Arial}
+#films #home-picker .overlap-faces{display:flex;align-items:center;padding-left:2px}
+#films #home-picker .overlap-faces img{width:23px;height:23px;border-radius:4px;border:2px solid white;margin-left:-3px;object-fit:contain}
+#films #home-picker .overlap-faces small{font:9px Arial;color:#8e9981;margin-left:5px}
+#films #home-picker .overlap-count{font:400 19px Arial;font-variant-numeric:tabular-nums}
+#films #home-picker .overlap-count small{font:10px Arial;color:#9aa68e;margin-left:3px}
+#films #home-picker .overlap-detail{font:11px/1.6 Arial;color:#7b8870;padding:10px 0 15px}
+#films #home-picker .ac-day.overlap-inspected{outline:2px solid #9cad89;outline-offset:2px}
+@media(max-width:600px){#films #home-picker .overlap-row{grid-template-columns:85px 1fr auto;gap:8px}#films #home-picker .overlap-faces img{width:21px;height:21px}}
+
+#films #home-picker .overlap-row{padding:16px 0;background:transparent!important;border-bottom:1px solid #e6e9df;grid-template-columns:102px 1fr auto}
+#films #home-picker .overlap-date{font:400 14px Arial;letter-spacing:-.2px;color:#4d5b41}
+#films #home-picker .overlap-count{font:400 23px Arial;color:#4d6040;letter-spacing:-.6px}
+#films #home-picker .overlap-count small{color:#a0ab94}
+#films #home-picker .overlap-faces{gap:2px;padding:0;flex-wrap:wrap}
+#films #home-picker .overlap-faces img{width:21px;height:21px;margin:0;border:0;box-shadow:none;border-radius:3px;cursor:help}
+#films #home-picker .overlap-row:hover .overlap-date,#films #home-picker .overlap-row[aria-pressed=true] .overlap-date{text-decoration:underline;text-underline-offset:5px;text-decoration-color:#b0bca2}
+
+@media(max-width:600px){#films #home-picker .overlap-row{grid-template-columns:82px 1fr auto}#films #home-picker .overlap-faces img{width:18px;height:18px}}
+
+#films #home-picker .friend-order{border-top:1px solid #e0e4d9;margin-top:28px;padding-top:23px}
+#films #home-picker .friend-order h3{font:400 11px Arial;letter-spacing:.07em;text-transform:uppercase;color:#66715b;margin:0 0 17px}
+#films #home-picker .friend-order-tabs{display:flex;gap:9px;flex-wrap:wrap}
+#films #home-picker .friend-order-tabs button{border:0;border-bottom:2px solid transparent;background:none;padding:0 0 7px;cursor:pointer;opacity:.65}
+#films #home-picker .friend-order-tabs button[aria-selected=true]{border-color:#60764c;opacity:1}
+#films #home-picker .friend-order-tabs img{width:27px;height:27px;object-fit:contain;border-radius:4px}
+#films #home-picker .friend-order-name{font:400 12px Arial;color:#49573e;margin:15px 0 12px}
+#films #home-picker .friend-order-posters{display:flex;gap:10px}
+#films #home-picker .friend-order-posters button{border:0;padding:0;background:none;cursor:pointer}
+#films #home-picker .friend-order-posters img{display:block;width:76px;height:110px;object-fit:cover;border-radius:1px}
+#films #home-picker .friend-order-direction{display:flex;align-items:center;gap:10px;width:162px;margin-top:10px;font:9px Arial;color:#8b957f}
+#films #home-picker .friend-order-direction i{height:2px;flex:1;background:linear-gradient(90deg,#94a285,#e5e9df)}
+#films #home-picker .friend-order-posters button{position:relative}
+#films #home-picker .friend-order-points{position:absolute;top:6px;left:6px;display:inline-flex;align-items:center;justify-content:center;background:#fffffff2;color:#597640;font:500 10px Arial;border-radius:3px;height:20px;min-width:23px;box-shadow:0 1px 3px #0001}
+#films #home-picker .friend-order-direction{display:block;width:calc(var(--friend-count,2)*76px + (var(--friend-count,2) - 1)*10px);margin-top:12px}
+#films #home-picker .friend-order-segments{display:grid;grid-template-columns:repeat(var(--friend-count,2),76px);gap:10px}
+#films #home-picker .friend-order-segments i{height:5px;display:block;background:#62774e;border-radius:1px}
+#films #home-picker .friend-order-segments i:nth-child(2){background:#7d8f6b}
+#films #home-picker .friend-order-segments i:nth-child(3){background:#9da990}
+#films #home-picker .friend-order-segments i:nth-child(4){background:#bcc5b2}
+#films #home-picker .friend-order-segments i:nth-child(5){background:#dce2d5}
+#films #home-picker .friend-order-ends{display:flex;justify-content:space-between;gap:8px;padding-top:8px;font:9px Arial;color:#849078}
+#films #home-picker .friend-order-points{position:static;display:flex;background:none;box-shadow:none;padding:0;margin-top:10px;gap:5px;height:23px;justify-content:flex-start}
+#films #home-picker .friend-order-points img{width:20px;height:20px;border-radius:3px;object-fit:contain}
+#films #home-picker .friend-order-points b{font:500 11px Arial;color:#6b8b4e}
+#films #home-picker .friend-order-points small{font:400 9px Arial;color:#8a967e;margin-left:-2px}
+
+#films #home-picker .fs-popular .fs-compact-ranking{display:flex;flex-direction:column!important;gap:12px;overflow:visible}
+#films #home-picker .fs-popular .fs-compact-rank{display:grid;grid-template-columns:32px minmax(0,1fr) 35px;align-items:center;gap:12px;border:0;padding:0}
+#films #home-picker .fs-popular .fs-rank-number,#films #home-picker .popular-nav{display:none}
+#films #home-picker .fs-popular .fs-rank-image{width:32px;height:44px;margin:0}
+#films #home-picker .fs-popular .fs-rank-image .fs-mini-open,#films #home-picker .fs-popular .fs-rank-image .ci-cover{width:32px!important;height:44px!important}
+#films #home-picker .fs-popular .fs-mini-stickers{display:none}
+#films #home-picker .fs-popular .fs-compact-rank-title{font:400 11px/1.4 Arial;color:#46503d;text-align:left;white-space:normal}
+#films #home-picker .fs-popular .fs-rank-track{display:block;height:4px;margin-top:7px;background:#eceee9;border-radius:0;overflow:hidden}
+#films #home-picker .fs-popular .fs-rank-track i{display:block;height:100%;background:#66735a}
+#films #home-picker .fs-popular .fs-rank-count{font:400 20px/1 Arial;color:#46503d;text-align:right}
+#films #home-picker .fs-popular .fs-rank-count:after{content:'♡';font:11px Arial;margin-left:3px;color:#8b9482}
+
+#films #home-picker .banner-like-count{font:11px Arial;color:white;text-shadow:0 1px 3px #0008;margin-left:8px}
+#films #home-picker .films-calendar-faces{display:flex;flex-wrap:wrap;justify-content:center;gap:1px;max-width:55px}
+#films #home-picker .films-calendar-faces img{width:12px;height:12px;margin:0;border:0;border-radius:2px}
+#films #home-picker .films-calendar .ac-day-extra{bottom:3px}
+#films #home-picker .films-calendar .ac-cell:has(.ac-day-extra)>.ac-day{padding-bottom:24px}
+#films #home-picker .friend-order-posters .ci-cover{width:76px!important;height:110px!important}
+#films #home-picker .friend-order-posters .ci-cover img{width:100%;height:100%;object-fit:cover}
+#films #home-picker .friend-order-points .films-avatars{display:inline-flex}
+#films #home-picker .friend-order-tabs .films-avatars{display:contents}
+@media(max-width:600px){#films #home-picker .films-calendar-faces{max-width:45px}#films #home-picker .films-calendar-faces img{width:10px;height:10px}}
+/* Override the older two-column chart allocation, without changing its data. */
+.site-films #films #home-picker .fs-popular .fs-compact-ranking{display:flex!important;flex-direction:column!important;gap:12px!important;grid-template-columns:none!important}
+.site-films #films #home-picker .fs-popular .fs-compact-rank{display:grid!important;grid-template-columns:32px minmax(0,1fr) 35px!important;width:100%!important;gap:12px!important}
+.site-films #films #home-picker .fs-popular .fs-compact-rank>div:not(.fs-rank-image){min-width:0;width:auto!important}
+.site-films #films #home-picker .fs-popular .fs-compact-rank-title{max-width:none!important;width:100%!important;white-space:normal!important;overflow:visible!important;display:block!important;min-height:0!important}
+.site-films #films #home-picker .fs-popular .fs-rank-track{width:100%!important}
+.site-films #films #home-picker .fs-popular .fs-rank-number{display:none!important}
+.site-films #films #home-picker .fs-popular .fs-rank-image{position:relative!important;grid-column:auto!important;grid-row:auto!important}
+.site-films #films #home-picker .fs-popular .hp-poster-score{display:none!important}

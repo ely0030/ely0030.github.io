@@ -349,7 +349,7 @@ window.pickerCustomScores ||= {};
     const save=el('div','films-calendar-save');surface.append(save);
     const panel=el('section','films-night-panel');panel.setAttribute('aria-label','Jouw filmavond');surface.append(panel);
     column.prepend(surface);
-    ctx.mountCalendar(calendar,{events,dayContent:d=>{const n=effectiveCount(d),tag=el('span','films-day-count');tag.dataset.level=String(n?Math.max(1,Math.ceil(n/maxAvailability*4)):0);tag.setAttribute('aria-hidden','true');const people=peopleForDate(d);tag.append(avatarRow(people,2,'films-calendar-faces'));return tag;},dayLabel:d=>{const people=peopleForDate(d);return ' · '+effectiveCount(d)+' beschikbaar'+(people.length?' · '+people.map(p=>p.name).join(', '):'');}});
+    ctx.mountCalendar(calendar,{events,dayContent:d=>{const n=effectiveCount(d),tag=el('span','films-day-count');tag.dataset.level=String(n?Math.max(1,Math.ceil(n/maxAvailability*4)):0);tag.setAttribute('aria-hidden','true');const people=peopleForDate(d);tag.append(avatarRow(people,people.length,'films-calendar-faces'));return tag;},dayLabel:d=>{const people=peopleForDate(d);return ' · '+effectiveCount(d)+' beschikbaar'+(people.length?' · '+people.map(p=>p.name).join(', '):'');}});
     const legend=el('p','films-calendar-legend','Groen: jij kunt · avatars: wie er kan');calendar.querySelector('.ac-grid').after(legend);
     function paintPanel(){
       panel.replaceChildren();const own=ctx.proposal.view?.own,ownOption=ctx.plan.options.find(o=>o.id===own?.optionId),same=own?.optionId===option.id&&own?.date===activeDate;
@@ -372,9 +372,10 @@ window.pickerCustomScores ||= {};
     calendar.addEventListener('pointerdown',event=>{const day=event.target.closest('[data-day]');if(day&&!day.disabled){activeDate=day.dataset.day;paintPanel();}});
     paintPanel();
     renderProposals(ctx,surface);
+    renderOverlap(ctx,surface,calendar,peopleForDate,effectiveCount,today);
   }
 
-  function refreshSocial(ctx){const host=ctx.host.querySelector('.films-social-content');if(host)window.renderFilmsSocial(host,ctx,{open:o=>openOption(o),add:propose,browse:()=>setView('all'),planNight:async(o,date)=>{activeDate=date;lastCalendarDate=context.calendarLast||'';planningOpen=true;await openOption(o,{scroll:false});sideTab='social';applySideTab();const section=context.host.querySelector('.films-social-planning');if(section){section.open=true;section.scrollIntoView({block:'center',behavior:'instant'});section.querySelector('.films-night-submit')?.focus({preventScroll:true});}}});}
+  function refreshSocial(ctx){const host=ctx.host.querySelector('.films-social-content');if(host)window.renderFilmsSocial(host,ctx,{open:o=>openOption(o),add:propose,browse:()=>setView('all'),planNight:async(o,date)=>{activeDate=date;lastCalendarDate=context.calendarLast||'';planningOpen=true;await openOption(o,{scroll:false});sideTab='social';applySideTab();const section=context.host.querySelector('.films-social-planning');if(section){section.open=true;section.scrollIntoView({block:'center',behavior:'instant'});section.querySelector('.films-night-submit')?.focus({preventScroll:true});}}});renderFriendOrders(ctx);}
   function applySideTab(){const column=context?.host.querySelector('.hp-dates');if(!column)return;for(const button of column.querySelectorAll('[data-side-tab]')){const selected=button.dataset.sideTab===sideTab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;}column.querySelector('.films-night').hidden=sideTab!=='availability';column.querySelector('.films-social-pane').hidden=sideTab!=='social';const next=column.querySelector('.films-next-pane');if(next)next.hidden=sideTab!=='next';const add=column.querySelector('.films-add-pane');if(add)add.hidden=sideTab!=='add';}
   function renderSocialTabs(ctx){const column=ctx.host.querySelector('.hp-dates'),availability=column.querySelector('.films-night');column.querySelector('.hp-personal-shelf')?.remove();availability.querySelector(':scope>.eyebrow')?.remove();availability.querySelector(':scope>.films-night-heading')?.remove();availability.id='films-availability-pane';availability.setAttribute('role','tabpanel');availability.setAttribute('aria-labelledby','films-tab-availability');
     const tabs=el('div','films-side-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Samen plannen en ontdekken');
@@ -390,9 +391,11 @@ window.pickerCustomScores ||= {};
     context = ctx;
     if (!ctx.plan) return;
     renderPosterSupporters(ctx);
+    const banner=ctx.host.querySelector('.films-poster-people'),otherLikes=(ctx.plan.people||[]).filter(p=>!p.self&&p.choices?.includes(ctx.plan.options[ctx.current]?.id)).length;
+    if(banner&&otherLikes)banner.append(el('span','banner-like-count',otherLikes+' '+(otherLikes===1?'vindt':'vinden')+' dit ook leuk'));
     const selected=ctx.plan.options[ctx.current],scheduled=(ctx.plan.programme||[]).filter(n=>n.choices?.includes(selected?.id)&&FilmsSocialModel.programmeDate(n)).sort((a,b)=>FilmsSocialModel.programmeDate(a).localeCompare(FilmsSocialModel.programmeDate(b)))[0];
     const caption=ctx.host.querySelector('.hp-caption');ctx.host.querySelector('.films-schedule-status')?.remove();
-    if(caption){const status=el('div','films-schedule-status'+(scheduled?' is-planned':''));status.append(el('span','films-schedule-dot'));status.append(document.createTextNode(scheduled?'Gepland · '+new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long'}).format(new Date(FilmsSocialModel.programmeDate(scheduled)+'T12:00:00Z')):'Nog niet gepland'));caption.after(status);}
+    if(caption&&scheduled){const status=el('div','films-schedule-status'+(scheduled?' is-planned':''));status.append(el('span','films-schedule-dot'));status.append(document.createTextNode(scheduled?'Gepland · '+new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'long'}).format(new Date(FilmsSocialModel.programmeDate(scheduled)+'T12:00:00Z')):'Nog niet gepland'));caption.after(status);}
 
     renderNight(ctx);
     renderSocialTabs(ctx);
@@ -425,5 +428,32 @@ window.pickerCustomScores ||= {};
     filterCards();
   }
 
+
+  let selectedFriendIndex=0,inspectedDate='';
+  function renderOverlap(ctx,surface,calendar,peopleForDate,effectiveCount,today){
+    const entries=[...new Set([...Object.keys(ctx.plan.dateCounts||{}),...ctx.dates])].filter(d=>d>=today&&d>=ctx.plan.window.start&&d<=ctx.plan.window.end).map(date=>({date,people:peopleForDate(date),count:effectiveCount(date)})).filter(d=>d.count>0).sort((a,b)=>b.count-a.count||a.date.localeCompare(b.date)).slice(0,3);
+    if(!entries.length)return;
+    const section=el('section','calendar-overlap');section.append(el('h3','','Meeste overlap'));
+    for(const entry of entries){const row=action('','overlap-row',()=>{inspectedDate=entry.date;for(const other of section.querySelectorAll('.overlap-row'))other.setAttribute('aria-pressed',String(other===row));for(const day of calendar.querySelectorAll('[data-day]'))day.classList.toggle('overlap-inspected',day.dataset.day===entry.date);},'overlap-'+entry.date);row.setAttribute('aria-pressed',String(inspectedDate===entry.date));row.setAttribute('aria-label',dateLabel(entry.date)+' · '+entry.count+' beschikbaar');row.append(el('span','overlap-date',new Date(entry.date+'T12:00:00Z').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})),avatarRow(entry.people,entry.people.length,'overlap-faces'));const count=el('span','overlap-count',String(entry.count));count.append(el('small','','/'+Math.max(ctx.plan.responseCount||0,(ctx.plan.people||[]).length,entry.count)));row.append(count);section.append(row);}surface.append(section);
+  }
+  function renderFriendOrders(ctx){
+    const host=ctx.host.querySelector('.films-social-content'),people=(ctx.plan.people||[]).filter(p=>!p.self&&p.rankingOrder?.some(id=>p.choices?.includes(id)&&ctx.plan.options.some(o=>o.id===id)));
+    if(!host||!people.length)return;
+    selectedFriendIndex=Math.min(selectedFriendIndex,people.length-1);
+    const section=el('section','friend-order'),tabs=el('div','friend-order-tabs'),shelf=el('div','friend-order-shelf');section.append(el('h3','','Favorieten van vrienden'),tabs,shelf);host.append(section);tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Kies een vriend');shelf.setAttribute('role','tabpanel');
+    people.forEach((person,index)=>{const b=action('','',()=>{selectedFriendIndex=index;paint();},'friend-order-'+index);b.title=person.name||'Zonder naam';b.setAttribute('aria-label',b.title);b.setAttribute('role','tab');b.append(avatarRow([person],1));b.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();selectedFriendIndex=(selectedFriendIndex+(event.key==='ArrowRight'?1:people.length-1))%people.length;paint();tabs.children[selectedFriendIndex].focus();}});tabs.append(b);});
+    function paint(){const person=people[selectedFriendIndex];for(const [index,b] of [...tabs.children].entries()){b.setAttribute('aria-selected',String(index===selectedFriendIndex));b.tabIndex=index===selectedFriendIndex?0:-1;}shelf.replaceChildren();shelf.append(el('p','friend-order-name',person.name||'Zonder naam'));const row=el('div','friend-order-posters'),order=[...new Set(person.rankingOrder)].filter(id=>person.choices.includes(id)),points=FilmsSocialModel.contribution(person.choices,order);for(const id of order){const option=ctx.plan.options.find(o=>o.id===id);if(!option)continue;const b=action('','',()=>openOption(option),'friend-pick-'+id);b.title=option.title;b.setAttribute('aria-label','Bekijk '+option.title);b.append(ctx.cover(option,'friend-order-'+selectedFriendIndex+'-'+id));const badge=el('span','friend-order-points');badge.append(avatarRow([person],1),el('b','','+'+(ctx.plan.nextRound?.rule==='rank-3-2-1'?points[id]:1)),el('small','',ctx.plan.nextRound?.rule==='rank-3-2-1'?'pt':'♥'));b.append(badge);row.append(b);}shelf.append(row);if(order.length>1){const guide=el('div','friend-order-direction');guide.style.setProperty('--friend-count',order.length);const segments=el('div','friend-order-segments');segments.setAttribute('aria-hidden','true');order.forEach((_,i)=>{const bar=el('i');bar.style.background=i===0?'#202020':i===1?'#858585':'#dedede';segments.append(bar);});const ends=el('div','friend-order-ends');ends.append(el('span','','Meest favoriet'),el('span','','Minst favoriet'));guide.append(segments,ends);shelf.append(guide);}}paint();
+  }
+
   window.pickerConfig = {mode: 'collection', onRender: render};
+})();
+
+(()=>{
+const host=document.querySelector('#home-picker'),tip=document.createElement('div');tip.className='calendar-face-label';tip.id='calendar-face-label';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);let active=null;
+function hide(){tip.hidden=true;active?.removeAttribute('aria-describedby');active=null}
+function show(face,event){if(!face)return;active=face;tip.textContent=face.alt||face.dataset.name||'';if(!tip.textContent)return;tip.hidden=false;face.setAttribute('aria-describedby',tip.id);const r=face.getBoundingClientRect(),x=event?.clientX??r.left,y=event?.clientY??r.bottom;tip.style.left=Math.max(8,Math.min(innerWidth-tip.offsetWidth-8,x+10))+'px';tip.style.top=Math.max(8,Math.min(innerHeight-tip.offsetHeight-8,y+12))+'px'}
+function prepare(){host.querySelectorAll('.films-calendar-faces img, .overlap-faces img').forEach(face=>{face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',face.alt);face.removeAttribute('title');face.closest('.films-day-count')?.removeAttribute('aria-hidden')})}
+new MutationObserver(prepare).observe(host,{subtree:true,childList:true});prepare();
+host.addEventListener('pointerdown',e=>{if(e.target.closest('.films-calendar-faces img, .overlap-faces img'))e.stopPropagation()},true);
+host.addEventListener('pointermove',e=>{const face=e.target.closest('.films-calendar-faces img, .overlap-faces img');if(face)show(face,e);else if(active)hide()});host.addEventListener('pointerleave',hide);host.addEventListener('focusin',e=>show(e.target.closest('.films-calendar-faces img, .overlap-faces img')));host.addEventListener('focusout',hide);host.addEventListener('click',e=>{const face=e.target.closest('.films-calendar-faces img, .overlap-faces img');if(face){e.stopPropagation();show(face)}});host.addEventListener('keydown',e=>{if(e.key==='Escape')hide();else if(['Enter',' '].includes(e.key)&&e.target.matches('.films-calendar-faces img, .overlap-faces img')){e.preventDefault();show(e.target)}});window.addEventListener('scroll',hide,true);
 })();
