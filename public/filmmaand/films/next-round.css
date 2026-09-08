@@ -135,3 +135,7 @@
 #films #home-picker .fr-supporter{width:var(--friend-point-size,18px);height:var(--friend-point-size,18px)}
 #films #home-picker .fr-supporters{align-items:flex-end}
 #films #home-picker .rank-endpoints{position:sticky;left:0;box-sizing:border-box}
+/* Latest r27 feedback: own shelf needs only the contribution, not a repeated self portrait. */
+#films #home-picker .fr-contribution img{display:none}
+#films #home-picker .fr-contribution b{font:400 24px/1.1 Arial;letter-spacing:-.5px}
+#films #home-picker .fr-contribution{min-height:27px;gap:5px}
