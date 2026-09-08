@@ -654,3 +654,15 @@
 .site-films #films #home-picker .films-poster-people .battle-person{transform:rotate(-5deg)}
 .site-films #films #home-picker .films-poster-people .battle-person:nth-child(2n){transform:rotate(6deg)}
 .site-films #films #home-picker .films-poster-people .battle-person:nth-child(3n){transform:rotate(-2deg)}
+/* New suggestions reuse the collection's proposer badge and dedicate the footer to supporters. */
+.site-films #films #home-picker .fs-new .fs-mini-card{flex-basis:128px}
+.site-films #films #home-picker .fs-new .fs-mini-open,.site-films #films #home-picker .fs-new .fs-mini-open .ci-cover{width:128px!important;height:192px!important}
+.site-films #films #home-picker .fs-new .hp-poster-score{display:none!important}
+.site-films #films #home-picker .fs-new .fs-mini-stickers{top:155px!important;left:7px!important;right:7px}
+.site-films #films #home-picker .fs-new .fs-mini-stickers .films-social-avatar{width:25px;height:25px}
+.site-films #films #home-picker .fs-new .fs-mini-card .fs-mini-remove{top:178px!important}
+.site-films #films #home-picker .fs-new .fs-mini-title{font-size:13px}
+.site-films #films #home-picker .fs-new .fs-mini-card>.hp-recommender{position:absolute;top:7px;left:7px;margin:0;background:#ffffffed;border-radius:50%;padding:3px;box-shadow:0 1px 5px #0002;z-index:3}
+.site-films #films #home-picker .fs-new .fs-mini-card>.hp-recommender img{width:26px;height:26px}
+.site-films #films #home-picker .fs-new .fs-mini-card>.hp-recommender span{display:none}
+.site-films #films #home-picker .fs-new .ci-cover>span.hp-poster-score,.site-films #films #home-picker .friend-order-posters .ci-cover>span.hp-poster-score{display:none!important}
