@@ -539,3 +539,12 @@ body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu,body.site-stemme
 
 /* Bedankt's optional edit button is unavailable after authoritative closure; programme link remains. */
 body.st-round-closed #stemmen .st-confirm-actions>button{display:none}
+
+/* Distinguish this film night from the following shortlist without altering the ballot. */
+#stemmen .st-round-purpose{margin:14px 0 0;font:13px/1.5 Arial,sans-serif;color:#647065}
+#stemmen .st-round-context{margin:22px auto 0;text-align:center;max-width:620px;font:12px/1.6 Arial,sans-serif;color:#647065}
+#stemmen .st-round-context[hidden],#stemmen .st-round-links a[hidden]{display:none}
+#stemmen .st-round-state{margin:0 0 8px}
+#stemmen .st-round-links{display:flex;justify-content:center;gap:12px 24px;flex-wrap:wrap}
+#stemmen .st-round-links a{color:inherit;text-underline-offset:4px}
+body.st-cinema-result #stemmen .st-round-purpose,body.st-cinema-result #stemmen .st-round-context{color:#eee}
