@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS claims(
  plan_id TEXT NOT NULL, anonymous_actor TEXT NOT NULL, participant_id TEXT NOT NULL REFERENCES participants(id),
  request_key TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, completed_at TEXT,
  PRIMARY KEY(plan_id,anonymous_actor), UNIQUE(plan_id,participant_id));
+CREATE TABLE IF NOT EXISTS password_credentials(participant_id TEXT PRIMARY KEY REFERENCES participants(id), password_hash TEXT NOT NULL, revision INTEGER NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS email_ownership(participant_id TEXT PRIMARY KEY REFERENCES participants(id), verified_at TEXT);
+CREATE TABLE IF NOT EXISTS session_security(token_hash TEXT PRIMARY KEY REFERENCES sessions(token_hash), method TEXT NOT NULL, authenticated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS auth_invites(token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, kind TEXT NOT NULL, participant_id TEXT REFERENCES participants(id), credential_revision INTEGER NOT NULL, created_by TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT);
 CREATE TABLE IF NOT EXISTS receipts(scope TEXT NOT NULL, request_key TEXT NOT NULL, fingerprint TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(scope,request_key));`);
   const q=s=>this.db.prepare(s);
   this.q={

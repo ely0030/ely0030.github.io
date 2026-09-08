@@ -24,7 +24,7 @@ export function createAuthRouter({auth,transfer,origins=[],cookie={},trustProxy=
   const mutation=method!=='GET';if(mutation&&cred?.transport==='cookie')csrf(req);
   try{
    if(sub==='code'&&method==='POST')return send(200,await auth.requestCode({email:body?.email,client:cl}));
-   if(sub==='verify'&&method==='POST'){const {token,participant}=await auth.verifyCode({challengeId:body?.challengeId,code:body?.code,client:cl});if(body?.transport==='bearer')return send(200,{participant,sessionToken:token});headers['Set-Cookie']=setCookie(token);return send(200,{participant})}
+   if(sub==='verify'&&method==='POST'){const {token,participant}=await auth.verifyCode({challengeId:body?.challengeId,code:body?.code,client:cl,sessionToken:cred?.token});if(body?.transport==='bearer')return send(200,{participant,sessionToken:token});headers['Set-Cookie']=setCookie(token);return send(200,{participant})}
    if(sub==='session'&&method==='GET'){if(!cred)return send(200,{participant:null});return send(200,auth.session(cred.token))}
    if((sub==='logout'&&method==='POST')||(sub==='session'&&method==='DELETE')){if(cred)auth.logout(cred.token);if(cred?.transport!=='bearer')headers['Set-Cookie']=clearCookie();return send(200,{ok:true})}
    if(sub==='logout-everywhere'&&method==='POST'){auth.logoutEverywhere(needToken());headers['Set-Cookie']=clearCookie();return send(200,{ok:true})}

@@ -43,16 +43,24 @@ export function createAuthService({store,mailer,avatars,now=()=>new Date().toISO
    store.transaction(()=>{store.q.expireOpenCodes.run(now(),address,challengeId);store.q.insertCode.run(challengeId,address,hash(challengeId+':'+code),now(),expiresAt,cl.ip)});
    try{await mailer.send({to:address,...renderCodeMail({code,expiresMinutes:Math.round(cfg.codeTtlSeconds/60)}),code})}catch(e){store.q.consumeCode.run(now(),challengeId);if(e.status)throw e;fail(503,'mail_unavailable','De e-mail kon niet worden verzonden.')}
    return {challengeId,expiresAt,resendAfter:cfg.resendAfterSeconds}},
-  async verifyCode({challengeId,code,client:c}={}){const cl=client(c);limit('verify:ip:'+cl.ip,cfg.verifyPerIp);
+  async verifyCode({challengeId,code,client:c,sessionToken}={}){const cl=client(c);limit('verify:ip:'+cl.ip,cfg.verifyPerIp);
    if(typeof challengeId!=='string'||!/^[A-Za-z0-9_-]{22}$/.test(challengeId)||typeof code!=='string'||!new RegExp('^\\d{'+cfg.codeLength+'}$').test(code))fail(400,'invalid_code','Deze code klopt niet.');
    const row=store.q.codeById.get(challengeId);if(!row)fail(400,'invalid_code','Deze code klopt niet.');
    if(row.consumed_at||Date.parse(row.expires_at)<=ms())fail(410,'code_expired','Deze code is verlopen. Vraag een nieuwe aan.');
    const attempts=store.q.bumpAttempts.get(challengeId).attempts;
    if(attempts>cfg.maxAttempts){store.q.consumeCode.run(now(),challengeId);fail(410,'code_expired','Te vaak geprobeerd. Vraag een nieuwe code aan.')}
    if(!timingSafeEqual(Buffer.from(hash(challengeId+':'+code)),Buffer.from(row.code_hash)))fail(400,'invalid_code','Deze code klopt niet.',{attemptsLeft:cfg.maxAttempts-attempts});
+   const existing=store.q.participantByEmail.get(row.email);
+   const ownership=existing&&store.db.prepare('SELECT verified_at FROM email_ownership WHERE participant_id=?').get(existing.id);
+   if(ownership&&!ownership.verified_at){
+    let current=null;try{current=this.authenticate(sessionToken)}catch{}
+    if(!current||current.participantId!==existing.id)fail(409,'email_binding_required','Log eerst in met je wachtwoord en bevestig daarna je e-mailadres. Bij een verkeerd adres helpt de organisator je verder.');
+   }
    const token=SESSION_PREFIX+b64(32);
    const p=store.transaction(()=>{if(store.q.consumeCode.run(now(),challengeId).changes!==1)fail(410,'code_expired','Deze code is al gebruikt.');let p=store.q.participantByEmail.get(row.email);if(!p){store.q.insertParticipant.run('u_'+b64(12),row.email,now());p=store.q.participantByEmail.get(row.email)}store.q.insertSession.run(hash(token),p.id,now(),iso(ms()+cfg.sessionTtlDays*864e5),now(),cl.agent);return p});
+   store.db.prepare('UPDATE email_ownership SET verified_at=? WHERE participant_id=?').run(now(),p.id);store.db.prepare('INSERT INTO session_security(token_hash,method,authenticated_at) VALUES(?,?,?)').run(hash(token),'code',now());
    return {token,participant:participantView(p)}},
+  issueSession(pid,method){const p=participant(pid),token=SESSION_PREFIX+b64(32);store.q.insertSession.run(hash(token),pid,now(),iso(ms()+cfg.sessionTtlDays*864e5),now(),'');store.db.prepare('INSERT INTO session_security(token_hash,method,authenticated_at) VALUES(?,?,?)').run(hash(token),method,now());return {token,participant:participantView(p)}},
   // Every presented session credential is authoritative: unknown, revoked or expired → 401 with clear:true. Never anonymous.
   authenticate(token){if(!isSessionToken(token))fail(401,'session_invalid','Log opnieuw in.',{clear:true});const s=store.q.sessionByHash.get(hash(token));if(!s||s.revoked_at||Date.parse(s.expires_at)<=ms())fail(401,'session_invalid','Je sessie is verlopen. Log opnieuw in.',{clear:true});if(ms()-Date.parse(s.last_seen_at)>cfg.sessionTouchSeconds*1000)store.q.touchSession.run(now(),iso(ms()+cfg.sessionTtlDays*864e5),s.token_hash);return {participantId:s.participant_id,email:s.email,onboarded:Boolean(s.onboarded),tokenHash:s.token_hash}},
   resolveActor(token){return isSessionToken(token)?participantActor(this.authenticate(token).participantId):null},
