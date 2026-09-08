@@ -1,6 +1,6 @@
 /* Local title results first; optional artwork hydrates by stable IMDb ID. */
 (()=>{'use strict';
-window.mountMovieSearch=(host,{api='/filmmaand/api/movies',query='',disabled=false,existing=()=>null,onQuery=()=>{},onSelect=()=>{}}={})=>{
+window.mountMovieSearch=(host,{api='/filmmaand/api/movies',query='',disabled=false,multiple=false,existing=()=>null,onQuery=()=>{},onSelect=()=>{}}={})=>{
  let dead=false,timer,controller,serial=0,items=[],active=-1,selectionRun=0;
  const pending=new Map(),failedImages=new Set();
  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
@@ -50,10 +50,10 @@ window.mountMovieSearch=(host,{api='/filmmaand/api/movies',query='',disabled=fal
    const b=el('button','hp-search-result');b.type='button';b.id='movie-result-'+i;b.tabIndex=-1;b.setAttribute('role','option');b.setAttribute('aria-selected','false');
    const art=el('span','hp-result-art'),copy=el('span','hp-result-copy');art.append(el('span','hp-result-year',item.year||'—'));
    copy.append(el('strong','',item.title),el('small','',[item.originalTitle!==item.title?item.originalTitle:null,(item.genres||[]).join(' · '),item.runtime?item.runtime+' min':null].filter(Boolean).join(' / ')));
-   const already=existing(item);if(already){b.dataset.existing=already.id;copy.append(el('small','hp-result-existing','Staat al in de selectie · '+already.title));}
+   const already=existing(item);if(already){b.dataset.existing=already.id;copy.append(el('small','hp-result-existing',multiple?'Toegevoegd':'Staat al in de selectie · '+already.title));}
    if(item.directors?.length)copy.append(el('small','hp-result-director','Regie: '+item.directors.join(', ')));
    if(item.cast?.length)copy.append(el('small','hp-result-cast',item.cast.join(' · ')));
-   b.append(art,copy,el('span','hp-result-arrow','↗'));b.onmousedown=e=>e.preventDefault();b.onclick=()=>void pick(i);list.append(b);paintArt(art,item,run);
+   b.append(art,copy,el('span','hp-result-arrow',multiple?(already?'✓':'+'):'↗'));if(multiple){b.setAttribute('aria-label',(already?'Toegevoegd: ':'Voeg toe: ')+item.title+' ('+item.year+')');b.setAttribute('aria-disabled',String(!!already));}b.onmousedown=e=>e.preventDefault();b.onclick=()=>void pick(i);list.append(b);paintArt(art,item,run);
   });
   list.hidden=!items.length;input.setAttribute('aria-expanded',String(!!items.length));
  }
@@ -68,7 +68,7 @@ window.mountMovieSearch=(host,{api='/filmmaand/api/movies',query='',disabled=fal
   try{
    const response=await fetch(api+'?q='+encodeURIComponent(q)+'&quick=1',{signal:controller.signal});if(!response.ok)throw Error('search');
    const data=await response.json();if(!current(run))return;items=data.movies||[];render(run);
-   status.textContent=items.length?'Kies de film die je bedoelt.':'Geen films gevonden. Probeer een andere titel of voeg een eigen thema toe.';
+   status.textContent=items.length?(multiple?'Voeg films toe met +.':'Kies de film die je bedoelt.'):'Geen films gevonden. Probeer een andere titel of voeg een eigen thema toe.';
    void hydrate(run);
   }catch(error){if(!current(run)||error.name==='AbortError')return;items=[];render(run);status.textContent='Zoeken lukt even niet. Probeer opnieuw of voeg een eigen thema toe.'}
  }
@@ -76,5 +76,5 @@ window.mountMovieSearch=(host,{api='/filmmaand/api/movies',query='',disabled=fal
  input.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(['ArrowDown','ArrowUp'].includes(e.key)&&items.length){e.preventDefault();list.hidden=false;input.setAttribute('aria-expanded','true');highlight((active+(e.key==='ArrowDown'?1:-1)+items.length)%items.length)}else if(e.key==='Enter'){e.preventDefault();if(active>=0&&!list.hidden)void pick(active);else if(items.length===1)void pick(0)}};
  host.onfocusout=e=>{if(!host.contains(e.relatedTarget))close()};input.onfocus=()=>{if(items.length){list.hidden=false;input.setAttribute('aria-expanded','true')}};
  if(query.trim().length>=2&&!disabled)void search();
- return{destroy(){dead=true;++serial;clearTimeout(timer);controller?.abort();host.replaceChildren()}};
+ return{refreshSelection(){if(!dead)render(serial)},destroy(){dead=true;++serial;clearTimeout(timer);controller?.abort();host.replaceChildren()}};
 };})();
