@@ -31,7 +31,6 @@
     const status=node('span','fr-status',controller.error?'Niet opgeslagen':controller.pending?'Opslaan…':controller.dirty?'Niet opgeslagen':controller.saved?'Opgeslagen':'');status.setAttribute('role','status');heading.append(status);personal.append(heading);
     if(controller.error||controller.dirty&&!controller.pending)personal.append(button(controller.locked?'Inloggen':controller.error?'Opnieuw proberen':'Bewaar volgorde','fr-retry',()=>controller.retry()));
     const rail=node('div','fr-order'),track=node('div','fr-track'),slot=node('div','fr-slot');slot.setAttribute('aria-hidden','true');track.append(slot);rail.append(track);personal.append(rail);
-    if(order.length>1){const guide=node('div','fr-preference-guide');guide.setAttribute('aria-hidden','true');guide.append(node('span','','Meest favoriet'),node('i'),node('span','','Minst favoriet'));personal.append(guide);}
     host.append(personal);
     const live=node('span','fr-announcement');live.setAttribute('aria-live','polite');host.append(live);
     const items=new Map(),step=106;

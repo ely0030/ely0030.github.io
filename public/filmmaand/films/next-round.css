@@ -110,7 +110,5 @@
 #films #home-picker .fr-item:not(.is-dragging) .fr-handle:not(:disabled):focus-visible{transform:translateY(-3px);outline:2px solid #4585d1;outline-offset:4px}
 #films #home-picker .fr-item:not(.is-dragging) .fr-handle:not(:disabled):active{transform:translateY(-3px);cursor:grabbing!important}
 #films #home-picker .fr-handle:disabled{cursor:default!important}
-#films #home-picker .fr-preference-guide{display:flex;align-items:center;gap:12px;max-width:100%;margin-top:12px;font:9px/1.4 Arial,sans-serif;color:#859278;pointer-events:none}
-#films #home-picker .fr-preference-guide i{height:1px;flex:1;background:linear-gradient(to right,#a5b497,#e5eadf)}
 #films #home-picker .fr-contribution{color:#536346;font-weight:500}
 @media(prefers-reduced-motion:reduce){#films #home-picker .fr-item:not(.is-dragging) .fr-handle:not(:disabled):is(:hover,:focus-visible,:active){transform:none;filter:none}}
