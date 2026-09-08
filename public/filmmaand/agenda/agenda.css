@@ -124,3 +124,8 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 #agenda .ag-mystery-art::after{content:'';position:absolute;inset:20%;border:1px solid #fff9;border-radius:50%;filter:blur(1px)}
 #agenda .ag-detail .ag-mystery-art{height:170px;margin-top:24px}
 #agenda .ag-detail .ag-mystery-note{margin-top:18px}
+
+/* Programme shell: approved local reference dimensions; event cards unchanged. */
+#agenda{box-sizing:border-box;max-width:1600px;margin:0 auto;padding:44px 4vw 72px}
+#agenda .ag-page-top{margin-bottom:32px}
+@media(max-width:800px){#agenda{margin:0 auto;padding:28px 20px 48px}#agenda .ag-page-top{margin-bottom:24px}}
