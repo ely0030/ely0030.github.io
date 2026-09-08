@@ -651,3 +651,6 @@
 .site-films #films #home-picker .films-poster-people .battle-own{border-color:#4585d1;outline:none}
 .site-films #films #home-picker .films-poster-people .battle-initial{display:grid;place-items:center;font:12px Arial;color:#46503d}
 .site-films #films #home-picker .banner-like-count{margin-left:4px}
+.site-films #films #home-picker .films-poster-people .battle-person{transform:rotate(-5deg)}
+.site-films #films #home-picker .films-poster-people .battle-person:nth-child(2n){transform:rotate(6deg)}
+.site-films #films #home-picker .films-poster-people .battle-person:nth-child(3n){transform:rotate(-2deg)}

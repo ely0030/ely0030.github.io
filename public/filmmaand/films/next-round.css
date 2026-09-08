@@ -166,3 +166,6 @@
 .site-films #films #home-picker .fr-supporters .fr-supporter img{width:100%;height:100%;object-fit:contain}
 @media(max-width:600px){.site-films #films #home-picker .fr-score-number{font-size:25px}.site-films #films #home-picker .rank-live-delta{margin-left:3px;padding-left:6px;gap:4px}.site-films #films #home-picker .rank-live-delta img{width:19px;height:19px}}
 @media(prefers-reduced-motion:reduce){.site-films #films #home-picker .fr-supporters .fr-supporter{transition:none}}
+.site-films #films #home-picker .fr-result-film .fr-score{justify-content:flex-start;column-gap:3px}
+.site-films #films #home-picker .fr-score-number{min-width:0;width:auto;flex:0 0 auto}
+.site-films #films #home-picker .fr-score>small{flex:0 0 auto;margin:0;padding:0}
