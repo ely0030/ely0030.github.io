@@ -110,3 +110,13 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 @media(max-width:650px){#agenda .ag-detail{width:calc(100% - 20px);max-height:calc(100dvh - 20px);scrollbar-gutter:auto}#agenda .ag-detail .ag-modal-bar{padding:8px 18px}#agenda .ag-detail .ag-detail-body{padding:22px 20px}#agenda .ag-detail .ag-detail-title{font-size:27px}#agenda .ag-detail .ag-modal-films{grid-template-columns:1fr;gap:24px;margin-top:22px}#agenda .ag-detail .ag-modal-art{height:155px}#agenda .ag-detail .ag-modal-film-title{font-size:20px}#agenda .ag-detail .ag-modal-people{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}#agenda .ag-detail .ag-modal-person{gap:8px;font-size:11px}#agenda .ag-detail .ag-modal-actions{padding:18px 20px;gap:10px 16px}}
 
 #agenda .ag-detail .ag-modal-art-fallback[hidden]{display:none}
+
+/* Evening status: restrained labels, with artwork cues that do not replace text. */
+#agenda .ag-evening-state{display:flex;align-items:center;gap:7px;margin:0 0 9px;font-size:10px;line-height:1.5;letter-spacing:.015em;color:#67735e}
+#agenda .ag-evening-state::before{content:'';display:block;width:5px;height:5px;flex:none;border-radius:50%;background:currentColor}
+#agenda [data-state=voting] .ag-evening-state{color:#456135}
+#agenda [data-state=past] .ag-evening-state{color:#7e847b}
+#agenda .ag-programme-event[data-state=past] .ag-programme-visual,#agenda .ag-detail[data-state=past] .ag-modal-art{filter:grayscale(.7);opacity:.68}
+#agenda .ag-programme-event[data-state=past] .ag-programme-title,#agenda .ag-programme-event[data-state=past] .ag-date-number{color:#73796d}
+#agenda .ag-programme-event[data-state=past] .ag-attendance-button{display:none}
+@media(max-width:800px){#agenda .ag-evening-state{font-size:9px;margin-bottom:7px;gap:5px}}
