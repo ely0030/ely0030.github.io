@@ -248,6 +248,31 @@ function programmeWhen(night){
  const d=new Date(timed?night.startsAt:day+'T12:00:00Z');
  return {iso:timed?night.startsAt:day,label:d.toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',weekday:'long',day:'numeric',month:'long'})+(timed?' · '+d.toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'}):'')};
 }
+// Closure is a result, not another selection state. Only an authoritative choice becomes the winner.
+function closedScreen(){
+ const r=vote.round,chosen=option(r.result?.choice),night=plan.programme?.find(n=>n.roundId===r.id),when=programmeWhen(night||{scheduledDate:r.scheduledDate}),nextRound=plan.nextRound;
+ const section=el('section','st-screen st-closed'+(chosen?' st-result-landed':''));section.dataset.screen='closed';
+ const copy=el('div','st-closed-copy'),kicker=el('p','st-closed-kicker',chosen?'De keuze is gemaakt':'Stemmen gesloten');copy.append(kicker);
+ copy.append(el('h1','st-closed-title',chosen?chosen.title:'De uitslag volgt.'));
+ if(when){const date=el('time','st-closed-date',when.label);date.dateTime=when.iso;copy.append(date);}
+ if(chosen){
+  const artwork=el('div','st-closed-art'),dvd=el('div','st-closed-case'),img=el('img');img.src=poster(chosen);img.alt=chosen.title;img.decoding='async';
+  const crown=el('span','st-closed-crown');crown.setAttribute('aria-hidden','true');crown.innerHTML='<svg viewBox="0 0 32 26"><path d="M4 8 10 13 16 3 22 13 28 8 25 22H7Z" fill="#c8a35b" stroke="#9a7739" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 19h16" stroke="#f4dfaf" stroke-width="1.5"/></svg>';dvd.append(img,el('span','st-closed-shine'));artwork.append(crown,dvd);section.append(artwork);
+  const info=metaOf(chosen);if(info)copy.append(el('p','st-closed-meta',info));
+ }else{
+  const tied=plan.round?.leaderIds?.length>1;
+  copy.append(el('p','st-closed-note',tied?'Gelijke stand. De organisator beslist welke film het wordt.':'De organisator legt de uitslag vast.'));
+ }
+ const actions=el('div','st-closed-actions');
+ if(night)actions.append(button('Bekijk het programma',null,'/filmmaand/programma/'));
+ else if(nextRound?.status==='frozen')actions.append(button('Bekijk de volgende shortlist',null,'/filmmaand/films/'));
+ else actions.append(button('Naar Films',null,'/filmmaand/films/'));
+ if(night&&nextRound?.status==='frozen'){const link=el('a','st-text','Volgende shortlist');link.href='/filmmaand/films/';actions.append(link);}
+ if(vote.own.final)actions.append(textLink('Mijn stem',()=>{screen='thanks';render()}));
+ copy.append(actions);
+ if(pending||error||authLock){const feedback=status();if(pending&&!error&&!authLock){feedback.append(document.createTextNode('Je eerdere stem wordt nog gecontroleerd. '),textLink('Opnieuw proberen',()=>retry()));}copy.append(feedback);}
+ section.append(copy);return section;
+}
 function plannedScreen(){const s=el('section','st-screen');s.dataset.screen='finale';const round=vote.round,night=plan.programme.find(n=>n.roundId&&n.roundId===round.id)||plan.programme.find(n=>n.choices.some(id=>round.shortlist.includes(id)))||plan.programme.at(-1);const chosen=night.choices.map(option).filter(Boolean);const when=programmeWhen(night);s.append(head('GEPLAND',chosen.map(o=>o.title).join(' + ')));const view=el('div','people-view'),band=el('div','battle-arena');for(const o of chosen.slice(0,2)){const p=buildLane(o);p.people.remove();p.scene.removeAttribute('role');p.scene.tabIndex=-1;const t=el('time','',when?.label||'Datum volgt');if(when)t.dateTime=when.iso;p.lane.querySelector('.battle-title').prepend(t);band.append(p.lane)}view.append(band);const b=bar(button('Naar de agenda',null,'/filmmaand/programma/'));const acts=b.querySelector('.st-actions');if(vote.own.final||vote.own.next)acts.prepend(textLink('Je stem',()=>{screen='thanks';render()}));acts.append(button('Alle films',null,'/filmmaand/films/'));s.append(view,b);return s}
 
 async function suggest(body){if(authLock){requestVoteLogin();return;}if(busy||!body)return;busy=true;error='';render();const receipt=read('stemmenSuggestionReceipt')||{key:crypto.randomUUID(),body:{...body,...(profile?{recommender:{name:profile.name,avatarId:profile.avatarId}}:{})}};write('stemmenSuggestionReceipt',receipt);
@@ -288,7 +313,7 @@ function waitForWhiteBackdrop(){if(reduced.matches||!resultBackdrop||!document.b
 function render(){if(!plan||!vote)return;if(screen==='thanks')waitForWhiteBackdrop();else puddingBackdropListener?.();if(screen!=='finale')clearResultBackdrop();if(screen==='next')screen='finale';decideScreen();main.setAttribute('aria-busy',String(busy));document.body.classList.toggle('st-round-closed',roundClosed());document.body.classList.toggle('st-dvd-page',screen==='finale'&&!vote.round.planned);document.body.classList.toggle('st-no-strip',screen!=='thanks');document.body.classList.toggle('can-vote',!authLock&&!busy&&screen!=='thanks'&&!roundBlocked());
  if(screen!=='thanks'&&puddingMount){puddingMount.destroy();puddingMount=null}
  let next=null;
- if(screen==='finale'){if(vote.round.planned){arena=null;next=plannedScreen()}else if(arena&&arena.section.isConnected&&arena.key===ballotKey()){updateFinale();return}else next=buildFinale()}
+ if(screen==='finale'){if(roundClosed()&&(!vote.round.planned||vote.round.result?.choice)){const key=JSON.stringify([vote.round,vote.own.final,plan.nextRound,plan.programme,option(vote.round.result?.choice),!!pending,error,authLock]);if(main.firstElementChild?.dataset.closedKey===key)return;arena=null;next=closedScreen();next.dataset.closedKey=key;const chosen=option(vote.round.result?.choice);if(chosen)void syncResultBackdrop([chosen]);else clearResultBackdrop();}else if(vote.round.planned){arena=null;next=plannedScreen()}else if(arena&&arena.section.isConnected&&arena.key===ballotKey()){updateFinale();return}else next=buildFinale()}
  else if(screen==='next'){if(rail&&rail.section.isConnected){updateNext();return}next=buildNext()}
  else if(main.firstElementChild?.updateBedankt&&main.firstElementChild.dataset.planned===String(!!vote.round.planned)){main.firstElementChild.updateBedankt(thanksContext());return;}else next=thanksScreen();
  if(screen!=='finale')arena=null;if(screen!=='next'){clearTimeout(rail?.deepTimer);searchMount?.destroy();searchMount=null;rail=null;}
