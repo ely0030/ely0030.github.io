@@ -134,3 +134,7 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 #agenda :is(.ag-mystery-art,.ag-programme-visual>.ag-art-fallback){position:relative;isolation:isolate;overflow:hidden;background:#302b3d;font-size:0;color:transparent}
 #agenda :is(.ag-mystery-art,.ag-programme-visual>.ag-art-fallback)::before{content:'';position:absolute;inset:-18px;background:url('/filmmaand/picker/art/blade-banner-e0292e1f45f2.webp') 22% center/cover no-repeat;filter:blur(11px) saturate(.95) brightness(1.06);transform:scale(1.12);pointer-events:none}
 #agenda :is(.ag-mystery-art,.ag-programme-visual>.ag-art-fallback)::after{content:'';position:absolute;inset:0;border:0;border-radius:0;background:linear-gradient(145deg,#ffffff16,transparent 48%,#1412231f);box-shadow:inset 0 0 0 1px #ffffff18;filter:none;transform:none;pointer-events:none}
+
+/* F02 approved: original full weekday/month label, slightly larger. */
+#agenda .ag-date-label{font-size:13px}
+@media(max-width:800px){#agenda .ag-date-label{font-size:11px}}
