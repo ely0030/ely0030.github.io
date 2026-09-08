@@ -60,3 +60,53 @@
 #agenda .ag-detail-title,#agenda .ag-detail-sub{font-family:"Programme Everett",Arial,sans-serif}#agenda .ag-detail>.ag-tie-art{height:240px}@media(max-width:650px){#agenda .ag-detail{width:calc(100% - 24px);max-height:calc(100dvh - 24px)}#agenda .ag-detail-body{padding:24px 20px}#agenda .ag-detail-title{font-size:29px}.ag-detail-films li{flex-wrap:wrap}.ag-detail-visual{height:180px}}
 
 #agenda .ag-sidebar-open{display:block;border-top:1px solid var(--ag-line);padding:10px 0 0;margin-top:22px;font-size:11px;text-decoration:underline;text-underline-offset:4px}#agenda .ag-availability-dialog .ag-sidebar-open{display:none}#agenda .ag-host .ac-hint{font:400 11px/1.6 'Programme Everett',Arial,sans-serif}#agenda>.ag-shared-save{position:sticky;bottom:14px;z-index:6;margin:24px auto 0;padding:14px 18px;background:white;border:1px solid var(--ag-line);box-shadow:0 5px 25px #18201910;max-width:640px}
+
+/* Film-detail-only geometry. Keep the Programme layout and canonical calendar untouched. */
+html:has(#agenda .ag-detail[open]){overflow:hidden}
+#agenda .ag-detail{width:min(880px,calc(100% - 40px));max-height:calc(100dvh - 40px);padding:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;background:#fff;border-radius:5px;box-shadow:0 20px 90px #0004;text-align:left}
+#agenda .ag-detail::backdrop{background:#18201788;backdrop-filter:blur(3px)}
+#agenda .ag-detail .ag-modal-bar{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:10px 24px;background:#fff;border-bottom:1px solid #e5e7df}
+#agenda .ag-detail .ag-modal-kicker{font:11px/1.5 'Programme Everett',Arial,sans-serif;color:#727969}
+#agenda .ag-detail .ag-detail-close{position:static;float:none;margin:0;min-width:72px;min-height:44px;border:0;padding:10px 0 10px 14px;background:transparent;font:12px/1.5 'Programme Everett',Arial,sans-serif;flex:none}
+#agenda .ag-detail .ag-detail-body{padding:26px 28px 28px;min-width:0}
+#agenda .ag-detail .ag-detail-title{font:400 32px/1.12 'Programme Everett',Arial,sans-serif;letter-spacing:-.035em;text-wrap:initial;overflow-wrap:anywhere;margin:0 0 12px}
+#agenda .ag-detail .ag-detail-when{font-size:12px;line-height:1.6;color:#6e7665;margin:0}
+#agenda .ag-detail .ag-modal-status{font-size:12px;line-height:1.65;color:#647257;margin:12px 0 0}
+#agenda .ag-detail .ag-modal-films{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:26px;margin-top:26px}
+#agenda .ag-detail .ag-modal-film{min-width:0}
+#agenda .ag-detail .ag-modal-art{position:relative;height:170px;background:transparent;overflow:hidden;border-radius:3px}
+#agenda .ag-detail .ag-modal-art-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:transparent}
+#agenda .ag-detail .ag-modal-art-fallback{height:100%;display:grid;place-content:center;background:#f4f5ef;color:#828877;font-size:11px;padding:20px}
+#agenda .ag-detail .ag-modal-film-copy{padding-top:16px}
+#agenda .ag-detail .ag-modal-film-title{font:400 21px/1.18 'Programme Everett',Arial,sans-serif;letter-spacing:-.025em;overflow-wrap:anywhere;margin:0}
+#agenda .ag-detail .ag-modal-film-meta{font-size:11px;line-height:1.65;color:#777f6e;margin:9px 0 0}
+#agenda .ag-detail .ag-modal-synopsis{font-size:12px;line-height:1.75;color:#4f5847;margin:12px 0 0;overflow-wrap:anywhere}
+#agenda .ag-detail .ag-modal-credits{font-size:11px;line-height:1.7;margin-top:14px}
+#agenda .ag-detail .ag-modal-credits summary{cursor:pointer;padding:8px 0;min-height:36px;color:#5f6e52}
+#agenda .ag-detail .ag-modal-film-list{list-style:none;margin:4px 0 0;padding:0}
+#agenda .ag-detail .ag-modal-film-list li{padding:8px 0;border-top:1px solid #e7e9e0;display:flex;flex-direction:column;gap:3px}
+#agenda .ag-detail .ag-modal-film-list small{font-size:10px;color:#7c8571}
+#agenda .ag-detail .ag-modal-voting,#agenda .ag-detail .ag-modal-attendance{border-top:1px solid #e4e7dc;margin-top:26px;padding-top:22px}
+#agenda .ag-detail .ag-modal-section-title{font:400 18px/1.35 'Programme Everett',Arial,sans-serif;letter-spacing:-.02em;margin:0 0 16px}
+#agenda .ag-detail .ag-modal-muted,#agenda .ag-detail .ag-modal-empty{font:12px/1.7 'Programme Everett',Arial,sans-serif;color:#717b64;overflow-wrap:anywhere;margin:0}
+#agenda .ag-detail .ag-modal-empty{padding:24px 0}
+#agenda .ag-detail .ag-modal-vote-group{margin-top:18px}
+#agenda .ag-detail .ag-modal-vote-title{font:400 12px/1.6 'Programme Everett',Arial,sans-serif;margin:0 0 10px;color:#515e45;overflow-wrap:anywhere}
+#agenda .ag-detail .ag-modal-people{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px 22px;list-style:none;margin:0;padding:0}
+#agenda .ag-detail .ag-modal-person{display:flex;align-items:center;gap:10px;min-width:0;font:12px/1.5 'Programme Everett',Arial,sans-serif}
+#agenda .ag-detail .ag-modal-person-name{min-width:0;overflow-wrap:anywhere}
+#agenda .ag-detail .battle-person{width:32px;height:36px;min-width:32px;max-width:32px;min-height:36px;max-height:36px;flex:0 0 32px;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible}
+#agenda .ag-detail .battle-person img{width:32px;height:36px;max-width:32px;max-height:36px;object-fit:contain;background:transparent;border-radius:0}
+#agenda .ag-detail .battle-name{display:none!important}
+#agenda .ag-detail .ag-person-initial{width:30px;height:30px;margin-top:3px;border-radius:50%;background:#eff2e9;color:#647057;font-size:12px}
+#agenda .ag-detail .ag-modal-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px;padding:20px 28px;background:#fafbf7;border-top:1px solid #e3e7da}
+#agenda .ag-detail .ag-modal-vote-action{display:inline-flex;align-items:center;min-height:44px;padding:11px 17px;background:#34472a;color:white;text-decoration:none;font-size:12px;line-height:1.5;border-radius:2px}
+#agenda .ag-detail .ag-own-toggle{margin:0;min-height:44px;padding:11px 16px;border:1px solid #aebba2;border-radius:2px;font:12px/1.5 'Programme Everett',Arial,sans-serif;background:transparent;color:#35462b}
+#agenda .ag-detail .ag-own-toggle[aria-pressed=true]{background:#e2ead8}
+#agenda .ag-detail .ag-own-toggle:disabled{opacity:.6}
+#agenda .ag-detail .ag-modal-text-action{display:inline-flex;align-items:center;min-height:44px;font-size:12px;padding:8px 0;color:#5d6c50;text-decoration:underline;text-underline-offset:4px}
+#agenda .ag-detail .ag-own-note{flex-basis:100%;font:11px/1.6 'Programme Everett',Arial,sans-serif;color:#79826f;margin:0}
+#agenda .ag-detail :focus-visible{outline:2px solid #526e43;outline-offset:3px}
+@media(max-width:650px){#agenda .ag-detail{width:calc(100% - 20px);max-height:calc(100dvh - 20px);scrollbar-gutter:auto}#agenda .ag-detail .ag-modal-bar{padding:8px 18px}#agenda .ag-detail .ag-detail-body{padding:22px 20px}#agenda .ag-detail .ag-detail-title{font-size:27px}#agenda .ag-detail .ag-modal-films{grid-template-columns:1fr;gap:24px;margin-top:22px}#agenda .ag-detail .ag-modal-art{height:155px}#agenda .ag-detail .ag-modal-film-title{font-size:20px}#agenda .ag-detail .ag-modal-people{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}#agenda .ag-detail .ag-modal-person{gap:8px;font-size:11px}#agenda .ag-detail .ag-modal-actions{padding:18px 20px;gap:10px 16px}}
+
+#agenda .ag-detail .ag-modal-art-fallback[hidden]{display:none}
