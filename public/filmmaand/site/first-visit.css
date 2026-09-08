@@ -26,3 +26,7 @@ body.has-first-visit:not(.tour-paused) .first-visit.tour-intro{display:block;wid
 @keyframes tour-hand-drag{0%,18%,92%,100%{transform:none;opacity:0}30%{transform:translateY(-5px);opacity:1}60%,76%{transform:translate(-52px,-5px);opacity:1}82%{transform:translateX(-52px);opacity:0}}
 @media(prefers-reduced-motion:reduce){.tour-target .tour-action,.tour-demo-card,.tour-demo-hand{animation:none!important}.tour-demo-hand{opacity:1}}
 @media(max-width:700px){.tour-cue{padding:12px;gap:12px}.tour-cue strong{font-size:12px}.tour-heart-goal{font-size:26px}}
+
+/* Quiet demonstration: animation is the instruction. */
+.tour-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+.tour-cue,.tour-cue.is-complete{background:none;padding:0;min-height:80px;height:80px;margin:8px 0 0;justify-content:center;flex-shrink:0}.tour-check{width:32px;height:32px}.tour-heart-goal{font-size:34px;gap:15px}.tour-cue .tour-drag-demo{height:72px}.tour-intro .tour-copy{margin-bottom:26px}.first-visit.tour-intro h2{max-width:none}
