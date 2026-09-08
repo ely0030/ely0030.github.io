@@ -144,3 +144,13 @@
 #films #home-picker .fr-item.is-watched .fr-position{display:none!important}
 #films #home-picker .fr-watched{position:absolute;top:calc(100% - 22px);left:0;font:10px/22px Arial;color:#929a8a}
 #films #home-picker .fr-item.is-watched{padding-bottom:28px}
+/* Match the approved contribution hierarchy, without inherited sticker boxes. */
+.site-films #films #home-picker .fr-position{justify-content:center!important}
+.site-films #films #home-picker .fr-contribution{justify-content:center;width:100%;font-weight:400}
+.site-films #films #home-picker .fr-contribution b{font:400 24px/1.1 Arial;letter-spacing:-.5px}
+.site-films #films #home-picker .fr-contribution small{font:400 10px Arial;color:#8a967e}
+.site-films #films #home-picker .fr-score-number{font:400 29px/1 Arial;letter-spacing:-.5px}
+.site-films #films #home-picker .fr-score>small{font:400 10px Arial;margin-left:4px}
+.site-films #films #home-picker .fr-supporter{flex:0 0 var(--friend-point-size,18px);width:var(--friend-point-size,18px);height:var(--friend-point-size,18px);background:transparent;border:0;box-shadow:none}
+.site-films #films #home-picker .fr-supporter img{background:transparent;object-fit:contain}
+.site-films #films #home-picker .fr-supporters{align-items:flex-end}

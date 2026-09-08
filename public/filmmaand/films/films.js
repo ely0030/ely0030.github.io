@@ -345,11 +345,12 @@ window.pickerCustomScores ||= {};
     const surface=el('section','films-night');surface.setAttribute('aria-label','Kalender en beschikbaarheid');
     surface.append(el('span','eyebrow','Samen naar de film'),el('h2','films-night-heading','Wanneer kunnen we?'));
     const calendar=el('div','hp-calendar films-calendar');surface.append(calendar);
-    const markerStyles=el('style');const markedDays=new Set();markerStyles.textContent=calendarNights.map(n=>{const date=n.date;if(markedDays.has(date))return '';markedDays.add(date);const marker=window.filmmaandEventScribble(date+'|'+n.id);return '#films .films-calendar [data-day="'+date+'"]{--event-scribble:'+marker.image+';--event-scribble-angle:'+marker.rotation+'}';}).join('\n');surface.append(markerStyles);
+
     const save=el('div','films-calendar-save');surface.append(save);
     const panel=el('section','films-night-panel');panel.setAttribute('aria-label','Jouw filmavond');surface.append(panel);
     column.prepend(surface);
     ctx.mountCalendar(calendar,{events,dayContent:d=>{const n=effectiveCount(d),tag=el('span','films-day-count');tag.dataset.level=String(n?Math.max(1,Math.ceil(n/maxAvailability*4)):0);tag.setAttribute('aria-hidden','true');const people=peopleForDate(d);tag.append(avatarRow(people,people.length,'films-calendar-faces'));return tag;},dayLabel:d=>{const people=peopleForDate(d);return ' · '+effectiveCount(d)+' beschikbaar'+(people.length?' · '+people.map(p=>p.name).join(', '):'');}});
+    if(calendarNights.length){const nights=el('div','films-scheduled-cards');for(const night of calendarNights){const actual=programme.find(n=>n.id===night.id),film=actual?.choices?.length===1?ctx.plan.options.find(o=>o.id===actual.choices[0]):null;const entry=film?action('','films-scheduled-card',()=>openOption(film),'scheduled-'+night.id):el('a','films-scheduled-card');if(!film)entry.href='/filmmaand/program/';entry.setAttribute('aria-label',dateLabel(night.date)+' · '+night.title);const stamp=el('span','films-scheduled-date');stamp.append(el('b','',String(Number(night.date.slice(8)))),el('small','',new Date(night.date+'T12:00:00Z').toLocaleDateString('nl-NL',{month:'short'})));entry.append(stamp,el('span','films-scheduled-title',film?film.title:night.title));nights.append(entry);}surface.append(nights);}
     const legend=el('p','films-calendar-legend','Groen: jij kunt · avatars: wie er kan');calendar.querySelector('.ac-grid').after(legend);
     function paintPanel(){
       panel.replaceChildren();const own=ctx.proposal.view?.own,ownOption=ctx.plan.options.find(o=>o.id===own?.optionId),same=own?.optionId===option.id&&own?.date===activeDate;
