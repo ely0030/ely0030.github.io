@@ -523,8 +523,18 @@ body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu,body.site-stemme
 .st-cinema-pane.has-seam{mask-image:linear-gradient(to right,transparent,#000 6%);-webkit-mask-image:linear-gradient(to right,transparent,#000 6%)}
 
 /* One stable, server-aligned clock; the DVD arena is never rebuilt for a tick. */
-#stemmen .st-countdown{display:block;margin:14px 0 0;font:12px/1.5 Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.03em;color:#666}
-#stemmen .st-countdown[hidden]{display:none}
-.st-cinema-result #stemmen .st-countdown{color:#eee}
+/* Deadline is a paired date and clock, not secondary caption text. */
+#stemmen .st-deadline{display:flex;justify-content:space-between;align-items:center;gap:32px;text-align:left;max-width:680px;margin:32px auto 0;padding:20px 0;border-top:1px solid #d8dbd5;border-bottom:1px solid #d8dbd5;color:#283d32}
+#stemmen .st-deadline[hidden],#stemmen .st-countdown[hidden]{display:none}
+#stemmen .st-deadline-label{display:block;font:600 10px/1.3 Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;margin-bottom:9px;color:#647568}
+#stemmen .st-deadline-date{display:block;font:400 23px/1.2 'Canela Trial',Georgia,serif;max-width:340px}
+#stemmen .st-deadline-zone{display:block;font:11px/1.4 Arial,sans-serif;color:#768176;margin-top:6px}
+#stemmen .st-deadline-remaining{text-align:right;flex-shrink:0}
+#stemmen .st-countdown{display:block;margin:0;font:400 38px/1.1 Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.045em;white-space:nowrap}
+#stemmen .is-closed .st-countdown{font-size:20px;letter-spacing:-.02em;white-space:normal;max-width:210px}
+.st-cinema-result #stemmen .st-deadline{color:white;border-color:#ffffff40}
+.st-cinema-result #stemmen .st-deadline-label,.st-cinema-result #stemmen .st-deadline-zone{color:#ffffffb8}
+@media(max-width:600px){#stemmen .st-deadline{margin-top:25px;padding:16px 0;gap:14px}#stemmen .st-deadline-date{font-size:19px}#stemmen .st-countdown{font-size:28px}#stemmen .st-deadline-label{font-size:9px;letter-spacing:.08em}#stemmen .is-closed .st-countdown{font-size:17px;max-width:140px}}
+
 /* Bedankt's optional edit button is unavailable after authoritative closure; programme link remains. */
 body.st-round-closed #stemmen .st-confirm-actions>button{display:none}

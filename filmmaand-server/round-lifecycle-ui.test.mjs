@@ -4,7 +4,7 @@ test('countdown uses server + monotonic clock; zero checks the server rather tha
  let monotonic=100,refreshes=0;const node={hidden:true,textContent:''},button={dataset:{state:'lock'},disabled:false};const classes=new Set(['can-vote']);
  const ctx={Date,performance:{now:()=>monotonic},setInterval:()=>1,document:{hidden:false,body:{classList:{remove:n=>classes.delete(n)}}},vote:{round:{id:'r',status:'open',closesAt:'2026-09-08T12:00:02Z'}},arena:{section:{querySelector:()=>node},bar:{querySelector:()=>button}},busy:false,authLock:null,refresh:()=>{refreshes++;return Promise.resolve()}};
  vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('// The countdown follows'),source.indexOf('const accountState=')),ctx);
- ctx.alignRoundClock('2026-09-08T12:00:00Z');ctx.updateCountdown();assert.equal(node.textContent,'Nog 00:00:02');assert.equal(ctx.roundRemaining(),2000);
+ ctx.alignRoundClock('2026-09-08T12:00:00Z');ctx.updateCountdown();assert.equal(node.textContent,'00:00:02');assert.equal(ctx.roundRemaining(),2000);
  monotonic=2100;ctx.updateCountdown();assert.equal(ctx.roundRemaining(),0);assert.equal(ctx.roundClosed(),false);assert.equal(ctx.roundBlocked(),true);assert.equal(node.textContent,'Sluiting controleren…');assert.equal(button.disabled,true);assert.equal(refreshes,1);
  ctx.vote.round.status='closed';ctx.updateCountdown();assert.equal(node.textContent,'Stemming gesloten');assert.equal(refreshes,1);
 });
