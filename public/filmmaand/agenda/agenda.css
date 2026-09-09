@@ -142,7 +142,7 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 /* Consistent weekday/month stack; keep the separating dot. */
 #agenda .ag-date-weekday,#agenda .ag-date-month{display:block}
 
-/* Three short first-visit cues at most, never continuous animation. */
+/* Mostly tiny hints, occasional medium, one strong hint at the budget end. */
 #agenda .ag-attendance-button.ag-attendance-cue{animation:ag-attendance-hint 600ms ease-in-out 2}
 @keyframes ag-attendance-hint{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-4px) rotate(-1.5deg)}55%{transform:translateX(4px) rotate(1.5deg)}80%{transform:translateX(-2px) rotate(0)}}
 @media(prefers-reduced-motion:reduce){#agenda .ag-attendance-button.ag-attendance-cue{animation:none}}
@@ -151,7 +151,16 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 #agenda .ag-meta-unknown>span{flex-basis:100%}
 /* Pure visual demonstration; never a pointer target or a synthetic click. */
 #agenda .ag-attendance-button{position:relative}
-#agenda .ag-cue-cursor{position:absolute;right:16px;top:45%;width:23px;height:27px;z-index:5;pointer-events:none;animation:ag-cursor-example 1200ms ease-in-out 1;filter:drop-shadow(0 2px 2px #0002)}
+#agenda .ag-cue-cursor{position:absolute;right:16px;top:45%;width:23px;height:27px;z-index:5;pointer-events:none;opacity:0;animation:ag-cursor-example 1800ms cubic-bezier(.25,.1,.25,1) 1 both;filter:drop-shadow(0 2px 2px #0002)}
 #agenda .ag-cue-cursor svg{display:block;width:100%;height:100%}
-@keyframes ag-cursor-example{0%{opacity:0;transform:translate(23px,19px)}20%{opacity:1}50%{transform:translate(0,0) scale(1)}65%{transform:translate(0,1px) scale(.85)}80%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(7px,5px)}}
+@keyframes ag-cursor-example{0%{opacity:0;transform:translate(23px,19px)}18%{opacity:1}42%{transform:translate(0,0) scale(1)}53%{transform:translate(0,1px) scale(.87)}64%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(0,0) scale(1)}}
 @media(prefers-reduced-motion:reduce){#agenda .ag-cue-cursor{display:none;animation:none}}
+
+#agenda .ag-attendance-cue.ag-cue-tiny{animation:ag-attendance-tiny 650ms ease-in-out 1 both}
+#agenda .ag-attendance-cue.ag-cue-medium{animation:ag-attendance-medium 800ms ease-in-out 1 both}
+#agenda .ag-attendance-cue.ag-cue-strong{animation:ag-attendance-hint 600ms ease-in-out 2 both}
+@keyframes ag-attendance-tiny{0%,100%{transform:translateY(0)}40%{transform:translateY(-1px)}70%{transform:translateY(.4px)}}
+@keyframes ag-attendance-medium{0%,100%{transform:rotate(0)}25%{transform:rotate(-.6deg)}60%{transform:rotate(.6deg)}}
+@media(prefers-reduced-motion:reduce){#agenda .ag-attendance-button.ag-attendance-cue{animation:none}}
+
+@media(max-width:800px){#agenda .ag-programme-description.ag-mystery-description{display:block;font-size:11px;line-height:1.5}}
