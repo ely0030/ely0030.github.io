@@ -56,6 +56,13 @@ postsByCategory['downloads'].push({
 //   isArchived: false
 // });
 
+// Direct link to the current Filmmaand programme.
+postsByCategory['projects'] = [...(postsByCategory['projects'] || []), {
+  id: 'filmmaand/programma',
+  data: { title: 'Filmmaand', pubDate: new Date('2026-09-09'), category: 'projects' },
+  isArchived: false
+}];
+
 // Sort categories alphabetically
 const sortedCategories = Object.keys(postsByCategory).sort();
 
