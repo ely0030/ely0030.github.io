@@ -72,7 +72,7 @@ function positionCountdown(node){
  box.classList.toggle('is-clock-counting',!!busy||!!flying);
  box.classList.toggle('is-result-clock',result);
  // Keep the fixed clock outside the animated section; backdrop fades never change its parent or phase.
- if(result){if(box.parentElement!==main)main.append(box);}else if(origin&&box.parentElement!==origin)origin.append(box);
+ if(result){box.hidden=true;}else if(origin&&box.parentElement!==origin)origin.append(box);
 }
 const countdownTimer=setInterval(()=>{if(!document.hidden)updateCountdown()},1000);
 
