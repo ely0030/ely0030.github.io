@@ -36,12 +36,12 @@
   {
     "id": "dress",
     "title": "Dress to Impress",
-    "meta": "Roblox"
+    "meta": "Roblox · 2023"
   },
   {
     "id": "redball",
     "title": "Redball 5",
-    "meta": "Nintendo"
+    "meta": "Nintendo · 2015"
   },
   {
     "id": "cronenberg",
