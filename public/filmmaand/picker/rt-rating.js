@@ -1,9 +1,18 @@
 // Dated fallback while automatic IMDb-matched ratings load or the provider is unavailable.
-// Exact IMDb identities; RT media-scorecard-json audienceScore.scoreType=ALL for all three.
+// Exact IMDb identities; RT media-scorecard-json audienceScore.scoreType=ALL.
+// Includes the verified 2026-09-09 programme gaps in MDBList (see owner handoff).
 const scores = {
   tt0074486: {title:'Eraserhead',year:1977,percent:87,audience:82,path:'eraserhead'},
   tt0082971: {title:'Raiders of the Lost Ark',year:1981,percent:94,audience:96,path:'raiders_of_the_lost_ark'},
-  tt0083658: {title:'Blade Runner',year:1982,percent:89,audience:91,path:'blade_runner'}
+  tt0083658: {title:'Blade Runner',year:1982,percent:89,audience:91,path:'blade_runner'},
+  tt0087469: {title:'Indiana Jones and the Temple of Doom',year:1984,percent:77,audience:82,path:'indiana_jones_and_the_temple_of_doom'},
+  tt0120737: {title:'The Lord of the Rings: The Fellowship of the Ring',year:2001,percent:91,audience:95,path:'the_lord_of_the_rings_the_fellowship_of_the_ring'},
+  tt0120669: {title:'Fear and Loathing in Las Vegas',year:1998,percent:50,audience:89,path:'fear_and_loathing_in_las_vegas'},
+  tt0242653: {title:'The Matrix Revolutions',year:2003,percent:33,audience:60,path:'matrix_revolutions'},
+  tt0372784: {title:'Batman Begins',year:2005,percent:85,audience:94,path:'batman_begins'},
+  tt0079944: {title:'Stalker',year:1979,percent:100,audience:92,path:'1043378-stalker'},
+  tt2631186: {title:'Baahubali: The Beginning',year:2015,percent:93,audience:85,path:'baahubali_the_beginning'},
+  tt4849438: {title:'Baahubali 2: The Conclusion',year:2017,percent:90,audience:86,path:'baahubali_2_the_conclusion'}
 };
 const valid=p=>Number.isInteger(p)&&p>=0&&p<=100;
 const requests=new Map();
@@ -34,7 +43,9 @@ export async function mountRating(imdb,id){
  alignWithTitle(imdb);
  const fallback=Object.hasOwn(scores,id)?{...scores[id],audienceKind:'all',checkedAt:'2026-09-09T00:00:00Z'}:null;
  if(fallback)render(imdb,fallback);
- const score=await lookup(id);if(score&&imdb.isConnected)render(imdb,score);
+ const score=await lookup(id);
+ // A checked RT identity wins over a provider mapping to a different entry/version.
+ if(score&&imdb.isConnected&&(!fallback||!score.path||score.path===fallback.path))render(imdb,score);
 }
 function render(imdb,score){
  if(!valid(score.percent)&&!valid(score.audience))return;
