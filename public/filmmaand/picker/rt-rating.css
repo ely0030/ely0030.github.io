@@ -9,3 +9,9 @@
 #home-picker .hp-rt-number{font-family:"Franklin Gothic","Franklin Gothic Book","Franklin Gothic Medium",-apple-system,BlinkMacSystemFont,"PT Sans",Arial,sans-serif;font-weight:400;font-size:14px;line-height:18px;font-variant-numeric:tabular-nums;letter-spacing:normal}
 #home-picker .hp-imdb-star{color:#f5c518}
 #home-picker .hp-film-ratings{flex-shrink:1;max-width:100%}
+
+/* Keep the score row beside the individual film title; wrap rather than squeeze on mobile. */
+#home-picker .hp-rating-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 18px;margin-bottom:13px}
+#home-picker .hp-rating-heading>h2,#home-picker .hp-rating-heading>h3{flex:1 1 180px;min-width:0;margin:0}
+#home-picker .hp-rating-heading>.hp-film-ratings{flex:0 1 auto;align-items:baseline}
+#home-picker .hp-rating-heading>.ci-link,#home-picker .hp-rating-heading .hp-film-ratings>.ci-link{margin:0;padding:0}

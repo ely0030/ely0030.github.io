@@ -6,9 +6,19 @@ const scores = {
   tt0083658: {title:'Blade Runner',year:1982,percent:89,audience:91,path:'blade_runner'}
 };
 const valid=p=>Number.isInteger(p)&&p>=0&&p<=100;
+function alignWithTitle(imdb){
+ const record=imdb.closest('.hp-film-record'),chosen=imdb.closest('.hp-chosen-movie');
+ const heading=record?.querySelector('.hp-record-title')||chosen?.querySelector('h3')||imdb.closest('.hp-layout')?.querySelector('.hp-caption h2');
+ if(!heading)return;
+ let row=heading.parentElement;
+ if(!row.classList.contains('hp-rating-heading')){row=document.createElement('div');row.className='hp-rating-heading';heading.replaceWith(row);row.append(heading);}
+ const group=imdb.parentElement?.classList.contains('hp-film-ratings')?imdb.parentElement:imdb;
+ if(group.parentElement!==row)row.append(group);
+}
 export function mountRating(imdb,id){
   if(!imdb?.isConnected)return;
   if(!document.getElementById('filmmaand-rt-style')){const css=document.createElement('link');css.id='filmmaand-rt-style';css.rel='stylesheet';css.href='/filmmaand/picker/rt-rating.css';document.head.append(css)}
+  alignWithTitle(imdb);
   const score=Object.hasOwn(scores,id)?scores[id]:null;
   if(!score||!valid(score.percent)||imdb.parentElement?.classList.contains('hp-film-ratings'))return;
   const ratings=document.createElement('span');ratings.className='hp-film-ratings';imdb.replaceWith(ratings);
