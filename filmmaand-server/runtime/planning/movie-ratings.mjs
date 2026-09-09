@@ -34,7 +34,7 @@ export function createMovieRatings({apiKey='',fetcher=fetch,now=Date.now,timeout
  async function busyResult(id,entry){
   if(visible(entry)){remember(id,entry);return visible(entry);}
   // A concurrent cold reader may already be about to commit. Join briefly, never resend.
-  for(let n=0;n<3;n++){await pause(200);const next=await shared(id);if(next.entry?.expires>now()){remember(id,next.entry);return visible(next.entry);}}
+  for(let n=0;n<3;n++){await pause(1000);const next=await shared(id);if(next.entry?.expires>now()){remember(id,next.entry);return visible(next.entry);}}
   remember(id,{version:2,data:null,status:'error',expires:now()+15000});return null;
  }
  async function refresh(id,old,onStale){
