@@ -143,6 +143,6 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 #agenda .ag-date-weekday,#agenda .ag-date-month{display:block}
 
 /* Three short first-visit cues at most, never continuous animation. */
-#agenda .ag-attendance-button.ag-attendance-cue{animation:ag-attendance-hint 620ms ease-in-out 1}
-@keyframes ag-attendance-hint{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-2px) rotate(-1deg)}55%{transform:translateX(2px) rotate(1deg)}80%{transform:translateX(-1px) rotate(0)}}
+#agenda .ag-attendance-button.ag-attendance-cue{animation:ag-attendance-hint 600ms ease-in-out 2}
+@keyframes ag-attendance-hint{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-4px) rotate(-1.5deg)}55%{transform:translateX(4px) rotate(1.5deg)}80%{transform:translateX(-2px) rotate(0)}}
 @media(prefers-reduced-motion:reduce){#agenda .ag-attendance-button.ag-attendance-cue{animation:none}}
