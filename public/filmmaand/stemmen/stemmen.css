@@ -527,10 +527,10 @@ body.site-stemmen:has(#stemmen .st-result-landed) .profile-menu,body.site-stemme
 #stemmen .st-clock-origin:has(.st-deadline[hidden]){display:none}
 #stemmen .st-deadline{text-align:center;color:#171c19;transition:opacity .35s ease,color .5s ease}
 #stemmen .st-deadline[hidden],#stemmen .st-countdown[hidden]{display:none}
-#stemmen .st-countdown{display:block;margin:0;font:400 38px/1 monospace;letter-spacing:-.05em;font-variant-numeric:tabular-nums;white-space:nowrap}
+#stemmen .st-countdown{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:0;font:400 38px/1 monospace;letter-spacing:-.05em;font-variant-numeric:tabular-nums;white-space:nowrap}
 #stemmen .st-deadline-date{display:block;margin-top:10px;font:10px/1.5 Arial,sans-serif;color:inherit}
 #stemmen.is-committing .st-deadline,#stemmen .st-reveal-sequence .st-deadline{opacity:0!important;pointer-events:none}
-#stemmen .st-deadline.is-result-clock{position:fixed;right:30px;bottom:24px;z-index:30;color:#f3f3e9;text-align:right;animation:st-clock-return .65s .3s both}
+#stemmen .st-deadline.is-result-clock{position:fixed;right:30px;bottom:24px;z-index:30;color:#171c19;text-align:right}
 #stemmen .is-result-clock .st-countdown{font-size:30px}
 #stemmen .is-closed .st-countdown{font:400 18px/1.3 Arial,sans-serif;letter-spacing:0;white-space:normal}
 @keyframes st-clock-return{from{opacity:0}to{opacity:1}}
@@ -597,3 +597,14 @@ body.st-cinema-result #stemmen .st-closed{color:#fff}
 #stemmen .st-summary-people img{width:28px;height:28px;object-fit:cover;border-radius:4px;background:#f2f3ef}
 #stemmen .st-summary-anonymous{color:#7c8278}
 @media(max-width:650px){#stemmen .st-vote-summary{grid-template-columns:1fr;gap:28px;padding:30px 12px 48px}#stemmen .st-vote-summary .st-closed-art{max-width:150px}#stemmen .st-vote-summary .st-closed-title{font-size:38px;margin-bottom:16px}#stemmen .st-vote-summary .st-closed-date{font-size:23px}#stemmen .st-summary-votes{text-align:left;margin-top:4px;padding-top:22px}#stemmen .st-summary-heading{margin-bottom:22px}#stemmen .st-summary-heading h2{font-size:29px}#stemmen .st-summary-heading>span{font-size:11px}#stemmen .st-summary-film{font-size:13px}#stemmen .st-summary-people{gap:8px 14px}#stemmen .st-summary-people li{font-size:11px}}
+
+/* One server clock across selection, reveal and the existing returning-voter receipt. */
+#stemmen .st-clock-unit{display:inline-flex;align-items:baseline;gap:4px}
+#stemmen .st-clock-label{font:400 11px/1 Arial,sans-serif;letter-spacing:0;opacity:.65}
+#stemmen .is-result-clock .st-countdown{justify-content:flex-end}
+#stemmen .st-deadline.is-clock-counting{opacity:0!important;pointer-events:none}
+body.st-cinema-result #stemmen .is-result-clock{color:#f3f3e9}
+#stemmen .st-thanks-clock{margin:24px 0;text-align:left}
+#stemmen .st-thanks-clock .st-countdown{justify-content:flex-start;font-size:32px}
+#stemmen.st-pudding-waits .st-thanks-clock{visibility:hidden}
+@media(max-width:700px){#stemmen .is-result-clock .st-countdown{justify-content:center}#stemmen .st-thanks-clock .st-countdown{font-size:30px}}
