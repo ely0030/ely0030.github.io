@@ -164,3 +164,8 @@ html:has(#agenda .ag-detail[open]){overflow:hidden}
 @media(prefers-reduced-motion:reduce){#agenda .ag-attendance-button.ag-attendance-cue{animation:none}}
 
 @media(max-width:800px){#agenda .ag-programme-description.ag-mystery-description{display:block;font-size:11px;line-height:1.5}}
+
+/* Approved P01: time only, beside the current scheduled round's status. */
+#agenda .ag-evening-state:has(.ag-vote-countdown){flex-wrap:wrap}
+#agenda .ag-vote-countdown{margin-left:17px;color:#171914;font:400 13px/1.5 Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.015em;white-space:nowrap}
+@media(max-width:800px){#agenda .ag-vote-countdown{margin-left:9px}}
