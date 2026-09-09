@@ -30,31 +30,32 @@ let calendarLoading,refreshInFlight=null,refreshAgain=false,profileRead=0,person
 let main,next,host,detail,overviewAside,availabilityDialog,sidebarHome,availabilityOpener,filterTools,programmeCount,periodLabel,calendarTitle,launch,plan=null,profile=null,personal=null,lastKey='',open=null,today='';
 let nightsByDay=new Map(),friendsByDay=new Map(),nextNight=null;const cache=new Map();
 
-/* Bounded independent motion and example-cursor schedules; no synthetic input. */
+/* Guest-only recurring hints stop on login; each animation remains finite. */
 const attendanceCuePrefix='filmmaand:programme-attendance-cue:v2:',cueMotion=matchMedia('(prefers-reduced-motion: reduce)');
 let attendanceCueKey='',cueAllowed=true,cueButton=null,cueTimer=null,cueObserver=null,cueCount=0,cueVisible=false,cueStopped=false,cursorTimer=null,cursorCleanup=null,cursorCount=0;
-function readCueVisit(n){const key=attendanceCuePrefix+n.id;if(key===attendanceCueKey)return;attendanceCueKey=key;try{const value=JSON.parse(localStorage.getItem(key)||'{}');cueCount=Number(value.count)||0;cueStopped=!!value.dismissed;cueAllowed=cueCount<12&&!cueStopped}catch{cueAllowed=false}}
-const cueEligible=()=>!cueStopped&&cueAllowed&&!cueMotion.matches&&!document.hidden&&cueVisible&&cueButton?.isConnected&&!cueButton.disabled&&cueButton.getAttribute('aria-pressed')!=='true'&&cueCount<12;
+function readCueVisit(n){const key=attendanceCuePrefix+n.id;if(key===attendanceCueKey)return;attendanceCueKey=key;cueCount=0;cueStopped=!guest();cueAllowed=guest();}
+const cueEligible=()=>guest()&&!document.querySelector('dialog[open]')&&!cueStopped&&cueAllowed&&!cueMotion.matches&&!document.hidden&&cueVisible&&cueButton?.isConnected&&!cueButton.disabled&&cueButton.getAttribute('aria-pressed')!=='true';
 function removeCueCursor(){clearTimeout(cursorCleanup);cueButton?.querySelector('.ag-cue-cursor')?.remove();}
 function clearButtonMotion(){cueButton?.classList.remove('ag-attendance-cue','ag-cue-tiny','ag-cue-medium','ag-cue-strong');}
 function pauseAttendanceCue(){clearTimeout(cueTimer);cueTimer=null;clearTimeout(cursorTimer);cursorTimer=null;clearButtonMotion();removeCueCursor();}
-function scheduleCursor(delay=3000){if(cursorTimer||!guest()||cursorCount>=3||!cueEligible())return;cursorTimer=setTimeout(showCueCursor,delay);}
-function showCueCursor(){cursorTimer=null;if(!guest()||cursorCount>=3||!cueEligible())return;if(cueButton.classList.contains('ag-attendance-cue')){scheduleCursor(1600);return;}removeCueCursor();cursorCount++;const cursor=el('span','ag-cue-cursor');cursor.setAttribute('aria-hidden','true');cursor.innerHTML='<svg viewBox="0 0 24 28" fill="none"><path d="M4 2v20l5-5 4 9 4-2-4-8h8L4 2Z" fill="#fff" stroke="#34482b" stroke-width="1.5" stroke-linejoin="round"/></svg>';cueButton.append(cursor);
+function scheduleCursor(delay=3000){if(cursorTimer||!guest()||!cueEligible())return;cursorTimer=setTimeout(showCueCursor,delay);}
+function showCueCursor(){cursorTimer=null;if(!guest()||!cueEligible())return;if(cueButton.classList.contains('ag-attendance-cue')){scheduleCursor(1600);return;}removeCueCursor();cursorCount++;const cursor=el('span','ag-cue-cursor');cursor.setAttribute('aria-hidden','true');cursor.innerHTML='<svg viewBox="0 0 24 28" fill="none"><path d="M4 2v20l5-5 4 9 4-2-4-8h8L4 2Z" fill="#fff" stroke="#34482b" stroke-width="1.5" stroke-linejoin="round"/></svg>';cueButton.append(cursor);
  const finish=()=>{cursor.remove();clearTimeout(cursorCleanup);scheduleCursor(23000);};cursor.addEventListener('animationend',finish,{once:true});cursorCleanup=setTimeout(finish,2200);
 }
-window.addEventListener('filmmaand-session',()=>{clearTimeout(cursorTimer);cursorTimer=null;removeCueCursor();});
+window.addEventListener('filmmaand-session',()=>{pauseAttendanceCue();cueStopped=!guest();cueAllowed=guest();if(!cueStopped)resumeAttendanceCue();});
 function stopAttendanceCue(){cueStopped=true;pauseAttendanceCue();cueObserver?.disconnect();try{localStorage.setItem(attendanceCueKey,JSON.stringify({count:cueCount,dismissed:true}))}catch{}}
 function pulseAttendanceCue(){cueTimer=null;if(!cueEligible())return;if(cueButton.querySelector('.ag-cue-cursor')){cueTimer=setTimeout(pulseAttendanceCue,2300);return;}
- cueCount++;try{localStorage.setItem(attendanceCueKey,JSON.stringify({count:cueCount,dismissed:false}))}catch{}clearButtonMotion();void cueButton.offsetWidth;const strength=cueCount===12?'strong':cueCount%4===0?'medium':'tiny';cueButton.classList.add('ag-attendance-cue','ag-cue-'+strength);cueTimer=setTimeout(()=>{clearButtonMotion();if(cueCount<12)cueTimer=setTimeout(pulseAttendanceCue,6000);},1250);
+ cueCount++;try{localStorage.setItem(attendanceCueKey,JSON.stringify({count:cueCount,dismissed:false}))}catch{}clearButtonMotion();void cueButton.offsetWidth;const strength=cueCount%12===0?'strong':cueCount%4===0?'medium':'tiny';cueButton.classList.add('ag-attendance-cue','ag-cue-'+strength);cueTimer=setTimeout(()=>{clearButtonMotion();if(!cueStopped)cueTimer=setTimeout(pulseAttendanceCue,6000);},1250);
 }
 function resumeAttendanceCue(){if(!cueEligible())return;if(!cueTimer)cueTimer=setTimeout(pulseAttendanceCue,900);scheduleCursor();}
-function syncAttendanceCue(){const n=nextNight;if(!n||nightPast(n)||dateOf(n)<=today)return;readCueVisit(n);if(cueStopped||!cueAllowed)return;const row=[...next.querySelectorAll('.ag-programme-event')].find(r=>r.dataset.event===n.id),button=row?.querySelector('.ag-attendance-button');if(button?.getAttribute('aria-pressed')==='true'){stopAttendanceCue();return;}if(!button||button.disabled)return;if(cueButton===button)return;pauseAttendanceCue();cueObserver?.disconnect();cueButton=button;cueVisible=false;cueObserver=new IntersectionObserver(entries=>{cueVisible=!!entries[0]?.isIntersecting;if(cueVisible)resumeAttendanceCue();else pauseAttendanceCue();},{threshold:.6});cueObserver.observe(button);}
-document.addEventListener('click',e=>{if(main?.contains(e.target)&&e.target.closest('.ag-attendance-button,.ag-own-toggle,.ag-host,.ag-availability-launch'))stopAttendanceCue();},{capture:true});
-document.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)&&main?.contains(e.target)&&e.target.closest('.ag-attendance-button,.ag-own-toggle,.ag-host,.ag-availability-launch'))stopAttendanceCue();},{capture:true});
+function syncAttendanceCue(){const n=nextNight;if(!n||nightPast(n)||dateOf(n)<=today)return;readCueVisit(n);if(cueStopped||!cueAllowed)return;const row=[...next.querySelectorAll('.ag-programme-event')].find(r=>r.dataset.event===n.id),button=row?.querySelector('.ag-attendance-button');if(button?.getAttribute('aria-pressed')==='true'){stopAttendanceCue();return;}if(!button||button.disabled)return;if(cueButton===button){resumeAttendanceCue();return;}pauseAttendanceCue();cueObserver?.disconnect();cueButton=button;cueVisible=false;cueObserver=new IntersectionObserver(entries=>{cueVisible=!!entries[0]?.isIntersecting;if(cueVisible)resumeAttendanceCue();else pauseAttendanceCue();},{threshold:.6});cueObserver.observe(button);}
+document.addEventListener('click',e=>{if(main?.contains(e.target)&&e.target.closest('.ag-attendance-button,.ag-own-toggle,.ag-host,.ag-availability-launch')){if(guest()){pauseAttendanceCue();cueTimer=setTimeout(()=>{cueTimer=null;resumeAttendanceCue();},3000);}else stopAttendanceCue();}},{capture:true});
+document.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)&&main?.contains(e.target)&&e.target.closest('.ag-attendance-button,.ag-own-toggle,.ag-host,.ag-availability-launch')){if(guest()){pauseAttendanceCue();cueTimer=setTimeout(()=>{cueTimer=null;resumeAttendanceCue();},3000);}else stopAttendanceCue();}},{capture:true});
 document.addEventListener('visibilitychange',()=>{pauseAttendanceCue();if(!document.hidden)resumeAttendanceCue();});
 cueMotion.addEventListener('change',()=>{pauseAttendanceCue();if(!cueMotion.matches)resumeAttendanceCue();});
 window.addEventListener('pagehide',()=>{pauseAttendanceCue();cueObserver?.disconnect();});
 
+document.addEventListener('close',()=>setTimeout(resumeAttendanceCue,100),true);
 /* ---------- data helpers ---------- */
 const avatarOf=id=>(window.filmmaandAvatarOptions||[]).find(a=>a.id===id);
 const optionOf=id=>plan?.options.find(o=>o.id===id);
