@@ -28,7 +28,7 @@ function makeDeadline(){const box=el('div','st-deadline'),remaining=el('div','st
 function countdownText(ms){const seconds=Math.max(0,Math.ceil(ms/1000));return [Math.floor(seconds/3600),Math.floor(seconds%3600/60),seconds%60].map(n=>String(n).padStart(2,'0'));}
 function updateCountdown(){
  let box=main.querySelector('.st-deadline');
- if(screen==='thanks'&&!box){const pudding=main.querySelector('.st-bedankt-pudding');if(pudding){box=makeDeadline();box.classList.add('st-thanks-clock');pudding.append(box);}}
+ if(screen==='thanks'&&!box){const anchor=main.querySelector('.st-confirm-when')||main.querySelector('.st-confirm-lead');if(anchor){box=makeDeadline();box.classList.add('st-thanks-clock');anchor.after(box);}}
  const node=box?.querySelector('.st-countdown');if(!node)return;if(screen==='finale')updateRoundContext();
  const remaining=roundRemaining(),closed=roundClosed(),decided=!!vote.round.result?.choice||!!vote.round.planned;
  box.hidden=node.hidden=screen==='thanks'&&decided||!vote.round.closesAt&&!closed||!closed&&remaining===null;
