@@ -90,3 +90,6 @@ body.auth-view{min-height:100vh;background:#131510;color:#fff}
 .avatar-note{margin:.25rem 0 0;font-size:.85rem;color:#8a5a00}
 .form-note.is-error{color:#b00020}
 .resend .is-waiting{opacity:.6}
+
+/* Keep alternative login actions separate, including on narrow modals. */
+.login-modal .form-area>form~button.quiet{display:block;width:fit-content;min-height:36px;margin-top:6px;padding:8px 0;text-align:left}
