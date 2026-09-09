@@ -15,18 +15,38 @@ const scores = {
   tt4849438: {title:'Baahubali 2: The Conclusion',year:2017,percent:90,audience:86,path:'baahubali_2_the_conclusion'}
 };
 const valid=p=>Number.isInteger(p)&&p>=0&&p<=100;
-const requests=new Map();
+const requests=new Map(),saved=new Map(),CACHE_KEY='filmmaand-rt-ratings-v2',HOUR=3600000,MAX_AGE=30*86400000;
+let loaded=false;
+function validSaved(id,score){return score&&score.imdbId===id&&score.source==='MDBList'&&typeof score.title==='string'&&score.title.length<=300&&(valid(score.percent)||valid(score.audience))&&Number.isFinite(Date.parse(score.checkedAt))&&Date.parse(score.checkedAt)<=Date.now()+60000&&Date.now()-Date.parse(score.checkedAt)<=MAX_AGE&&(!score.path||typeof score.path==='string'&&/^[a-zA-Z0-9_-]+$/.test(score.path));}
+function readSaved(id){
+ if(!loaded){loaded=true;try{const raw=localStorage.getItem(CACHE_KEY);if(raw&&raw.length<=200000){const rows=JSON.parse(raw);if(Array.isArray(rows))for(const [key,entry] of rows.slice(-128)){if(/^tt\d{7,12}$/.test(key)&&Number.isFinite(entry?.until)&&entry.until<=Date.now()+HOUR&&(entry.score===null||validSaved(key,entry.score)))saved.set(key,entry);}}}catch{}}
+ const entry=saved.get(id);if(entry?.score&&!validSaved(id,entry.score)){saved.delete(id);return null;}return entry;
+}
+function save(id,score,until){
+ saved.delete(id);saved.set(id,{score,until});while(saved.size>128)saved.delete(saved.keys().next().value);
+ try{localStorage.setItem(CACHE_KEY,JSON.stringify([...saved]));}catch{}
+}
 function lookup(id){
- const cached=requests.get(id);if(cached&&cached.until>Date.now())return cached.job;
- const job=(async()=>{try{
+ const old=readSaved(id);if(old&&old.until>Date.now())return Promise.resolve(old.score);
+ if(requests.has(id))return requests.get(id);
+ const job=Promise.resolve().then(async()=>{try{
   const response=await fetch('/filmmaand/api/movies/'+encodeURIComponent(id),{signal:AbortSignal.timeout(10000)});
-  if(!response.ok)return null;
-  const {movie}=await response.json(),rt=movie?.rtRatings;
-  if(movie?.id!==id||rt?.imdbId!==id||rt.source!=='MDBList'||!Number.isFinite(Date.parse(rt.checkedAt)))return null;
-  if(!valid(rt.critics)&&!valid(rt.audience))return null;
-  return {title:movie.title,year:movie.year,percent:rt.critics,audience:rt.audience,audienceKind:'unspecified',checkedAt:rt.checkedAt,source:'MDBList',path:typeof rt.path==='string'&&/^[a-zA-Z0-9_-]+$/.test(rt.path)?rt.path:null};
- }catch{return null;}})();
- requests.set(id,{job,until:Date.now()+5*60000});while(requests.size>256)requests.delete(requests.keys().next().value);return job;
+  if(!response.ok)throw Error('unavailable');
+  const {movie}=await response.json(),rt=movie?.rtRatings,meta=movie?.rtRatingsCache;
+  if(movie?.id!==id)throw Error('identity');
+  let score=null;
+  if(rt){
+   score={imdbId:id,title:movie.title,year:movie.year,percent:rt.critics,audience:rt.audience,audienceKind:'unspecified',checkedAt:rt.checkedAt,source:rt.source,path:typeof rt.path==='string'&&/^[a-zA-Z0-9_-]+$/.test(rt.path)?rt.path:null};
+   if(rt.imdbId!==id||!validSaved(id,score))throw Error('rating');
+  }
+  const status=meta?.status||(score&&Date.now()-Date.parse(score.checkedAt)<7*86400000?'fresh':'unavailable');
+  // Absolute server freshness is never reset merely because a cached value was read again.
+  const budget=status==='fresh'||status==='missing'?HOUR:15000;
+  const serverUntil=Number.isFinite(meta?.retryAt)?meta.retryAt:score?Date.parse(score.checkedAt)+7*86400000:Date.now()+15000;
+  const until=Math.max(Date.now()+15000,Math.min(Date.now()+budget,serverUntil));
+  score=score||old?.score||null;save(id,score,until);return score;
+ }catch{const score=old?.score||null;save(id,score,Date.now()+15000);return score;}
+ finally{requests.delete(id);}});requests.set(id,job);return job;
 }
 function alignWithTitle(imdb){
  const record=imdb.closest('.hp-film-record'),chosen=imdb.closest('.hp-chosen-movie');
@@ -43,6 +63,8 @@ export async function mountRating(imdb,id){
  alignWithTitle(imdb);
  const fallback=Object.hasOwn(scores,id)?{...scores[id],audienceKind:'all',checkedAt:'2026-09-09T00:00:00Z'}:null;
  if(fallback)render(imdb,fallback);
+ const cached=readSaved(id)?.score;
+ if(cached&&(!fallback||!cached.path||cached.path===fallback.path))render(imdb,cached);
  const score=await lookup(id);
  // A checked RT identity wins over a provider mapping to a different entry/version.
  if(score&&imdb.isConnected&&(!fallback||!score.path||score.path===fallback.path))render(imdb,score);
