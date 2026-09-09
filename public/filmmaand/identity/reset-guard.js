@@ -3,7 +3,7 @@
  if(window.filmmaandResetGuard)return;
  const nativeFetch=window.fetch.bind(window),marker='filmmaand-reset-generation-v1';
  const prefix='filmmaand-checkin-v1:/filmmaand/api:home-picker-lab:';
- const keys=['identity','draft','receipt','availabilityDraft','availabilityReceipt','nightProposalReceipt','suggestionDraft','suggestionReceipt','lastSuggestion','profileReceipt','voteReceipt','stemmenSuggestionReceipt','ballotHelpDismissed'].map(k=>prefix+k).concat(['filmmaand-identity-claim-v1','filmmaand-auth-v1','filmmaand-identity-design-v1','filmmaand-identity-design-v1-signed-in','filmmaand-identity-design-v1-expired']);
+ const keys=['identity','draft','receipt','availabilityDraft','availabilityReceipt','datePollDraft','datePollReceipt','nightProposalReceipt','suggestionDraft','suggestionReceipt','lastSuggestion','profileReceipt','voteReceipt','stemmenSuggestionReceipt','ballotHelpDismissed'].map(k=>prefix+k).concat(['filmmaand-identity-claim-v1','filmmaand-auth-v1','filmmaand-identity-design-v1','filmmaand-identity-design-v1-signed-in','filmmaand-identity-design-v1-expired']);
  let pinned=null,stopped=false,initialGeneration=null,storageError=null;
  try{initialGeneration=localStorage.getItem(marker)}catch(e){storageError=e}
  const valid=g=>typeof g==='string'&&g.length>0&&g.length<=128;

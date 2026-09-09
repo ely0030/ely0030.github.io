@@ -6,6 +6,7 @@ const storagePrefix='filmmaand-checkin-v1:/filmmaand/api:home-picker-lab:';
 const read=key=>{try{return JSON.parse(localStorage.getItem(storagePrefix+key)||'null')}catch{return null}};
 const account=()=>{const p=window.filmmaandSession?.participant;return !!p?.id&&p.onboarded&&!p.cached};
 window.filmmaandHasPendingEntryAction=()=>{
+ if(window.filmmaandDatePollEntryPending||read('datePollDraft')||read('datePollReceipt'))return true;
  if(['receipt','voteReceipt','availabilityReceipt','nightProposalReceipt','stemmenSuggestionReceipt','suggestionReceipt'].some(k=>read(k)))return true;
  const s=window.checkinState?.();
  if(s?.pending)return true;
