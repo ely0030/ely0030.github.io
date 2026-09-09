@@ -12,8 +12,8 @@ const guest=()=>!!window.filmmaandRequireAccount&&!(window.filmmaandSession?.par
 /* Demo: ?demo (persisted for the tab) overlays fictional friends and two planned nights on the real plan, labelled
  * Voorbeeld, so the page can be seen full before anyone has planned anything. Your own days stay real. ?demo=0 leaves. */
 const DEMO=false;
-// Temporarily hidden by organizer request; reveal explicitly, never on a timer.
-const DATE_POLL_VISIBLE=false;
+// Weekly date planning explicitly revealed after preview approval.
+const DATE_POLL_VISIBLE=true;
 let datePollController=null;if(DATE_POLL_VISIBLE){const datePollCss=document.createElement('link');datePollCss.rel='stylesheet';datePollCss.href='/filmmaand/agenda/date-poll.css';document.head.append(datePollCss);const datePollScript=document.createElement('script');datePollScript.src='/filmmaand/agenda/date-poll.js';datePollScript.onload=()=>{datePollController=window.createProgrammeDatePoll({api,onChange:()=>refresh(true)});if(plan&&next)datePollController.update(plan,next,filter)};document.head.append(datePollScript);}
 
 const demoPeople=[['Sanne',7],['Joris',9],['Femke',12],['Tim',13],['Noor',8],['Bram',6]];
