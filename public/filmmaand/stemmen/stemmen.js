@@ -28,14 +28,18 @@ function makeDeadline(){const box=el('div','st-deadline'),remaining=el('div','st
 function countdownText(ms){const seconds=Math.max(0,Math.ceil(ms/1000));return [Math.floor(seconds/3600),Math.floor(seconds%3600/60),seconds%60].map(n=>String(n).padStart(2,'0'));}
 function updateCountdown(){
  let box=main.querySelector('.st-deadline');
- if(screen==='thanks'&&!box){const actions=main.querySelector('.st-confirm-actions');if(actions){box=makeDeadline();box.classList.add('st-thanks-clock');actions.before(box);}}
+ if(screen==='thanks'&&!box){const pudding=main.querySelector('.st-bedankt-pudding');if(pudding){box=makeDeadline();box.classList.add('st-thanks-clock');pudding.append(box);}}
  const node=box?.querySelector('.st-countdown');if(!node)return;if(screen==='finale')updateRoundContext();
  const remaining=roundRemaining(),closed=roundClosed(),decided=!!vote.round.result?.choice||!!vote.round.planned;
  box.hidden=node.hidden=screen==='thanks'&&decided||!vote.round.closesAt&&!closed||!closed&&remaining===null;
  const counting=!closed&&remaining!==null&&remaining>0;
  if(counting){
-  if(node.dataset.mode!=='digits'){node.dataset.mode='digits';node.replaceChildren();for(const label of ['h','m','s']){const unit=el('span','st-clock-unit');unit.append(el('span','st-clock-value'),el('small','st-clock-label',label));node.append(unit);}}
-  const values=countdownText(remaining);node.querySelectorAll('.st-clock-value').forEach((n,i)=>{if(n.textContent!==values[i])n.textContent=values[i]});node.setAttribute('aria-label',values[0]+' uur, '+values[1]+' minuten, '+values[2]+' seconden tot de stemming sluit');
+  const values=countdownText(remaining);
+  if(screen==='thanks'){
+   if(node.dataset.mode!=='units'){node.dataset.mode='units';node.replaceChildren();for(const label of ['h','m','s']){const unit=el('span','st-clock-unit');unit.append(el('span','st-clock-value'),el('small','st-clock-label',label));node.append(unit);}}
+   node.querySelectorAll('.st-clock-value').forEach((n,i)=>{if(n.textContent!==values[i])n.textContent=values[i]});
+  }else{const text=values.join(':');node.dataset.mode='digits';if(node.textContent!==text)node.textContent=text;}
+  node.setAttribute('aria-label',values[0]+' uur, '+values[1]+' minuten, '+values[2]+' seconden tot de stemming sluit');
  }else{const text=closed?'Stemming gesloten':remaining===null?'':'Sluiting controleren…';node.dataset.mode='status';node.removeAttribute('aria-label');if(node.textContent!==text)node.textContent=text;}
  const deadline=closed?vote.round.closedAt:vote.round.closesAt,end=Date.parse(deadline),dateLabel=box.querySelector('.st-deadline-date');
  const label=Number.isFinite(end)?(closed?'Gesloten op ':'Stemmen sluit ')+new Date(end).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'';
