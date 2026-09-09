@@ -129,3 +129,9 @@ test('a transient failure for one film does not suppress another film lookup',as
  let calls=0;const r=createMovieRatings({apiKey:'fixture',fetcher:async url=>{calls++;if(url.pathname.includes(id))throw Error('one film timeout');return Response.json(body({imdb_id:'tt0083658'}));}});
  assert.equal(await r.details(id),null);assert.equal((await r.details('tt0083658')).critics,83);assert.equal(calls,2);r.close();
 });
+
+test('provider cooldown still allows reading fresh scores from the shared cache',async()=>{
+ const store=memoryShared(),other='tt0083658',time=Date.parse(stamp);await store.setJSON('movies/'+other,record({data:normalizeRatings(body({imdb_id:other}),other,stamp)}));let calls=0;
+ const r=createMovieRatings({apiKey:'fixture',sharedStore:store,now:()=>time,fetcher:async()=>{calls++;return new Response('',{status:429,headers:{'retry-after':'600'}});}});
+ assert.equal(await r.details(id),null);assert.equal((await r.details(other)).critics,83);assert.equal(calls,1);r.close();
+});

@@ -85,7 +85,7 @@ export function createMovieRatings({apiKey='',fetcher=fetch,now=Date.now,timeout
   cacheInfo:info,
   async details(id,{waitUntil}={}){
    if(closed||!/^tt\d{7,12}$/.test(id))return null;
-   const old=cached(id);if(!apiKey||old?.expires>now()||cooldown>now())return visible(old);
+   const old=cached(id);if(!apiKey||old?.expires>now()||cooldown>now()&&!sharedStore)return visible(old);
    let work=pending.get(id);
    if(!work){
     if(pending.size>=4)return visible(old);
