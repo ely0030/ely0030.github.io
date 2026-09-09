@@ -573,3 +573,7 @@ window.pickerProgrammeNotes = {
     ]
   }
 };
+
+// User-requested editorial display labels; not catalogue director facts.
+window.pickerProgrammeNotes.dress.directorLabel="Roblox";
+window.pickerProgrammeNotes.redball.directorLabel="Nintendo";
