@@ -179,3 +179,9 @@
 .site-films #films #home-picker .fr-supporter-points{position:absolute;right:-4px;top:-5px;min-width:12px;padding:1px 2px;border-radius:3px;background:#fff;color:#65784f;font:500 8px/1 Arial,sans-serif;font-variant-numeric:tabular-nums;pointer-events:none}
 .site-films #films #home-picker .fr-supporter[hidden]{display:none!important}
 .site-films #films #home-picker .films-next-pane .fr-result-film .fr-supporters{gap:5px 6px;row-gap:9px;padding-top:3px}
+
+/* The space around/beneath favourites is a mouse scroll surface, not another reorder handle. */
+@media(hover:hover) and (pointer:fine){
+ #films #home-picker .fr-order,#films #home-picker .fr-track,#films #home-picker .fr-order .rank-direction,#films #home-picker .fr-order .fr-position{cursor:grab}
+ #films #home-picker .fr-order.is-panning,#films #home-picker .fr-order.is-panning *{cursor:grabbing!important;user-select:none}
+}
