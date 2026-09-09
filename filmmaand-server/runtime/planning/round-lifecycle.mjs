@@ -8,16 +8,25 @@ export function roundLifecycle(p,now,planned=false){
  const closed=planned||!!r.closedAt||(!!r.closesAt&&Date.parse(now)>=Date.parse(r.closesAt));
  return {id,revision:r.revision||0,lifecycle:!!r.lifecycle,status:r.result?'resolved':closed?'closed':'open',opensAt:r.opensAt||r.since||null,closesAt:r.closesAt||null,closedAt:r.closedAt||(closed?r.closesAt||null:null),result:r.result||null};
 }
-export function rankingPoints(p){
+// Eligibility belongs to this plan's explicit round history, not a person's display order.
+export function rankingEligibility(p,shortlist=p.round?.shortlist||[]){
+ const known=new Set(p.options.map(o=>o.id)),valid=ids=>[...new Set(ids)].filter(id=>known.has(id));
+ const retiredIds=valid([p.round?.result?.choice,...(p.roundHistory||[]).map(h=>h.round?.result?.choice)]);
+ const plannedIds=valid([...(p.programme||[]).flatMap(n=>n.choices||[]),...(p.confirmation?.choices||[])]);
+ const suspendedIds=p.round?.result?.choice?[]:valid(shortlist).filter(id=>!retiredIds.includes(id)&&!plannedIds.includes(id));
+ return {suspendedIds,retiredIds,plannedIds,excludedIds:valid([...retiredIds,...plannedIds,...suspendedIds])};
+}
+export function eligibleContribution(response,excluded=[]){
+ const blocked=new Set(excluded),choices=[...new Set(response?.choices||[])],rank=[...new Set(response?.rankingOrder||[])].filter(id=>choices.includes(id)&&!blocked.has(id));
+ return Object.fromEntries(choices.map(id=>[id,blocked.has(id)?0:rank.indexOf(id)>=0?Math.max(1,5-rank.indexOf(id)):1]));
+}
+export function rankingPoints(p,excluded=rankingEligibility(p).excludedIds){
  const points=Object.fromEntries(p.options.map(o=>[o.id,0]));
- for(const r of Object.values(p.responses||{})){
-  const choices=[...new Set(r.choices||[])],order=[...new Set(r.rankingOrder||[])].filter(id=>choices.includes(id));
-  for(const id of choices)if(Object.hasOwn(points,id)){const index=order.indexOf(id);points[id]+=index<0?1:Math.max(1,5-index);}
- }
+ for(const response of Object.values(p.responses||{}))for(const [id,value] of Object.entries(eligibleContribution(response,excluded)))if(Object.hasOwn(points,id))points[id]+=value;
  return points;
 }
-export function rankedSelection(p,excluded){
- const points=rankingPoints(p),blocked=new Set(excluded),eligible=p.options.map((o,i)=>({id:o.id,points:points[o.id],i})).filter(o=>o.points>0&&!blocked.has(o.id)).sort((a,b)=>b.points-a.points||a.i-b.i).map(({id,points})=>({id,points}));
+export function rankedSelection(p,excluded=[]){
+ const blocked=new Set([...excluded,...rankingEligibility(p).excludedIds]),points=rankingPoints(p,blocked),eligible=p.options.map((o,i)=>({id:o.id,points:points[o.id],i})).filter(o=>o.points>0&&!blocked.has(o.id)).sort((a,b)=>b.points-a.points||a.i-b.i).map(({id,points})=>({id,points}));
  const cutoff=eligible[2]?.points,cutoffIds=cutoff===undefined?[]:eligible.filter(o=>o.points===cutoff).map(o=>o.id),above=eligible.filter(o=>o.points>cutoff).map(o=>o.id);
  const tiedCutoff=cutoff!==undefined&&cutoffIds.length>3-above.length;
  return {points,eligible,shortlist:eligible.slice(0,3).map(o=>o.id),cutoffTieIds:tiedCutoff?cutoffIds:[],ready:eligible.length>=3&&!tiedCutoff,snapshot:hash({roundId:p.round?.id||legacyRoundId(p),eligible})};

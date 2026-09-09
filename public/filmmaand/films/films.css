@@ -741,3 +741,9 @@
 .site-films #films #home-picker .films-next-pane .films-cutoff-current[hidden]{display:none}
 .site-films #films #home-picker .films-next-pane .fr-personal{padding-top:24px}
 @media(max-width:600px){.site-films #films #home-picker .films-next-pane .films-result-heading h3{font-size:22px}.site-films #films #home-picker .films-next-pane .films-cutoff{padding-left:12px}.site-films #films #home-picker .films-next-pane .films-cutoff-time{font-size:19px}.site-films #films #home-picker .films-next-pane .films-next-purpose{font-size:10px}.site-films #films #home-picker .films-next-pane .films-result-footer{font-size:10px}.site-films #films #home-picker .films-next-pane .fr-lineup-title{font-size:11px}}
+
+/* R2: mouse drag browsing; native touch scrolling remains the browser's. */
+.site-films #films #home-picker .fs-new .fs-mini-rail{scrollbar-width:none;cursor:grab}
+.site-films #films #home-picker .fs-new .fs-mini-rail::-webkit-scrollbar{display:none}
+.site-films #films #home-picker .fs-new .fs-mini-rail.is-browsing{cursor:grabbing;scroll-snap-type:none;user-select:none}
+.site-films #films #home-picker .fs-new .fs-mini-rail.is-browsing *{cursor:grabbing!important;user-select:none}

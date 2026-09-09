@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+import {createPlanningService} from './runtime/planning/service.mjs';
+const scope={module:{exports:{}}};vm.runInNewContext(await readFile(new URL('../public/filmmaand/films/social-model.js',import.meta.url),'utf8'),scope);
+const model=scope.module.exports,plain=x=>JSON.parse(JSON.stringify(x));
+class Store{row=null;etag=0;async read(){return this.row?{data:structuredClone(this.row),etag:String(this.etag)}:null}async compareAndSwap(id,etag,p){if(etag!==(this.row?String(this.etag):null))return false;this.row=structuredClone(p);this.etag++;return true}}
+test('suspend → eligible edit → unresolved tie → resolve → restored losers → next collection, with client/server parity',async()=>{
+ const store=new Store(),s=createPlanningService({store,adminToken:'admin',now:()=> '2026-09-09T12:00:00Z'}),id='eligible',actor='a'.repeat(43);let serial=0;const key=()=>('eligible-'+(++serial)).padEnd(20,'x');
+ await s.seed({id,title:'Test',window:{start:'2026-09-01',end:'2026-09-30'},options:['a','x','b','y','c','z','d'].map(id=>({id,title:id}))});
+ await s.setRound(id,'admin',key(),{shortlist:['x','y','z']});
+ const choices=['a','x','b','y','c','z','d'],saved=['a','x','b','y','c'];
+ const body={expectedRevision:0,choices,rankingOrder:saved,dates:['2026-09-12']},receiptKey=key(),receipt=await s.submit(id,actor,receiptKey,body);
+ let plan=await s.get(id,actor),state=model.eligibility(plan);
+ assert.deepEqual(plan.nextRound.ownPoints,{a:5,x:0,b:4,y:0,c:3,z:0,d:1});
+ assert.deepEqual(plain(model.displayOrder(choices,saved,state)),['a','b','c','d','x','y','z']);
+ const before=structuredClone(store.row);await s.get(id,actor);assert.deepEqual(store.row,before,'display reads do not persist the temporary partition');
+ const desired=['c','a','b','d','x','y','z'],merged=plain(model.mergeEligibleOrder(choices,saved,desired,state.excludedIds));
+ assert.deepEqual(merged,['c','x','a','y','b','d']);assert.ok(!merged.includes('z'),'unranked suspended stays unranked');
+ const preview=model.ranking({plan,choices,ranking:{order:saved}},merged);
+ await s.submit(id,actor,key(),{...body,expectedRevision:1,rankingOrder:merged});
+ plan=await s.get(id,actor);assert.deepEqual(plan.nextRound.ownPoints,{a:4,x:0,b:3,y:0,c:5,z:0,d:2});assert.deepEqual(plain(preview.candidates.map(c=>[c.optionId,c.score])),plan.nextRound.eligible.slice(0,3).map(c=>[c.id,c.points]));
+ const change=async(action,extra={})=>{const round=(await s.get(id)).round;return s.setRound(id,'admin',key(),{action,expectedRoundId:round.id,expectedRevision:round.revision,...extra})};
+ await s.vote(id,actor,key(),{expectedRevision:0,final:'x'});
+ await s.vote(id,'b'.repeat(43),key(),{expectedRevision:0,final:'y'});
+ await change('close');plan=await s.get(id,actor);const snapshot=structuredClone(store.row.round.nextSelection);assert.deepEqual(plan.nextRound.eligibility.suspendedIds,['x','y','z']);assert.equal(plan.round.status,'closed');
+ await change('resolve',{choice:'x'});plan=await s.get(id,actor);assert.equal(plan.round.status,'resolved');assert.deepEqual(plan.nextRound.eligibility.retiredIds,['x']);assert.deepEqual(plan.nextRound.eligibility.suspendedIds,[]);
+ assert.deepEqual(plain(model.displayOrder(choices,merged,model.eligibility(plan))),['c','a','y','b','d','z','x']);assert.deepEqual(plan.nextRound.ownPoints,{a:4,x:0,b:2,y:3,c:5,z:1,d:1});assert.deepEqual(store.row.round.nextSelection,snapshot,'resolved preferences never rewrite cutoff');
+ const frozen=model.ranking({plan,choices,ranking:{order:merged}},['d','c','a','y','b']);assert.deepEqual(plain(frozen.candidates.map(c=>[c.optionId,c.score])),snapshot.eligible.slice(0,3).map(c=>[c.id,c.points]));
+ await change('open',{selectionSnapshot:snapshot.snapshot,shortlist:snapshot.shortlist,scheduledDate:'2026-09-18',closesAt:'2026-09-17T20:00:00Z'});
+ plan=await s.get(id,actor);assert.deepEqual(plan.nextRound.eligibility.retiredIds,['x']);assert.deepEqual(plan.nextRound.eligibility.suspendedIds,['c','a','b']);assert.deepEqual(plan.nextRound.ownPoints,{a:0,x:0,b:0,y:5,c:0,z:1,d:4});assert.deepEqual(plain(model.contribution(choices,merged,plan.nextRound.rule,model.eligibility(plan).excludedIds)),plan.nextRound.ownPoints);
+ assert.deepEqual((await s.own(id,actor)).response.rankingOrder,merged);assert.deepEqual((await s.own(id,actor)).response.dates,['2026-09-12']);assert.deepEqual(await s.submit(id,actor,receiptKey,body),receipt,'original exact receipt survives round changes');
+});

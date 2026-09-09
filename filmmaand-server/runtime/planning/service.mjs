@@ -1,5 +1,5 @@
 import {createHash,timingSafeEqual} from 'node:crypto';
-import {roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
+import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
 import {isSessionToken,isAnonymousBearer,isParticipantActor} from './auth/credentials.mjs';
 const fail=(status,code,message,details)=>{throw Object.assign(new Error(message),{status,code,details})};
 const hash=x=>createHash('sha256').update(x).digest('hex');
@@ -33,8 +33,8 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  const amsterdam=iso=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam'}).format(new Date(iso));
  function validStart(p,s){if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(s)||!Number.isFinite(Date.parse(s))||amsterdam(s)<p.window.start||amsterdam(s)>p.window.end)fail(400,'event_time','Een geldige starttijd in UTC is vereist.');return new Date(s).toISOString()}
  function optionCountsOf(p){const optionCounts=Object.fromEntries(p.options.map(o=>[o.id,0]));for(const r of Object.values(p.responses))for(const id of r.choices)if(id in optionCounts)optionCounts[id]++;return optionCounts}
- function rankedContribution(response){const choices=[...new Set(response?.choices||[])],rank=[...new Set(response?.rankingOrder||[])].filter(id=>choices.includes(id));return Object.fromEntries(choices.map(id=>[id,rank.indexOf(id)>=0?Math.max(1,5-rank.indexOf(id)):1]));}
- function nextRoundOf(p,me){const selection=p.round?.nextSelection||{...rankedSelection(p,[...plannedIds(p),...roundOf(p).shortlist]),status:'collecting',sourceRoundId:roundOf(p).id,closesAt:p.round?.closesAt||null,frozenAt:null};return {rule:'rank-5-4-3-2-1',...selection,...(me?{ownPoints:rankedContribution(p.responses[me])}:{})};}
+ function rankedContribution(response,excluded){return eligibleContribution(response,excluded);}
+ function nextRoundOf(p,me){const round=roundOf(p),eligibility=rankingEligibility(p,round.shortlist),selection=p.round?.nextSelection||{...rankedSelection(p,eligibility.excludedIds),status:'collecting',sourceRoundId:round.id,closesAt:p.round?.closesAt||null,frozenAt:null};return {rule:'rank-5-4-3-2-1',...selection,eligibility,...(me?{ownPoints:rankedContribution(p.responses[me],eligibility.excludedIds)}:{})};}
  // The finale shortlist: organizer-set, or derived from picker preferences and frozen at the first vote.
  function deriveShortlist(p){const planned=plannedIds(p),counts=optionCountsOf(p);return p.options.map((o,i)=>({id:o.id,i,count:counts[o.id]||0})).filter(x=>!planned.has(x.id)).sort((a,b)=>b.count-a.count||a.i-b.i).slice(0,3).map(x=>x.id)}
  function roundOf(p){const planned=plannedIds(p);const shortlist=(p.round?.shortlist||deriveShortlist(p)).filter(id=>p.options.some(o=>o.id===id));return {shortlist,...(p.roundSchedule?.date?{scheduledDate:p.roundSchedule.date}:{}),derived:p.round?p.round.derived!==false:true,excluded:[...planned],planned:shortlist.some(id=>planned.has(id)),...roundLifecycle(p,now(),shortlist.some(id=>planned.has(id)))}}

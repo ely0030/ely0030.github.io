@@ -9,7 +9,7 @@ const plain=x=>JSON.parse(JSON.stringify(x));
 test('five ranks agree across server/client; tail/unranked hearts retain one; reads/replay preserve stored state',async()=>{
  const c=openState(emptyState()),s=createPlanningService({store:c.plans,adminToken:'admin'});
  try{const seed=JSON.parse(await readFile(new URL('./runtime/planning/seed.json',import.meta.url)));seed.id='five-rank';seed.round={shortlist:['blade','matrix','lotr'],derived:false};await s.seed(seed);
- const choices=seed.options.slice(0,7).map(o=>o.id),order=choices.slice(0,6),actor='a'.repeat(43),draft={expectedRevision:0,choices,dates:['2026-09-12'],rankingOrder:order};
+ const choices=seed.options.filter(o=>!seed.round.shortlist.includes(o.id)).slice(0,7).map(o=>o.id),order=choices.slice(0,6),actor='a'.repeat(43),draft={expectedRevision:0,choices,dates:['2026-09-12'],rankingOrder:order};
  const receipt=await s.submit(seed.id,actor,'ranking-five-save-0001',draft),stored=c.export(),ballot=await s.voteView(seed.id,actor),plan=await s.get(seed.id,actor),expected=Object.fromEntries(choices.map((id,i)=>[id,i<5?5-i:1]));
  assert.equal(plan.nextRound.rule,'rank-5-4-3-2-1');assert.deepEqual(plan.nextRound.ownPoints,expected);assert.deepEqual(plain(model.module.exports.contribution(choices,order)),expected);
  assert.deepEqual((await s.voteView(seed.id,actor)).round,ballot.round);assert.deepEqual(c.export(),stored);
