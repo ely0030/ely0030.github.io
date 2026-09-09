@@ -18,7 +18,7 @@ function requestLogin(){if(loginPrompt||document.querySelector('dialog[open]'))r
 function dependencyError(){if(document.querySelector('dialog[open]'))return;const d=el('dialog','availability-intro'),title=el('h2','','De kalender kon niet worden geladen'),actions=el('div','availability-intro-actions'),later=el('button','availability-intro-later','Later'),retry=el('button','availability-intro-next','Opnieuw proberen');title.id='availability-intro-error-title';d.setAttribute('aria-labelledby',title.id);later.type=retry.type='button';const close=()=>{d.close();d.remove()};later.onclick=close;retry.onclick=()=>{close();void window.openAvailabilityIntro()};d.addEventListener('cancel',e=>{e.preventDefault();close()});actions.append(later,retry);d.append(title,actions);document.body.append(d);d.showModal()}
 window.openAvailabilityIntro=async()=>{if(active){active.dialog.focus({preventScroll:true});return true}const p=await verify();if(!p){requestLogin();return false}try{await dependencies()}catch{dependencyError();return false}reviewPending=false;enqueue(p);return true};
 // Fresh login uses the existing real picker once; repeat visits and recovery keep their current context.
-window.openPostLoginAvailability=p=>{if(!verified(p)||seen(p.id))return false;enqueue(p,true);return true};
+window.openPostLoginAvailability=p=>{if(!verified(p)||!window.filmmaandSession?.hasFreshOnboardingStep?.('availability'))return false;window.filmmaandSession.consumeOnboardingStep('availability');if(seen(p.id))return false;enqueue(p,true);return true};
 // Explicit manual login requests can also resume the picker.
 window.addEventListener('filmmaand-login-complete',e=>{if(!reviewPending||e.detail?.recovery)return;reviewPending=false;enqueue(e.detail?.participant,true)});
 

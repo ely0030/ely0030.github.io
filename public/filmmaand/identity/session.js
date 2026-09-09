@@ -18,8 +18,16 @@ async function api(path,{method='GET',body,key:idempotencyKey,headers:extraHeade
 // after a lost response replays instead of re-running. Only the key already in this browser is ever offered.
 async function claimPicker(){if(!participant?.onboarded)return null;const anonymousBearer=read(pickerIdentityKey);if(!/^[A-Za-z0-9_-]{43}$/.test(anonymousBearer||''))return null;let receipt=read(claimKey);if(!receipt||receipt.anonymousBearer!==anonymousBearer)receipt={key:crypto.randomUUID(),anonymousBearer,planId};write(claimKey,receipt);
  try{const result=await api('claim',{method:'POST',key:receipt.key,body:{planId:receipt.planId,anonymousBearer:receipt.anonymousBearer}});write(claimKey,null);window.dispatchEvent(new Event('filmmaand-profile-changed'));window.dispatchEvent(new Event('filmmaand-display-profile-synced'));return result}catch(e){if(e.status>=400&&e.status<500&&e.code!=='rate_limited')write(claimKey,null);if(e.code==='claim_conflict'||e.code==='already_claimed')return {claimed:false,already:false,refused:e.code,message:e.message};throw e}}
+// Automatic guidance belongs only to this account's acknowledged first profile save.
+// Account completion itself is server participant.onboarded, never a browser-version flag.
+const onboardingFlowKey='filmmaand-fresh-onboarding-v1';
+const flow=()=>{try{return JSON.parse(sessionStorage.getItem(onboardingFlowKey)||'null')}catch{return null}};
+function clearFlow(){try{sessionStorage.removeItem(onboardingFlowKey)}catch{}}
+function consumeStep(step){const current=flow();if(!participant?.id||current?.account!==participant.id)return;current[step]=false;try{sessionStorage.setItem(onboardingFlowKey,JSON.stringify(current))}catch{}}
 const session={
  get participant(){return participant},
+ hasFreshOnboardingStep(step){return !!participant?.onboarded&&!participant.cached&&flow()?.account===participant.id&&flow()?.[step]===true},
+ consumeOnboardingStep:consumeStep,
  get passwordsEnabled(){return passwordsEnabled},
  // 200 {participant:null} while this browser holds the server-written 'account' marker means a validated session was lost
  // (cookie expired, or cleared by an earlier 401 on another request): that is an expiry, never a return to anonymous.
@@ -36,8 +44,8 @@ const session={
  async verify(challengeId,code){const d=await api('verify',{method:'POST',body:{challengeId,code}});remember(d.participant);return participant},
  avatars:()=>api('avatars'),
  profile:()=>api('profile'),
- async saveProfile(body){const d=await api('profile',{method:'PUT',key:crypto.randomUUID(),body});remember({...participant,onboarded:d.profile.onboarded,profile:d.profile},{announce:true});return d.profile},
- async logout(){try{await api('logout',{method:'POST'})}catch{}remember(null,{announce:true})},
+ async saveProfile(body){const first=participant?.onboarded===false,id=participant?.id;const d=await api('profile',{method:'PUT',key:crypto.randomUUID(),body});const accepted=remember({...participant,onboarded:d.profile.onboarded,profile:d.profile},{announce:true});if(accepted&&first&&id&&participant?.id===id&&d.profile.onboarded){try{sessionStorage.setItem(onboardingFlowKey,JSON.stringify({account:id,availability:true,tour:true}))}catch{}}return d.profile},
+ async logout(){try{await api('logout',{method:'POST'})}catch{}clearFlow();remember(null,{announce:true})},
  claimPicker,
  signedIn:()=>Boolean(participant),
  expired:()=>localStorage.getItem(key+'-expired')==='true',
