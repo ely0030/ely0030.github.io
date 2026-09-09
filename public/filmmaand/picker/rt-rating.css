@@ -1,7 +1,7 @@
 #home-picker .hp-film-ratings{display:inline-flex;align-items:flex-start;gap:14px;flex-shrink:0;flex-wrap:wrap}
 #home-picker .hp-rt-rating{display:inline-block;color:#50483f;text-decoration:none;font-size:11px;line-height:1.7;flex-shrink:0}
 #home-picker .hp-rt-score{display:flex;align-items:center;gap:5px;white-space:nowrap}
-#home-picker .hp-rt-score img{display:block;width:62px;height:18px;object-fit:contain}
+#home-picker .hp-rt-score img{display:block;width:18px;height:18px;object-fit:contain}
 #home-picker .hp-rt-rating small{display:block;color:#aaa096;font-size:9px;text-align:right}
 #home-picker .hp-rt-rating:hover{text-decoration:underline}
 @media(max-width:520px){#home-picker .hp-record-meta{flex-wrap:wrap;gap:8px}#home-picker .hp-film-ratings{gap:12px}}
