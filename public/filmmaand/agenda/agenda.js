@@ -112,7 +112,51 @@ function scheduleSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=
 const ownValue=()=>personal?.getValue?.()||[];
 function changeDates(value){if(guest()){const before=new Set(ownValue()),date=value.find(d=>!before.has(d));window.requestFilmmaandParticipation?.({date,available:true});return false;}const accepted=personal?.setValue?.(value);if(accepted)scheduleSave();return accepted}
 function updateSaveVisibility(){const message=saveArea.querySelector('.pa-message')?.textContent||'',button=saveArea.querySelector('.pa-actions button');if(autoSaveInFlight&&button?.textContent!=='Opslaan…'){autoSaveInFlight=false;if(personal?.canEdit?.()&&['Bewaar je beschikbaarheid.','Je beschikbaarheid is bewaard.'].includes(message))scheduleSave()}const normal=['','Bewaar je beschikbaarheid.','Je beschikbaarheid is bewaard.'].includes(message);saveArea.hidden=(normal||button?.textContent==='Opslaan…')&&!saveArea.querySelector('.pa-picker-link')}
-const calendarOptions=()=>({events:[...nightsByDay].flatMap(([date,ns])=>ns.map(n=>({date,title:titleOf(n)})))});
+// Compact calendar geometry ships with its renderer: cached page CSS cannot expose full-size avatars.
+const calendarFaceStyle=el('style');
+calendarFaceStyle.textContent=`
+#agenda .ag-host .ac-cell{position:relative;height:44px;min-width:0}
+#agenda .ag-host .ac-cell>.ac-day{width:100%;height:44px;padding:0 0 14px}
+#agenda .ag-host .ac-day-extra{position:absolute;inset:auto 1px 2px;padding:0;pointer-events:none;z-index:3}
+#agenda .ag-calendar-faces{display:flex;justify-content:center;align-items:center;gap:1px;pointer-events:none}
+#agenda .ag-calendar-face{position:relative;display:grid;place-items:center;flex:0 0 12px;width:12px;height:12px;min-width:0;min-height:0;padding:0;border:0;background:transparent;pointer-events:auto;cursor:pointer}
+#agenda .ag-calendar-face img{display:block;width:12px;height:12px;max-width:12px;max-height:12px;object-fit:contain}
+#agenda .ag-calendar-initial{font:8px/12px Arial,sans-serif;color:#394933}
+#agenda .ag-calendar-more{font:8px/12px Arial,sans-serif;color:#394933}
+#agenda .ag-calendar-name{display:none;position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%);width:max-content;max-width:145px;padding:6px 8px;background:#263723;color:white;border-radius:3px;font:11px/1.35 Arial,sans-serif;white-space:normal;overflow-wrap:anywhere;pointer-events:none;z-index:30}
+#agenda .ac-cell:has(.ag-calendar-face:hover),#agenda .ac-cell:has(.ag-calendar-face:focus-visible),#agenda .ac-cell:has(.is-name-open){z-index:35}
+#agenda .ag-calendar-face:hover .ag-calendar-name,#agenda .ag-calendar-face:focus-visible .ag-calendar-name,#agenda .ag-calendar-face.is-name-open .ag-calendar-name{display:block}
+#agenda .ac-cell:nth-child(7n + 1) .ag-calendar-name{left:0;transform:none}
+#agenda .ac-cell:nth-child(7n) .ag-calendar-name{left:auto;right:0;transform:none}
+#agenda .ag-calendar-face:focus-visible{outline:2px solid #497464;outline-offset:2px}
+#agenda .ag-host.ac-dragging .ag-calendar-face{pointer-events:none}
+#agenda .ag-host .ac-cell>.ac-day>.ac-event-dot{bottom:16px}
+`;
+document.head.append(calendarFaceStyle);
+function calendarFaces(date){
+ const people=friendsByDay.get(date)||[];
+ if(!people.length)return null;
+ const row=el('span','ag-calendar-faces');
+ row.setAttribute('role','group');row.setAttribute('aria-label','Beschikbaar op '+longDay(date));
+ const addFace=(label,person,count)=>{
+  const face=el('button','ag-calendar-face'+(count?' ag-calendar-more':''));
+  face.type='button';face.setAttribute('aria-label',label);face.setAttribute('aria-expanded','false');
+  // Intrinsic sizes are a second guard against image layout expansion.
+  const avatar=person&&Number.isInteger(person.avatarId)?avatarOf(person.avatarId):null;
+  if(avatar){const img=el('img');img.src=avatar.src;img.alt='';img.width=12;img.height=12;img.style.cssText='width:12px;height:12px;max-width:12px;max-height:12px;object-fit:contain';if(avatar.filter)img.style.filter=avatar.filter;face.append(img)}
+  else face.append(el('span','ag-calendar-initial',count?'+'+count:label.slice(0,1)));
+  const tip=el('span','ag-calendar-name',label);face.append(tip);
+  const close=()=>{face.classList.remove('is-name-open');face.setAttribute('aria-expanded','false')};
+  face.onpointerdown=e=>e.stopPropagation();
+  face.onclick=e=>{e.stopPropagation();const wasOpen=face.classList.contains('is-name-open');for(const other of host.querySelectorAll('.ag-calendar-face.is-name-open')){other.classList.remove('is-name-open');other.setAttribute('aria-expanded','false')}if(!wasOpen){face.classList.add('is-name-open');face.setAttribute('aria-expanded','true')}};
+  face.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();host.querySelector('[data-day="'+date+'"]')?.focus({preventScroll:true})}};
+  face.onblur=close;row.append(face);
+ };
+ for(const person of people.slice(0,2))addFace(person.name||'Anoniem',person,0);
+ if(people.length>2)addFace(people.slice(2).map(p=>p.name||'Anoniem').join(', '),null,people.length-2);
+ return row;
+}
+const calendarOptions=()=>({events:[...nightsByDay].flatMap(([date,ns])=>ns.map(n=>({date,title:titleOf(n)}))),dayContent:calendarFaces,dayLabel:date=>{const names=(friendsByDay.get(date)||[]).map(p=>p.name||'Anoniem');return names.length?' · beschikbaar: '+names.join(', '):''}});
 function positionSaveControls(){if(!saveArea||!overviewAside||!main)return;const target=availabilityDialog?.open||!matchMedia('(max-width:800px)').matches?overviewAside:main;if(saveArea.parentNode!==target)target.append(saveArea)}
 function openAvailability(opener){availabilityOpener=opener;availabilityDialog.append(overviewAside);availabilityDialog.showModal();positionSaveControls();availabilityDialog.querySelector('.ag-availability-close').focus({preventScroll:true})}
 function closeAvailability(){if(availabilityDialog?.open)availabilityDialog.close();if(sidebarHome&&overviewAside)sidebarHome.append(overviewAside);positionSaveControls();availabilityOpener?.isConnected&&availabilityOpener.focus({preventScroll:true})}
