@@ -13,3 +13,6 @@
 :is(#agenda,body) .dc-coordination button,:is(#agenda,body) .dc-coordination select,:is(#agenda,body) .dc-coordination input {font:inherit;font-size:13px;border:1px solid #bbb;border-radius:4px;padding:9px 10px;background:#fff;color:#222;margin:3px}
 :is(#agenda,body) .dc-days button {padding:8px 6px;margin:1px}:is(#agenda,body) .dc-coordination button[aria-pressed=true] {background:#253522;color:white;border-color:#253522}:is(#agenda,body) .dc-coordination button:disabled{opacity:.45}:is(#agenda,body) .dc-coordination label{display:block;font-size:13px;margin:14px 0}:is(#agenda,body) .dc-coordination select{display:block}:is(#agenda,body) .dc-event summary{cursor:pointer;font-size:16px}:is(#agenda,body) .dc-coordination :focus-visible{outline:2px solid #45603b;outline-offset:3px}
 @media(max-width:650px){:is(#agenda,body) .dc-days{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}:is(#agenda,body) .dc-coordination{padding:0 12px;box-sizing:border-box}}
+
+/* Canonical preference leader, independent of the viewer's own choice. */
+#agenda .dp-day.dp-leading{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
