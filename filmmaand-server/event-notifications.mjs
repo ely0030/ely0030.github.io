@@ -30,7 +30,11 @@ export function eligibleEventRecipients(c,options={}){
 }
 function projectNotice(n,p){
  const options=Array.isArray(p.options)?p.options:[];
- return {id:n.id,type:n.type,planId:n.planId,eventId:n.eventId,eventVersion:n.eventVersion??null,occurredAt:n.occurredAt,scheduledDate:n.scheduledDate,previousDate:n.previousDate||null,proposedDate:n.proposedDate||null,proposalId:n.proposalId||null,requiredActors:Array.isArray(n.requiredActors)?[...new Set(n.requiredActors.filter(x=>typeof x==='string'))].sort():[],title:clean(n.title)||'Filmavond',timing:{arrival:clean(n.timing?.arrival,80),screening:clean(n.timing?.screening,80),end:clean(n.timing?.end,80)},films:(Array.isArray(n.choices)?n.choices:[]).map(id=>options.find(o=>o.id===id)).filter(Boolean).map(o=>clean(o.title)).filter(Boolean)};
+ const selected=(Array.isArray(n.choices)?n.choices:[]).map(id=>options.find(o=>o.id===id)).filter(Boolean);
+ const confirmed=n.type==='date-confirmed';
+ const selectedTitle=selected.map(o=>clean(o.title)).filter(Boolean).join(' · ');
+ const lineup=[...new Set(selected.flatMap(o=>Array.isArray(o.lineup)&&o.lineup.length?o.lineup:selected.length>1?[o.title]:[]).map(x=>clean(x)).filter(Boolean))];
+ return {id:n.id,type:n.type,planId:n.planId,eventId:n.eventId,eventVersion:n.eventVersion??null,occurredAt:n.occurredAt,scheduledDate:n.scheduledDate,previousDate:n.previousDate||null,proposedDate:n.proposedDate||null,proposalId:n.proposalId||null,requiredActors:Array.isArray(n.requiredActors)?[...new Set(n.requiredActors.filter(x=>typeof x==='string'))].sort():[],title:(confirmed&&selectedTitle?selectedTitle:clean(n.title))||'Filmavond',timing:{arrival:clean(n.timing?.arrival,80),screening:clean(n.timing?.screening,80),end:clean(n.timing?.end,80)},films:confirmed?lineup:selected.map(o=>clean(o.title)).filter(Boolean)};
 }
 /** Call within the SAME state transaction as date changes. No network or provider effects here. */
 export function queueCoordinationEvents(c,options={}){
@@ -71,14 +75,15 @@ export function renderEventNotification(notice,{participantId,origin='https://el
  switch(notice.type){
  case 'round-opened':heading='Er staat een nieuwe stemming klaar.';subject='Filmmaand · Kies de volgende film';paragraphs=[title];if(day)paragraphs.push('Filmavond: '+day+'.');action='Bekijk de stemming';break;
  case 'round-concluded':heading='De stemming is afgerond.';subject='Filmmaand · Uitslag van de stemming';paragraphs=[title];if(day&&notice.programmeId)paragraphs.push('Filmavond: '+day+'.');action=notice.programmeId?'Zie programma':'Bekijk de uitslag';break;
- case 'date-confirmed':heading='De datum staat vast.';subject='Filmmaand · '+title+' · '+day;paragraphs=[title+' is gepland op '+day+'.',...(notice.resultText?[clean(notice.resultText)]:[])];break;
+ case 'date-confirmed':heading='De datum staat vast.';subject=confirmationSubject(notice.scheduledDate,title);paragraphs=[title+' is gepland op '+day+'.',...(notice.resultText?[clean(notice.resultText)]:[])];break;
  case 'date-change-proposed':heading='Een andere datum?';subject='Filmmaand · Voorstel om '+title+' te verplaatsen';paragraphs=['Huidige datum: '+day+'.','Voorgestelde datum: '+displayDate(notice.proposedDate)+'.','De huidige datum blijft staan zolang de wijziging niet is bevestigd.',required?'Je staat als aanwezig op de huidige datum. Jouw expliciete akkoord is nodig voor een automatische verplaatsing.':'Laat weten of je akkoord gaat met de verplaatsing. De huidige aanwezigen moeten daar expliciet mee instemmen.','Je antwoord gaat over het verplaatsen van deze avond, niet over je algemene beschikbaarheid.'];action='Reageer op het voorstel';break;
  case 'date-changed':heading='De datum is gewijzigd.';subject='Filmmaand · Nieuwe datum voor '+title;paragraphs=[title+': '+displayDate(notice.previousDate)+' vervalt.','De nieuwe datum is '+day+'.','Controleer je aanwezigheid bij de avond op de site.'];break;
  case 'event-updated':heading='De avond is bijgewerkt.';subject='Filmmaand · Update voor '+title;paragraphs=[title+' · '+day+'.','Bekijk de actuele gegevens in het programma.'];break;
  case 'reminder':heading='Tot bij de film.';subject='Filmmaand · Herinnering: '+title;paragraphs=[title+' staat gepland op '+day+'.'];break;
  }
  if(notice.type!=='date-change-proposed'){
-  for(const [key,label] of [['arrival','Inloop'],['screening',notice.type==='date-confirmed'?'Aanvang':'Film start'],['end','Einde']])if(clean(notice.timing?.[key],80))paragraphs.push(label+': '+clean(notice.timing[key],80)+'.');
+  if(notice.type==='date-confirmed')for(const slot of confirmationTimes(notice))paragraphs.push(slot.label+': '+slot.value+(slot.caption?' · '+slot.caption:'')+'.');
+  else for(const [key,label] of [['arrival','Inloop'],['screening','Film start'],['end','Einde']])if(clean(notice.timing?.[key],80))paragraphs.push(label+': '+clean(notice.timing[key],80)+'.');
   if(notice.films?.length)paragraphs.push('Filmprogramma: '+notice.films.map(x=>clean(x)).join(' · ')+'.');
  }
  const text=['Alec Filmmaand',heading,...paragraphs,action+': '+url.href].join('\n\n');
@@ -86,12 +91,31 @@ export function renderEventNotification(notice,{participantId,origin='https://el
  const html=`<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(subject)}</title></head><body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;margin:auto;background:#fff;"><tr><td style="padding:30px 32px;font:700 13px/20px Arial,Helvetica,sans-serif;"><img src="${base.origin}/filmmaand/site/icons/interval-black-48.png" width="22" height="22" alt="" style="vertical-align:middle;margin-right:9px;border:0;">ALEC FILMMAAND</td></tr><tr><td style="padding:25px 32px 40px;"><h1 style="margin:0;font:400 44px/48px Arial,Helvetica,sans-serif;letter-spacing:-1.8px;">${escape(heading)}</h1>${paragraphs.map(p=>`<p style="margin:22px 0 0;font:15px/25px Arial,Helvetica,sans-serif;">${escape(p)}</p>`).join('')}</td></tr><tr><td bgcolor="#101010" style="padding:25px 32px;background:#101010;"><a href="${escape(url.href)}" style="font:700 13px/22px Arial,Helvetica,sans-serif;color:#fff;text-decoration:underline;">${escape(action)} ↗</a></td></tr></table></body></html>`;
  return {subject,text,html};
 }
+function confirmationSubject(value,title){
+ const weekday=new Intl.DateTimeFormat('nl-NL',{weekday:'long',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));
+ const short=title.replace(/\s+Marathon$/i,'');
+ return weekday[0].toUpperCase()+weekday.slice(1)+': '+(short.length>60?short.slice(0,57).trimEnd()+'…':short);
+}
+function confirmationTimes(notice){
+ const clock=value=>{const m=String(value||'').match(/^(?:ca\.\s*)?(\d{1,2}):(\d{2})$/);return m&&+m[1]<24&&+m[2]<60?+m[1]*60+(+m[2]):null};
+ const start=clock(clean(notice.timing?.screening,80));
+ return [['arrival','Inloop'],['screening','Aanvang'],['end','Einde']].map(([key,label])=>{
+  const raw=clean(notice.timing?.[key],80),suffix=raw.match(/^(.*) \((\+\d+) dag(?:en)?\)$/);
+  const value=suffix?suffix[1]:raw,time=clock(value);if(time===null)return {label,value:raw,caption:''};let offset=suffix?Number(suffix[2]):0;
+  // A clock after midnight is on the following day; arrival after the start clock is the previous day.
+  if(!suffix&&time!==null&&start!==null){if(key==='end'&&time<start)offset=1;if(key==='arrival'&&time>start)offset=-1;}
+  if(!Number.isSafeInteger(offset)||Math.abs(offset)>365)return {label,value:raw,caption:''};
+  const day=new Date(notice.scheduledDate+'T12:00:00Z');day.setUTCDate(day.getUTCDate()+offset);
+  const caption=time!==null?new Intl.DateTimeFormat('nl-NL',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(day).replace(/\./g,''):'';
+  return {label,value,caption};
+ }).filter(slot=>slot.value);
+}
 /** Confirmation-only presentation. The event facts and delivery contract remain unchanged. */
 function renderConfirmedScreening(notice,{base,url,subject,title,heading}){
  const day=displayDate(notice.scheduledDate);
- const slots=[['arrival','Inloop'],['screening','Aanvang'],['end','Einde']].map(([key,label])=>({label,value:clean(notice.timing?.[key],80)})).filter(slot=>slot.value).map(slot=>{const day=slot.value.match(/^(.*) \((\+\d+ dag(?:en)?)\)$/);return day?{...slot,value:day[1],day:day[2]}:slot});
+ const slots=confirmationTimes(notice);
  const films=(notice.films||[]).map(f=>clean(f)).filter(Boolean);
- const timings=slots.length?`<tr><td style="padding:0 32px 34px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="table-layout:fixed;border-top:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;"><tr>${slots.map((slot,index)=>`<td width="${Math.floor(100/slots.length)}%" valign="top" style="padding:20px ${index===slots.length-1?0:12}px 22px ${index?12:0}px;${index?'border-left:1px solid #e5e5e5;':''}"><p style="margin:0 0 9px;font:11px/16px Arial,Helvetica,sans-serif;color:#6d6d6d;">${slot.label}</p><p style="margin:0;font:400 ${slot.value.length>12?16:23}px/29px Arial,Helvetica,sans-serif;letter-spacing:-.5px;overflow-wrap:anywhere;word-break:break-word;color:#111;">${escape(slot.value)}</p>${slot.day?`<p style="margin:4px 0 0;font:11px/16px Arial,Helvetica,sans-serif;color:#6d6d6d;">${escape(slot.day)}</p>`:''}</td>`).join('')}</tr></table></td></tr>`:'';
+ const timings=slots.length?`<tr><td style="padding:0 32px 34px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="table-layout:fixed;border-top:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;"><tr>${slots.map((slot,index)=>`<td width="${Math.floor(100/slots.length)}%" valign="top" style="padding:20px ${index===slots.length-1?0:12}px 22px ${index?12:0}px;${index?'border-left:1px solid #e5e5e5;':''}"><p style="margin:0 0 9px;font:11px/16px Arial,Helvetica,sans-serif;color:#6d6d6d;">${slot.label}</p><p style="margin:0;font:400 ${slot.value.length>12?16:23}px/29px Arial,Helvetica,sans-serif;letter-spacing:-.5px;overflow-wrap:anywhere;word-break:break-word;color:#111;">${escape(slot.value)}</p>${slot.caption?`<p style="margin:5px 0 0;font:12px/18px Arial,Helvetica,sans-serif;color:#6d6d6d;white-space:nowrap;">${escape(slot.caption)}</p>`:''}</td>`).join('')}</tr></table></td></tr>`:'';
  return `<!doctype html>
 <html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(subject)}</title></head>
 <body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;">
