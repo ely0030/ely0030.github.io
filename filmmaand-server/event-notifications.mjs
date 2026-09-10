@@ -91,7 +91,8 @@ export function createEventNotifications(options={}){
   const selected=await transact(store,c=>{
    const ns=namespace(c.state),m=ns.outbox[id];if(!m||m.status!=='pending')return null;
    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now()));
-   if(m.notice.scheduledDate<today){delete ns.outbox[id];return null;}
+   const relevantDate=m.notice.type==='date-change-proposed'?m.notice.proposedDate:m.notice.scheduledDate;
+   if(relevantDate<today){delete ns.outbox[id];return null;}
    const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(m.participantId);
    // Address changes, account deletion, new opt-outs and local suppression cancel queued delivery.
    if(!p||p.email.toLowerCase()!==m.to||!policyAllows(c,p,options)){delete ns.outbox[id];return null;}
