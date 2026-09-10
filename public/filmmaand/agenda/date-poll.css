@@ -17,3 +17,6 @@
 /* Canonical preference leader, independent of the viewer's own choice. */
 #agenda .dp-day{position:relative}
 #agenda .dp-day.dp-leading::after{content:"";position:absolute;width:12px;height:10px;top:-5px;left:calc(50% - 6px);background:currentColor;clip-path:polygon(0 15%,28% 42%,50% 0,72% 42%,100% 15%,88% 85%,12% 85%);pointer-events:none}
+
+/* Short final weeks still keep all dates below their weekday labels. */
+#agenda .dp-day-slot{grid-row:2}
