@@ -29,7 +29,7 @@
   const blocked = () => !!document.querySelector('dialog[open]:not(.fm-notifications-panel),.first-visit,.account-unlock[open]') || document.body.classList.contains('has-first-visit');
   function mount() { const profile = host.querySelector('.profile-menu'); if (profile && root.nextSibling !== profile) profile.before(root); else if (!root.isConnected) host.append(root); }
   new MutationObserver(mount).observe(host, {childList: true}); mount();
-  function clearToast() { toast?.remove(); toast = null; root.classList.remove('is-arriving'); }
+  function clearToast() { toast?.remove(); toast = null; if (root.classList.contains('is-arriving')) root.classList.remove('is-arriving'); }
   function hide(focus = true) { if (panel.open) panel.close(); bell.setAttribute('aria-expanded', 'false'); if (focus && !root.hidden) bell.focus({preventScroll: true}); }
   function position() {
     const box = bell.getBoundingClientRect(), width = Math.min(460, document.documentElement.clientWidth - 24);
