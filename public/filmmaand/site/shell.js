@@ -2,3 +2,6 @@
 
 /* Local review control: never shown on the hosted site. */
 (()=>{if(!['localhost','127.0.0.1'].includes(location.hostname))return;fetch('/healthz').then(r=>r.json()).then(h=>{if(h.mailer!=='dev')return;const footer=document.querySelector('.site-footer');if(!footer)return;const b=document.createElement('button');b.type='button';b.textContent='Login opnieuw testen';b.style.cssText='font:inherit;color:inherit;background:transparent;border:1px solid #aaa;padding:8px 12px;cursor:pointer;border-radius:3px';b.onclick=async()=>{b.disabled=true;try{const r=await fetch('/filmmaand/api/auth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!r.ok)throw Error();location.assign('/filmmaand/identity/')}catch{b.disabled=false;b.textContent='Opnieuw proberen'}};footer.append(b)}).catch(()=>{});})();
+
+/* Shared private activity surface; session validation controls visibility. */
+(()=>{if(!document.querySelector('.site-shell-header')||document.querySelector('script[data-filmmaand-notifications]'))return;const css=document.createElement('link');css.rel='stylesheet';css.href='/filmmaand/site/notifications.css';document.head.append(css);const script=document.createElement('script');script.src='/filmmaand/site/notifications.js';script.dataset.filmmaandNotifications='';document.head.append(script)})();

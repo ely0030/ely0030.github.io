@@ -9,7 +9,7 @@ const days=(a,b)=>{const result=[];for(let t=Date.parse(a);t<=Date.parse(b);t+=8
 const event=(p,id)=>id==='confirmation'?p.confirmation:(p.programme||[]).find(n=>n.id===id);
 const revision=n=>n.coordinationRevision||0;
 const upcoming=(p,d,now)=>validDate(d)&&d>=localDate(now)&&d>=p.window.start&&d<=p.window.end;
-export function notice(p,n,type,now,extra={}){const id=extra.id||[type,n.id||'confirmation',revision(n),extra.proposalId||''].join(':');const log=p.coordinationEvents||=[];if(log.some(e=>e.id===id))return;log.push({id,type,planId:p.id,eventId:n.id||'confirmation',eventVersion:revision(n),occurredAt:now,scheduledDate:eventDate(n),choices:[...(n.choices||[])],timing:resolvedEventTiming(n),...extra});}
+export function notice(p,n,type,now,extra={}){const id=extra.id||[type,n.id||'confirmation',revision(n),extra.proposalId||''].join(':');const log=p.coordinationEvents||=[];if(log.some(e=>e.id===id))return;log.push({id,type,planId:p.id,eventId:n.id||'confirmation',eventVersion:revision(n),occurredAt:now,scheduledDate:eventDate(n),choices:[...(n.choices||[])],timing:resolvedEventTiming(n,p.options),...extra});}
 export function openAvailabilityPoll(p,b,{id,now}){
  if(!strict(b,['action','mode','window','choices','closesAt','programmeId'])||b.action!=='open'||b.mode!=='availability')fail(400,'date_poll','Ongeldige datumpoll.');
  if(p.datePoll?.status==='open')fail(409,'date_poll_open','Sluit eerst de huidige datumpoll.');
@@ -33,8 +33,8 @@ export function changeDate(p,a,b,{id,now,eligible,admin=false}){if(!strict(b,['a
  if(!admin||b.action!=='times')fail(403,'organizer_required','Deze ronde kan hier alleen door de beheerder van tijden worden voorzien.');
  const r=p.roundSchedule;if(b.expectedRoundId!==(p.round?.id||null))fail(409,'event_changed','De stemronde is veranderd.');if(b.eventVersion!==(r.coordinationRevision||0))fail(409,'event_changed','Deze avond is elders veranderd.');
  if(r.date<localDate(now))fail(409,'event_past','Deze avond is voorbij.');
- if(b.startsAt!==undefined||b.reminderMinutes!==undefined)fail(400,'round_timing','Pas hier alleen Aanvang en Einde aan.');
- if(!strict(b.timing,['screening','end'])||Object.values(b.timing).some(t=>typeof t!=='string'||t.length>60||/[<>\x00-\x1f]/.test(t)))fail(400,'timing','Gebruik korte tijdlabels zonder opmaak.');
+ if(b.startsAt!==undefined||b.reminderMinutes!==undefined)fail(400,'round_timing','Pas hier alleen Inloop, Aanvang en Einde aan.');
+ if(!strict(b.timing,['arrival','screening','end'])||Object.values(b.timing).some(t=>typeof t!=='string'||t.length>60||/[<>\x00-\x1f]/.test(t)))fail(400,'timing','Gebruik korte tijdlabels zonder opmaak.');
  r.timing={...b.timing};r.coordinationRevision=(r.coordinationRevision||0)+1;
  return {eventId:b.eventId,eventVersion:r.coordinationRevision};
  }const n=current(p,b);if(['propose','times'].includes(b.action)&&eventDate(n)<localDate(now))fail(409,'event_past','Deze avond is voorbij.');

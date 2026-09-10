@@ -1,3 +1,4 @@
+import {captureActivity,commitActivity,notificationRequest} from './account-notifications.mjs';
 import {createPasswords,admitPasswordAttempt,passwordWork} from './runtime/planning/auth/passwords.mjs';
 import {createHash} from 'node:crypto';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
@@ -92,6 +93,8 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       c.state.format=2;headers['Set-Cookie']=router.setCookie(result.token);return send(200,{participant:result.participant});
      }
      if(path.startsWith('/api/auth/'))return await router.handle(req,{path,method,body,headers,send});
+     const notifications=path.match(/^\/api\/notifications(?:\/(read|preferences))?$/);
+     if(notifications){const account=auth.authenticate(router.credential(req)?.token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');if(method!=='GET')router.csrf(req);return send(200,notificationRequest(c,account.participantId,{method,part:notifications[1],body,url,at:now?now():new Date().toISOString()}));}
      const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|coordination))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
      const [,id,part]=match,cred=router.credential(req);
@@ -102,15 +105,17 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.
      if(!['setRound','scheduleRound','planNight','confirm','manageDatePoll','manageCoordination'].includes(fn)){const account=auth.authenticate(token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');}
+     const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
+     const committed=async operation=>{const value=await operation;commitActivity(c,activityBefore,activityAt);return value;};
      if(organizerCookie){
       const account=organizerAccount();
       if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');
       const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
       // A receipt belongs to the validated account, never the shared admin actor alone.
       const scoped='organizer-'+createHash('sha256').update(JSON.stringify([account.participantId,key])).digest('hex');
-      return send(200,await service[fn](id,adminToken,scoped,body));
+      return send(200,await committed(service[fn](id,adminToken,scoped,body)));
      }
-     return send(200,fn==='uploadImage'?await service[fn](id,token,body):await service[fn](id,token,req.headers['idempotency-key'],body));
+     return send(200,await committed(fn==='uploadImage'?service[fn](id,token,body):service[fn](id,token,req.headers['idempotency-key'],body)));
     }catch(e){if(!e.status)throw e;if(e.details?.clear&&router.credential(req)?.transport==='cookie')headers['Set-Cookie']=router.clearCookie();return send(e.status,{error:{code:e.code,message:e.message,details:e.details}})}finally{if(queueEvents)await queueEvents(c)}
    });
    if(result.error)throw Object.assign(Error(result.error.message),result.error);

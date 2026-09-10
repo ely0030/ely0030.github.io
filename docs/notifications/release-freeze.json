@@ -1,0 +1,26 @@
+{
+  "base": "abc2f27e6f2169f3c6aa22da906b8af4a9d79639",
+  "files": {
+    "filmmaand-server/api.mjs": "80c68321a55fc5cea3aa8042a0b75185f2ce4982a31eaf721b464ec2dd525f84",
+    "filmmaand-server/date-coordination-tick.mjs": "6b96cb2ded3a4a3f3af683b05b19ac15b8cf33277f87660de71466e14f66c63f",
+    "filmmaand-server/event-notifications.mjs": "bfc1566b38b37d2febd274af2a4c5cef8097c2d442641c241d295b449bf87c77",
+    "filmmaand-server/event-notifications.test.mjs": "fbab111b24d18f2cf22b6176cc2c45e6a2cf3689d7f2e32d8bc32467c544f970",
+    "filmmaand-server/event-timing.test.mjs": "413ee36c47e12d5f1d8490d8e2108ac0e7d9a7d4ffc87d489f4aed9057e174c5",
+    "filmmaand-server/runtime/planning/date-coordination.mjs": "b37bb335916669af9bb223d612fcb5b5d739f70e0b376fe0b88555a3843fc3b4",
+    "filmmaand-server/runtime/planning/event-timing.mjs": "ad0878540aeb350cd186eac7553d9ff85d40d9c95a5f98241bb63de5ac0d2554",
+    "filmmaand-server/runtime/planning/service.mjs": "8f8c852295841c9e0343f1a6887a93b38f260d2d22ceba2a0ec02d382fc12fbc",
+    "public/filmmaand/agenda/agenda.js": "953914d0001acd2730d5d5d7f568b8959b471520ebc4f48117426e0a34381a0f",
+    "public/filmmaand/agenda/date-coordination.js": "0194060862429a9633579e426b4b791a0e9f475f61ba6430bb8d84a049edaecd",
+    "public/filmmaand/beheer/beheer.js": "0909552d035cccf724871fb8c8881055e2717e8ad0751e7851de8c31bfd894dc",
+    "public/filmmaand/site/shell.js": "c8d88c5af01dec27b3116c4790c3edf127058b7a2a362ddbb9a6de5d0e97b6d7",
+    "filmmaand-server/account-notifications.mjs": "e693be128c03333ff6bb8445f13686cb4f23e83dee19c0824b8e05eed1f969f8",
+    "filmmaand-server/account-notifications.test.mjs": "78615c7c768780184d98813dc91d61ea0e5d2f7a6345ec6da43daceb15c3fd4b",
+    "public/filmmaand/site/notifications.js": "78b27834de8a87c9e5c0213bd812b9cba05d7a86a42904fef9acdf458dca40b7",
+    "public/filmmaand/site/notifications.css": "6d244198a362accc4f5ed4a6ec544e7df831169fa161d302e065962c7fb61b30"
+  },
+  "focusedTests": 39,
+  "build": "PASS",
+  "browser": "Chromium390 emulation",
+  "capturedEmails": 6,
+  "realTestEmails": 0
+}
