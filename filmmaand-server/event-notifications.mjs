@@ -63,7 +63,7 @@ export function renderEventNotification(notice,{participantId,origin='https://el
  case 'reminder':heading='Tot bij de film.';subject='Filmmaand · Herinnering: '+title;paragraphs=[title+' staat gepland op '+day+'.'];break;
  }
  if(notice.type!=='date-change-proposed'){
-  for(const [key,label] of [['arrival','Inloop'],['screening',notice.type==='date-confirmed'?'Aanvang':'Film start'],['end','Einde']])if(clean(notice.timing?.[key],80))paragraphs.push(label+': '+clean(notice.timing[key],80)+'.');
+  for(const [key,label] of [['arrival','Inloop'],['screening',notice.type==='date-confirmed'?'Aanvang':'Film start'],['end','Einde']])if(!(notice.type==='date-confirmed'&&key==='arrival')&&clean(notice.timing?.[key],80))paragraphs.push(label+': '+clean(notice.timing[key],80)+'.');
   if(notice.films?.length)paragraphs.push('Filmprogramma: '+notice.films.map(x=>clean(x)).join(' · ')+'.');
  }
  const text=['Alec Filmmaand',heading,...paragraphs,action+': '+url.href].join('\n\n');
@@ -73,10 +73,8 @@ export function renderEventNotification(notice,{participantId,origin='https://el
 }
 /** Confirmation-only presentation. The event facts and delivery contract remain unchanged. */
 function renderConfirmedScreening(notice,{base,url,subject,title,heading}){
- const when=new Date(notice.scheduledDate+'T12:00:00Z');
- const format=options=>new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',...options}).format(when);
- const weekday=format({weekday:'long'}),monthDay=format({day:'numeric',month:'long'}),year=format({year:'numeric'});
- const slots=[['arrival','Inloop'],['screening','Aanvang'],['end','Einde']].map(([key,label])=>({label,value:clean(notice.timing?.[key],80)})).filter(slot=>slot.value);
+ const day=displayDate(notice.scheduledDate);
+ const slots=[['screening','Aanvang'],['end','Einde']].map(([key,label])=>({label,value:clean(notice.timing?.[key],80)})).filter(slot=>slot.value);
  const films=(notice.films||[]).map(f=>clean(f)).filter(Boolean);
  const timings=slots.length?`<tr><td style="padding:0 32px 34px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="table-layout:fixed;border-top:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;"><tr>${slots.map((slot,index)=>`<td width="${Math.floor(100/slots.length)}%" valign="top" style="padding:20px ${index===slots.length-1?0:12}px 22px ${index?12:0}px;${index?'border-left:1px solid #e5e5e5;':''}"><p style="margin:0 0 9px;font:11px/16px Arial,Helvetica,sans-serif;color:#6d6d6d;">${slot.label}</p><p style="margin:0;font:400 ${slot.value.length>12?16:23}px/29px Arial,Helvetica,sans-serif;letter-spacing:-.5px;overflow-wrap:anywhere;word-break:break-word;color:#111;">${escape(slot.value)}</p></td>`).join('')}</tr></table></td></tr>`:'';
  return `<!doctype html>
@@ -85,8 +83,8 @@ function renderConfirmedScreening(notice,{base,url,subject,title,heading}){
 <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td align="center">
 <!--[if mso]><table role="presentation" width="600" border="0" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;margin:auto;background:#fff;color:#111;">
-<tr><td style="padding:30px 32px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-bottom:1px solid #111;"><tr><td style="padding:0 0 23px;font:700 13px/22px Arial,Helvetica,sans-serif;letter-spacing:.2px;"><img src="${base.origin}/filmmaand/site/icons/interval-black-48.png" width="22" height="22" alt="" style="width:22px;height:22px;vertical-align:middle;margin-right:9px;border:0;">ALEC FILMMAAND</td></tr></table></td></tr>
-<tr><td style="padding:29px 32px 0;"><p style="margin:0;font:400 14px/22px Arial,Helvetica,sans-serif;color:#555;">${escape(heading)}</p><p style="margin:28px 0 10px;font:11px/18px Arial,Helvetica,sans-serif;letter-spacing:1.4px;text-transform:uppercase;color:#555;">${escape(weekday)} &nbsp;·&nbsp; ${escape(year)}</p><h1 style="margin:0;font:400 43px/49px Georgia,'Times New Roman',serif;letter-spacing:-1.5px;color:#111;">${escape(monthDay)}</h1></td></tr>
+<tr><td style="padding:30px 32px;font:700 13px/20px Arial,Helvetica,sans-serif;"><img src="${base.origin}/filmmaand/site/icons/interval-black-48.png" width="22" height="22" alt="" style="vertical-align:middle;margin-right:9px;border:0;">ALEC FILMMAAND</td></tr>
+<tr><td style="padding:25px 32px 0;"><h1 style="margin:0;font:400 44px/48px Arial,Helvetica,sans-serif;letter-spacing:-1.8px;">${escape(heading)}</h1><p style="margin:22px 0 0;font:15px/25px Arial,Helvetica,sans-serif;">${escape(day)}</p></td></tr>
 <tr><td style="padding:27px 32px 29px;"><h2 style="margin:0;font:400 21px/28px Arial,Helvetica,sans-serif;letter-spacing:-.4px;color:#111;">${escape(title)}</h2>${films.length?`<p style="margin:7px 0 0;font:15px/24px Arial,Helvetica,sans-serif;color:#666;">${films.map(escape).join(' · ')}</p>`:''}</td></tr>
 ${timings}
 <tr><td bgcolor="#101010" style="background:#101010;"><a href="${escape(url.href)}" style="display:block;padding:23px 32px;font:700 13px/22px Arial,Helvetica,sans-serif;color:#fff;text-decoration:none;mso-padding-alt:23px 32px;">Zie programma &nbsp;↗</a></td></tr>
