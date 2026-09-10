@@ -1,3 +1,9 @@
+# Active Filmmaand project — read first
+
+This repository is a live site, not the starter template. Start with `docs/MAC-CODEX.md` and README.md for current source/deployment paths. Use Node24 for local Filmmaand work; `npm run setup:filmmaand`, then `npm run dev:filmmaand` for isolated synthetic data. `npm run dev:site` is Astro-only.
+
+`public/filmmaand/agenda/` is canonical Programme source; `public/filmmaand/programma/` is generated. Main pushes deploy through Netlify; GitHub Pages does not host the backend. Do not recreate WSL paths or depend on old localhost artifact servers. Do not commit credentials/private state or reset live accounts. Existing user authorization governs changes and deployment; no repetitive approval gates. Keep checks proportionate and coordinate one main-branch deployment operator when working concurrently.
+
 # Repository Guidelines
 
 ## Project Structure & Module Organization

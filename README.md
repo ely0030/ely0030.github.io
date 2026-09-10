@@ -1,99 +1,31 @@
-# Astro Starter Kit: Blog
+# ely0030.xyz / Filmmaand
+
+Production: https://ely0030.xyz/filmmaand/programma/
+
+Filmmaand is the shared film-night app on the personal Astro site. GitHub `main` is the source of truth; the connected Netlify site deploys pushed changes automatically. GitHub Pages also has a legacy workflow, but cannot run Filmmaand’s API.
+
+**Continuing on a Mac or a fresh machine: [MAC-CODEX.md](docs/MAC-CODEX.md).** Agents should read [AGENTS.md](AGENTS.md) before editing.
+
+## Quick local setup
+
+Install Git and Node 24 first. If using nvm, run `nvm install && nvm use` in this repo.
 
 ```sh
-npm create astro@latest -- --template blog
+npm run setup:filmmaand
+npm run dev:filmmaand
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/blog)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/blog)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/blog/devcontainer.json)
+Open http://localhost:4412/filmmaand/programma/ or http://localhost:4412/filmmaand/beheer/ . This is an isolated synthetic account with captured mail, **not your live account**. Sample state resets each time this developer server starts. No production credentials are needed.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+For the Astro homepage/blog, use `npm run dev:site` (normally http://localhost:4321/). Astro alone does not provide the Filmmaand API. The older `npm run dev` launches legacy blog editor tooling; use the explicit commands above for this handoff.
 
-![blog](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+## Source map
 
-Features:
+- `public/filmmaand/`: real app HTML, JS, CSS, fonts and images.
+- `public/filmmaand/agenda/`: canonical Programme source. `/programma/` is a generated route; do not edit generated copies.
+- `filmmaand-server/`: API, auth, planning, strong-CAS storage and notifications.
+- `netlify/functions/`: HTTP/scheduled entrypoints; `netlify.toml` describes deployment.
+- `filmmaand-data/`: compressed catalogue shipped in Git, expanded by setup/build.
+- `src/`: personal site’s Astro pages/content.
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-├── public/
-├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
-
-## 📌 Custom Post Marks (iOS Reminders‑style)
-
-Give any blog post coloured exclamation/question marks (shown just left of the bullet on the home page) by adding 3 optional front‑matter fields:
-
-```yaml
-markType:  'exclamation' | 'question'   # Which symbol to display
-markCount: 1 | 2 | 3                    # How many symbols (max 3)
-markColor: 'grey' | 'orange' | 'blue'   # Colour of the symbol
-```
-
-Example:
-
-```md
----
-title: "CSS Best Practices"
-pubDate: "2023-11-12"
-description: "Essential CSS techniques"
-markType: 'exclamation'
-markCount: 2
-markColor: 'orange'
----
-```
-
-The marks logic lives in:
-
-- `src/content.config.ts` – declares the new front‑matter fields.
-- `src/pages/index.astro` – renders the repeated "!" or "?" ahead of each title.
-- `src/styles/global.css` – colours & positions the marks and restores the default bullet via a `::before` pseudo‑element.
-
-Updating colours or icons is just a matter of tweaking the enum arrays in `content.config.ts` and the matching CSS classes.
+Build with `npm run build`. Use focused checks for changed behavior, not the entire test suite for every visual edit. Live data, credentials, resets, emails and operator commands are separate from deploying code: read the handoff before using them.

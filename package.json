@@ -10,7 +10,10 @@
     "build": "node scripts/prepare-filmmaand.mjs && npm --prefix filmmaand-server ci --omit=dev --no-audit --no-fund && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test:filmmaand": "node --test filmmaand-server/*.test.mjs filmmaand-server/operator/*.test.mjs"
+    "test:filmmaand": "node --test filmmaand-server/*.test.mjs filmmaand-server/operator/*.test.mjs",
+    "setup:filmmaand": "node scripts/setup-filmmaand.mjs",
+    "dev:filmmaand": "node qa/date-coordination/serve.mjs",
+    "dev:site": "astro dev --host 127.0.0.1"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.2.4",

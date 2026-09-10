@@ -130,3 +130,8 @@ filmmaand-server/node_modules/
 
 # Generated canonical programme document
 /public/filmmaand/program/
+
+# Portable developer setup: generated route and local-only secrets
+/public/filmmaand/programma/
+.env.*
+!.env.example
