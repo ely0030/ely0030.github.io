@@ -1,0 +1,51 @@
+(node:208052) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real API writes → file persisted deadline decision → postcommit captured notification; concurrent tick/replay once (130.018621ms)
+✔ actual API move consent and organizer manual time preserve date availability; stale proposal rejected (60.288927ms)
+✔ availability, favourites, chronological tie, unknown and legacy preservation (28.082562ms)
+✔ deadline commits once, zero positive needs organizer, no legacy auto-finalization (4.161964ms)
+✔ current attendees must consent, refusal blocks, new joiner required and cancellation no longer blocks (3.539869ms)
+✔ zero attendees cannot auto-move; explicit organizer override, cancellation and version guards (1.910716ms)
+✔ manual time labels stay manual; reminder off until explicitly configured and only once (1.602597ms)
+✔ pending move can resolve beyond original date, but never after proposed date (1.497207ms)
+(node:208059) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ independent votes, public ties/self, own revisions and exact replay after close (60.226717ms)
+✔ invalid dates/anonymous/stale poll rejected; deleted profiles excluded; new poll resets own projection (10.596503ms)
+✔ explicit creation/close never create programme or round dates (16.180813ms)
+(node:208060) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ queue happens inside state CAS and delivery only sees committed notices (49.441913ms)
+✔ failed state commit cannot emit messages (7.981723ms)
+✔ concurrent drains and retries deliver once per event/member (44.247797ms)
+✔ disabled, missing activation and preactivation logs never create a backlog (10.939125ms)
+✔ unverified, opted-out, suppressed, excluded and demo accounts are not eligible (13.826267ms)
+✔ recipient membership, address and opt-out are rechecked immediately before claim (29.29507ms)
+✔ registration allow-list is enforced for notifications (5.202689ms)
+✔ timeout and lost acknowledgement cannot automatically duplicate send (4.635068ms)
+✔ lost acceptance persistence keeps committed attempt fence (6.732517ms)
+✔ newer date decision cancels obsolete queued notices, including same-clock versions (11.841527ms)
+✔ template includes only known manual times and chosen films, escaping untrusted titles (0.707827ms)
+✔ proposal distinguishes required consent from other group members and leaves original date (0.830155ms)
+✔ reminders are sent only when the scheduler explicitly emits a committed reminder (10.263396ms)
+✔ Mailgun uses existing EU config, sender, disabled tracking and required TLS with captured fetch (39.035384ms)
+✔ shared mail quota defers notifications without consuming their attempt (7.339241ms)
+✔ malformed committed dates are ignored without breaking the state transaction (1.528678ms)
+✔ notifications delayed beyond the event calendar day are discarded (3.777938ms)
+✔ withdrawn, completed, stale or missing proposals never dispatch old agreement requests (18.784928ms)
+✔ current proposal roster determines recipient consent wording (10.461628ms)
+✔ removed Programme event or newer canonical revision cancels queued notice without relying on log (8.253875ms)
+✔ live pending proposal survives its old date while proposed date is still future (25.870105ms)
+✔ empty current consent roster does not fall back to creation snapshot (11.221106ms)
+(node:208066) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ organizer defaults deny; validated cookie, CSRF and generation gate every mutation (100.439165ms)
+✔ receipt replay is account-bound; revoke/expiry/reset reject before receipt, bearer admin remains separate (45.023271ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 539.702217

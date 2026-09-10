@@ -11,8 +11,8 @@ import {createImages} from './images.mjs';
 const error=(status,code,message)=>Object.assign(Error(message),{status,code});
 const rewrite=(value,key='')=>typeof value==='string'&&['url','poster','backdrop','image','posterFull','metadataPoster'].includes(key)&&value.startsWith('/planning-api/images/')?'/filmmaand/api/images/'+value.slice('/planning-api/images/'.length):Array.isArray(value)?value.map(v=>rewrite(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v,k)])):value;
 const json=(status,body,headers={})=>new Response(status===204?null:JSON.stringify(rewrite(body)),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
-const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:date-poll':'voteDatePoll','POST:date-poll':'manageDatePoll','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
-export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,now,avatars=loadAvatarOptions()}){
+const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:coordination':'coordinate','POST:coordination':'manageCoordination','PUT:date-poll':'voteDatePoll','POST:date-poll':'manageDatePoll','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
+export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,queueEvents,now,avatars=loadAvatarOptions()}){
  return async function handle(request,context={}){
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
   if(!url.pathname.startsWith('/filmmaand/api/'))return json(404,{error:{code:'not_found'}});
@@ -77,7 +77,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      // Logout remains available to old documents. Organizer mutations keep their separate secret contract.
      const readOnly=['GET','HEAD'].includes(method);
      const logout=(method==='POST'&&path==='/api/auth/logout')||(method==='DELETE'&&path==='/api/auth/session');
-     const organizer=method==='POST'&&/^\/api\/plans\/[a-z0-9-]+\/(round|round-date|programme|confirmation|date-poll)$/.test(path);
+     const organizer=method==='POST'&&/^\/api\/plans\/[a-z0-9-]+\/(round|round-date|programme|confirmation|date-poll|coordination)$/.test(path);
      const organizerCookie=organizer&&router.credential(req)?.transport==='cookie';
      if(!readOnly&&!logout&&(!organizer||organizerCookie)&&(organizerCookie||generation!=='0')&&req.headers['x-filmmaand-reset-generation']!==generation){
       return send(409,{error:{code:'reset_generation',message:'De site is opnieuw voorbereid. Vernieuw om verder te gaan.',details:{resetGeneration:generation}}});
@@ -92,16 +92,16 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       c.state.format=2;headers['Set-Cookie']=router.setCookie(result.token);return send(200,{participant:result.participant});
      }
      if(path.startsWith('/api/auth/'))return await router.handle(req,{path,method,body,headers,send});
-     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll))?$/);
+     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|coordination))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
      const [,id,part]=match,cred=router.credential(req);
      if(cred?.transport==='cookie'&&method!=='GET')router.csrf(req);
      const token=cred?.token??(req.headers.authorization||'').replace(/^Bearer /,'');
      const service=createPlanningService({store:c.plans,adminToken,movieCatalogue,programmeMovies,imageStore:createImages(blobs,c.state),identity:auth,now});
-     if(method==='GET'){const fn={response:'own',profile:'getProfile',vote:'voteView',proposals:'proposals','date-poll':'getDatePoll'}[part]||'get';const result=await service[fn](id,token||null);if(fn==='get'){const fixture=c.state.plans[id]?.data.fixtureGroups?.['social-friends-v1'];if(fixture)result.demo={active:true,label:'Voorbeeldgegevens · fictieve deelnemers',participants:fixture.actors.length}}return send(200,result)}
+     if(method==='GET'){const fn={response:'own',profile:'getProfile',vote:'voteView',proposals:'proposals','date-poll':'getDatePoll',coordination:'coordination'}[part]||'get';const result=await service[fn](id,token||null);if(fn==='get'){const fixture=c.state.plans[id]?.data.fixtureGroups?.['social-friends-v1'];if(fixture)result.demo={active:true,label:'Voorbeeldgegevens · fictieve deelnemers',participants:fixture.actors.length}}return send(200,result)}
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.
-     if(!['setRound','scheduleRound','planNight','confirm','manageDatePoll'].includes(fn)){const account=auth.authenticate(token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');}
+     if(!['setRound','scheduleRound','planNight','confirm','manageDatePoll','manageCoordination'].includes(fn)){const account=auth.authenticate(token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');}
      if(organizerCookie){
       const account=organizerAccount();
       if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');
@@ -111,7 +111,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       return send(200,await service[fn](id,adminToken,scoped,body));
      }
      return send(200,fn==='uploadImage'?await service[fn](id,token,body):await service[fn](id,token,req.headers['idempotency-key'],body));
-    }catch(e){if(!e.status)throw e;if(e.details?.clear&&router.credential(req)?.transport==='cookie')headers['Set-Cookie']=router.clearCookie();return send(e.status,{error:{code:e.code,message:e.message,details:e.details}})}
+    }catch(e){if(!e.status)throw e;if(e.details?.clear&&router.credential(req)?.transport==='cookie')headers['Set-Cookie']=router.clearCookie();return send(e.status,{error:{code:e.code,message:e.message,details:e.details}})}finally{if(queueEvents)await queueEvents(c)}
    });
    if(result.error)throw Object.assign(Error(result.error.message),result.error);
    const response=result.value;

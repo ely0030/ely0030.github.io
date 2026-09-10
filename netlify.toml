@@ -43,3 +43,8 @@
   to = "/filmmaand/programma/:splat"
   status = 301
   force = true
+
+[functions.date-coordination]
+  node_bundler = "nft"
+  external_node_modules = ["sharp"]
+  included_files = ["filmmaand-server/**", "!filmmaand-server/*.test.mjs", "!filmmaand-server/operator/**", "!filmmaand-server/node_modules/@img/*musl*/**", "!filmmaand-server/node_modules/@img/sharp-wasm32/**"]

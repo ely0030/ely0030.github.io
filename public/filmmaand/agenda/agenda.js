@@ -14,7 +14,7 @@ const guest=()=>!!window.filmmaandRequireAccount&&!(window.filmmaandSession?.par
 const DEMO=false;
 // Weekly date planning explicitly revealed after preview approval.
 const DATE_POLL_VISIBLE=true;
-let datePollController=null;if(DATE_POLL_VISIBLE){const datePollCss=document.createElement('link');datePollCss.rel='stylesheet';datePollCss.href='/filmmaand/agenda/date-poll.css';document.head.append(datePollCss);const datePollScript=document.createElement('script');datePollScript.src='/filmmaand/agenda/date-poll.js';datePollScript.onload=()=>{datePollController=window.createProgrammeDatePoll({api,onChange:()=>refresh(true)});if(plan&&next)datePollController.update(plan,next,filter)};document.head.append(datePollScript);}
+let datePollController=null;if(DATE_POLL_VISIBLE){const datePollCss=document.createElement('link');datePollCss.rel='stylesheet';datePollCss.href='/filmmaand/agenda/date-poll.css';document.head.append(datePollCss);const datePollScript=document.createElement('script');datePollScript.src='/filmmaand/agenda/date-poll.js';datePollScript.onload=()=>{datePollController=window.createProgrammeDatePoll({api,onChange:()=>refresh(true)});if(plan&&next)datePollController.update(plan,next,filter)};const coordinationScript=document.createElement('script');coordinationScript.src='/filmmaand/agenda/date-coordination.js';coordinationScript.onload=()=>document.head.append(datePollScript);document.head.append(coordinationScript);}
 
 const demoPeople=[['Sanne',7],['Joris',9],['Femke',12],['Tim',13],['Noor',8],['Bram',6]];
 const dayAfter=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
