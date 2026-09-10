@@ -15,4 +15,5 @@
 @media(max-width:650px){:is(#agenda,body) .dc-days{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}:is(#agenda,body) .dc-coordination{padding:0 12px;box-sizing:border-box}}
 
 /* Canonical preference leader, independent of the viewer's own choice. */
-#agenda .dp-day.dp-leading{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+#agenda .dp-day{position:relative}
+#agenda .dp-day.dp-leading::after{content:"";position:absolute;width:12px;height:10px;top:-5px;left:calc(50% - 6px);background:currentColor;clip-path:polygon(0 15%,28% 42%,50% 0,72% 42%,100% 15%,88% 85%,12% 85%);pointer-events:none}
