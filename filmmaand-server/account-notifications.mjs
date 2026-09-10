@@ -3,8 +3,12 @@ import {createHash} from 'node:crypto';
 import {rankedSelection,roundLifecycle,frozenResult} from './runtime/planning/round-lifecycle.mjs';
 const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const DAY=86400000, clean=v=>String(v||'').replace(/[\u0000-\u001f]/g,' ').slice(0,180);
+// A recommendation becomes genuine at the first crossing of three distinct likes
+// from people other than the suggester. The durable marker makes that crossing
+// once-only for a film within its theme, even after unlike/re-like activity.
+export const POPULARITY_THRESHOLD=3;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-const ns=c=>c.state.accountNotifications||={version:1,accounts:{},baselines:{},mailIntents:{}};
+const ns=c=>{const state=c.state.accountNotifications||={version:1,accounts:{},baselines:{},mailIntents:{}};state.recommendations||={};return state;};
 const canonical=(p,a)=>p.claimedBy?.[a]||a;
 function owner(p,o){for(const [key,r] of Object.entries(p.receipts||{})){const i=key.indexOf(':'),a=key.slice(0,i),k=key.slice(i+1);if(r.result?.option?.id===o.id&&o.id==='suggestion-'+createHash('sha256').update(a+':'+k).digest('hex').slice(0,20))return canonical(p,a);}return null;}
 export function activityProjection(p,at){
@@ -22,17 +26,21 @@ export function commitActivity(c,before,at,{scheduled=false}={}){
   const p=row.data,after=activityProjection(p,at),prior=structuredClone(scheduled?n.baselines[planId]:before[planId]);const stored=n.baselines[planId];n.baselines[planId]=after;if(!prior)continue;
   if(stored?.round.id===prior.round.id&&stored.round.status==='open'&&prior.round.status==='closed')prior.round=stored.round;
   const title=id=>clean(p.options.find(o=>o.id===id)?.title||'Een film'),titles=ids=>ids.map(title).join(' · '),roundId=after.round.id;
-  function emit(type,key,text,{actorId=null,recipient=null,href='/filmmaand/films/',count=1,group=true}={}){
+  function emit(type,key,text,{actorId=null,recipient=null,recipients=null,excludeRecipients=null,href='/filmmaand/films/',count=1,group=true}={}){
    const person=people.find(p=>'p_'+p.id===actorId),actor=person?{name:clean(person.name),avatarId:person.avatar_id}:null;
-   for(const person of people){if(recipient&&recipient!=='p_'+person.id||actorId==='p_'+person.id)continue;const account=n.accounts[person.id]||={items:[],importantActivityEmail:true};retain(account,at);const groupKey=hash([planId,type,key]),old=account.items.find(i=>i.groupKey===groupKey&&(type==='suggestion-liked'||Date.parse(at)-Date.parse(i.updatedAt)<10*60*1000));
+   for(const person of people){const personId='p_'+person.id;if(recipient&&recipient!==personId||recipients&&!recipients.has(personId)||excludeRecipients?.has(personId)||actorId===personId)continue;const account=n.accounts[person.id]||={items:[],importantActivityEmail:true};retain(account,at);const groupKey=hash([planId,type,key]),old=account.items.find(i=>i.groupKey===groupKey&&(type==='suggestion-liked'||Date.parse(at)-Date.parse(i.updatedAt)<10*60*1000));
     if(group&&old){old.text=clean(text);old.href=href;old.actor=actor;old.updatedAt=new Date(Math.max(Date.parse(at),Date.parse(old.updatedAt)+1)).toISOString();old.readAt=null;old.count=type==='suggestion-liked'?old.count+count:count;if(type==='suggestion-liked')old.text=clean(text.replace('een hartje.',old.count+' keer een hartje.'));}
     else account.items.push({id:hash([groupKey,at,p.version]),groupKey,type,text:clean(text),href,actor,count,createdAt:at,updatedAt:at,readAt:null});retain(account,at);
    }
   }
+  const recommendedRecipients=new Set();
   for(const o of after.suggestions){if(!prior.suggestions.some(x=>x.id===o.id)&&o.owner)emit('film-suggested',o.id,title(o.id)+' is voorgesteld.',{actorId:o.owner,group:false,href:'/filmmaand/films/?film='+encodeURIComponent(o.id)});
-   const likers=Object.entries(after.likes).filter(([a,ids])=>a!==o.owner&&ids.includes(o.id)&&!(prior.likes[a]||[]).includes(o.id));if(o.owner&&likers.length)emit('suggestion-liked',o.id,'Je voorstel '+title(o.id)+' kreeg een hartje.',{recipient:o.owner,actorId:likers.at(-1)[0],count:likers.length,href:'/filmmaand/films/?film='+encodeURIComponent(o.id)});}
-  const entered=after.entries.filter(id=>!prior.entries.includes(id));if(entered.length)emit('leaderboard-entry',roundId,titles(entered)+' staat nu in de top voor de volgende ronde.',{href:entered.length===1?'/filmmaand/films/?film='+encodeURIComponent(entered[0]):'/filmmaand/films/'});
-  if(!same(after.numberOne,prior.numberOne))emit('next-leader',roundId,after.numberOne.length>1?'Gedeeld bovenaan voor de volgende ronde: '+titles(after.numberOne):after.numberOne.length?titles(after.numberOne)+' staat bovenaan voor de volgende ronde.':'Er is nog geen koploper voor de volgende ronde.');
+   const likers=Object.entries(after.likes).filter(([a,ids])=>a!==o.owner&&ids.includes(o.id)&&!(prior.likes[a]||[]).includes(o.id));if(o.owner&&likers.length)emit('suggestion-liked',o.id,'Je voorstel '+title(o.id)+' kreeg een hartje.',{recipient:o.owner,actorId:likers.at(-1)[0],count:likers.length,href:'/filmmaand/films/?film='+encodeURIComponent(o.id)});
+   if(o.owner){const recommendationKey=hash([planId,o.id]),otherLikes=Object.entries(after.likes).filter(([a,ids])=>a!==o.owner&&ids.includes(o.id)).map(([a])=>a),priorOtherLikes=Object.entries(prior.likes).filter(([a,ids])=>a!==o.owner&&ids.includes(o.id)).map(([a])=>a);
+    if(!n.recommendations[recommendationKey]&&priorOtherLikes.length<POPULARITY_THRESHOLD&&otherLikes.length>=POPULARITY_THRESHOLD){const recipients=new Set(people.map(person=>'p_'+person.id).filter(id=>id!==o.owner&&!otherLikes.includes(id)));n.recommendations[recommendationKey]={planId,optionId:o.id,occurredAt:at};for(const id of recipients)recommendedRecipients.add(id);emit('popular-suggestion',o.id,title(o.id)+' kreeg '+otherLikes.length+' hartjes. Misschien iets voor jou?',{recipients,group:false,href:'/filmmaand/films/?film='+encodeURIComponent(o.id)});}
+    else if(priorOtherLikes.length>=POPULARITY_THRESHOLD)n.recommendations[recommendationKey]||={planId,optionId:o.id,occurredAt:at,baseline:true};}}
+  const entered=after.entries.filter(id=>!prior.entries.includes(id));if(entered.length)emit('leaderboard-entry',roundId,titles(entered)+' staat nu in de top voor de volgende ronde.',{excludeRecipients:recommendedRecipients,href:entered.length===1?'/filmmaand/films/?film='+encodeURIComponent(entered[0]):'/filmmaand/films/'});
+  if(!same(after.numberOne,prior.numberOne))emit('next-leader',roundId,after.numberOne.length>1?'Gedeeld bovenaan voor de volgende ronde: '+titles(after.numberOne):after.numberOne.length?titles(after.numberOne)+' staat bovenaan voor de volgende ronde.':'Er is nog geen koploper voor de volgende ronde.',{excludeRecipients:recommendedRecipients});
   if(after.round.id===prior.round.id&&after.round.status==='open'&&!same(after.leaders,prior.leaders))emit('vote-leader',roundId,after.leaders.length>1?'Gelijke stand in de stemming: '+titles(after.leaders):after.leaders.length?titles(after.leaders)+' gaat aan kop in de stemming.':'De stemming heeft nog geen koploper.',{href:'/filmmaand/stemmen/'});
   let mailType,text;
   if(after.round.id!==prior.round.id&&after.round.status==='open'){mailType='round-opened';text='Een nieuwe stemronde is open. Kies je film.';}

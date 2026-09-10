@@ -8,8 +8,8 @@ import {createEventNotifications} from './event-notifications.mjs';
 import {runCoordinationTick} from './date-coordination-tick.mjs';
 const NOW='2026-09-10T12:00:00.000Z',origin='https://ely0030.xyz';
 class Memory{data=emptyState();etag=1;async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}}async setJSON(k,d,{onlyIfMatch}){if(this.fail)throw Error('failed commit');if(this.conflict){this.conflict=false;this.etag++;return {modified:false}}if(onlyIfMatch!==String(this.etag))return {modified:false};this.data=structuredClone(d);this.etag++;return {modified:true}}}
-async function fixture(){let at=NOW;const store=new Memory(),c=openState(store.data),tokens={},messages=[];for(const [i,id] of ['one','two','three'].entries())c.authStore.db.prepare('INSERT INTO participants(id,email,created_at,onboarded,name,avatar_id) VALUES(?,?,?,?,?,?)').run(id,'captured.'+id+'@gmail.com',NOW,1,id,i);
- const auth=createAuthService({store:c.authStore,avatars:[],now:()=>at});for(const id of ['one','two','three'])tokens[id]=auth.issueSession(id,'code').token;
+async function fixture({people=['one','two','three']}={}){let at=NOW;const store=new Memory(),c=openState(store.data),tokens={},messages=[];for(const [i,id] of people.entries())c.authStore.db.prepare('INSERT INTO participants(id,email,created_at,onboarded,name,avatar_id) VALUES(?,?,?,?,?,?)').run(id,'captured.'+id+'@gmail.com',NOW,1,id,i);
+ const auth=createAuthService({store:c.authStore,avatars:[],now:()=>at});for(const id of people)tokens[id]=auth.issueSession(id,'code').token;
  const svc=createPlanningService({store:c.plans,adminToken:'admin',now:()=>at});await svc.seed({id:'group',title:'Film',window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c','d','e','f'].map(id=>({id,title:id.toUpperCase()}))});await svc.setRound('group','admin','initial-shortlist-01',{shortlist:['a','b','c']});store.data=c.export();c.close();
  const mail=createEventNotifications({store,enabled:true,activatedAt:'2026-09-10T11:00:00Z',allowAnyRecipient:true,now:()=>at,send:async m=>{messages.push(m);return {providerId:'captured'}}});
  const api=createApi({store,blobs:{},adminToken:'admin',origin,now:()=>at,queueEvents:mail.queue});let serial=0;
@@ -54,6 +54,23 @@ test('same-transaction confirmation includes actual result without duplicate unr
 });
 test('claimed canonical suggester keeps credit and self likes stay excluded',async()=>{
  const f=await fixture(),c=openState(f.store.data),svc=createPlanningService({store:c.plans,adminToken:'admin',now:()=>NOW}),anon='z'.repeat(43);const {option}=await svc.suggest('group',anon,'legacy-suggestion-01',{title:'Claimed film'});const {createActorTransfer}=await import('./runtime/planning/auth/transfer.mjs');const {createHash}=await import('node:crypto');await createActorTransfer({store:c.plans})('group',createHash('sha256').update(anon).digest('hex'),'p_one','legacy-claim-key-01');f.store.data=c.export();c.close();await f.req('plans/group/response','PUT',{expectedRevision:0,choices:[option.id],dates:[]},'one');assert.ok(!(await f.feed('one')).body.items.some(i=>i.type==='suggestion-liked'));await f.req('plans/group/response','PUT',{expectedRevision:0,choices:[option.id],dates:[]},'two');assert.ok((await f.feed('one')).body.items.some(i=>i.type==='suggestion-liked'));
+});
+
+test('popular suggestion alerts only non-likers at the first three-person crossing and coalesces simultaneous rank notices',async()=>{
+ const f=await fixture({people:['one','two','three','four','five']}),suggested=await f.req('plans/group/suggestions','POST',{title:'Popular film'},'one'),id=suggested.body.option.id;
+ await f.req('plans/group/response','PUT',{expectedRevision:0,choices:[id],dates:[]},'two');await f.req('plans/group/response','PUT',{expectedRevision:0,choices:[id],dates:[]},'three');assert.ok(!(await f.feed('five')).body.items.some(i=>i.type==='popular-suggestion'));
+ f.setAt('2026-09-10T12:00:03.000Z');await f.req('plans/group/response','PUT',{expectedRevision:0,choices:[id],dates:[]},'four');
+ const recommendation=(await f.feed('five')).body.items.filter(i=>i.type==='popular-suggestion');assert.equal(recommendation.length,1);assert.equal(recommendation[0].text,'Popular film kreeg 3 hartjes. Misschien iets voor jou?');assert.equal(recommendation[0].href,'/filmmaand/films/?film='+encodeURIComponent(id));assert.ok(!(await f.feed('five')).body.items.some(i=>i.updatedAt>=recommendation[0].updatedAt&&['leaderboard-entry','next-leader'].includes(i.type)));
+ for(const who of ['one','two','three','four'])assert.ok(!(await f.feed(who)).body.items.some(i=>i.type==='popular-suggestion'));
+ await f.req('plans/group/response','PUT',{expectedRevision:1,choices:[],dates:[]},'four');await f.req('plans/group/response','PUT',{expectedRevision:2,choices:[id],dates:[]},'four');assert.equal((await f.feed('five')).body.items.filter(i=>i.type==='popular-suggestion').length,1);
+});
+
+test('an already-popular suggestion is baselined without deployment backfill or later re-crossing spam',async()=>{
+ const f=await fixture({people:['one','two','three','four','five']}),suggested=await f.req('plans/group/suggestions','POST',{title:'Existing film'},'one'),id=suggested.body.option.id;
+ // Model deployment onto existing state by removing only the notification subsystem.
+ for(const who of ['two','three','four'])await f.req('plans/group/response','PUT',{expectedRevision:0,choices:[id],dates:[]},who);delete f.store.data.accountNotifications;
+ await f.req('plans/group/response','PUT',{expectedRevision:0,choices:['d'],dates:[]},'five');assert.ok(!(await f.feed('five')).body.items.some(i=>i.type==='popular-suggestion'));
+ await f.req('plans/group/response','PUT',{expectedRevision:1,choices:[],dates:[]},'four');await f.req('plans/group/response','PUT',{expectedRevision:2,choices:[id],dates:[]},'four');assert.ok(!(await f.feed('five')).body.items.some(i=>i.type==='popular-suggestion'));
 });
 
 test('grouped next-shortlist entrant updates its direct link with latest text',async()=>{
