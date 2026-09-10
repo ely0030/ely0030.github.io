@@ -103,7 +103,7 @@ export function createEventNotifications(options={}){
     const proposal=plan?.dateChanges?.find(p=>p.id===m.notice.proposalId&&p.eventId===m.notice.eventId);
     if(!proposal||proposal.status!=='pending'||(current.coordinationRevision||0)!==m.notice.eventVersion){delete ns.outbox[id];return null;}
     // Use the current authoritative proposal consent roster, rather than a stale email copy.
-    m.notice.requiredActors=Array.isArray(proposal.requiredActors)?proposal.requiredActors:[];
+    m.notice.requiredActors=Array.isArray(proposal.currentRequiredActors)?proposal.currentRequiredActors:Array.isArray(proposal.requiredActors)?proposal.requiredActors:[];
    }
    // A queued notice becomes obsolete after a newer change for the same evening.
    const events=Object.values(c.state.plans||{}).flatMap(p=>p.data.coordinationEvents||[]);
