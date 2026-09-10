@@ -79,8 +79,8 @@ export function changeRound(p,b,{now,key,round,excluded}){
    if(b.programme===true){
     const day=screeningDate(p,p.roundSchedule?.date),items=p.programme||=[],existing=items.find(n=>n.id===b.programmeId);
     const dateOf=n=>n.scheduledDate||(n.startsAt?new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam'}).format(new Date(n.startsAt)):null);
-    if(b.programmeId){if(!existing||existing.selection!=='pending'||dateOf(existing)!==day)invalid('programme_transition','Kies de open filmavond op de datum van deze ronde.');existing.choices=[b.choice];delete existing.selection;existing.roundId=r.id;existing.confirmedAt=now;r.result.programmeId=existing.id;}
-    else {if(items.some(n=>dateOf(n)===day)||p.confirmation&&dateOf(p.confirmation)===day)fail('programme_exists','Er bestaat al een filmavond op deze datum. Kies de open filmavond expliciet.');const night={id:'night-'+hash(r.id).slice(0,12),roundId:r.id,scheduledDate:day,choices:[b.choice],confirmedAt:now};(p.programme||=[]).push(night);r.result.programmeId=night.id;}
+    if(b.programmeId){if(!existing||existing.selection!=='pending'||dateOf(existing)!==day)invalid('programme_transition','Kies de open filmavond op de datum van deze ronde.');if(p.roundSchedule?.timing){const inherited={...p.roundSchedule.timing};if(existing.startsAt&&!existing.timing?.screening)delete inherited.screening;existing.timing={...inherited,...Object.fromEntries(Object.entries(existing.timing||{}).filter(([,v])=>typeof v==='string'&&v.trim()))};}existing.choices=[b.choice];delete existing.selection;existing.roundId=r.id;existing.confirmedAt=now;r.result.programmeId=existing.id;}
+    else {if(items.some(n=>dateOf(n)===day)||p.confirmation&&dateOf(p.confirmation)===day)fail('programme_exists','Er bestaat al een filmavond op deze datum. Kies de open filmavond expliciet.');const night={id:'night-'+hash(r.id).slice(0,12),roundId:r.id,scheduledDate:day,...(p.roundSchedule?.timing?{timing:{...p.roundSchedule.timing}}:{}),choices:[b.choice],confirmedAt:now};(p.programme||=[]).push(night);r.result.programmeId=night.id;}
    }
    r.revision++;break;
   }

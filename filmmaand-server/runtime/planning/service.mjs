@@ -1,3 +1,4 @@
+import {resolvedEventTiming} from './event-timing.mjs';
 import {tickCoordination,changeDate,coordinationView} from './date-coordination.mjs';
 import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.mjs';
 import {createHash,timingSafeEqual} from 'node:crypto';
@@ -31,7 +32,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  function profile(p,a){if(isParticipantActor(a))return {revision:0,recommender:display(p,a)};return p.displayProfiles?.[a]||{revision:0,recommender:null}}
  function validatedProfile(r){if(!r||!plain(r.name,32)||!r.name.trim()||!Number.isInteger(r.avatarId)||!avatarIds.includes(r.avatarId))fail(400,'profile','Kies een geldige naam en avatar.');return {name:r.name.trim(),avatarId:r.avatarId}}
  // Planned nights (organizer-set, any number) plus the legacy single confirmation, projected together.
- const programmeOf=p=>[...(p.programme||[]),...(p.confirmation?[{id:'confirmation',...p.confirmation}]:[])];
+ const programmeOf=p=>[...(p.programme||[]),...(p.confirmation?[{id:'confirmation',...p.confirmation}]:[])].map(n=>({...n,timing:resolvedEventTiming(n)}));
  const plannedIds=p=>new Set(programmeOf(p).flatMap(n=>n.choices));
  const amsterdam=iso=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam'}).format(new Date(iso));
  function validStart(p,s){if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(s)||!Number.isFinite(Date.parse(s))||amsterdam(s)<p.window.start||amsterdam(s)>p.window.end)fail(400,'event_time','Een geldige starttijd in UTC is vereist.');return new Date(s).toISOString()}
@@ -40,7 +41,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  function nextRoundOf(p,me){const round=roundOf(p),eligibility=rankingEligibility(p,round.shortlist),selection=p.round?.nextSelection||{...rankedSelection(p,eligibility.excludedIds),status:'collecting',sourceRoundId:round.id,closesAt:p.round?.closesAt||null,frozenAt:null};return {rule:'rank-5-4-3-2-1',...selection,eligibility,...(me?{ownPoints:rankedContribution(p.responses[me],eligibility.excludedIds)}:{})};}
  // The finale shortlist: organizer-set, or derived from picker preferences and frozen at the first vote.
  function deriveShortlist(p){const planned=plannedIds(p),counts=optionCountsOf(p);return p.options.map((o,i)=>({id:o.id,i,count:counts[o.id]||0})).filter(x=>!planned.has(x.id)).sort((a,b)=>b.count-a.count||a.i-b.i).slice(0,3).map(x=>x.id)}
- function roundOf(p){const planned=plannedIds(p);const shortlist=(p.round?.shortlist||deriveShortlist(p)).filter(id=>p.options.some(o=>o.id===id));return {shortlist,...(p.roundSchedule?.date?{scheduledDate:p.roundSchedule.date}:{}),derived:p.round?p.round.derived!==false:true,excluded:[...planned],planned:shortlist.some(id=>planned.has(id)),...roundLifecycle(p,now(),shortlist.some(id=>planned.has(id)))}}
+ function roundOf(p){const planned=plannedIds(p);const shortlist=(p.round?.shortlist||deriveShortlist(p)).filter(id=>p.options.some(o=>o.id===id));return {shortlist,...(p.roundSchedule?.date?{scheduledDate:p.roundSchedule.date,timing:resolvedEventTiming(p.roundSchedule),coordinationRevision:p.roundSchedule.coordinationRevision||0}:{}),derived:p.round?p.round.derived!==false:true,excluded:[...planned],planned:shortlist.some(id=>planned.has(id)),...roundLifecycle(p,now(),shortlist.some(id=>planned.has(id)))}}
  const voter=(p,a)=>{const r=display(p,a);return r?{name:r.name,avatarId:r.avatarId}:{name:null,avatarId:null}};
  const ownVote=(p,a)=>{const v=p.votes?.[a];return v?{revision:v.revision,final:v.final??null,next:v.next??null,updatedAt:v.updatedAt}:{revision:0,final:null,next:null,updatedAt:null}};
  function tally(p,phase,eligible){const counts=Object.fromEntries(eligible.map(id=>[id,0])),voters=Object.fromEntries(eligible.map(id=>[id,[]]));let total=0;for(const [a,v] of Object.entries(p.votes||{})){const id=v[phase];if(id&&id in counts){counts[id]++;voters[id].push(voter(p,a));total++}}return {total,counts,voters}}
