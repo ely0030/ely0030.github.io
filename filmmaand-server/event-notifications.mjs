@@ -95,6 +95,15 @@ export function createEventNotifications(options={}){
    const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(m.participantId);
    // Address changes, account deletion, new opt-outs and local suppression cancel queued delivery.
    if(!p||p.email.toLowerCase()!==m.to||!policyAllows(c,p,options)){delete ns.outbox[id];return null;}
+   const plan=c.state.plans[m.notice.planId]?.data;
+   const current=[...(plan?.programme||[]),...(plan?.confirmation?[{id:'confirmation',...plan.confirmation}]:[])].find(e=>e.id===m.notice.eventId);
+   if(!current||(current.coordinationRevision||0)>(m.notice.eventVersion??0)){delete ns.outbox[id];return null;}
+   if(m.notice.type==='date-change-proposed'){
+    const proposal=plan?.dateChanges?.find(p=>p.id===m.notice.proposalId&&p.eventId===m.notice.eventId);
+    if(!proposal||proposal.status!=='pending'||(current.coordinationRevision||0)!==m.notice.eventVersion){delete ns.outbox[id];return null;}
+    // Use the current authoritative proposal consent roster, rather than a stale email copy.
+    m.notice.requiredActors=Array.isArray(proposal.requiredActors)?proposal.requiredActors:[];
+   }
    // A queued notice becomes obsolete after a newer change for the same evening.
    const events=Object.values(c.state.plans||{}).flatMap(p=>p.data.coordinationEvents||[]);
    if(events.some(e=>e.eventId===m.notice.eventId&&e.planId===m.notice.planId&&['date-changed','event-updated'].includes(e.type)&&(Date.parse(e.occurredAt)>Date.parse(m.notice.occurredAt)||(Number.isInteger(e.eventVersion)&&Number.isInteger(m.notice.eventVersion)&&e.eventVersion>m.notice.eventVersion)))){delete ns.outbox[id];return null;}
