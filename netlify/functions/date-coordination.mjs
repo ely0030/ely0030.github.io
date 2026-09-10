@@ -1,4 +1,3 @@
-import {coordinationScheduled} from '../../filmmaand-server/handler.mjs';
-export default async function(request,context){return coordinationScheduled(context);}
-// Netlify invokes scheduled functions on published deploys, independently of visitors.
+// Match the API entrypoint: retain package resolution beside the backend's own dependencies.
+export default async function(request,context){const mod=await import(new URL('../../filmmaand-server/handler.mjs',import.meta.url).href);return mod.coordinationScheduled(context);}
 export const config={schedule:'* * * * *'};
