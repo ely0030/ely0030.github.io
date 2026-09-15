@@ -131,7 +131,7 @@ ${timings}
 </td></tr></table></body></html>`;
 }
 
-function providerSender(options){
+export function providerSender(options){
  const {provider,apiKey,from,domain,apiBaseUrl='https://api.eu.mailgun.net',fetcher=fetch}=options;
  return async(message,{id})=>{
   if(!apiKey||!from||!['mailgun','resend'].includes(provider))throw Error('Notification transport unavailable');

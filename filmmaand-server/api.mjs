@@ -1,3 +1,4 @@
+import {tonightView,tonightWrite,tonightMessages} from './tonight.mjs';
 import {captureActivity,commitActivity,notificationRequest} from './account-notifications.mjs';
 import {createPasswords,admitPasswordAttempt,passwordWork} from './runtime/planning/auth/passwords.mjs';
 import {createHash} from 'node:crypto';
@@ -13,7 +14,7 @@ const error=(status,code,message)=>Object.assign(Error(message),{status,code});
 const rewrite=(value,key='')=>typeof value==='string'&&['url','poster','backdrop','image','posterFull','metadataPoster'].includes(key)&&value.startsWith('/planning-api/images/')?'/filmmaand/api/images/'+value.slice('/planning-api/images/'.length):Array.isArray(value)?value.map(v=>rewrite(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v,k)])):value;
 const json=(status,body,headers={})=>new Response(status===204?null:JSON.stringify(rewrite(body)),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
 const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:coordination':'coordinate','POST:coordination':'manageCoordination','PUT:date-poll':'voteDatePoll','POST:date-poll':'manageDatePoll','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
-export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,queueEvents,now,avatars=loadAvatarOptions()}){
+export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,queueEvents,deliverTonight,now,avatars=loadAvatarOptions()}){
  return async function handle(request,context={}){
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
   if(!url.pathname.startsWith('/filmmaand/api/'))return json(404,{error:{code:'not_found'}});
@@ -93,6 +94,19 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       c.state.format=2;headers['Set-Cookie']=router.setCookie(result.token);return send(200,{participant:result.participant});
      }
      if(path.startsWith('/api/auth/'))return await router.handle(req,{path,method,body,headers,send});
+     if(path==='/api/tonight'||path.startsWith('/api/tonight/')){
+      const credential=router.credential(req),account=credential?.token?auth.authenticate(credential.token):null;
+      if(path==='/api/tonight'&&method==='GET')return send(200,tonightView(c,account,avatars));
+      if(!account)throw error(401,'session_required','Log in om te reageren.');
+      if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');
+      if(method==='GET'&&path==='/api/tonight/messages'){organizerAccount();return send(200,tonightMessages(c));}
+      router.csrf(req);
+      const part=path==='/api/tonight/response'&&method==='PUT'?'response':path==='/api/tonight/messages'&&method==='POST'?'messages':null;
+      if(!part)return send(405,{error:{code:'method'}});
+      const result=tonightWrite(c,account,req.headers['idempotency-key'],part,body,now?now():new Date().toISOString());
+      return send(200,part==='response'?tonightView(c,account,avatars):result);
+     }
+
      const notifications=path.match(/^\/api\/notifications(?:\/(read|preferences))?$/);
      if(notifications){const account=auth.authenticate(router.credential(req)?.token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');if(method!=='GET')router.csrf(req);return send(200,notificationRequest(c,account.participantId,{method,part:notifications[1],body,url,at:now?now():new Date().toISOString()}));}
      const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|coordination))?$/);
@@ -120,6 +134,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
    });
    if(result.error)throw Object.assign(Error(result.error.message),result.error);
    const response=result.value;
+   if(path==='/api/tonight/messages'&&method==='POST'&&response.status===200&&deliverTonight){const delivery=await deliverTonight(response.body.id);if(delivery)response.body=delivery;}
    // Deliver only after successful durable commit; callback handles idempotency and durable retry.
    if(path==='/api/auth/code'&&response.status===200&&deliverMail)await deliverMail(response.body.challengeId);
    if(response.headers['Set-Cookie'])response.headers['Set-Cookie']=response.headers['Set-Cookie'].replace('Path=/;','Path=/filmmaand/;');

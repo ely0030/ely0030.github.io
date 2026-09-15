@@ -1,3 +1,4 @@
+import {createTonightForwarder} from './tonight.mjs';
 import {createEventNotifications} from './event-notifications.mjs';
 import {runCoordinationTick} from './date-coordination-tick.mjs';
 import {readFile} from 'node:fs/promises';
@@ -18,8 +19,9 @@ async function initialize(context={}){
  const registration=registrationPolicy(env);
  const mail=createMail({store,plainTextTest:{tokenSha256:env.AUTH_PLAIN_TEXT_TEST_SHA256,recipient:env.AUTH_PLAIN_TEXT_TEST_RECIPIENT,expiresAt:env.AUTH_PLAIN_TEXT_TEST_EXPIRES_AT},apiKey:env.AUTH_MAILER==='mailgun'?env.MAILGUN_API_KEY:env.RESEND_API_KEY,provider:env.AUTH_MAILER,domain:env.MAILGUN_DOMAIN,apiBaseUrl:env.MAILGUN_API_BASE_URL,from:env.AUTH_FROM,allowedRecipients:registration.allowedRecipients,allowAnyRecipient:registration.allowAnyRecipient,enabled:['resend','mailgun'].includes(env.AUTH_MAILER)});
  const events=createEventNotifications({store,enabled:env.FILMMAAND_EVENT_EMAILS==='1',activatedAt:env.FILMMAAND_EVENT_EMAILS_ACTIVATED_AT,origin:env.FILMMAAND_ORIGIN||'https://ely0030.xyz',allowedRecipients:registration.allowedRecipients,allowAnyRecipient:registration.allowAnyRecipient,provider:env.AUTH_MAILER,apiKey:env.AUTH_MAILER==='mailgun'?env.MAILGUN_API_KEY:env.RESEND_API_KEY,domain:env.MAILGUN_DOMAIN,apiBaseUrl:env.MAILGUN_API_BASE_URL,from:env.AUTH_FROM});
- const api=createApi({store,blobs,movieCatalogue,programmeMovies:JSON.parse(await readFile(new URL('./runtime/planning/programme-movies.json',import.meta.url))),adminToken:env.PLANNING_ADMIN_TOKEN,organizerIds:(env.FILMMAAND_ORGANIZER_IDS||'').split(',').map(id=>id.trim()).filter(Boolean),origin:env.FILMMAAND_ORIGIN||'https://ely0030.xyz',authConfig:{allowList:registration.allowList,passwordsEnabled:env.AUTH_PASSWORDS_ENABLED==='1'},queueMail:mail.queue,deliverMail:mail.deliver,queueEvents:events.queue});
- return {api,mail,events,store};
+ const tonight=createTonightForwarder({store,provider:env.AUTH_MAILER,apiKey:env.AUTH_MAILER==='mailgun'?env.MAILGUN_API_KEY:env.RESEND_API_KEY,domain:env.MAILGUN_DOMAIN,apiBaseUrl:env.MAILGUN_API_BASE_URL,from:env.AUTH_FROM});
+ const api=createApi({store,blobs,movieCatalogue,programmeMovies:JSON.parse(await readFile(new URL('./runtime/planning/programme-movies.json',import.meta.url))),adminToken:env.PLANNING_ADMIN_TOKEN,organizerIds:(env.FILMMAAND_ORGANIZER_IDS||'').split(',').map(id=>id.trim()).filter(Boolean),origin:env.FILMMAAND_ORIGIN||'https://ely0030.xyz',authConfig:{allowList:registration.allowList,passwordsEnabled:env.AUTH_PASSWORDS_ENABLED==='1'},queueMail:mail.queue,deliverMail:mail.deliver,queueEvents:events.queue,deliverTonight:tonight.deliver});
+ return {api,mail,events,store,tonight};
 }
 export default async function handler(request,context){
  try{
@@ -39,4 +41,4 @@ export default async function handler(request,context){
 }
 export const config={path:['/filmmaand','/filmmaand/','/filmmaand/api/*','/filmmaand/films/','/filmmaand/films/index.html','/filmmaand/stemmen/','/filmmaand/stemmen/index.html'],preferStatic:false};
 
-export async function coordinationScheduled(context={}){const {store,events}=await(instance||=(initialize(context).catch(e=>{instance=null;throw e})));const result=await runCoordinationTick({store,queueEvents:events.queue});await events.drain({limit:1});return Response.json(result);}
+export async function coordinationScheduled(context={}){const {store,events,tonight}=await(instance||=(initialize(context).catch(e=>{instance=null;throw e})));const result=await runCoordinationTick({store,queueEvents:events.queue});await events.drain({limit:1});await tonight.drain();return Response.json(result);}
