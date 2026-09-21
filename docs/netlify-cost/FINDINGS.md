@@ -1,6 +1,9 @@
 # Netlify compute burn — findings and fixes
 
-Chalice, 21 September 2026. Companion to `CHALICE-HANDOFF.md`. Cameo measured the account side
+Chalice, 21 September 2026. Companion to `CHALICE-HANDOFF.md`; see also Cameo's
+`INTEGRATION.md`. **Landed:** `b9429c6` fast-forwarded onto `main` 16:03Z. The push produced no
+deploy — Netlify blocks builds while usage is exceeded — so the fix sits on `main` and goes live
+with the first build after service resumes. Post-merge corrections are marked below. Cameo measured the account side
 (report: `usages_exceeded: credits, ENFORCED, exceeded_at 2026-09-18T21:00:25Z`); this file covers
 the per-invocation mechanism, the patch, and what is still uncertain.
 
@@ -113,24 +116,43 @@ Full state rebuilds per minute, per open page:
 - `api`, `entry-routes`, `date-coordination`, `date-coordination-journey`, `round-lifecycle-api`,
   `state`, `event-timing`: 27/27 pass.
 - `theme-composer`, `movie-ratings`, `api`, `suggestion-autolike`: 43/43 pass.
-- **Pre-existing failure, not from this work:** `programme-pending.test.mjs` is 3/6 red at baseline
-  too (verified by reverting only this change and re-running). Belongs to whoever owns the dirty
-  `tonight.mjs` / `event-notifications.mjs` work.
-- Not checked: the handler drain gating has no test harness — `handler.mjs` needs live Netlify
-  Blobs. It was reviewed by reading, not executed.
+- **Pre-existing failure, not from this work, and unowned:** `programme-pending.test.mjs` is 3/6
+  red at baseline (verified by reverting only this change). I guessed it belonged to the dirty
+  `tonight.mjs` / `event-notifications.mjs` work; Cameo disproved that by stashing those and running
+  it on clean `main` — **still 3/6 red**. So it is a real standing failure on `main`, owned by
+  nobody: 'explicit date-only pending projects without a film, time or voting association',
+  'transition-shaped requests are unsupported', 'concurrent exact create retries append one pending
+  entry'. It did not block this merge and should not block the next one, but it needs an owner.
+- The handler drain gating has no test harness (`handler.mjs` needs live Netlify Blobs) and was
+  reviewed by reading. **Cameo verified it by execution after the merge and it is a net improvement,
+  not a trade:** a login code is delivered inline on the POST (`api.mjs:139`, `deliverMail`), so it
+  never depended on `drain()` at all, and `/api/auth/code` is a POST so it still drains. The old
+  rescue path required *someone to be actively polling*, which meant a stranded send with nobody
+  browsing was never rescued; adding `mail.drain()` to `coordinationScheduled` makes it guaranteed
+  within 60 s at zero traffic. Cameo also walked the full transitive import graph from the cron
+  entry (15 modules, zero references to `data/`, `movie-catalogue`, `movie-credits` or
+  `movie-artwork`) and confirmed the catalogue modules do no module-scope file access, so the
+  `data/**` exclusion cannot break the import.
 
 ## Remaining uncertainty — read this before declaring it fixed
 
 1. **These are forecasts, not a measured bill.** No per-invocation duration is obtainable from the
    Netlify API and production is down, so the split between causes A, B and C is inferred from
    mechanism. The reduction in *work* is certain; the reduction in *credits* is not yet observed.
-2. **Headroom is thin.** 104 GB-hr/7 days is ~4460 credits/month against a 1000 budget. An 8x
-   reduction lands near 550 credits/month — under budget, but it scales with how many tabs are open.
-   Watch the first days after service resumes; the two deferred levers above are the next step.
+2. **Headroom is thin, and the burn was worse than 104 GB-hr shows.** Netlify recorded
+   `grace_topup_granted_at 2026-09-17T23:27:42Z`, ~21 h before the hard stop, so real consumption
+   exceeded the 1000-credit budget rather than just reaching it. 104 GB-hr/7 days is ~4460
+   credits/month against that budget and is therefore a *floor*. An 8x reduction lands near 550
+   credits/month — under budget, but it scales with how many tabs are open. Watch the first days
+   after service resumes; the two deferred levers above are the next step.
 3. **Cold-start behaviour changed.** For the first poll or two after a new container starts, films
    may lack overview/backdrop/ratings. Posters committed to the plan are unaffected (asserted in the
    new test). Raise `FILMMAAND_ENRICH_BUDGET_MS` if that is too visible.
-4. **A topup buys ~3.5 days at the old burn rate.** Fixes should be deployed before any topup, or
-   it gets paid twice. Not authorized to buy — Chris's call.
+4. ~~A topup buys ~3.5 days at the old burn rate; deploy the fixes first.~~ **Corrected after the
+   merge — the ordering problem is gone.** The fix is on `main` and builds are blocked while usage
+   is exceeded, so the next build *is* the fixed build: a topup now restores the site on new code,
+   not old. Landing this on `main` rather than leaving it on a branch was what closed that trap.
+   Still not authorized to buy — Chris's call, and `auto_topup_enabled` is false, so nothing is
+   being charged silently.
 5. `/.netlify/functions/date-coordination` is publicly reachable; anyone hitting it runs a full
    tick. Not exploited here, not fixed here, worth a follow-up.
