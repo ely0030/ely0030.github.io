@@ -177,3 +177,70 @@ Full state rebuilds per minute, per open page:
    being charged silently.
 5. `/.netlify/functions/date-coordination` is publicly reachable; anyone hitting it runs a full
    tick. Not exploited here, not fixed here, worth a follow-up.
+
+---
+
+## Second pass, 21 September — an idle site should cost almost nothing
+
+Chris asked for another look. Two more real findings, and a list of what was examined and rejected,
+because the rejections are the more useful half.
+
+### D. The scheduled tick read the whole state four times to find nothing to do — my own regression
+
+Making the cron the standing drain worker (change A) was right, but I did not look at what the drains
+cost. `mail.drain()`, `events.drain()` and `tonight.drain()` each *open* with their own full
+strongly-consistent read of the same `state-v1` blob, and `runCoordinationTick` had already read it.
+So every idle minute downloaded the entire state **four times** to discover there was nothing to
+send — 1,440 times a day, forever, with nobody visiting.
+
+The tick already holds that state open in a transaction. It now reports which drains have work, and
+`coordinationScheduled` skips the ones that do not: an idle tick is **one read instead of four**.
+
+The hint is fail-safe by construction — an absent or unrecognised hint drains everything exactly as
+before, so a wrong hint can only cost a read, never strand a queued send. Each drain still re-reads
+and CAS-guards its own delivery, so a hint that goes stale between the tick and the drain just defers
+one tick. The dangerous direction is a false negative, and
+`coordination-tick-work.test.mjs` pins it: forcing all three hints to `false` fails 4 of the 5 cases,
+and the one that still passes is the idle case that *should* report nothing.
+
+This matters out of proportion to its share of the bill: it is the floor the site pays with zero
+visitors, and a friend-group site is idle most of the time.
+
+### E. Uploaded images were billed as compute on every first view
+
+`/api/images/<hash>.webp` is served by the function and already answers
+`Cache-Control: public, max-age=31536000, immutable`. But that is a *browser* directive — Netlify does
+not edge-cache a function response without an explicit CDN directive, so every visitor's first view of
+every uploaded image cost a function invocation plus a blob download. Added
+`Netlify-CDN-Cache-Control: public, max-age=31536000, immutable, durable` (directive per Cameo's read
+of the current docs). Zero privacy change: these bytes were already declared public and immutable.
+Small in steady state, but it also means a shared link opened by ten people no longer multiplies.
+
+### Examined and rejected — do not spend time re-deriving these
+
+- **Session touch.** `authenticate()` writes `last_seen_at`, and any write means uploading the whole
+  blob. But `sessionTouchSeconds` is 3600 against a 180-day TTL, so it is ~1 write per active user per
+  hour. Real mechanism, immaterial magnitude, and it is auth. Left alone.
+- **`eventNotifications.seen` is never pruned.** It is deliberate — the permanent replay guard that
+  stops a notification being re-sent after bodies and receipts expire. Growth is tens of ~150-byte
+  entries a month, so it is unbounded in principle and trivial in practice. Pruning a replay guard to
+  save kilobytes is how you send duplicate mail. Left alone.
+- **A read fast path in `transact()`** (skip CAS/export/double-stringify for GETs). Still the largest
+  single lever left, and after the first pass the arithmetic already fits without it — see below. It
+  also needs `queueEvents` gated off read paths first. Not worth the risk at the current margin.
+- **Guarding the public `/.netlify/functions/date-coordination`.** Anyone hitting that URL runs a full
+  tick. The standard guard keys off Netlify's scheduled-invocation payload, and I could not verify its
+  shape offline — no `@netlify/functions` in the tree — and the site is 503 so I cannot probe it. A
+  guard I cannot test could silently kill the drain worker. Not shipped; still worth doing by whoever
+  can test it against a live deploy.
+
+### Where that leaves the budget
+
+Budget is 1000 credits/month = 100 GB-hr = 12,000 billed seconds/day, i.e. **8.3 s of function time
+per 60 s of wall clock**. Idle cost is now roughly one blob read and one hydrate per minute. A busy
+Programma tab is 4 requests/minute at one state rebuild each. The remaining levers are worth single
+-digit percentages; the first pass was worth multiples. That is the honest reason to stop here rather
+than keep cutting.
+
+Still forecast. No bill has been measured, and none can be until the site is built and served again.
+

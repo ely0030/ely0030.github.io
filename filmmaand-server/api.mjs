@@ -31,7 +31,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     try{const text=Buffer.concat(chunks).toString('utf8');body=text?JSON.parse(text):{}}catch{throw error(400,'json','Ongeldige invoer.')}
    }
    const image=path.match(/^\/api\/images\/([a-f0-9]{64})\.webp$/);
-   if(image&&method==='GET'){const bytes=await blobs.get(image[1],{type:'arrayBuffer'});return bytes?new Response(bytes,{headers:{'Content-Type':'image/webp','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=31536000, immutable'}}):json(404,{error:{code:'not_found'}})}
+   if(image&&method==='GET'){const bytes=await blobs.get(image[1],{type:'arrayBuffer'});return bytes?new Response(bytes,{headers:{'Content-Type':'image/webp','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=31536000, immutable','Netlify-CDN-Cache-Control':'public, max-age=31536000, immutable, durable'}}):json(404,{error:{code:'not_found'}})}
    if(path==='/api/movies'&&method==='GET'){if(!movieCatalogue)throw error(503,'catalogue','De filmcatalogus is tijdelijk niet beschikbaar.');return json(200,{movies:await movieCatalogue.search(url.searchParams.get('q')||'',8,{waitForArtwork:url.searchParams.get('quick')!=='1'})})}
    const movie=path.match(/^\/api\/movies\/(tt\d{7,12})$/);
    if(movie&&method==='GET'){if(!movieCatalogue)throw error(503,'catalogue','De filmcatalogus is tijdelijk niet beschikbaar.');const value=movieCatalogue.details?await movieCatalogue.details(movie[1],{includeMetadata:url.searchParams.get('poster')!=='1',waitUntil:typeof context.waitUntil==='function'?context.waitUntil.bind(context):undefined}):movieCatalogue.get(movie[1]);return value?json(200,{movie:value}):json(404,{error:{code:'not_found'}})}

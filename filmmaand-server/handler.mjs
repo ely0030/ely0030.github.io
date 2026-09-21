@@ -57,8 +57,12 @@ export const config={path:['/filmmaand','/filmmaand/','/filmmaand/api/*','/filmm
 export async function coordinationScheduled(context={}){
  const {store,mail,events,tonight}=await(messaging||=(initializeMessaging().catch(e=>{messaging=null;throw e})));
  const result=await runCoordinationTick({store,queueEvents:events.queue});
- await events.drain({limit:3});
- try{await mail.drain()}catch{/* A queued login code is also retried by the next request that asks for one. */}
- await tonight.drain();
- return Response.json(result);
+ // An absent or unrecognised hint drains everything, exactly as before: a wrong hint must never be able
+ // to strand a queued send, only to cost a read. Each drain still re-reads and CAS-guards its own
+ // delivery, so acting on a hint that went stale in the last millisecond just defers it one tick.
+ const work=result?.work&&typeof result.work==='object'?result.work:{events:true,mail:true,tonight:true};
+ if(work.events)await events.drain({limit:3});
+ if(work.mail)try{await mail.drain()}catch{/* A queued login code is also retried by the next request that asks for one. */}
+ if(work.tonight)await tonight.drain();
+ return Response.json({changed:result?.changed});
 }
