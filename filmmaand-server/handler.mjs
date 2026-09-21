@@ -39,7 +39,7 @@ export default async function handler(request,context){
   // A mutation can rescue a committed but unacknowledged send; the scheduled tick is the
   // standing drain worker. Read-only polling used to pay for both drains, which cost two
   // extra full strongly-consistent state reads per request and dominated function compute.
-  const readOnly=request.method==='GET'||request.method==='HEAD';
+  const readOnly=['GET','HEAD','OPTIONS'].includes(request.method); // a CORS preflight is answered before any transaction and must not drain
   if(!readOnly)try{await mail.drain()}catch{/* Current request reports its own delivery failures. */}
   const kind=/^\/filmmaand\/(films|stemmen)\/(?:index.html)?$/.exec(url.pathname)?.[1];
   if(kind){

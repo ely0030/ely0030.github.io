@@ -146,7 +146,10 @@ Full state rebuilds per minute, per open page:
    credits/month — under budget, but it scales with how many tabs are open. Watch the first days
    after service resumes; the two deferred levers above are the next step.
 3. **Cold-start behaviour changed.** For the first poll or two after a new container starts, films
-   may lack overview/backdrop/ratings. Posters committed to the plan are unaffected (asserted in the
+   may lack overview/backdrop/ratings. The budget is checked before each provider call starts, not
+   during it, so the true worst case for one cold request is the 600 ms budget plus one in-flight
+   call at its own timeout — ~3.1 s against TMDB's 2500 ms cap — not 600 ms. Still far inside the
+   10 s function timeout that the old unbounded loop could hit. Posters committed to the plan are unaffected (asserted in the
    new test). Raise `FILMMAAND_ENRICH_BUDGET_MS` if that is too visible.
 4. ~~A topup buys ~3.5 days at the old burn rate; deploy the fixes first.~~
    ~~Corrected after the merge — the ordering problem is gone; a topup now restores the site on new
