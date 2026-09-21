@@ -52,15 +52,20 @@ export default async function handler(request,context){
 }
 export const config={path:['/filmmaand','/filmmaand/','/filmmaand/api/*','/filmmaand/films/','/filmmaand/films/index.html','/filmmaand/stemmen/','/filmmaand/stemmen/index.html'],preferStatic:false};
 
+// Only an EXPLICIT false skips a drain. An absent hint, an unrecognised one, or an object that is
+// simply missing a key all drain — so adding a fourth outbox later, or a tick that returns a partial
+// hint, costs one wasted read rather than silently stranding a queued send. A wrong hint must only
+// ever be able to cost work, never to lose mail. Exported so this invariant is testable without Blobs.
+export function drainSelection(hint){
+ const h=hint&&typeof hint==='object'?hint:{};
+ return {events:h.events!==false,mail:h.mail!==false,tonight:h.tonight!==false};
+}
 // The scheduled tick is the standing drain worker for all three outbound mail paths, so a
 // slower cadence delays delivery by at most one interval instead of stranding a queued send.
 export async function coordinationScheduled(context={}){
  const {store,mail,events,tonight}=await(messaging||=(initializeMessaging().catch(e=>{messaging=null;throw e})));
  const result=await runCoordinationTick({store,queueEvents:events.queue});
- // An absent or unrecognised hint drains everything, exactly as before: a wrong hint must never be able
- // to strand a queued send, only to cost a read. Each drain still re-reads and CAS-guards its own
- // delivery, so acting on a hint that went stale in the last millisecond just defers it one tick.
- const work=result?.work&&typeof result.work==='object'?result.work:{events:true,mail:true,tonight:true};
+ const work=drainSelection(result?.work);
  if(work.events)await events.drain({limit:3});
  if(work.mail)try{await mail.drain()}catch{/* A queued login code is also retried by the next request that asks for one. */}
  if(work.tonight)await tonight.drain();
