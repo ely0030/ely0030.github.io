@@ -145,5 +145,8 @@
   async function refreshVotes(){if(votes?.source==='demo'&&document.querySelector('[data-source=live][aria-pressed=true]')){votes=null;window.festivalStripVotes=null;render()}if(fetching||document.hidden||votes?.source==='demo'||votes?.source==='final')return;fetching=true;try{const r=await fetch('/filmmaand/api/plans/home-picker-lab',{cache:'no-store'});if(!r.ok)throw Error('plan unavailable');const p=await r.json();window.filmmaandPublicPlan=p;window.dispatchEvent(new CustomEvent('filmmaand-public-plan',{detail:p}));if(votes?.source==='demo'||votes?.source==='final'||!Array.isArray(p.options)||!p.optionCounts)return;publicOptions=p.options;votes={source:'preferences',counts:p.optionCounts};render()}catch{window.filmmaandPublicPlan=null;window.dispatchEvent(new CustomEvent('filmmaand-public-plan',{detail:null}))}finally{fetching=false}}
   if(window.festivalStripVotes)window.setProgrammeStripVotes(window.festivalStripVotes);else render();
   document.addEventListener('click',event=>{if(event.target.closest('[data-source=live]')){votes=null;window.festivalStripVotes=null;render();refreshVotes()}});
-  refreshVotes();setInterval(refreshVotes,10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVotes()});
+  // Shell-wide decorative counts. The visibilitychange refresh below makes a returning tab
+  // instant, so the standing interval does not have to be fast: at 10s this one strip was the
+  // single largest source of Netlify function invocations across Programma, Films and Stemmen.
+  refreshVotes();setInterval(refreshVotes,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVotes()});
 })();

@@ -1,0 +1,136 @@
+# Netlify compute burn — findings and fixes
+
+Chalice, 21 September 2026. Companion to `CHALICE-HANDOFF.md`. Cameo measured the account side
+(report: `usages_exceeded: credits, ENFORCED, exceeded_at 2026-09-18T21:00:25Z`); this file covers
+the per-invocation mechanism, the patch, and what is still uncertain.
+
+## State of the site
+
+**The site is fully down, not just the functions.** `https://ely0030.xyz/`, the Programme page and
+every API path return `503 {"error":"usage_exceeded"}` with `server: Netlify`. A plain static asset
+returns it too. 1000 credits were spent in seven days (11–18 September), against a monthly budget.
+
+That also means production is unmeasurable right now: no live latency, and the account API exposes
+no per-invocation duration (Cameo's dead ends: `/accounts/<id>/usage`, `/billing/usage`, `/credits`,
+`/functions/<name>/logs` all 404). Everything below is measured from source and from local
+instruments, and is labelled as forecast where it is forecast.
+
+## Cause
+
+Both functions are 1024 MB, so **GB-hours == seconds of runtime**. 104 GB-hr = 374,400 billed
+seconds in 7 days = 37 s of function time per 60 s of wall clock, ~4.5x over budget.
+
+### A. Every request rebuilt the entire state three times
+
+`handler.mjs` ran `mail.drain()` before the request and `events.drain({limit:2})` after it, on
+*every* invocation including read-only polls. Each of those, plus the API call itself, is a separate
+`transact()`: a full strongly-consistent download of the `state-v1` blob, a fresh in-memory SQLite
+built by re-INSERTing all ten auth tables row by row, then `JSON.stringify` over the whole state
+**twice** to decide whether anything changed.
+
+Measured locally (`bench-transact.mjs`, node 24, this machine — a 1024 MB Lambda is slower):
+
+| state | blob | parse | hydrate | export | idle diff | one cycle |
+|---|---|---|---|---|---|---|
+| light history | 108 KB | 0.8 ms | 4.8 ms | 0.4 ms | 0.9 ms | **6.7 ms** |
+| ~3 months of use | 531 KB | 1.9 ms | 12.3 ms | 0.7 ms | 5.0 ms | **19.9 ms** |
+| retention caps reached | 2.8 MB | 13.5 ms | 60.8 ms | 3.4 ms | 17.1 ms | **99.8 ms** |
+
+CPU is the smaller half; the three strongly-consistent blob round trips are the larger one. Note the
+feedback loop: `rate_limits` and `receipts` grow with traffic, so more traffic makes every later
+request more expensive.
+
+On the browser side one open Programma tab ran three independent pollers (10 s, 15 s, 15 s) and
+`programme-strip.js` sits in the shared site shell, so Films and Stemmen polled too.
+
+### B. The public plan GET blocked on one provider call per film
+
+`service.get()` awaited `movieCatalogue.details()` for **every** film in the plan before answering.
+`createMovieRatings` and `createMovieMetadata` are both built with `cachePath: null` in production,
+so a cold instance has no durable cache: ratings cost one Netlify Blob read per film (1500 ms cap
+each) and metadata costs a TMDB call per film (2500 ms cap each), four at a time. With ~45 options
+that is a multi-second request on every cold container, against a 10 s timeout — and a timed-out
+invocation bills the full 10 s.
+
+This was not in the handoff's suspect list. It is the reason a single poll could cost seconds
+rather than the ~300 ms the blob traffic alone explains.
+
+### C. The cron carried the whole film index
+
+`date-coordination` is scheduled `* * * * *` (43,200 invocations/month, burning with zero visitors)
+and shared `initialize()` with the API: it opened `movie-catalogue.sqlite` (150 MB) and
+`movie-credits.sqlite` (24 MB), parsed the artwork/programme JSON and built the discovery and API
+layers — none of which the tick touches. Both were also in the function's `included_files`, which is
+most of the measured 84.8 MB bundle every cold start has to unpack.
+
+## Changes
+
+| file | change |
+|---|---|
+| `filmmaand-server/handler.mjs` | drains now run on mutations only; the scheduled tick became the standing drain worker for all three mail paths (`events.drain` 1→3, `mail.drain` added) |
+| `filmmaand-server/handler.mjs` | `initializeMessaging()` split out — the tick builds store + mail + events + tonight and never opens the catalogue |
+| `netlify.toml` | `!filmmaand-server/data/**` excluded from the `date-coordination` bundle |
+| `filmmaand-server/runtime/planning/service.mjs` | enrichment runs under `ENRICH_BUDGET_MS` (600 ms, `FILMMAAND_ENRICH_BUDGET_MS`) |
+| `public/filmmaand/{site,picker}/programme-strip.js` | 10 s → 60 s |
+| `public/filmmaand/agenda/agenda.js` | 15 s → 30 s (`?v=` bumped in `agenda/index.html`) |
+| `public/filmmaand/picker/personal-availability.js` | 15 s → 60 s, plus a visibilitychange/focus refresh so a returning tab is instant |
+| `public/filmmaand/stemmen/stemmen.js` | 10 s → 20 s (two invocations per cycle) |
+| `public/filmmaand/vanavond/app.js` | 30 s → 60 s |
+
+Full state rebuilds per minute, per open page:
+
+| page | before | after | factor |
+|---|---|---|---|
+| Programma | 14 req x 3 = 42 | 4 x 1 = 4 | 10.5x |
+| Stemmen | 18 x 3 = 54 | 7 x 1 = 7 | 7.7x |
+| Films | 6 x 3 = 18 | 1 x 1 = 1 | 18x |
+
+## What was deliberately NOT changed
+
+- **Cron cadence stays `* * * * *`.** Slowing it is the obvious saving and it is *not* safe as
+  written: `tickCoordination` fires a programme reminder only inside a window exactly
+  `reminderMinutes` wide, and Beheer accepts a reminder as short as one minute
+  (`beheer.js`: `ri.min=1`). Any slower schedule can skip a short reminder entirely rather than
+  delay it. Slowing it needs that minimum clamped first — a product decision, with the tick now
+  cheap per invocation either way.
+- **No edge caching of the plan GET.** `Netlify-CDN-Cache-Control: public, durable` would remove
+  most of the remaining polling cost, but the plan GET marks the caller's own entries with
+  `self: true` from their cookie, so it needs a correct `Vary` before it can be shared. Not done
+  blind.
+- **No read fast path in `transact()`.** Skipping CAS/export/eventual-consistency for GETs is the
+  next big lever, but `queueEvents(c)` runs inside the read transaction and *can* legitimately
+  write there; a naive fast path would silently drop queued notifications.
+- No paid change, no migration, no test email, no live data touched.
+
+## Checks
+
+- `plan-get-enrichment.test.mjs` (new, focused on the changed behaviour): a warm instance still
+  enriches every film; a cold one answers under budget and still serves the plan's stored artwork.
+  Mutation-checked — against the old unbounded loop the second case takes 1210 ms and **fails**;
+  against the patch it takes 404 ms and passes. The pre-existing suite does *not* cover this:
+  forcing the budget to 1 ms leaves all of `api`/`theme-composer`/`movie-ratings`/`suggestion-autolike`
+  green, which is why the test was added.
+- `api`, `entry-routes`, `date-coordination`, `date-coordination-journey`, `round-lifecycle-api`,
+  `state`, `event-timing`: 27/27 pass.
+- `theme-composer`, `movie-ratings`, `api`, `suggestion-autolike`: 43/43 pass.
+- **Pre-existing failure, not from this work:** `programme-pending.test.mjs` is 3/6 red at baseline
+  too (verified by reverting only this change and re-running). Belongs to whoever owns the dirty
+  `tonight.mjs` / `event-notifications.mjs` work.
+- Not checked: the handler drain gating has no test harness — `handler.mjs` needs live Netlify
+  Blobs. It was reviewed by reading, not executed.
+
+## Remaining uncertainty — read this before declaring it fixed
+
+1. **These are forecasts, not a measured bill.** No per-invocation duration is obtainable from the
+   Netlify API and production is down, so the split between causes A, B and C is inferred from
+   mechanism. The reduction in *work* is certain; the reduction in *credits* is not yet observed.
+2. **Headroom is thin.** 104 GB-hr/7 days is ~4460 credits/month against a 1000 budget. An 8x
+   reduction lands near 550 credits/month — under budget, but it scales with how many tabs are open.
+   Watch the first days after service resumes; the two deferred levers above are the next step.
+3. **Cold-start behaviour changed.** For the first poll or two after a new container starts, films
+   may lack overview/backdrop/ratings. Posters committed to the plan are unaffected (asserted in the
+   new test). Raise `FILMMAAND_ENRICH_BUDGET_MS` if that is too visible.
+4. **A topup buys ~3.5 days at the old burn rate.** Fixes should be deployed before any topup, or
+   it gets paid twice. Not authorized to buy — Chris's call.
+5. `/.netlify/functions/date-coordination` is publicly reachable; anyone hitting it runs a full
+   tick. Not exploited here, not fixed here, worth a follow-up.

@@ -4,6 +4,10 @@ import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
 import {isSessionToken,isAnonymousBearer,isParticipantActor} from './auth/credentials.mjs';
+// Warm entries resolve without any provider call, so a warm instance still enriches the whole
+// plan inside this budget. A cold one stops early and serves what it has instead of blocking a
+// public poll on one MDBList/TMDB round trip per film; the next poll continues where it left off.
+const ENRICH_BUDGET_MS=Number(process.env.FILMMAAND_ENRICH_BUDGET_MS)||600;
 const fail=(status,code,message,details)=>{throw Object.assign(new Error(message),{status,code,details})};
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const date=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x)&&Number.isFinite(Date.parse(x))&&new Date(x).toISOString().slice(0,10)===x;
@@ -60,7 +64,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
   async seed(plan){if(!date(plan.window?.start)||!date(plan.window?.end)||plan.window.end<plan.window.start||days(plan.window.start,plan.window.end).length>62)fail(400,'window','Ongeldig datumvenster.');if(!Array.isArray(plan.options)||!plan.options.length||new Set(plan.options.map(o=>o.id)).size!==plan.options.length)fail(400,'options','Ongeldige opties.');return store.compareAndSwap(plan.id,null,{...plan,maxChoices:plan.maxChoices||plan.options.length,responses:{},receipts:{},confirmation:null,version:1});},
   // Optional credential: a valid one marks the caller's own people[] entry and own suggestion credits with self:true.
   // Anything invalid is ignored — the public GET never fails on identity and its payload is otherwise identical.
-  async get(id,token=null){const p=(await load(id)).data;let me=null;if(token){try{me=actor(token);if(claimedTo(p,me))me=null}catch{me=null}}if(movieCatalogue?.details){const ids=[...new Set(p.options.flatMap(o=>[o.movie?.id,o.movies?.[0]?.id]).filter(Boolean))];let next=0;await Promise.all(Array.from({length:Math.min(4,ids.length)},async()=>{while(next<ids.length)await movieCatalogue.details(ids[next++]).catch(()=>null)}));}const out=publicPlan(p,me);out.metadataVersion=hash(JSON.stringify(out.options.map(o=>[o.movie||null,o.movies||null,o.image||null]))).slice(0,16);return out},
+  async get(id,token=null){const p=(await load(id)).data;let me=null;if(token){try{me=actor(token);if(claimedTo(p,me))me=null}catch{me=null}}if(movieCatalogue?.details){const ids=[...new Set(p.options.flatMap(o=>[o.movie?.id,o.movies?.[0]?.id]).filter(Boolean))];let next=0;const until=Date.now()+ENRICH_BUDGET_MS;await Promise.all(Array.from({length:Math.min(4,ids.length)},async()=>{while(next<ids.length&&Date.now()<until)await movieCatalogue.details(ids[next++]).catch(()=>null)}));}const out=publicPlan(p,me);out.metadataVersion=hash(JSON.stringify(out.options.map(o=>[o.movie||null,o.movies||null,o.image||null]))).slice(0,16);return out},
   async own(id,token){const a=actor(token);return {response:own((await loadFor(id,a)).data,a),identity:{kind:isParticipantActor(a)?'account':'anonymous'}}},
   async getProfile(id,token){const a=actor(token);return {profile:profile((await loadFor(id,a)).data,a)}},
   async updateProfile(id,token,key,b){const a=actor(token);if(isParticipantActor(a))fail(409,'account_profile','Je naam en avatar horen bij je account en wijzig je daar.');return mutate(id,a,key,{operation:'display-profile',body:b},p=>{const previous=profile(p,a);if(b?.expectedRevision!==previous.revision)fail(409,'conflict','Je profiel is elders gewijzigd.',{profile:previous});const recommender=validatedProfile(b.recommender);const next={revision:previous.revision+1,recommender};(p.displayProfiles||={})[a]=next;return {profile:next};})},

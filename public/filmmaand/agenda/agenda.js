@@ -1,7 +1,7 @@
 /* Festivalagenda B: one canonical availability sidebar, list filters and native details.
  * The shared controller owns identity, drafts, saves and recovery. Amsterdam dates throughout. */
 (()=>{'use strict';
-const api='/filmmaand/api/plans/home-picker-lab',AMS='Europe/Amsterdam',POLL=15000;
+const api='/filmmaand/api/plans/home-picker-lab',AMS='Europe/Amsterdam',POLL=30000;
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const amsDay=iso=>new Intl.DateTimeFormat('en-CA',{timeZone:AMS,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));
 const timeOf=iso=>new Date(iso).toLocaleTimeString('nl-NL',{timeZone:AMS,hour:'2-digit',minute:'2-digit'});

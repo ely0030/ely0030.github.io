@@ -47,4 +47,6 @@
 [functions.date-coordination]
   node_bundler = "nft"
   external_node_modules = ["sharp"]
-  included_files = ["filmmaand-server/**", "!filmmaand-server/*.test.mjs", "!filmmaand-server/operator/**", "!filmmaand-server/node_modules/@img/*musl*/**", "!filmmaand-server/node_modules/@img/sharp-wasm32/**"]
+  # The scheduled tick never opens the movie catalogue; excluding it keeps ~175 MB of SQLite
+  # out of this bundle so a cron cold start is not paying to unpack the whole film index.
+  included_files = ["filmmaand-server/**", "!filmmaand-server/*.test.mjs", "!filmmaand-server/operator/**", "!filmmaand-server/data/**", "!filmmaand-server/node_modules/@img/*musl*/**", "!filmmaand-server/node_modules/@img/sharp-wasm32/**"]

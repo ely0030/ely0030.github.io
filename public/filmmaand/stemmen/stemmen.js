@@ -355,6 +355,8 @@ document.addEventListener('DOMContentLoaded',async()=>{try{if(DVD_PREVIEW){setup
  main.replaceChildren(initialLoading());
  token=read('identity');if(!/^[A-Za-z0-9_-]{43}$/.test(token||'')){token=accountState()?'account':btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');if(token!=='account')write('identity',token)}
  pending=read('voteReceipt');await refresh(true);const entryParams=new URLSearchParams(location.search);if(entryParams.get('edit')==='1'&&vote?.own.final&&!pending)beginFinalEdit({focusChoice:false});if(pending&&entryParams.get('screen')!=='thanks'&&entryParams.get('edit')!=='1')await retry();
- setInterval(()=>refresh(),10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.addEventListener('filmmaand-profile-changed',()=>patchOwnDisplayProfile());window.addEventListener('storage',e=>{if(e.key==='filmmaand-identity-design-v1')patchOwnDisplayProfile()});window.addEventListener('filmmaand-display-profile-synced',()=>{profileProjectionPending=true;if(!busy)refresh(true)});window.addEventListener('focus',()=>refresh());
+ // Each cycle is two function invocations (plan + vote). Focus and visibilitychange below
+ // already cover the cases where a voter is actually looking at a changing screen.
+ setInterval(()=>refresh(),20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.addEventListener('filmmaand-profile-changed',()=>patchOwnDisplayProfile());window.addEventListener('storage',e=>{if(e.key==='filmmaand-identity-design-v1')patchOwnDisplayProfile()});window.addEventListener('filmmaand-display-profile-synced',()=>{profileProjectionPending=true;if(!busy)refresh(true)});window.addEventListener('focus',()=>refresh());
  }catch(e){console.error(e);main.replaceChildren(el('p','st-loading','Je browseropslag is niet beschikbaar.'))}});
 })();
