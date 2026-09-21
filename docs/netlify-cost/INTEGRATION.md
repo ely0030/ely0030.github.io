@@ -131,3 +131,74 @@ Remaining levers, in order, if it is still high a week after service resumes:
 3. `sharp` lazy-import (bundle still 84.8 MB for the request function).
 4. `/.netlify/functions/date-coordination` is **publicly reachable** — anyone hitting that URL triggers
    a full tick. Logged, not fixed.
+
+---
+
+# Round 2 — idle cron reads (21 Sept, later)
+
+**Merged:** `ab529d8` (Chalice) + `0ffd9a9` (Cameo hardening), fast-forwarded onto `main` and pushed.
+48/48 green. `programme-pending.test.mjs` still 3/6 red, still pre-existing, still unowned.
+
+## What I verified before landing
+
+**The drain hints are the whole risk surface here.** A wrong hint that skips a drain strands a queued
+send — a login code a friend never receives. So the hints were checked against the *committed* drain
+logic, not the description of it:
+
+- `events`: hint reads `state.eventNotifications.outbox` for `status==='pending'`. Matches — the queue
+  sets `status:'pending'` (`event-notifications.mjs:63`) and the drain claims only pending (`:153`).
+- `tonight`: hint reads `state.tonight[*].messages` for pending. Matches — set at `tonight.mjs:32`,
+  drained only when pending at `:41`.
+- `mail`: hint is `outbox non-empty || any expired mailReceipt`. Matches both halves of `mail.drain()`,
+  and is deliberately *broader* than the drain's own provider/attemptedAt filter — it errs toward
+  draining, which is the safe direction.
+
+**The one I actually worried about — unbounded growth.** `events.drain()` is skipped when idle, and
+`event-notifications.mjs:45` deletes outbox entries older than 30 days. If that prune lived in the drain,
+skipping it would let non-pending entries accumulate forever. It does not: it is inside
+`queueCoordinationEvents`, which runs on every tick *inside the tick's own transaction*. Skipping the
+drain cannot grow state. Safe.
+
+## The hardening (`0ffd9a9`)
+
+The gating comment promised "an absent or unrecognised hint drains everything". True for a missing or
+non-object hint; **not** true for an object merely missing a key — `work.mail === undefined` is falsy, so
+it skipped rather than drained. The stated invariant and the code disagreed, on exactly the failure that
+must not be possible.
+
+**Not a live bug.** `runCoordinationTick` always sets all three keys, and I confirmed by mutation that
+removing one fails 3 of 5 of `coordination-tick-work.test.mjs` — a regression at the producer is caught.
+The fix makes the *consumer* match its own contract, so that a fourth outbox added later cannot introduce
+the failure quietly.
+
+Extracted as `drainSelection()` — exported so the invariant is testable at all, since the gating inside
+`coordinationScheduled` needs live Blobs and had no harness (Chalice flagged that as his weakest link in
+round 1). Only an explicit `false` now skips; `undefined`, `null`, `NaN`, `''` and unrecognised keys all
+drain. Mutation-checked: against the previous guard the new test fails 3/4, the survivor being the
+all-false idle case that must pass either way.
+
+## Image caching (`api.mjs`)
+
+`Netlify-CDN-Cache-Control: public, max-age=31536000, immutable, durable` added to
+`/api/images/<hash>.webp`. This corrects an error of mine from round 1: I established that no Netlify
+Image CDN is in use and concluded images cost bandwidth, not compute. True for static assets — but this
+route is **function-served**, and the existing `Cache-Control` is a browser directive that Netlify does
+not treat as a CDN directive. Every visitor's first view of every uploaded image was billing an
+invocation plus a blob download. No privacy change: those bytes were already declared public and
+immutable.
+
+## Still open, and the only unbounded item
+
+`/.netlify/functions/date-coordination` is publicly reachable and each hit runs a full tick. Chalice
+declined to guard it because Netlify's scheduled-invocation payload shape cannot be verified offline,
+there is no `@netlify/functions` in the tree, and the site is 503 so it cannot be probed — a guard that
+cannot be tested could silently kill the drain worker. I cannot test it either, for the same reason.
+**This is the one item here with unbounded exposure rather than a bounded cost**, and it needs doing by
+whoever can test against a live deploy. It should not be attempted blind.
+
+## Ceiling, unchanged
+
+Budget is 8.3 s of function time per 60 s of wall clock. Round 1 was worth multiples; this round is worth
+single-digit percentages, which is why Chalice stopped rather than reaching for the `transact` read fast
+path. **Still forecast. No bill has been measured and none can be until the site builds and serves
+again** — which still requires an explicitly triggered deploy.
