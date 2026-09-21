@@ -3,7 +3,7 @@
 Chalice, 21 September 2026. Companion to `CHALICE-HANDOFF.md`; see also Cameo's
 `INTEGRATION.md`. **Landed:** `b9429c6` fast-forwarded onto `main` 16:03Z. The push produced no
 deploy — Netlify blocks builds while usage is exceeded — so the fix sits on `main` and goes live
-with the first build after service resumes. Post-merge corrections are marked below. Cameo measured the account side
+**only once a build is triggered**, which restoring credits does *not* do on its own (see item 4). Post-merge corrections are marked below. Cameo measured the account side
 (report: `usages_exceeded: credits, ENFORCED, exceeded_at 2026-09-18T21:00:25Z`); this file covers
 the per-invocation mechanism, the patch, and what is still uncertain.
 
@@ -148,10 +148,31 @@ Full state rebuilds per minute, per open page:
 3. **Cold-start behaviour changed.** For the first poll or two after a new container starts, films
    may lack overview/backdrop/ratings. Posters committed to the plan are unaffected (asserted in the
    new test). Raise `FILMMAAND_ENRICH_BUDGET_MS` if that is too visible.
-4. ~~A topup buys ~3.5 days at the old burn rate; deploy the fixes first.~~ **Corrected after the
-   merge — the ordering problem is gone.** The fix is on `main` and builds are blocked while usage
-   is exceeded, so the next build *is* the fixed build: a topup now restores the site on new code,
-   not old. Landing this on `main` rather than leaving it on a branch was what closed that trap.
+4. ~~A topup buys ~3.5 days at the old burn rate; deploy the fixes first.~~
+   ~~Corrected after the merge — the ordering problem is gone; a topup now restores the site on new
+   code.~~ **Corrected twice. Both earlier versions were wrong, and the second one was dangerous.**
+
+   A topup does **not** restore the site on new code. Restoring credits unpauses the project and it
+   serves its **last published deploy** — and that is still `5db79e5`, the 15 September build, i.e.
+   exactly the code that burned the credits. There is no build in the resume path. Measured by Cameo
+   after the merge:
+
+   - `GET /sites/<id>/deploys` returns 4 records, newest `5db79e5` at `2026-09-15T08:31:22Z`.
+     **No deploy record exists for `b9429c6`** — the push was dropped, not queued. (This also closes
+     the gap Chalice could not confirm first-hand because of API rate limiting.)
+   - `site.published_deploy.commit_ref` = `5db79e5e991bb83ae5eb9010b80cfed0bd2ffa1d`, state `ready`,
+     published `2026-09-15T08:32:20.657Z`.
+   - `build_settings.stop_builds` = `false`, so nothing at the *site* level blocks building. The
+     blocker is purely the account credit state, which means a build triggered after credits return
+     will succeed.
+
+   **Therefore the operational requirement is:** after a topup or the 11 Oct reset, a deploy must be
+   **explicitly triggered** (a push to `main`, or a manual redeploy). Until that happens the site is
+   live on the unfixed code and will burn a fresh balance at the old rate — roughly 3.5 days for a
+   500-credit topup. The trap was not closed by landing on `main`; it was *moved*, from "the fix is
+   not merged" to "the merged fix is not built". Do not let a restored site be mistaken for a fixed
+   one.
+
    Still not authorized to buy — Chris's call, and `auto_topup_enabled` is false, so nothing is
    being charged silently.
 5. `/.netlify/functions/date-coordination` is publicly reachable; anyone hitting it runs a full
