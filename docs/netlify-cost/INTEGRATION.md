@@ -136,8 +136,8 @@ Remaining levers, in order, if it is still high a week after service resumes:
 
 # Round 2 — idle cron reads (21 Sept, later)
 
-**Merged:** `ab529d8` (Chalice) + `0ffd9a9` (Cameo hardening), fast-forwarded onto `main` and pushed.
-48/48 green. `programme-pending.test.mjs` still 3/6 red, still pre-existing, still unowned.
+**Merged:** `ab529d8` (Chalice) + `0ffd9a9` (Cameo hardening) + `5b71966` (CORS preflight gating),
+fast-forwarded onto `main` and pushed. 48/48 green on the suites touched.
 
 ## What I verified before landing
 
@@ -202,3 +202,47 @@ Budget is 8.3 s of function time per 60 s of wall clock. Round 1 was worth multi
 single-digit percentages, which is why Chalice stopped rather than reaching for the `transact` read fast
 path. **Still forecast. No bill has been measured and none can be until the site builds and serves
 again** — which still requires an explicitly triggered deploy.
+
+
+---
+
+# Pre-existing failures: FIVE, not three — corrected
+
+Chalice's final audit ran the full suite on current `main` and on a **pristine worktree of the published
+commit `5db79e5`**, and diffed the failure *sets*. Identical: main 194/199, baseline 182/187, same five
+names. **The landed work introduced zero regressions**, and there are five pre-existing failures on the
+code that is actually live — not the three I recorded earlier.
+
+I confirmed this independently rather than accept the count: stashed the dirty `tonight.mjs` /
+`event-notifications.mjs` / `tonight.test.mjs`, checked out `5db79e5`, and ran the three suites.
+**5 failed, 10 passed**, exactly these:
+
+- `programme-pending` — `explicit date-only pending projects without a film, time or voting association`
+- `programme-pending` — `transition-shaped requests are unsupported and cannot update or append another night`
+- `programme-pending` — `concurrent exact create retries append one pending entry`
+- `round-lifecycle-ui` — `countdown uses server + monotonic clock; zero checks the server rather than inventing closure`
+- `round-lifecycle` — `ranked pipeline archives old votes, starts empty, and rejects stale writes even when a film returns later`
+
+The last two read files Chalice changed (`stemmen.js`, `service.mjs`), which is exactly why he chased
+them back to baseline before believing they were not his. **All five are unowned.** Not urgent, not
+blocking, but they are red on production code and somebody should own them.
+
+## CORS preflight (`5b71966`)
+
+`OPTIONS` was treated as a mutation by the `readOnly` test, so a cross-origin preflight ran both drains —
+two full strongly-consistent state reads to answer a 204. Verified safe to gate before landing:
+`api.mjs:22` returns the 204 **before the first `transact` at line 46**, so an `OPTIONS` request can
+never queue mail and skipping its drain cannot strand anything. Bounded (same-origin never preflights)
+but free.
+
+## Enrichment worst case, stated honestly
+
+`FINDINGS.md` now records that the budget is checked *before* each provider call starts, so one cold
+request is 600 ms **plus one in-flight call at its own timeout** — roughly 3.1 s against TMDB's 2500 ms,
+not 600 ms.
+
+## Branch hygiene note
+
+This shared checkout has no `refs/remotes/origin/*` for the feature branches, only local heads, so
+`git branch -r --merged` reports misleadingly here. By SHA, `b9429c6`, `a11709f`, `ab529d8` and `5b71966`
+are all ancestors of `main`. Kept rather than deleted because this file cites them.
