@@ -4,6 +4,7 @@ import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
 import {isSessionToken,isAnonymousBearer,isParticipantActor} from './auth/credentials.mjs';
+import {passInvalid} from './auth/poll-passes.mjs';
 // Warm entries resolve without any provider call, so a warm instance still enriches the whole
 // plan inside this budget. A cold one stops early and serves what it has instead of blocking a
 // public poll on one MDBList/TMDB round trip per film; the next poll continues where it left off.
@@ -26,6 +27,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  function guard(p,a){if(claimedTo(p,a))fail(410,'claimed','Deze browsersleutel is overgezet naar je account. Log in om verder te gaan.',{clear:true})}
  // Public display identity: account profile for participants (follows profile edits), the per-plan snapshot for anonymous actors.
  const datePollDisplay=(p,a)=>isParticipantActor(a)?identity?.publicProfile?.(a)||null:null;
+ const datePollView=(p,a)=>({...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay),viewer:datePollDisplay(p,a)});
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
  const responseDates=r=>Array.isArray(r.dates)?r.dates:r.start&&r.end?days(r.start,r.end):[];
@@ -107,7 +109,14 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
    const planned=plannedIds(p);if(!Array.isArray(b?.shortlist)||b.shortlist.length!==3||new Set(b.shortlist).size!==3||b.shortlist.some(x=>!p.options.some(o=>o.id===x)||planned.has(x)))fail(400,'shortlist','Kies drie verschillende, nog niet geplande opties.');p.round={id:'round-'+hash(id+':'+key).slice(0,20),revision:0,shortlist:[...b.shortlist],derived:false,since:now()};return {round:roundOf(p)};
   })},
   // A date for the open round is not a programme decision and never selects/locks a film.
-  async getDatePoll(id,token){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return ownDatePoll((await loadFor(id,a)).data,a);},
+  async getDatePoll(id,token){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return datePollView((await loadFor(id,a)).data,a);},
+  // Poll-pass identity (PUT returns exactly the receipted own answer, like voteDatePoll, so a replay is byte-exact): the api layer resolved the pass to exactly one participant actor and the poll it was minted for.
+  // The pass works only while that poll is the plan's current poll; otherwise it is indistinguishable from an unknown pass.
+  async getDatePollAs(id,a,pollId){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId)passInvalid();return datePollView(p,a);},
+  async voteDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();const own=await mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>{if(p.datePoll?.id!==pollId)passInvalid();return writeDatePoll(p,a,b,now())});return own;},
+  // Organiser pass minting needs the current poll's identity and deadline; nothing personal.
+  async datePollInfo(id){const q=(await load(id)).data.datePoll;return q?{id:q.id,mode:q.mode||null,status:q.status,closesAt:q.closesAt||null}:null;},
+  assertAdmin(token){admin(token);},
   async voteDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>writeDatePoll(p,a,b,now()));},
   async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now()});return {datePoll:publicDatePoll(p,null,datePollDisplay)};});},
   async coordination(id,token){const a=token?actor(token):null;const p=(await load(id)).data;return coordinationView(p,a,x=>datePollDisplay(p,x));},

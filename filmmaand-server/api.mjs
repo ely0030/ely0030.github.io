@@ -2,6 +2,8 @@ import {tonightView,tonightWrite,tonightMessages} from './tonight.mjs';
 import {captureActivity,commitActivity,notificationRequest} from './account-notifications.mjs';
 import {createPasswords,admitPasswordAttempt,passwordWork} from './runtime/planning/auth/passwords.mjs';
 import {createHash} from 'node:crypto';
+import {createPollPasses,PASS_ACTIONS} from './runtime/planning/auth/poll-passes.mjs';
+import {participantActor} from './runtime/planning/auth/credentials.mjs';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
 import {transact,openState} from './state.mjs';
 import {createPlanningService} from './runtime/planning/service.mjs';
@@ -19,7 +21,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
   if(!url.pathname.startsWith('/filmmaand/api/'))return json(404,{error:{code:'not_found'}});
   if(request.headers.get('origin')&&request.headers.get('origin')!==origin)return json(403,{error:{code:'origin',message:'Origin niet toegestaan.'}});
-  if(method==='OPTIONS')return json(204,null,{'Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key, X-Filmmaand-Reset-Generation, X-Filmmaand-Organizer-Id'});
+  if(method==='OPTIONS')return json(204,null,{'Access-Control-Allow-Methods':'GET, PUT, POST, DELETE, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key, X-Filmmaand-Reset-Generation, X-Filmmaand-Organizer-Id, X-Filmmaand-Poll-Pass'});
   const req={url:request.url,headers:Object.fromEntries(request.headers),socket:{remoteAddress:context.ip||'unknown'}};
   let body=null,passwordLease=null;
   try{
@@ -69,6 +71,8 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     const generation=c.state.resetGeneration??'0';
     if(typeof generation!=='string'||!generation||generation.length>128)throw error(503,'reset_generation','De site wordt opnieuw voorbereid.');
     const headers={'X-Filmmaand-Reset-Generation':generation};
+    // Everything on the date-poll route names a person (own answers, a pass, a minted link), errors included: never cacheable.
+    if(/^\/api\/plans\/[^/]+\/date-poll$/.test(path))headers['Cache-Control']='private, no-store';
     const auth=createAuthService({store:c.authStore,avatars,now,config:authConfig,mailer:{async send(message){if(!queueMail)throw error(503,'mail_unavailable','E-mail is nog niet ingesteld.');await queueMail(c,message,{plainTextTestToken:request.headers.get('x-filmmaand-plain-text-test')})}}});
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
@@ -115,6 +119,27 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      if(cred?.transport==='cookie'&&method!=='GET')router.csrf(req);
      const token=cred?.token??(req.headers.authorization||'').replace(/^Bearer /,'');
      const service=createPlanningService({store:c.plans,adminToken,movieCatalogue,programmeMovies,imageStore:createImages(blobs,c.state),identity:auth,now});
+     if(part==='date-poll'){
+      const passes=createPollPasses({store:c.authStore,now});
+      if(method==='POST'&&PASS_ACTIONS.includes(body?.action)){
+       let createdBy='admin';
+       if(organizerCookie){const account=organizerAccount();if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');createdBy=account.participantId;}
+       else service.assertAdmin(token);
+       if(body.action==='list-passes')return send(200,passes.list(id,body));
+       if(body.action==='revoke-passes')return send(200,passes.revoke(id,body));
+       return send(200,passes.issue(id,await service.datePollInfo(id),body,createdBy,origin));
+      }
+      // A poll pass is an alternative identity for this route only. When sent it wins over any session, and an
+      // invalid pass is an error, never a silent fallback. Resolving it reads; GET stays read-only.
+      const pass=req.headers['x-filmmaand-poll-pass'];
+      if(pass!==undefined){
+       const holder=passes.resolve(pass,id),a=participantActor(holder.participantId);
+       if(method==='GET')return send(200,await service.getDatePollAs(id,a,holder.pollId));
+       if(method!=='PUT')return send(405,{error:{code:'method'}});
+       const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
+       const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
+      }
+     }
      if(method==='GET'){const fn={response:'own',profile:'getProfile',vote:'voteView',proposals:'proposals','date-poll':'getDatePoll',coordination:'coordination'}[part]||'get';const result=await service[fn](id,token||null);if(fn==='get'){const fixture=c.state.plans[id]?.data.fixtureGroups?.['social-friends-v1'];if(fixture)result.demo={active:true,label:'Voorbeeldgegevens · fictieve deelnemers',participants:fixture.actors.length}}return send(200,result)}
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.
