@@ -26,6 +26,7 @@ const snapshot=f=>JSON.stringify(f.store.data)+'#'+f.store.etag;
 test('a scanner-style GET changes nothing: any pass state, any number of fetches, byte-identical state and no write',async()=>{
  const f=await fixture();await f.request('plans/proof/date-poll','POST',{action:'revoke-passes',pollId:f.pollId,emails:[f.joep.email]},f.admin('unused-key-000000002'));
  const before=snapshot(f),writes=f.writes();
+ f.clock.now='2026-09-22T11:30:00.000Z';// the scanner fetches later than the mint; anything time-stamped on read would show
  for(let i=0;i<3;i++){
   assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor))).status,200);
   assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(f.joep))).status,401);// revoked
