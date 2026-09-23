@@ -21,7 +21,9 @@ test('the shipped page is the generated kit page, without sample people or kit s
  }
  assert.match(page,/<span id="sub">Alec, jij<\/span>/);
  // Exactly these scripts, in this order: the guard (head), avatars, the page. eggs.js is started by wanneer.js after the first GET.
- assert.deepEqual([...page.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]),['/filmmaand/identity/reset-guard.js','/filmmaand/identity/avatars.js','/filmmaand/wanneer/wanneer.js']);
+ // + Cairn's intro film (Chris, 23 Sept): an optional mode file, then the loader, which fetches film.bundle.js itself (async).
+ const film=/film-mode\.js/.test(page)?['/filmmaand/wanneer/film-mode.js','/filmmaand/wanneer/film-loader.js']:['/filmmaand/wanneer/film-loader.js'];
+ assert.deepEqual([...page.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]),['/filmmaand/identity/reset-guard.js','/filmmaand/identity/avatars.js','/filmmaand/wanneer/wanneer.js',...film]);
  assert.equal(/<script>/.test(page),false);
  assert.match(page,/<meta name="referrer" content="no-referrer">/);
  assert.ok(page.includes('#rsvp button[data-pre=true]:not([aria-pressed=true]){border:1.5px dashed #00a884;background:#f0fbf7}'));assert.ok(page.includes('@media (prefers-color-scheme:dark){#rsvp button[data-pre=true]:not([aria-pressed=true]){background:#103529}}'));
