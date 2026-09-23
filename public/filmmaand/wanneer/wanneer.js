@@ -8,7 +8,12 @@
    a calm system chip says so. Nothing is written on load: a PUT only follows a tap. reset-guard.js (loaded first)
    adds X-Filmmaand-Reset-Generation to every API request. */
 (()=>{'use strict';
-const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat',RSVP_API=API+'-rsvp';
+const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat',RSVP_API=API+'-rsvp',FILM_API=API+'-film';
+// The intro film (Cairn; Chris 23 Sept: "if they've seen the full movie once, that login account shouldn't get it again").
+// The loader (film-loader.js) waits for AFM_FILM_READY (resolved once the first poll read settled, on every path), then reads
+// AFM_FILM_SEEN (from the server, per account). It calls AFM_FILM_ONDONE({completed}); only a FULL viewing is recorded.
+let filmReady;window.AFM_FILM_SEEN=false;window.AFM_FILM_READY=new Promise(r=>filmReady=r);
+window.AFM_FILM_ONDONE=r=>{if(r&&r.completed)window.filmmaandFilm.markSeen()};
 
 // ---- the pass: out of the address bar before anything else can copy it. Kept in memory and in this tab's history.state
 // (Cameo, 23 Sept: a reload must keep working), never in the URL, cookies or web storage. Cleared when it stops working.
@@ -66,7 +71,7 @@ async function load(){
  hot.resetFails();adopt(body);return true;
 }
 function adopt(body){
- data=body;pollId=body.pollId||poll()?.id||null;revision=body.revision??0;
+ data=body;pollId=body.pollId||poll()?.id||null;revision=body.revision??0;if(typeof body.filmSeen==='boolean')window.AFM_FILM_SEEN=body.filmSeen;
  const p=poll();NIGHTS=p?days(p.window):[];
  const own=body.availability||{};
  if(!dirty()){// never overwrite an unsaved tap
@@ -205,6 +210,7 @@ if(!still){
    setTimeout(()=>{animDone=true;if(loaded)reveal(true)},950)},450)},1300);
 }else animDone=true;
 function arrived(){
+ if(filmReady){filmReady(window.AFM_FILM_SEEN);filmReady=null}
  if(voted||still||animDone)reveal(!voted&&!still);// a returning voter sees the chat at once
  if(!eggs){eggs=true;const s=document.createElement('script');s.src='/filmmaand/wanneer/eggs.js';document.body.append(s)}// after the real vote state
 }
@@ -291,6 +297,11 @@ async function chatPost(msg,opts=false){
   rereadSoon();
   return chatItem(chatMsgs.find(m=>m.id===r.message.id)||r.message);
  }
+window.filmmaandFilm={
+ get seen(){return !!window.AFM_FILM_SEEN},
+ // Only with a pass or a login (anonymous visitors can't be remembered server-side; the loader keeps its own local note).
+ async markSeen(film='intro'){if(window.AFM_FILM_SEEN)return true;try{await call('PUT',{film},newKey(),FILM_API);window.AFM_FILM_SEEN=true;return true}catch{return false}}
+};
 window.filmmaandChat={
  list:chatList,
  subscribe(cb){chatSubs.add(cb);try{cb(chatList())}catch{}return ()=>chatSubs.delete(cb)},

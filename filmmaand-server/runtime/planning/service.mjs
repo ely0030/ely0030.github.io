@@ -1,5 +1,5 @@
 import {resolvedEventTiming} from './event-timing.mjs';
-import {tickCoordination,changeDate,coordinationView,answersOpen,needsPick,responded,writeRsvp,ownRsvp} from './date-coordination.mjs';
+import {tickCoordination,changeDate,coordinationView,answersOpen,needsPick,responded,writeRsvp,ownRsvp,writeFilmSeen} from './date-coordination.mjs';
 import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.mjs';
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
@@ -41,7 +41,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  const liteView=(p,a,since)=>{const q=p.datePoll,av=q?.mode==='availability';return {pollId:q?.id||null,status:q?.status||null,pickedAt:av&&q.status==='confirmed'?q.closedAt||null:null,
   chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},doodleStamp:doodleStamp(p,a)}};
  const ownOnly=r=>({doodle:{id:r.doodle.id,at:r.doodle.at}});// the receipt: id + time only, never the strokes
- const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},rsvp:av?ownRsvp(p.datePoll,a,now()):{answer:null,at:null,open:false},pickedAt:av&&p.datePoll.status==='confirmed'?p.datePoll.closedAt||null:null}};
+ const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},rsvp:av?ownRsvp(p.datePoll,a,now()):{answer:null,at:null,open:false},pickedAt:av&&p.datePoll.status==='confirmed'?p.datePoll.closedAt||null:null,filmSeen:!!(p.filmSeen&&Object.hasOwn(p.filmSeen,a))}};
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
  const responseDates=r=>Array.isArray(r.dates)?r.dates:r.start&&r.end?days(r.start,r.end):[];
@@ -160,6 +160,8 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
   async chatDatePollAs(id,a,pollId,key,b,since=0){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-chat',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return {...writeChat(p,a,b,now(),datePollDisplay),chat:chatView(p,a,datePollDisplay,since,now())}},r=>({message:{id:r.message.id,seq:r.message.seq,at:r.message.at}}));},
   async chatDatePoll(id,token,key,b,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-chat',body:b},p=>({...writeChat(p,a,b,now(),datePollDisplay),chat:chatView(p,a,datePollDisplay,since,now())}),r=>({message:{id:r.message.id,seq:r.message.seq,at:r.message.at}}));},
   // RSVP after a pick: own answer only (strict body {pollId, answer}), until the end of the picked night. No mail.
+  async filmSeenDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-film',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return writeFilmSeen(p,a,b,now())});},
+  async filmSeenDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-film',body:b},p=>writeFilmSeen(p,a,b,now()));},
   async rsvpDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-rsvp',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return writeRsvp(p,a,b,now())});},
   async rsvpDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');if(!datePollDisplay({},a))fail(409,'onboarding_required','Kies eerst je naam en avatar.');return mutate(id,a,key,{operation:'date-poll-rsvp',body:b},p=>writeRsvp(p,a,b,now()));},
   async voteDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>writeDatePoll(p,a,b,now()));},

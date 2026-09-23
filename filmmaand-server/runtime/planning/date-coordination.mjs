@@ -53,6 +53,11 @@ export const ARCHIVE_DROP=['chat','doodles','rsvp','doodleSaves','nudges','invit
 export function archivePoll(q){const out=structuredClone(q);for(const k of ARCHIVE_DROP)delete out[k];return out}
 // RSVP after a pick ("Ja, ik kom!" / "Toch niet"): own answer, changeable until the end of the picked night.
 export const rsvpOpen=(q,now)=>q?.status==='confirmed'&&!!q.scheduledDate&&Date.parse(now)<nightEnd(q.scheduledDate);
+// The intro film (Chris, 23 Sept): "if they've seen the full movie once, that login account shouldn't get it again".
+// Own flag only, per account, on the plan; the page records it only after a FULL viewing (never on a skip).
+export function writeFilmSeen(p,a,b,now){
+ if(!strict(b,['film'])||typeof b.film!=='string'||!/^[a-z0-9-]{1,40}$/.test(b.film))fail(400,'film','Onbekende film.');
+ const map=(p.filmSeen||={});if(!map[a])map[a]={film:b.film,at:now};return {filmSeen:true,at:map[a].at};}
 export function writeRsvp(p,a,b,now){const q=p.datePoll;
  if(!strict(b,['pollId','answer'])||!['ja','nee'].includes(b.answer))fail(400,'rsvp','Kies ja of nee.');
  if(q?.mode!=='availability'||b.pollId!==q.id)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');

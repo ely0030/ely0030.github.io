@@ -45,8 +45,8 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  assert.match(js,/const API='\/filmmaand\/api\/plans\/home-picker-lab\/date-poll'/);
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
- // URLs: the three fixed endpoints and one numeric chat cursor; nothing else is ever put in a URL.
- assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'?since='+since:API","API+'?public=1'","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
+ // URLs: the four fixed endpoints (+ the intro film's own flag, 23 Sept) and one numeric chat cursor; nothing else is ever put in a URL.
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'-film'","API+'?since='+since:API","API+'?public=1'","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
@@ -56,7 +56,10 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  // ?antwoord= only pre-selects: sendRsvp (the only RSVP write) is reached from the two buttons alone.
  assert.deepEqual(js.match(/sendRsvp\(a\)|sendRsvp\(answer,true\)/g),['sendRsvp(answer,true)','sendRsvp(a)']);assert.equal(/preselect[^;\n]*sendRsvp/.test(js),false);
  // Nothing writes on load: the only PUT is inside saveOnce, reached from a tap (Klaar / a night / the quick buttons).
- assert.equal((js.match(/call\('PUT'/g)||[]).length,3);// the vote (saveOnce), the doodle (filmmaandDoodles.save), the rsvp (a tap)
+ assert.equal((js.match(/call\('PUT'/g)||[]).length,4);// the vote (saveOnce), the doodle (filmmaandDoodles.save), the rsvp (a tap), the film flag:
+ // the intro film's "seen" flag is written ONLY from the film's own end callback, and only for a completed viewing (never on load, never on a skip).
+ assert.match(js,/window\.AFM_FILM_ONDONE=r=>\{if\(r&&r\.completed\)window\.filmmaandFilm\.markSeen\(\)\};/);
+ assert.equal((js.match(/markSeen\(/g)||[]).length,2);// its definition + that one caller
 });
 
 test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and two bounded ones after a doodle send',()=>{
