@@ -2,13 +2,13 @@
 import {createHash} from 'node:crypto';
 import {transact} from './state.mjs';
 import {providerAcceptanceId} from './mail-diagnostics.mjs';
-import {answersOpen,responded,rsvpOpen} from './runtime/planning/date-coordination.mjs';
+import {answersOpen,responded,declined,rankAvailability,rsvpOpen} from './runtime/planning/date-coordination.mjs';
 import {createPollPasses} from './runtime/planning/auth/poll-passes.mjs';
 import {renderPollNudge} from './poll-nudge-mail.mjs';
 import {renderPollInvite} from './poll-invite-mail.mjs';
 import {renderPollConfirm} from './poll-confirm-mail.mjs';
 const ACTIVITY=new Set(['round-opened','round-concluded']);
-const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge','poll-invite','poll-confirm']);
+const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge','poll-invite','poll-confirm','poll-digest']);
 const DAY=86400000, hash=value=>createHash('sha256').update(value).digest('hex');
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const validTime=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
@@ -112,6 +112,48 @@ export function queuePollInvites(c,{planId,poll,recipients,now}){
  }
  return queued;
 }
+export function pollDigestProgress(poll,holders,organizerIds){
+ const organizers=new Set(organizerIds);
+ return {responded:Object.entries(poll.votes||{}).filter(([actor,v])=>actor.startsWith('p_')&&!organizers.has(actor.slice(2))&&responded(poll,v)).length,
+  waiting:holders.filter(h=>!responded(poll,poll.votes?.['p_'+h.participantId])).length};
+}
+function digestSnapshot(c,poll,holders){
+ const names=new Map(c.authStore.db.prepare('SELECT id,name FROM participants').all().map(p=>['p_'+p.id,clean(p.name,80)]));
+ const named=actors=>actors.map(a=>names.get(a)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'nl'));
+ const ranking=rankAvailability(poll),nights=ranking.map(({date,available,unavailable})=>({date,yes:available,no:unavailable,
+  yesNames:named(Object.entries(poll.votes||{}).filter(([,v])=>v?.availability?.[date]===true).map(([a])=>a)),
+  noNames:named(Object.entries(poll.votes||{}).filter(([,v])=>v?.availability?.[date]===false).map(([a])=>a))}));
+ return {nights,declined:named(Object.entries(poll.votes||{}).filter(([,v])=>declined(poll,v)).map(([a])=>a)),
+  waiting:named(holders.filter(h=>!responded(poll,poll.votes?.['p_'+h.participantId])).map(h=>'p_'+h.participantId)),
+  leader:ranking[0]?.available>0?ranking[0].date:null};
+}
+/** Queue each milestone with its vote in the same state transaction. */
+export function queuePollDigests(c,{planId,poll,holders,organizerIds,before,now}){
+ if(poll?.mode!=='availability')return 0;
+ const after=pollDigestProgress(poll,holders,organizerIds),due=[];
+ if(before.responded<3&&after.responded>=3&&!poll.digests?.three)due.push('three');
+ if(holders.length&&before.waiting>0&&after.waiting===0&&!poll.digests?.all)due.push('all');
+ if(!due.length)return 0;
+ const ns=namespace(c.state),summary=digestSnapshot(c,poll,holders);let queued=0;
+ for(const kind of due){
+  (poll.digests||={})[kind]=now;
+  for(const participantId of new Set(organizerIds)){
+   const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(participantId);if(!p?.email)continue;
+   const id=hash(['poll-digest',planId,poll.id,kind,participantId].join('\0'));if(ns.seen[id])continue;
+   ns.seen[id]={at:now,eventId:poll.id,type:'poll-digest'};
+   ns.outbox[id]={id,notice:{id:'digest:'+id.slice(0,20),type:'poll-digest',planId,eventId:poll.id,occurredAt:now,scheduledDate:poll.window.end,kind,summary},participantId,to:p.email.toLowerCase(),createdAt:now,status:'pending'};queued++;
+  }
+ }
+ return queued;
+}
+const shortDate=value=>{const d=new Date(value+'T12:00:00Z');return new Intl.DateTimeFormat('nl-NL',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(d).replaceAll('.','');};
+export function renderPollDigest({kind,summary},{origin='https://ely0030.xyz'}={}){
+ const subject=kind==='three'?'Filmmaand: 3 mensen hebben gestemd':'Filmmaand: iedereen heeft gestemd';
+ const night=n=>`${shortDate(n.date)} · ${n.yes} ja${n.yesNames.length?' ('+n.yesNames.join(', ')+')':''} · ${n.no} nee${n.noNames.length?' ('+n.noNames.join(', ')+')':''}`;
+ const lines=[subject,'',...summary.nights.map(night),'',`Kan geen enkele avond: ${summary.declined.join(', ')||'niemand'}`,`Nog niet: ${summary.waiting.join(', ')||'niemand'}`,
+  `Voorop: ${summary.leader?shortDate(summary.leader):'nog geen avond'}`,'',new URL('/filmmaand/beheer/',origin).href];
+ const text=lines.join('\n');return {subject,text,html:`<!doctype html><html lang="nl"><meta charset="utf-8"><title>${escape(subject)}</title><body><pre style="font:15px/1.6 Arial,sans-serif;white-space:pre-wrap">${escape(text)}</pre></body></html>`};
+}
 function displayDate(value){return new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Amsterdam'}).format(new Date(value+'T12:00:00Z'));}
 export function renderEventNotification(notice,{participantId,origin='https://ely0030.xyz'}={}){
  if(!validNotice(notice))throw Error('Invalid committed notification');
@@ -200,11 +242,19 @@ export function createEventNotifications(options={}){
    const ns=namespace(c.state),m=ns.outbox[id];if(!m||m.status!=='pending')return null;
    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now()));
    const relevantDate=m.notice.type==='date-change-proposed'?m.notice.proposedDate:m.notice.scheduledDate;
-   if(relevantDate<today){delete ns.outbox[id];return null;}
+   if(m.notice.type!=='poll-digest'&&relevantDate<today){delete ns.outbox[id];return null;}
    const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(m.participantId);
    // Address changes, account deletion, new opt-outs and local suppression cancel queued delivery.
    if(!p||p.email.toLowerCase()!==m.to||!policyAllows(c,p,options)||(ACTIVITY.has(m.notice.type)&&c.state.accountNotifications?.accounts?.[p.id]?.importantActivityEmail===false)){delete ns.outbox[id];return null;}
    const plan=c.state.plans[m.notice.planId]?.data;
+   if(m.notice.type==='poll-digest'){
+    if(!plan){delete ns.outbox[id];return null;}
+    const day=now().slice(0,10),month=day.slice(0,7);c.state.mailUsage||={};
+    if((c.state.mailUsage[day]||0)>=80||(c.state.mailUsage[month]||0)>=2000)return null;
+    const rendered=renderPollDigest(m.notice,{origin});
+    m.status='attempted';m.attemptedAt=now();c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
+    return {id:m.id,to:m.to,...rendered};
+   }
    if(m.notice.type==='poll-confirm'){
     // Dropped if the poll moved on, is no longer the confirmed one for that night, or the night is over.
     const q=plan?.datePoll,who=c.authStore.db.prepare('SELECT name,onboarded FROM participants WHERE id=?').get(p.id);

@@ -3,7 +3,7 @@ import {captureActivity,commitActivity,notificationRequest} from './account-noti
 import {createPasswords,admitPasswordAttempt,passwordWork} from './runtime/planning/auth/passwords.mjs';
 import {createHash} from 'node:crypto';
 import {createPollPasses,PASS_ACTIONS} from './runtime/planning/auth/poll-passes.mjs';
-import {queuePollNudges,queuePollInvites,invitedParticipants,queuePollConfirms} from './event-notifications.mjs';
+import {queuePollNudges,queuePollInvites,invitedParticipants,queuePollConfirms,pollDigestProgress,queuePollDigests} from './event-notifications.mjs';
 import {participantActor} from './runtime/planning/auth/credentials.mjs';
 import {parseSince} from './runtime/planning/chat.mjs';
 import {responded} from './runtime/planning/date-coordination.mjs';
@@ -81,6 +81,13 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     const auth=createAuthService({store:c.authStore,avatars,now,config:authConfig,mailer:{async send(message){if(!queueMail)throw error(503,'mail_unavailable','E-mail is nog niet ingesteld.');await queueMail(c,message,{plainTextTestToken:request.headers.get('x-filmmaand-plain-text-test')})}}});
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
+    const saveVote=async(id,operation,at)=>{
+     const poll=c.state.plans[id]?.data.datePoll,holders=poll?.mode==='availability'?createPollPasses({store:c.authStore,accounts:auth,now}).holders(id,poll.id):[];
+     const before=poll?.mode==='availability'?pollDigestProgress(poll,holders,organizerIds):null;
+     const value=await operation();
+     if(before&&mailActive())queuePollDigests(c,{planId:id,poll:c.state.plans[id].data.datePoll,holders,organizerIds,before,now:at});
+     return value;
+    };
     try{
      if(path==='/api/auth/methods'&&method==='GET')return send(200,{passwordsEnabled});
      if(path==='/api/reset-generation'&&method==='GET')return send(200,{resetGeneration:generation});
@@ -230,7 +237,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
         return send(200,withInvitees(await service.getDatePollAs(id,a,holder.pollId,since)));}
        if(method!=='PUT')return send(405,{error:{code:'method'}});
        const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
-       const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
+       const value=await saveVote(id,()=>service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body),activityAt);commitActivity(c,activityBefore,activityAt);return send(200,value);
       }
      }
      if(method==='GET'&&part==='date-poll'){const since=parseSince(url.searchParams.get('since'));
@@ -242,7 +249,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      if(!['setRound','scheduleRound','planNight','confirm','manageDatePoll','manageCoordination'].includes(fn)){const account=auth.authenticate(token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');}
      const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
      let pickMailOff=false;
-     const committed=async operation=>{const value=await operation;commitActivity(c,activityBefore,activityAt);afterPick();return pickMailOff&&value&&typeof value==='object'?{...value,mail:'off'}:value;};
+     const committed=async operation=>{const value=fn==='voteDatePoll'?await saveVote(id,operation,activityAt):await operation();commitActivity(c,activityBefore,activityAt);afterPick();return pickMailOff&&value&&typeof value==='object'?{...value,mail:'off'}:value;};
      // A manual date-poll pick queues ONE confirmation per poll participant (live pass holders + everyone who answered),
      // in this same transaction. Replays are no-ops via the seen ledger. Only reachable through the organiser pick.
      const afterPick=()=>{if(fn!=='manageDatePoll'||body?.action!=='pick')return;const q=c.state.plans[id]?.data.datePoll;if(q?.mode!=='availability'||q.status!=='confirmed')return;
@@ -258,9 +265,9 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
       // A receipt belongs to the validated account, never the shared admin actor alone.
       const scoped='organizer-'+createHash('sha256').update(JSON.stringify([account.participantId,key])).digest('hex');
-      return send(200,await committed(service[fn](id,adminToken,scoped,body)));
+      return send(200,await committed(()=>service[fn](id,adminToken,scoped,body)));
      }
-     return send(200,await committed(fn==='uploadImage'?service[fn](id,token,body):service[fn](id,token,req.headers['idempotency-key'],body)));
+     return send(200,await committed(()=>fn==='uploadImage'?service[fn](id,token,body):service[fn](id,token,req.headers['idempotency-key'],body)));
     }catch(e){if(!e.status)throw e;if(e.details?.clear&&router.credential(req)?.transport==='cookie')headers['Set-Cookie']=router.clearCookie();return send(e.status,{error:{code:e.code,message:e.message,details:e.details}})}finally{if(queueEvents)await queueEvents(c)}
    });
    if(result.error)throw Object.assign(Error(result.error.message),result.error);
