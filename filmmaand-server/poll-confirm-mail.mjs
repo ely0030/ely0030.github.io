@@ -8,7 +8,7 @@ export function renderPollConfirm({name,date,tijd,waar,namen,url,origin}){
  const ja=url+'&antwoord=ja',nee=url+'&antwoord=nee';
  const ctx=Object.freeze({name,avond:avondOf(date),tijd,waar,namen:Object.freeze([...namen]),jaUrl:ja,neeUrl:nee,assetBase:new URL(MAIL_ASSET_PATH,origin).href.replace(/\/$/,'')});
  const out={subject:String(template.subject(ctx)),text:String(template.text(ctx)),html:String(template.html(ctx))};
- const amp=u=>u.replace(/&/g,'&amp;');
+ const amp=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));// the same escaping as the template
  if(!out.subject.trim()||!out.text.includes(ja)||!out.text.includes(nee)||!out.html.includes(amp(ja))||!out.html.includes(amp(nee)))throw Error('Confirmation template must carry the ja and nee links in text and html');
  return out;
 }

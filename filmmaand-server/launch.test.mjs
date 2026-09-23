@@ -52,7 +52,7 @@ test('the launch, as the organiser from Beheer: manual poll, invitees, one invit
   await f.events.drain({limit:20});
   assert.deepEqual(f.sent.map(m=>m.to).sort(),['lotte@filmvrienden.nl','mo@filmvrienden.nl']);
   const lotte=f.sent.find(m=>m.to==='lotte@filmvrienden.nl');
-  assert.equal(lotte.subject,'movie deze week?');assert.match(lotte.text,/^Hoi Lotte,\n\nmovie deze week\? do 24, vr 25 of za 26 september\n\nhttps:\/\/example\.test\/filmmaand\/wanneer\/\?pas=[A-Za-z0-9_-]{43}\n\nAlec$/);
+  assert.equal(lotte.subject,'movie deze week?');assert.match(lotte.text,/^movie deze week\?\n\nmovie deze week\? Donderdag 24, vrijdag 25 of zaterdag 26 september\.\nKies je avond: https:\/\/example\.test\/filmmaand\/wanneer\/\?pas=[A-Za-z0-9_-]{43}\n\nAls de avond vaststaat krijg je nog een mailtje om te bevestigen \(kijk ook in je spam!\)\.\n\nGroetjes, Alec\n?$/);
   const link=/pas=([A-Za-z0-9_-]{43})/.exec(lotte.text)[1];assert.ok(lotte.html.includes(link));
   assert.equal((await f.request(URL_,'GET',null,{'X-Filmmaand-Poll-Pass':link})).body.viewer.name,'Lotte');// the mailed link works
   // No plaintext token in state (incl. outbox) or logs: neither the mailed one nor the ones issue-passes returned.
@@ -79,12 +79,20 @@ test('invitations are organiser-only; refused callers queue nothing; a closed po
  assert.equal((await f.request(URL_,'POST',{action:'invite',pollId},f.org('launch-invite-key-05'))).body.error.code,'date_poll_closed');
 });
 
-test('the template is pluggable and must carry the link; assets are served from /filmmaand/assets/mail/',async()=>{
- const out=renderPollInvite({name:'<Lotte>',window:{start:NIGHTS[0],end:NIGHTS[2]},url:'https://example.test/filmmaand/wanneer/?pas='+'A'.repeat(43),origin:ORIGIN});
- assert.ok(out.html.includes('&lt;Lotte&gt;'));assert.equal(out.html.includes('<Lotte>'),false);// ctx values are escaped in html
- const tpl=await readFile(new URL('./poll-invite-template.mjs',import.meta.url),'utf8');
- assert.match(tpl,/export const subject=/);assert.match(tpl,/export const text=/);assert.match(tpl,/export const html=/);assert.match(tpl,/assetBase/);
- assert.ok((await readFile(new URL('../public/filmmaand/assets/mail/README.md',import.meta.url),'utf8')).includes('/filmmaand/assets/mail/'));
+test('the final invitation card: byte-for-byte port, the pass link at every former {{POLL_URL}}, hosted assets, no {{ left',async()=>{
+ const tpl=await import('./poll-invite-template.mjs'),url='https://example.test/filmmaand/wanneer/?pas='+'A'.repeat(43);
+ const out=renderPollInvite({name:'Lotte',window:{start:NIGHTS[0],end:NIGHTS[2]},url,origin:ORIGIN});
+ assert.equal(out.subject,'movie deze week?');
+ const spots=(tpl.SOURCE_HTML.match(/\{\{POLL_URL\}\}/g)||[]).length;assert.equal(spots,4);
+ assert.equal(out.html.split(url).length-1,spots);assert.equal(out.html.includes('{{'),false);assert.equal(out.text.includes('{{'),false);
+ // Only the placeholders changed: the rest of the markup is the kit file, preheader included.
+ assert.equal(out.html,tpl.SOURCE_HTML.replaceAll('{{POLL_URL}}',url).replaceAll('{{ASSET_BASE}}',ORIGIN+'/filmmaand/assets/mail'));
+ assert.match(out.html,/movie deze week\? do 24, vr 25, za 26\. Kies je avond\./);
+ assert.deepEqual(out.html.match(/src="[^"]+"/g),['src="'+ORIGIN+'/filmmaand/assets/mail/card-groot.gif"','src="'+ORIGIN+'/filmmaand/assets/mail/sig.png"']);
+ for(const f of ['card-groot.gif','sig.png'])assert.ok((await readFile(new URL('../public/filmmaand/assets/mail/'+f,import.meta.url))).length>100,f);
+ // A hostile URL cannot break out of the attribute.
+ assert.equal(renderPollInvite({name:'x',window:{start:NIGHTS[0],end:NIGHTS[2]},url:url+'"&x=<y>',origin:ORIGIN}).html.includes('"&x=<y>'),false);
+ const src=await readFile(new URL('./poll-invite-template.mjs',import.meta.url),'utf8');assert.match(src,/SPECIFIC TO THIS POLL/);
  // Beheer: the open form sends pick:'manual' unless "automatisch kiezen" is ticked; issue/invite only via coordinate().
  const js=await readFile(new URL('../public/filmmaand/beheer/beheer.js',import.meta.url),'utf8');
  assert.match(js,/\.\.\.\(isAuto\?\{\}:\{pick:'manual'\}\)/);
