@@ -4,7 +4,7 @@
 //     name; "Ik kan deze week niet" = all false = declined; a dead pass falls back to the session.
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 import {createApi} from './api.mjs';import {openState,emptyState} from './state.mjs';import {createPlanningService} from './runtime/planning/service.mjs';
-import handler from './handler.mjs';
+import handler from './handler.mjs';import vm from 'node:vm';
 
 const dir=new URL('../public/filmmaand/wanneer/',import.meta.url);
 const page=await readFile(new URL('index.html',dir),'utf8'),js=await readFile(new URL('wanneer.js',dir),'utf8'),eggs=await readFile(new URL('eggs.js',dir),'utf8');
@@ -54,6 +54,36 @@ test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and
  assert.match(js,/addEventListener\('visibilitychange',fresh\);window\.addEventListener\('focus',fresh\)/);
 });
 
+test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{
+ const block=js.slice(js.indexOf("const PASS_STATE="),js.indexOf('const hadPass'));
+ const drop=/function dropPass\(e\)\{[^\n]*\}/.exec(js)[0];
+ function run(href,state){
+  const box={URL,history:{state,replaceState(s,_,url){this.state=s;if(url!==undefined)box.location.href=new URL(url,box.location.href).href;this.calls++},calls:0},location:{href},localStorage:null,sessionStorage:null,document:null};
+  vm.runInNewContext(block+'\n'+drop+'\nthis.get=()=>pass;this.drop=()=>dropPass({code:"pass_invalid"});',box);return box}
+ const T='T'.repeat(43);
+ const first=run('https://x.test/filmmaand/wanneer/?pas='+T+'&keep=1#h',{other:1});
+ assert.equal(first.get(),T);assert.equal(first.location.href,'https://x.test/filmmaand/wanneer/?keep=1#h');
+ assert.equal(JSON.stringify(first.history.state),JSON.stringify({other:1,filmmaandPollPass:T}));
+ // Reload: same tab state, no ?pas= in the URL.
+ const reload=run(first.location.href,first.history.state);assert.equal(reload.get(),T);assert.equal(reload.history.calls,0);
+ // pass_invalid clears it from the tab state; the next reload has no pass.
+ reload.drop();assert.equal(reload.get(),null);assert.equal(JSON.stringify(reload.history.state),JSON.stringify({other:1}));
+ assert.equal(run(reload.location.href,reload.history.state).get(),null);
+ // Every replaceState call keeps the URL free of the pass.
+ for(const m of js.matchAll(/history\.replaceState\(([^;]*)\)/g))assert.equal(/pas=|pass\b[^S]/.test(m[1].replace(/withPass\((pass|null)\)/,'')),false,m[1]);
+});
+
+test('return-to after login: only same-origin /filmmaand/ paths (no open redirect)',async()=>{
+ const studio=await readFile(new URL('../public/filmmaand/identity/studio.js',import.meta.url),'utf8');
+ const line=/const safeReturn=[^\n]*/.exec(studio)[0];const box={};vm.runInNewContext(line+';this.f=safeReturn',box);
+ assert.equal(box.f('/filmmaand/wanneer/'),'/filmmaand/wanneer/');assert.equal(box.f('/filmmaand/programma/'),'/filmmaand/programma/');
+ for(const bad of [null,'','/','/filmmaand','//evil.test/filmmaand/','https://evil.test/filmmaand/','/filmmaand//evil.test','/filmmaand/../admin','/filmmaand/%2e%2e/x',
+  '/filmmaand/wanneer/?pas=x','/filmmaand/x#y','/filmmaand/\\evil.test','javascript:alert(1)','/filmmaand/ spaced','/Filmmaand/x','/other/','/filmmaand/'+'a'.repeat(100)])
+  assert.equal(box.f(bad),null,String(bad));
+ assert.match(studio,/location\.replace\(returnTo\|\|'\/filmmaand\/programma\/'/);
+ assert.match(js,/\/filmmaand\/identity\/\?terug=\/filmmaand\/wanneer\//);
+});
+
 test('mail links and reminder links go to /filmmaand/wanneer/, and the older /filmmaand/?pas= form lands there too',async()=>{
  const r=await handler(new Request('https://ely0030.xyz/filmmaand/?pas=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),{});
  assert.equal(r.status,302);assert.equal(r.headers.get('location'),'https://ely0030.xyz/filmmaand/wanneer/?pas=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
@@ -90,6 +120,9 @@ test('mail link → GET → Klaar (PUT) → re-GET shows your own name on the ni
  assert.deepEqual(first.body.viewer,{name:'Lotte',avatarId:12});
  assert.deepEqual(first.body.poll.window,{start:NIGHTS[0],end:NIGHTS[2]});assert.equal(first.body.poll.pick,'manual');assert.equal(first.body.poll.status,'open');
  assert.deepEqual(first.body.availability,{});assert.equal(first.body.revision,0);// not answered: the page shows the untouched poll
+ // Invitees: everyone with a live pass, display names only, even before they answer. Date-poll GET only.
+ assert.deepEqual(first.body.invitees,['Daan','Lotte','Mo']);
+ const pub=await f.request('GET',null,{},'plans/home-picker-lab');assert.equal('invitees' in pub.body,false);assert.equal(JSON.stringify(pub.body).includes('Daan'),false);
  // Daan answered earlier; Lotte sees his name, not her own yet.
  assert.equal((await put(f,daan,0,[NIGHTS[2]],'wanneer-daan-000000001')).status,200);
  const before=(await f.request('GET',null,{'X-Filmmaand-Poll-Pass':lotte})).body;

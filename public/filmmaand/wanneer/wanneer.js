@@ -10,10 +10,14 @@
 (()=>{'use strict';
 const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle';
 
-// ---- the pass: out of the address bar before anything else can copy it
+// ---- the pass: out of the address bar before anything else can copy it. Kept in memory and in this tab's history.state
+// (Cameo, 23 Sept: a reload must keep working), never in the URL, cookies or web storage. Cleared when it stops working.
+const PASS_STATE='filmmaandPollPass';
+const withPass=v=>{const s={...(history.state&&typeof history.state==='object'?history.state:{})};if(v)s[PASS_STATE]=v;else delete s[PASS_STATE];return s};
 let pass=null;
-{const u=new URL(location.href),p=u.searchParams.get('pas');
- if(p!==null){if(p)pass=p;u.searchParams.delete('pas');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}}
+{const u=new URL(location.href),p=u.searchParams.get('pas'),kept=history.state?.[PASS_STATE];
+ if(p!==null){if(p)pass=p;u.searchParams.delete('pas');history.replaceState(withPass(pass),'',u.pathname+u.search+u.hash)}
+ else if(typeof kept==='string'&&kept)pass=kept}
 const hadPass=!!pass;
 
 const $=s=>document.querySelector(s);
@@ -34,8 +38,9 @@ const night=d=>poll()?.ranking?.find(r=>r.date===d)||{people:[],no:[]};
 const me=()=>({n:'Jij',src:avatar(data?.viewer?.avatarId)});
 const who=d=>[...(mine.has(d)?[me()]:[]),...night(d).people.filter(p=>!p.self).map(p=>({n:p.name,src:avatar(p.avatarId)}))];
 const count=d=>who(d).length;
-function members(){const p=poll(),seen=new Map();if(p){for(const r of p.ranking||[])for(const x of [...(r.people||[]),...(r.no||[])])if(!x.self)seen.set(x.name,x);for(const x of p.declined||[])if(!x.self)seen.set(x.name,x)}
- return [...seen.keys()].filter(n=>n!=='Alec').sort((a,b)=>a.localeCompare(b,'nl'))}
+// Everyone in the group: invitees (live pass holders, from the GET) plus anyone who answered; never the viewer ("jij" is last).
+function members(){const p=poll(),seen=new Set(data?.invitees||[]);if(p){for(const r of p.ranking||[])for(const x of [...(r.people||[]),...(r.no||[])])if(!x.self)seen.add(x.name);for(const x of p.declined||[])if(!x.self)seen.add(x.name)}
+ seen.delete(data?.viewer?.name);seen.delete('Alec');return [...seen].sort((a,b)=>a.localeCompare(b,'nl'))}
 
 // ---- API
 async function call(method,body,key,url=API){
@@ -50,7 +55,7 @@ async function call(method,body,key,url=API){
 const newKey=()=>'wanneer-'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');
 
 // A pass that stopped working is dropped once; the session gets one try. Returns true when that fallback happened.
-function dropPass(e){if(e.code==='pass_invalid'&&pass){pass=null;return true}return false}
+function dropPass(e){if(e.code==='pass_invalid'&&pass){pass=null;history.replaceState(withPass(null),'');return true}return false}
 
 async function load(){
  let body;lastRead=Date.now();
@@ -107,7 +112,7 @@ function trouble(e,saving){
  if(e.status===401){
   // No pass in the address (e.g. a reload: the pass lives in memory only) or a dead one, and no session.
   lock();note(hadPass?'Deze link werkt niet (meer). Vraag de organisator om een nieuwe link, of':'Open de link uit je mail nog een keer, of',
-              ['log in met je account.','/filmmaand/identity/']);
+              ['log in met je account.','/filmmaand/identity/?terug=/filmmaand/wanneer/']);
   return false}
  if(e.status===404||e.code==='not_found'){lock();note('Er staat nu geen vraag open.');return false}
  if(saving){if(!serverVoted())voted=false;render();note('Opslaan lukte net niet. Probeer het nog een keer.');return false}

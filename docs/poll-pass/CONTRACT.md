@@ -116,6 +116,9 @@ X-Filmmaand-Poll-Pass: <token>          # or: a normal session cookie, no pass h
   poll without a deadline. `scheduledDate` / `programmeId` appear once the poll is decided
   (`status: "confirmed"`). Answers are accepted while `status` is `"open"` and, if `closesAt` is set, before
   it. A manual poll past its `closesAt` stays `"open"` (waiting for the organiser) but refuses answers.
+- `invitees` (top level, date-poll GET only, pass or session): the display names of everyone holding a live pass for
+  this poll (not revoked, not expired, onboarded), sorted, so the page can list members who have not answered yet. Never
+  on the public plan GET. It is a read and writes nothing.
 - `viewer` is the pass holder's public name/avatar so the page can say "Je antwoordt als Sam".
 - The session GET (no pass header) now returns the same shape. `poll` and `viewer` were added; the
   existing fields are unchanged.

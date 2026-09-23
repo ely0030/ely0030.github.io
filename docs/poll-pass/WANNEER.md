@@ -30,17 +30,19 @@ commit the generated files (Netlify cannot see the kit; it is not in this repo).
 
 - **Link.** Minted and reminder links are now `https://ely0030.xyz/filmmaand/wanneer/?pas=<token>`. The older form
   `/filmmaand/?pas=…` redirects there with the query string preserved (handler, before any store access).
-- **Pass.** On load `wanneer.js` reads `?pas=` once, keeps it in memory, and removes it from the address bar with
-  `history.replaceState` before the first request. It sends the pass as `X-Filmmaand-Poll-Pass` on every date-poll
+- **Pass.** On load `wanneer.js` reads `?pas=` once and removes it from the address bar with `history.replaceState`
+  before the first request. It keeps the pass in memory and in this tab's `history.state` (`filmmaandPollPass`), so a reload
+  keeps working (Cameo, 23 Sept). `pass_invalid` clears it from there. It sends the pass as `X-Filmmaand-Poll-Pass` on every date-poll
   request and never puts it in a URL or in browser storage. `Referrer-Policy: no-referrer` (meta + netlify.toml header) keeps
   the token out of Referer during the first requests.
 - **Fallback.** On `401 pass_invalid` the page drops the pass and tries the session once. If there is no session, a calm
   `#note` chip appears ("Deze link werkt niet (meer)…" / "Open de link uit je mail nog een keer, of log in"), plus a link
-  to `/filmmaand/identity/`. `reset-guard.js` loads first, as on every Filmmaand page, and adds
+  to `/filmmaand/identity/?terug=/filmmaand/wanneer/`. After logging in, the identity page returns there
+  (`safeReturn` in `studio.js`: `/filmmaand/` paths of `[A-Za-z0-9/_-]` only, no `//`; tested against open redirects). `reset-guard.js` loads first, as on every Filmmaand page, and adds
   `X-Filmmaand-Reset-Generation`.
 - **Data.** Nights come from `poll.window`. Each night's people come from `ranking[].people` (the viewer's own entry is
   drawn from local ticks, so a tap shows at once). Avatars map `avatarId` to `/filmmaand/identity/avatars.js`. The header
-  lists `Alec`, then everyone named anywhere in the poll (yes, no, declined), then `jij`. The rail avatar is the viewer's
+  lists `Alec`, then the invitees (`invitees` on the GET: everyone holding a live pass) plus anyone who answered, then `jij`. The rail avatar is the viewer's
   own, with the tooltip "Je antwoordt als <naam>".
 - **Saving.** "Klaar" sends a PUT: every night explicit `true`/`false`, `favourite:null`, the last `revision`, and a fresh
   `Idempotency-Key`, reused on the single network retry. Then it GETs again. After voting, each tap is saved the same way
@@ -80,7 +82,4 @@ Tests: `node --test filmmaand-server/wanneer-page.test.mjs` (or the full `npm ru
 
 ## Known limits / open
 
-- **Reload loses the pass** (memory only, as briefed). A friend without a session who reloads sees the chip asking them
-  to reopen the mail link. Keeping it in `history.state` would survive a reload without putting it in the URL or in
-  storage that other pages can read, at the cost of it sitting in the tab's session history. That is a product call.
-- The API names only people who answered, so the header cannot list invited people who have not answered yet.
+- The pass sits in the tab's session history (`history.state`), by decision. A new tab opened on the bare URL has no pass.

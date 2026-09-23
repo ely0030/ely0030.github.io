@@ -120,6 +120,11 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      if(cred?.transport==='cookie'&&method!=='GET')router.csrf(req);
      const token=cred?.token??(req.headers.authorization||'').replace(/^Bearer /,'');
      const service=createPlanningService({store:c.plans,adminToken,movieCatalogue,programmeMovies,imageStore:createImages(blobs,c.state),identity:auth,now});
+     // Invitees (Cameo/Chris, 23 Sept): everyone holding a live pass for this poll, as display names only, so the group
+     // header can list members who have not answered yet. Date-poll GET only (pass or session), never the public plan GET.
+     // A read: the holders query writes nothing.
+     const withInvitees=r=>{if(r?.pollId){const names=createPollPasses({store:c.authStore,accounts:auth,now}).holders(id,r.pollId).map(h=>auth.publicProfile(participantActor(h.participantId))?.name).filter(Boolean);
+      r.invitees=[...new Set(names)].sort((x,y)=>x.localeCompare(y,'nl'))}else if(r)r.invitees=[];return r};
      if(part==='date-poll-doodle'){
       // Shared doodles: PUT only. With a pass the holder may add/replace only their OWN doodle for the pass's poll.
       if(method!=='PUT')return send(405,{error:{code:'method'}});
@@ -156,12 +161,13 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       const pass=req.headers['x-filmmaand-poll-pass'];
       if(pass!==undefined){
        const holder=passes.resolve(pass,id),a=participantActor(holder.participantId);
-       if(method==='GET')return send(200,await service.getDatePollAs(id,a,holder.pollId));
+       if(method==='GET')return send(200,withInvitees(await service.getDatePollAs(id,a,holder.pollId)));
        if(method!=='PUT')return send(405,{error:{code:'method'}});
        const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
        const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
       }
      }
+     if(method==='GET'&&part==='date-poll')return send(200,withInvitees(await service.getDatePoll(id,token||null)));
      if(method==='GET'){const fn={response:'own',profile:'getProfile',vote:'voteView',proposals:'proposals','date-poll':'getDatePoll',coordination:'coordination'}[part]||'get';const result=await service[fn](id,token||null);if(fn==='get'){const fixture=c.state.plans[id]?.data.fixtureGroups?.['social-friends-v1'];if(fixture)result.demo={active:true,label:'Voorbeeldgegevens · fictieve deelnemers',participants:fixture.actors.length}}return send(200,result)}
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.
