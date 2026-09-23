@@ -50,3 +50,11 @@
   # The scheduled tick never opens the movie catalogue; excluding it keeps ~175 MB of SQLite
   # out of this bundle so a cron cold start is not paying to unpack the whole film index.
   included_files = ["filmmaand-server/**", "!filmmaand-server/*.test.mjs", "!filmmaand-server/operator/**", "!filmmaand-server/data/**", "!filmmaand-server/node_modules/@img/*musl*/**", "!filmmaand-server/node_modules/@img/sharp-wasm32/**"]
+
+# The date poll page arrives as /filmmaand/wanneer/?pas=<token>. The page strips the token from the address bar at once,
+# but requests made before that (the page's own scripts/images) would carry the full URL as Referer. Never send it.
+[[headers]]
+  for = "/filmmaand/wanneer/*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex"
