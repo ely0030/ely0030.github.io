@@ -50,7 +50,9 @@ commit the generated files (Netlify cannot see the kit; it is not in this repo).
   "De avond staat vast: <dag>." No poll → "Er staat nu geen vraag open."
 - **Eggs.** `eggs.js` is started by `wanneer.js` after the first GET, so it sees the real `body.voted` (a returning voter's
   sticker is already there; a new vote gets the typing → sticker reply).
-- **Refresh.** When the tab becomes visible again, at most one GET per minute, and never while a tap is unsaved.
+- **Cadence B.** GET on open, on tab visible / window focus (at most once per 15 s, never while a tap is unsaved),
+  and +20 s / +60 s after a doodle send (visible tab only). The doodle PUT response carries everyone's doodles. An idle page
+  makes zero requests (tested). The vote PUT is still followed by one GET (as in the contract).
 
 ## Shared doodles: the page hook (phase 2)
 
@@ -58,7 +60,7 @@ Server contract: `CONTRACT.md`, "Shared doodles". `wanneer.js` only moves data. 
 and uses the hook when it exists (the kit page has no hook and keeps its local-only path):
 
 ```js
-window.filmmaandDoodles.list()        // {mine:{id,at,strokes}|null, others:[{id,name,avatarId,avatar,at,strokes}]}
+window.filmmaandDoodles.list()        // {canSave, mine:{id,at,t,strokes}|null, others:[{id,name,avatarId,avatar,at,t,strokes}]}
 window.filmmaandDoodles.save(strokes) // Promise<{id,at,strokes}>; replaces your own; rejects with Error.code
 window.filmmaandDoodles.subscribe(cb) // cb(list()) now and after every poll GET; returns unsubscribe
 // plus a 'filmmaand-doodles' CustomEvent on window after every GET (detail = list())

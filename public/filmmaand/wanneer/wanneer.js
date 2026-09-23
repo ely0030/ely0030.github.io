@@ -53,7 +53,7 @@ const newKey=()=>'wanneer-'+Array.from(crypto.getRandomValues(new Uint8Array(12)
 function dropPass(e){if(e.code==='pass_invalid'&&pass){pass=null;return true}return false}
 
 async function load(){
- let body;
+ let body;lastRead=Date.now();
  try{body=await call('GET')}
  catch(e){if(dropPass(e))return load();return trouble(e)}
  adopt(body);return true;
@@ -196,25 +196,35 @@ document.addEventListener('click',e=>{if(!pop.hidden&&!pop.contains(e.target)){p
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){pop.hidden=true;menu.setAttribute('aria-expanded','false');menu.focus()}});
 
 // ---- shared doodles: a data hook for eggs.js (Capsule renders them; this page only moves data). One doodle per person
-// per poll; save() adds or replaces your OWN. Doodles arrive with every poll GET (data.doodles, hidden ones already removed).
+// per poll; save() adds or replaces your OWN. The server speaks {s,t} (CONTRACT.md "Shared doodles"); the hook hands the
+// eggs {strokes,t}. Author, `at` and `t` are always server-stamped.
 const doodleSubs=new Set();
+const asItem=d=>({id:d.id,at:d.at,t:d.t,strokes:d.s});
 function doodleList(){const all=data?.doodles||[],own=all.find(d=>d.self);
- return {mine:own?{id:own.id,at:own.at,strokes:own.strokes}:null,
-         others:all.filter(d=>!d.self).map(d=>({id:d.id,name:d.name,avatarId:d.avatarId,avatar:avatar(d.avatarId),at:d.at,strokes:d.strokes}))}}
+ return {canSave:!!data?.viewer&&open(),mine:own?asItem(own):null,
+         others:all.filter(d=>!d.self).map(d=>({...asItem(d),name:d.name,avatarId:d.avatarId,avatar:avatar(d.avatarId)}))}}
 function announceDoodles(){const l=doodleList();for(const cb of doodleSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-doodles',{detail:l}))}
+let after=[];// the two bounded re-GETs after a send (+20s, +60s), restarted by the next send
 window.filmmaandDoodles={
  list:doodleList,
  subscribe(cb){doodleSubs.add(cb);try{cb(doodleList())}catch{}return ()=>doodleSubs.delete(cb)},
  async save(strokes,retried=false){
   if(!pollId||!open())throw Object.assign(new Error('Stemmen is gesloten.'),{code:'date_poll_closed'});
-  try{const own=await call('PUT',{pollId,strokes},newKey(),DOODLE_API);await load();return own}
+  let r;
+  try{r=await call('PUT',{pollId,s:strokes},newKey(),DOODLE_API)}
   catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandDoodles.save(strokes,true);throw e}
+  if(data)data.doodles=r.doodles;announceDoodles();// the response carries everyone's doodles: no extra GET
+  for(const x of after)clearTimeout(x);
+  after=[20e3,60e3].map(ms=>setTimeout(()=>{if(document.visibilityState==='visible'&&!dirty()&&!saving)load()},ms));
+  return asItem(r.doodle);
  }
 };
 
-// ---- fresh counts when the tab comes back (one cheap read, at most once a minute; never while a tap is unsaved)
+// ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;
+// after a doodle send the two bounded re-GETs above. Nothing else is timed: an idle page makes zero requests.
 let lastRead=Date.now();
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&loaded&&data&&!dirty()&&!saving&&Date.now()-lastRead>60e3){lastRead=Date.now();load()}});
+function fresh(){if(document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<15e3)return;load()}
+document.addEventListener('visibilitychange',fresh);window.addEventListener('focus',fresh);
 
 render();load();
 })();

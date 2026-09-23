@@ -43,6 +43,17 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  assert.equal((js.match(/call\('PUT'/g)||[]).length,2);// the vote (saveOnce) and the doodle (filmmaandDoodles.save)
 });
 
+test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and two bounded ones after a doodle send',()=>{
+ // The one interval is the send-button wiggle (UI only). It never requests.
+ const intervals=[...js.matchAll(/setInterval\(([^;]*)\)/g)].map(m=>m[1]);
+ assert.equal(intervals.length,1);assert.match(intervals[0],/wiggle/);assert.equal(/load\(|call\(|fetch\(/.test(intervals[0]),false);
+ // Timed reads: exactly the +20s/+60s pair after a doodle send, only for a visible tab.
+ assert.match(js,/\[20e3,60e3\]\.map\(ms=>setTimeout\(\(\)=>\{if\(document\.visibilityState==='visible'/);
+ assert.equal((js.match(/setTimeout\([^;]*load\(\)/g)||[]).length,1);
+ assert.match(js,/Date\.now\(\)-lastRead<15e3\)return;load\(\)/);
+ assert.match(js,/addEventListener\('visibilitychange',fresh\);window\.addEventListener\('focus',fresh\)/);
+});
+
 test('mail links and reminder links go to /filmmaand/wanneer/, and the older /filmmaand/?pas= form lands there too',async()=>{
  const r=await handler(new Request('https://ely0030.xyz/filmmaand/?pas=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),{});
  assert.equal(r.status,302);assert.equal(r.headers.get('location'),'https://ely0030.xyz/filmmaand/wanneer/?pas=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
