@@ -68,3 +68,22 @@ test('games have their own rate limit (6 a minute), and the organiser can hide a
  assert.equal((await f.request('plans/home-picker-lab/date-poll','POST',{action:'hide-message',pollId:f.pollId,messageId:m.id,hidden:true},f.admin('hide-game-key-000001'))).status,200);
  const after=await f.read('Daan',0);assert.equal(games(after.body).some(x=>x.id===m.id),false);assert.ok(after.body.chat.hidden.includes(m.id));
 });
+
+// Chris, 23 Sept: a test account's vote had to be undone with a workaround. The organiser can now wipe one person's answer.
+test('the organiser can clear one vote: it stops counting, the voter can answer again, and a stale save of theirs is refused',async()=>{
+ const f=await fixture();
+ const vote=(who,rev,availability)=>f.request(POLL,'PUT',{pollId:f.pollId,revision:rev,availability,favourite:null},{'X-Filmmaand-Poll-Pass':f.pass[who],'Idempotency-Key':f.key()});
+ assert.equal((await vote('Lotte',0,{[NIGHTS[0]]:true,[NIGHTS[1]]:true})).status,200);
+ assert.equal((await vote('Daan',0,{[NIGHTS[0]]:true})).status,200);
+ const view=async()=>(await f.request(POLL,'POST',{action:'list-availability',pollId:f.pollId},f.admin())).body.datePoll;
+ const before=await view();assert.equal(before.voteCount,2);
+ const lotte=before.voters.find(x=>x.name==='Lotte');assert.ok(lotte&&typeof lotte.voter==='string');
+ const r=await f.request(POLL,'POST',{action:'clear-vote',pollId:f.pollId,voter:lotte.voter},f.admin('clear-vote-key-000001'));
+ assert.equal(r.status,200);
+ const after=await view();assert.equal(after.voteCount,1);assert.deepEqual(after.voters.map(x=>x.name),['Daan']);
+ assert.deepEqual(after.ranking.find(x=>x.date===NIGHTS[0]).people.map(x=>x.name),['Daan']);
+ assert.equal((await vote('Lotte',1,{[NIGHTS[2]]:true})).status,409,'a stale save (old revision) is refused');
+ assert.equal((await vote('Lotte',0,{[NIGHTS[2]]:true})).status,200,'a fresh answer works');
+ assert.equal((await f.request(POLL,'POST',{action:'clear-vote',pollId:f.pollId,voter:'participant:nobody'},f.admin('clear-vote-key-000002'))).status,404);
+ assert.equal((await f.request(POLL,'POST',{action:'clear-vote',pollId:f.pollId,voter:lotte.voter,extra:1},f.admin('clear-vote-key-000003'))).status,400);
+});

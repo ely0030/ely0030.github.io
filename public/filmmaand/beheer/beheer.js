@@ -3,7 +3,7 @@ const storageKey=id=>'filmmaand-organizer-receipt-v1:'+id+':'+planId;
 const status=s=>$('#status').textContent=s;
 function lock(){document.querySelectorAll('#controls button,#controls input,#controls select').forEach(n=>n.disabled=busy||!!pending||!access);$('#retry').disabled=busy;$('#pending').hidden=!pending;$('#refresh').disabled=busy;if(access&&plan&&!busy&&!pending){$('#deadline-form button').disabled=plan.round.status!=='open';$('#close-form button').disabled=plan.round.status!=='open';$('#resolve-form button').disabled=plan.round.status!=='closed';$('#open-form button').disabled=plan.round.status!=='resolved'||plan.nextRound.eligible.length<3;}}
 function persist(value){if(!access)throw Error('Beheerder niet bekend.');if(value)localStorage.setItem(storageKey(access.participantId),JSON.stringify(value));else localStorage.removeItem(storageKey(access.participantId));pending=value;lock()}
-async function request(path,opts={}){const r=await fetch(api+path,{...opts,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json',...opts.headers}});const body=await r.json();if(!r.ok)throw Object.assign(Error(body.error?.message||'Verzoek mislukt.'),{status:r.status,code:body.error?.code});return body}
+async function request(path,opts={}){const ac=new AbortController(),t=setTimeout(()=>ac.abort(),45e3);let r;try{r=await fetch(api+path,{...opts,signal:ac.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json',...opts.headers}})}catch(e){throw Object.assign(Error(e?.name==='AbortError'?'De server reageert niet. Probeer het zo opnieuw.':'Geen verbinding. Probeer het zo opnieuw.'),{status:0,code:'network'})}finally{clearTimeout(t)}const body=await r.json();if(!r.ok)throw Object.assign(Error(body.error?.message||'Verzoek mislukt.'),{status:r.status,code:body.error?.code});return body}
 function localDate(iso){return new Date(iso).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',dateStyle:'long',timeStyle:'short'})}
 function parts(ms){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ms)).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`}
 function dutchUTC(value){if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(value))throw Error('Vul een volledige Nederlandse datum en tijd in.');const goal=Date.parse(value+'Z');let guess=goal;for(let i=0;i<3;i++)guess+=goal-Date.parse(parts(guess)+'Z');if(parts(guess)!==value||parts(guess-3600000)===value||parts(guess+3600000)===value)throw Error('Deze lokale tijd is ongeldig of dubbel door de zomertijd. Kies een andere tijd.');return new Date(guess).toISOString()}
@@ -26,7 +26,9 @@ form('#close-form',()=>propose('close',{},'De huidige stemming nu sluiten? Nieuw
 form('#resolve-form',f=>{const choice=f.get('choice'),programme=f.has('programme'),programmeId=f.get('programmeId');propose('resolve',{choice,programme,...(programme&&programmeId?{programmeId}:{})},title(choice)+' vastleggen als uitslag'+(programme?' en in het programma opnemen':'')+'?')});
 form('#open-form',f=>{const shortlist=f.getAll('candidate');if(shortlist.length!==3)throw Error('Kies precies drie films.');const closesAt=dutchUTC(f.get('close'));propose('open',{shortlist,selectionSnapshot:plan.nextRound.snapshot,scheduledDate:f.get('date'),closesAt},'Nieuwe ronde met '+shortlist.map(title).join(', ')+'. Filmavond '+f.get('date')+'; stemmen sluit '+localDate(closesAt)+'. De oude ronde wordt gearchiveerd; stemmen beginnen op nul.')});
 
-function coordinate(path,body,summary){if(!access||pending||busy)return;proposedPath=path;proposed=body;$('#summary').textContent=summary;$('#confirm').showModal();$('#cancel-confirm').focus()}
+// Chris, 23 Sept: after the storage outage a click did nothing (an unconfirmed earlier action blocks new ones). Say so.
+function blocked(){if(pending){status('Er staat nog een handeling open zonder bevestiging. Druk eerst bovenaan op "Hetzelfde verzoek opnieuw controleren".');$('#pending').scrollIntoView({block:'center'});return true}if(busy){status('Even geduld, de vorige handeling loopt nog.');return true}return !access}
+function coordinate(path,body,summary){if(blocked())return;proposedPath=path;proposed=body;$('#summary').textContent=summary;$('#confirm').showModal();$('#cancel-confirm').focus()}
 function renderCoordination(){
  let area=$('#coordination-controls');if(!area){area=document.createElement('section');area.id='coordination-controls';$('#controls').append(area)}const top=$('#poll-panel');if(top&&top.nextSibling!==area)top.after(area);area.replaceChildren();const add=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;area.append(n);return n};
  add('h2','Datum afspreken');const q=plan.datePoll;add('p',q?'Huidige poll: '+q.status+(q.mode==='availability'?' · beschikbaarheid':' · bestaande voorkeursstemmen'):'Nog geen datumpoll.');
@@ -112,6 +114,10 @@ function renderPollPanel(){
  }
  add('p','Kan geen enkele avond: '+names(v.declined));
  add('p','Nog niet geantwoord: '+names(waiting));
+ // (a2) clear one person's answer (a test account, a mistake). Confirmed like everything else; mails nobody.
+ if(v.voters?.length){const d=add('details');add('summary','Stem wissen ('+v.voters.length+')',d);
+  for(const x of v.voters){const row=add('p',(x.name||'Onbekend')+' ',d);const b=add('button','Stem wissen',row);b.dataset.voter=x.voter;
+   b.onclick=()=>coordinate('date-poll',{action:'clear-vote',pollId:v.id,voter:x.voter},'Het antwoord van '+(x.name||'deze persoon')+' helemaal wissen? Het telt dan niet meer mee en die persoon kan opnieuw stemmen. Er wordt niets gemaild.')}}
  // (c) reminders: exactly the nudge-list people, confirmed by count and name.
  add('h2','Herinnering');
  const who=pollView.nudge.recipients||[];
