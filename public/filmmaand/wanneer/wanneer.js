@@ -8,7 +8,7 @@
    a calm system chip says so. Nothing is written on load: a PUT only follows a tap. reset-guard.js (loaded first)
    adds X-Filmmaand-Reset-Generation to every API request. */
 (()=>{'use strict';
-const API='/filmmaand/api/plans/home-picker-lab/date-poll';
+const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle';
 
 // ---- the pass: out of the address bar before anything else can copy it
 let pass=null;
@@ -38,10 +38,10 @@ function members(){const p=poll(),seen=new Map();if(p){for(const r of p.ranking|
  return [...seen.keys()].filter(n=>n!=='Alec').sort((a,b)=>a.localeCompare(b,'nl'))}
 
 // ---- API
-async function call(method,body,key){
+async function call(method,body,key,url=API){
  const headers={Accept:'application/json'};if(pass)headers['X-Filmmaand-Poll-Pass']=pass;
  if(body){headers['Content-Type']='application/json';headers['Idempotency-Key']=key}
- let r;for(let i=0;;i++){try{r=await fetch(API,{method,headers,credentials:'same-origin',cache:'no-store',...(body?{body:JSON.stringify(body)}:{})});break}
+ let r;for(let i=0;;i++){try{r=await fetch(url,{method,headers,credentials:'same-origin',cache:'no-store',...(body?{body:JSON.stringify(body)}:{})});break}
   catch(e){if(e?.code==='reset_generation'||i>0)throw e;await new Promise(x=>setTimeout(x,800))}}// one retry, same key
  let json=null;try{json=await r.json()}catch{}
  if(!r.ok)throw Object.assign(new Error(json?.error?.message||'HTTP '+r.status),{status:r.status,code:json?.error?.code||'http'});
@@ -66,7 +66,7 @@ function adopt(body){
   const said=NIGHTS.filter(d=>own[d]===true||own[d]===false);
   voted=said.length>0;mine=new Set(NIGHTS.filter(d=>own[d]===true));none=voted&&mine.size===0;
  }
- note('');setSub();render();if(revealed)pollEl.hidden=!poll();
+ note('');setSub();render();if(revealed)pollEl.hidden=!poll();announceDoodles();
  if(!loaded){loaded=true;arrived();}
 }
 
@@ -194,6 +194,23 @@ const menu=$('#menu'),pop=$('#menu-pop');
 menu.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;menu.setAttribute('aria-expanded',!pop.hidden)};
 document.addEventListener('click',e=>{if(!pop.hidden&&!pop.contains(e.target)){pop.hidden=true;menu.setAttribute('aria-expanded','false')}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){pop.hidden=true;menu.setAttribute('aria-expanded','false');menu.focus()}});
+
+// ---- shared doodles: a data hook for eggs.js (Capsule renders them; this page only moves data). One doodle per person
+// per poll; save() adds or replaces your OWN. Doodles arrive with every poll GET (data.doodles, hidden ones already removed).
+const doodleSubs=new Set();
+function doodleList(){const all=data?.doodles||[],own=all.find(d=>d.self);
+ return {mine:own?{id:own.id,at:own.at,strokes:own.strokes}:null,
+         others:all.filter(d=>!d.self).map(d=>({id:d.id,name:d.name,avatarId:d.avatarId,avatar:avatar(d.avatarId),at:d.at,strokes:d.strokes}))}}
+function announceDoodles(){const l=doodleList();for(const cb of doodleSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-doodles',{detail:l}))}
+window.filmmaandDoodles={
+ list:doodleList,
+ subscribe(cb){doodleSubs.add(cb);try{cb(doodleList())}catch{}return ()=>doodleSubs.delete(cb)},
+ async save(strokes,retried=false){
+  if(!pollId||!open())throw Object.assign(new Error('Stemmen is gesloten.'),{code:'date_poll_closed'});
+  try{const own=await call('PUT',{pollId,strokes},newKey(),DOODLE_API);await load();return own}
+  catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandDoodles.save(strokes,true);throw e}
+ }
+};
 
 // ---- fresh counts when the tab comes back (one cheap read, at most once a minute; never while a tap is unsaved)
 let lastRead=Date.now();

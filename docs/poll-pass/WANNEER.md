@@ -52,6 +52,18 @@ commit the generated files (Netlify cannot see the kit; it is not in this repo).
   sticker is already there; a new vote gets the typing → sticker reply).
 - **Refresh.** When the tab becomes visible again, at most one GET per minute, and never while a tap is unsaved.
 
+## Shared doodles: the page hook (phase 2)
+
+Server contract: `CONTRACT.md`, "Shared doodles". `wanneer.js` only moves data. Capsule's `eggs.js` renders the doodles
+and uses the hook when it exists (the kit page has no hook and keeps its local-only path):
+
+```js
+window.filmmaandDoodles.list()        // {mine:{id,at,strokes}|null, others:[{id,name,avatarId,avatar,at,strokes}]}
+window.filmmaandDoodles.save(strokes) // Promise<{id,at,strokes}>; replaces your own; rejects with Error.code
+window.filmmaandDoodles.subscribe(cb) // cb(list()) now and after every poll GET; returns unsubscribe
+// plus a 'filmmaand-doodles' CustomEvent on window after every GET (detail = list())
+```
+
 ## Run it
 
 ```sh

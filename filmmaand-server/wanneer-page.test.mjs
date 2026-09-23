@@ -37,9 +37,10 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  assert.ok(js.indexOf("history.replaceState")<js.indexOf('fetch('));
  assert.match(js,/const API='\/filmmaand\/api\/plans\/home-picker-lab\/date-poll'/);
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
- assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(API,']);assert.equal(/API\s*\+/.test(js),false);
+ assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
+ assert.deepEqual(js.match(/API\s*\+[^;,]*/g),["API+'-doodle'"]);assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);
  // Nothing writes on load: the only PUT is inside saveOnce, reached from a tap (Klaar / a night / the quick buttons).
- assert.equal((js.match(/call\('PUT'/g)||[]).length,1);
+ assert.equal((js.match(/call\('PUT'/g)||[]).length,2);// the vote (saveOnce) and the doodle (filmmaandDoodles.save)
 });
 
 test('mail links and reminder links go to /filmmaand/wanneer/, and the older /filmmaand/?pas= form lands there too',async()=>{
