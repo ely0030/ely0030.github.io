@@ -328,6 +328,21 @@ The **doodle rate** (6/min, 30/h) applies and is shared with the older one-per-p
 back-compat); the text rate counts text only. At most **100 drawings per poll** (inside the 400-message cap). Organiser
 hide per message (listed as `[tekening]`).
 
+**Cost, in more detail** (review item 4). A lite read is small on the wire, but on the server it is still one full
+`transact()`: a strongly-consistent download of the **whole state blob**, a hydrate and the request (FINDINGS.md). Its cost
+therefore grows with the state size, not with the response size. Measured locally (FINDINGS `bench-transact.mjs`; a 1024 MB
+Lambda is slower): 6.7 ms at 108 KB, 19.9 ms at 531 KB, 99.8 ms at 2.8 MB.
+- **The chat's own worst case** adds to that blob: 100 drawings × ≤ 4,096 B ≈ 410 KB plus 300 text messages × ~600 B ≈ 180 KB,
+  so **~590 KB** per poll at the caps (400 messages, 100 drawings). It is dropped from state when the poll is replaced
+  (the archive strips chat and doodles). A full chat therefore roughly doubles a mid-size state and the per-read time with it.
+- **Budget** (FINDINGS): 100 GB-hr/month at 1024 MB = 360,000 billed seconds/month ≈ **3.3 GB-hr a day**.
+- **Worst case**: 10 tabs hot (voted, visible, focused, someone chatting) for a whole busy hour = 12,000 lite reads. At
+  0.3–0.5 billed s each (a slow Lambda on a large blob, plus invocation overhead) that is **1.0–1.7 GB-hr, about half a day's
+  budget, or 1–1.7 % of the month**. A two-hour evening at that pace ≈ 2–3.3 GB-hr (one day's budget).
+- **Realistic**: a 5-person, 30-minute chat with pauses (which cool it down) ≈ 3,000 reads ≈ **0.25–0.4 GB-hr**. Idle, hidden,
+  not voted, anonymous or 20 minutes without input: **0**.
+- The biggest lever remains FINDINGS' "read fast path in `transact()`" (not in scope here).
+
 **Anonymous read** (no pass, no session): `GET …/date-poll?public=1` → `{datePoll}`: the public projection only (id, window,
 status, counts; never names), the same data the public plan GET already exposes, without the plan's movies/programme payload.
 `private, no-store`. The page uses it at most once per load, and makes no other reads while anonymous.
