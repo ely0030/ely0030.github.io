@@ -311,11 +311,15 @@ window.filmmaandChat={
  // A drawing as a chat message (Chris, 23 Sept): the same stream, several per person; the doodle rate applies.
  async sendDoodle(strokes,opts=false){return chatPost({kind:'doodle',s:strokes},opts)},
  // A game turn (games.js): {game:'hop'|'pool', gid, payload}; the game rate applies.
- async sendGame({game,gid,payload},opts=false){return chatPost({kind:'game',game,gid,payload},opts)}
+ async sendGame({game,gid,payload},opts=false){return chatPost({kind:'game',game,gid,payload},opts)},
+ // One re-read on request (games.js calls it when a game closes, so a waiting player sees the other's move soon). No timer:
+ // the same guards as fresh(), and at most one read per 5 s counting every other read too. true = a read started.
+ refresh(){if(anon||document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<5e3)return false;load();return true}
 };
 
 // ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;
-// after a doodle send the two bounded re-GETs above. Nothing else is timed: an idle page makes zero requests.
+// after a doodle send the two bounded re-GETs above; filmmaandChat.refresh on request (a game closing), at most every 5 s.
+// Nothing else is timed: an idle page makes zero requests.
 let lastRead=Date.now();
 function fresh(){if(anon)return;// anonymous: every re-read would 401 again; nothing to refresh
  if(document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<15e3)return;load()}

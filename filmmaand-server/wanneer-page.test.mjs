@@ -76,6 +76,9 @@ test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and
  // Exactly one bounded timed read outside hot mode: the +20 s / +60 s pair after a send.
  assert.equal((js.match(/setTimeout\(\(\)=>\{if\(document\.visibilityState==='visible'&&!dirty\(\)&&!saving\)load\(\)\}/g)||[]).length,1);
  assert.match(js,/Date\.now\(\)-lastRead<15e3\)return;load\(\)/);
+ // + filmmaandChat.refresh() (games.js, when a game closes): untimed, the same guards, at most one read per 5 s.
+ assert.match(js,/refresh\(\)\{if\(anon\|\|document\.visibilityState!=='visible'\|\|!loaded\|\|!data\|\|dirty\(\)\|\|saving\|\|Date\.now\(\)-lastRead<5e3\)return false;load\(\);return true\}/);
+ assert.equal((js.match(/\brefresh\(\)/g)||[]).length,1,'refresh() has one definition and no timed caller in the page');
  assert.match(js,/addEventListener\('visibilitychange',fresh\);window\.addEventListener\('focus',fresh\)/);
  // Hot mode (Chris; Cameo's guardrails): the only other timed read. It is a LITE read, wired through createHot() (tested
  // behaviourally below); hidden/blur pause it; the server clock (Date header) decides freshness.
