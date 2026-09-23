@@ -242,7 +242,9 @@ window.filmmaandDoodles={
 // what is new (?since=), and a send's response already carries everything since that cursor. Text is plain: render it
 // with textContent, never innerHTML.
 let chatMsgs=[],chatCursor=0,chatFor=null;const chatSubs=new Set();
-const chatItem=m=>({id:m.id,seq:m.seq,name:m.name,avatarId:m.avatarId,avatar:avatar(m.avatarId),at:m.at,t:m.t,text:m.text,...(m.self?{self:true}:{})});
+// kind 'text' → text; kind 'sticker' → sticker (0..3, the same for everyone). alec:true = Alec's own (avatar null: the eggs draw him).
+const chatItem=m=>({id:m.id,seq:m.seq,kind:m.kind||'text',name:m.name,avatarId:m.avatarId,avatar:m.alec?null:avatar(m.avatarId),at:m.at,t:m.t,
+ ...(m.kind==='sticker'?{sticker:m.sticker}:{text:m.text}),...(m.alec?{alec:true}:{}),...(m.self?{self:true}:{})});
 // The chat outlives the vote: after the pick it stays open until the end of the picked night (server says chat.open).
 const chatOpenNow=()=>!!data?.viewer&&(data?.chat?.open??open());
 // pickedAt (ISO or null): the eggs place items sent after the pick below the pick block (#rsvp, right after the notice).

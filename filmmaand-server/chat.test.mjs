@@ -29,15 +29,16 @@ test('post as yourself, read with a cursor: the POST returns the chat since your
  const f=await fixture();
  const first=await f.say('Lotte','  movie?  ');
  assert.equal(first.status,200,JSON.stringify(first.body));assert.equal(first.headers.get('cache-control'),'private, no-store');assert.equal(first.headers.get('set-cookie'),null);
- assert.deepEqual(first.body.message,{id:first.body.message.id,seq:1,name:'Lotte',avatarId:12,at:'2026-09-23T10:00:00.000Z',t:'12:00',text:'movie?',self:true});
- assert.deepEqual(first.body.chat.messages.map(m=>m.text),['movie?']);assert.equal(first.body.chat.cursor,1);
- tick(f,30);const reply=await f.say('Daan','ja!\nzaterdag',1);// Daan's cursor is 1: the response carries only his own new message
- assert.deepEqual(reply.body.chat.messages.map(m=>[m.name,m.text,!!m.self]),[['Daan','ja!\nzaterdag',true]]);assert.equal(reply.body.chat.cursor,2);
- const all=(await f.read('Lotte')).body.chat;assert.deepEqual(all.messages.map(m=>[m.seq,m.name,!!m.self]),[[1,'Lotte',true],[2,'Daan',false]]);assert.equal(all.cursor,2);
- assert.deepEqual((await f.read('Lotte',1)).body.chat.messages.map(m=>m.seq),[2]);
- assert.deepEqual((await f.read('Lotte',2)).body.chat,{open:true,messages:[],cursor:2,hidden:[]});
+ // seq 1 is Alec's opening sticker (posted when the poll opened); texts start at 2.
+ assert.deepEqual(first.body.message,{id:first.body.message.id,seq:2,kind:'text',name:'Lotte',avatarId:12,at:'2026-09-23T10:00:00.000Z',t:'12:00',text:'movie?',self:true});
+ assert.deepEqual(first.body.chat.messages.map(m=>m.kind==='sticker'?'sticker':m.text),['sticker','movie?']);assert.equal(first.body.chat.cursor,2);
+ tick(f,30);const reply=await f.say('Daan','ja!\nzaterdag',2);// Daan's cursor is 2: the response carries only his own new message
+ assert.deepEqual(reply.body.chat.messages.map(m=>[m.name,m.text,!!m.self]),[['Daan','ja!\nzaterdag',true]]);assert.equal(reply.body.chat.cursor,3);
+ const all=(await f.read('Lotte')).body.chat;assert.deepEqual(all.messages.map(m=>[m.seq,m.name,!!m.self]),[[1,'Alec',false],[2,'Lotte',true],[3,'Daan',false]]);assert.equal(all.cursor,3);
+ assert.deepEqual((await f.read('Lotte',2)).body.chat.messages.map(m=>m.seq),[3]);
+ assert.deepEqual((await f.read('Lotte',3)).body.chat,{open:true,messages:[],cursor:3,hidden:[]});
  // A bad cursor reads as 0 (everything), never an error.
- assert.equal((await f.read('Lotte','abc')).body.chat.messages.length,2);
+ assert.equal((await f.read('Lotte','abc')).body.chat.messages.length,3);
  // The public plan GET has no chat.
  const pub=await f.request('plans/home-picker-lab','GET');assert.equal(JSON.stringify(pub.body).includes('movie?'),false);
  // The receipt keeps only the message, never the chat view.
@@ -87,14 +88,15 @@ test('organiser hide: gone for everyone (the hidden id is listed so clients remo
  const f=await fixture();const m=(await f.say('Lotte','oeps')).body.message;tick(f,5);await f.say('Daan','hoi');
  const notices=()=>JSON.stringify([f.store.data.plans['home-picker-lab'].data.notices,f.store.data.eventNotifications]);const before=notices();
  const org=(await f.request(POLL,'POST',{action:'list-availability',pollId:f.pollId},f.admin())).body.datePoll.chat;
- assert.deepEqual(org.map(x=>[x.name,x.text,x.hidden]),[['Lotte','oeps',false],['Daan','hoi',false]]);
+ assert.deepEqual(org.filter(x=>x.kind==='text').map(x=>[x.name,x.text,x.hidden]),[['Lotte','oeps',false],['Daan','hoi',false]]);
  // Only the organiser: a pass cannot hide.
  assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:m.id,hidden:true},{'X-Filmmaand-Poll-Pass':f.pass.Daan,'Idempotency-Key':f.key()})).status,405);
  assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:m.id,hidden:true},f.admin('hide-message-key-0001'))).status,200);
- const view=(await f.read('Daan')).body.chat;assert.deepEqual(view.messages.map(x=>x.text),['hoi']);assert.deepEqual(view.hidden,[m.id]);
- assert.deepEqual((await f.read('Lotte',2)).body.chat.hidden,[m.id]);// a client that already showed it learns to remove it
+ const texts=c=>c.messages.filter(x=>x.kind==='text').map(x=>x.text);
+ const view=(await f.read('Daan')).body.chat;assert.deepEqual(texts(view),['hoi']);assert.deepEqual(view.hidden,[m.id]);
+ assert.deepEqual((await f.read('Lotte',3)).body.chat.hidden,[m.id]);// a client that already showed it learns to remove it
  assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:m.id,hidden:false},f.admin('hide-message-key-0002'))).status,200);
- assert.deepEqual((await f.read('Daan')).body.chat.messages.map(x=>x.text),['oeps','hoi']);
+ assert.deepEqual(texts((await f.read('Daan')).body.chat),['oeps','hoi']);
  assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:'msg-nope',hidden:true},f.admin('hide-message-key-0003'))).body.error.code,'message_unknown');
  assert.equal(notices(),before);
 });
@@ -114,10 +116,30 @@ test('after the pick the chat stays open until the end of the picked night (Amst
  assert.equal((await vote('vote-after-pick-0002')).body.error.code,'date_poll_closed');
  // 00:00 Amsterdam (22:00Z): the chat closes; the pass is read-only for 24h more.
  f.clock.now='2026-09-26T22:00:00.000Z';assert.equal((await f.say('Lotte','te laat')).body.error.code,'date_poll_closed');
- const late=await f.read('Daan');assert.equal(late.status,200);assert.equal(late.body.chat.open,false);assert.deepEqual(late.body.chat.messages.map(m=>m.text),['wanneer?','ik neem chips mee','tot zo!']);
+ const late=await f.read('Daan');assert.equal(late.status,200);assert.equal(late.body.chat.open,false);assert.deepEqual(late.body.chat.messages.filter(m=>m.kind==='text').map(m=>m.text),['wanneer?','ik neem chips mee','tot zo!']);
  f.clock.now='2026-09-27T21:59:00.000Z';assert.equal((await f.read('Daan')).status,200);// grace, still under the hard cap (28 Sept 00:00Z)
  f.clock.now='2026-09-27T22:00:00.000Z';assert.equal((await f.read('Daan')).body.error.code,'pass_invalid');
  // A poll CLOSED without a pick closes the chat at once (no night to talk about).
  const g=await fixture();assert.equal((await g.request(POLL,'POST',{action:'close',pollId:g.pollId},g.admin('close-chat-poll-0001'))).status,200);
  assert.equal((await g.say('Lotte','hallo?')).body.error.code,'date_poll_closed');assert.equal((await g.read('Lotte')).body.chat.open,false);
 });
+
+test("Alec's sticker: a real first message when the poll opens, the same style for everyone, hideable, not postable by anyone",async()=>{
+ const f=await fixture();
+ const lotte=(await f.read('Lotte')).body.chat.messages,daan=(await f.read('Daan')).body.chat.messages;
+ assert.equal(lotte.length,1);const [s]=lotte;
+ assert.equal(s.kind,'sticker');assert.equal(s.seq,1);assert.equal(s.name,'Alec');assert.equal(s.alec,true);assert.equal(s.avatarId,null);
+ assert.ok(Number.isInteger(s.sticker)&&s.sticker>=0&&s.sticker<=3);assert.equal('text' in s,false);assert.equal('self' in s,false);
+ assert.deepEqual(daan,lotte,'identical for every reader');
+ // Only the server posts it: a POST can only ever carry text, as yourself.
+ assert.equal((await f.say('Lotte','x',0,{kind:'sticker'})).status,400);assert.equal((await f.say('Lotte','x',0,{sticker:1})).status,400);
+ // The organiser sees and can hide it like any message.
+ const org=(await f.request(POLL,'POST',{action:'list-availability',pollId:f.pollId},f.admin())).body.datePoll.chat;
+ assert.deepEqual(org.map(x=>[x.kind,x.name,x.text]),[['sticker','Alec','[sticker '+s.sticker+']']]);
+ assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:s.id,hidden:true},f.admin('hide-sticker-key-001'))).status,200);
+ const after=(await f.read('Lotte')).body.chat;assert.deepEqual(after.messages,[]);assert.deepEqual(after.hidden,[s.id]);
+ // The style is drawn per poll at open time: across fresh polls every style shows up (randomInt(4), 40 polls).
+ const seen=new Set();for(let i=0;i<40;i++){const g=await fixture();seen.add((await g.read('Lotte')).body.chat.messages[0].sticker)}
+ assert.deepEqual([...seen].sort(),[0,1,2,3]);
+});
+

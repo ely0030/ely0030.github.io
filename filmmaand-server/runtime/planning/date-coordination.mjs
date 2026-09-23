@@ -1,3 +1,4 @@
+import {randomInt} from 'node:crypto';
 import {resolvedEventTiming} from './event-timing.mjs';
 // Pure state transitions. All callers commit through the canonical plan/state CAS.
 const fail=(status,code,message)=>{throw Object.assign(Error(message),{status,code})};
@@ -26,7 +27,11 @@ export function openAvailabilityPoll(p,b,{id,now}){
  let linked=null;if(b.programmeId!==undefined){linked=event(p,b.programmeId);if(!linked||linked.selection!=='pending'||linked.choices?.length)fail(409,'date_poll_event','Kies een bestaande avond met open filmkeuze.');}
  if(p.datePoll)(p.datePollHistory||=[]).push(archivePoll(p.datePoll));
  p.datePoll={id,mode:'availability',status:'open',window:{...b.window},choices:[],votes:{},openedAt:now,closesAt:noDeadline?null:b.closesAt,...(manual?{pick:'manual'}:{}),...(linked?{programmeId:b.programmeId,eventVersion:revision(linked),originalDate:eventDate(linked)}:{})};
+ // Alec's sticker (Chris, 23 Sept): a real first chat message, the same for everyone. The style (0..3) is drawn once, here.
+ p.datePoll.chat={seq:1,messages:[{id:'msg-'+id.slice(-8)+'-1',seq:1,a:ALEC_AUTHOR,at:now,kind:'sticker',sticker:randomInt(STICKER_STYLES)}]};
 }
+// The chat's system author: the group's host, shown as "Alec". Not an account; it never votes, never gets mail.
+export const ALEC_AUTHOR='alec',STICKER_STYLES=4;
 // Responded = at least one night explicitly answered (true or false). An all-false answer is a real "I can't make any
 // of these nights": it counts as responded (never nudged) and is listed as declined. {} (or nothing) is "not answered yet".
 const answered=(q,v)=>days(q.window.start,q.window.end).filter(d=>typeof v?.availability?.[d]==='boolean');

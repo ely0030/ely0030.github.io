@@ -1,7 +1,9 @@
 // Text group chat on the date poll (phase 3, Chris 23 Sept), the same channel as the shared doodles. Stored on the poll
 // (p.datePoll.chat), so a new poll starts empty. A pass (or session) may only post as its own person. Never mails, never
 // notifies. Rate limit per person is computed from the stored messages at write time, so reads never write.
-import {chatOpen} from './date-coordination.mjs';
+import {chatOpen,ALEC_AUTHOR} from './date-coordination.mjs';
+// Who wrote a message: an account's display profile, or Alec (the system author of the poll's opening sticker).
+const author=(p,a,display)=>a===ALEC_AUTHOR?{name:'Alec',avatarId:null}:display(p,a);
 
 const fail=(status,code,message,details)=>{throw Object.assign(new Error(message),{status,code,...(details?{details}:{})})};
 const strict=(b,keys)=>b&&typeof b==='object'&&!Array.isArray(b)&&Object.keys(b).every(k=>keys.includes(k));
@@ -32,18 +34,20 @@ export function writeChat(p,a,b,now,display){
  const seq=++chat.seq,m={id:'msg-'+q.id.slice(-8)+'-'+seq,seq,a,at:now,text};chat.messages.push(m);
  return {message:view(p,m,a,display)};
 }
-function view(p,m,me,display){const who=display(p,m.a);return {id:m.id,seq:m.seq,name:who?.name||null,avatarId:who?.avatarId??null,at:m.at,t:hhmm(m.at),text:m.text,...(m.a===me?{self:true}:{})}}
+// kind 'text' (default, also for messages stored before kinds existed) carries text; kind 'sticker' carries sticker (0..3).
+function view(p,m,me,display){const who=author(p,m.a,display),kind=m.kind||'text';return {id:m.id,seq:m.seq,kind,name:who?.name||null,avatarId:who?.avatarId??null,at:m.at,t:hhmm(m.at),
+ ...(kind==='sticker'?{sticker:m.sticker}:{text:m.text}),...(m.a===ALEC_AUTHOR?{alec:true}:{}),...(m.a===me?{self:true}:{})}}
 
 // The reader's view: visible messages after `since` (a seq; 0 = everything), the new cursor, and every hidden id so a
 // client can remove one it already shows. Only people with a display profile, like the names elsewhere.
 export function chatView(p,me,display,since=0,now){
  const chat=p.datePoll?.chat,all=chat?.messages||[];
- return {open:!!now&&chatOpen(p.datePoll,now),messages:all.filter(m=>m.seq>since&&!m.hidden&&display(p,m.a)).map(m=>view(p,m,me,display)),cursor:chat?.seq||0,hidden:all.filter(m=>m.hidden).map(m=>m.id)};
+ return {open:!!now&&chatOpen(p.datePoll,now),messages:all.filter(m=>m.seq>since&&!m.hidden&&author(p,m.a,display)).map(m=>view(p,m,me,display)),cursor:chat?.seq||0,hidden:all.filter(m=>m.hidden).map(m=>m.id)};
 }
 export const parseSince=v=>/^\d{1,6}$/.test(v||'')?Number(v):0;
 
 // Organiser: every message with its hidden flag, and the kill switch {action:'hide-message', pollId, messageId, hidden}.
-export function organiserChat(p,display){return (p.datePoll?.chat?.messages||[]).map(m=>({id:m.id,name:display(p,m.a)?.name||null,at:m.at,text:m.text,hidden:!!m.hidden}))}
+export function organiserChat(p,display){return (p.datePoll?.chat?.messages||[]).map(m=>({id:m.id,kind:m.kind||'text',name:author(p,m.a,display)?.name||null,at:m.at,text:m.kind==='sticker'?'[sticker '+m.sticker+']':m.text,hidden:!!m.hidden}))}
 export function hideMessage(p,b){
  if(!strict(b,['action','pollId','messageId','hidden'])||typeof b.messageId!=='string'||typeof b.hidden!=='boolean')fail(400,'chat','Ongeldige actie.');
  const q=p.datePoll;if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
