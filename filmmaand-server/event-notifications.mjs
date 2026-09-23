@@ -2,12 +2,13 @@
 import {createHash} from 'node:crypto';
 import {transact} from './state.mjs';
 import {providerAcceptanceId} from './mail-diagnostics.mjs';
-import {answersOpen,responded} from './runtime/planning/date-coordination.mjs';
+import {answersOpen,responded,rsvpOpen} from './runtime/planning/date-coordination.mjs';
 import {createPollPasses} from './runtime/planning/auth/poll-passes.mjs';
 import {renderPollNudge} from './poll-nudge-mail.mjs';
 import {renderPollInvite} from './poll-invite-mail.mjs';
+import {renderPollConfirm} from './poll-confirm-mail.mjs';
 const ACTIVITY=new Set(['round-opened','round-concluded']);
-const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge','poll-invite']);
+const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge','poll-invite','poll-confirm']);
 const DAY=86400000, hash=value=>createHash('sha256').update(value).digest('hex');
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const validTime=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
@@ -53,6 +54,8 @@ export function queueCoordinationEvents(c,options={}){
   const notice=projectNotice(n,p);
   // Stable minimal ledger prevents replay even after private message bodies/receipts expire.
   ns.seen[key]={at,eventId:n.eventId,type:n.type};
+  // A manual date-poll pick mails its own per-person confirmation (poll-confirm, queued with the pick); no site-wide fan-out.
+  if(n.pollConfirm)continue;
   for(const recipient of recipients){if(n.type==='date-confirmed'&&c.state.accountNotifications?.accounts?.[recipient.id]?.importantActivityEmail!==false&&ns.coalescedConfirmations?.[hash(JSON.stringify([n.planId,n.eventId,recipient.id]))]?.scheduledDate===n.scheduledDate)continue;const id=hash(key+'\0'+recipient.id);ns.outbox[id]={id,notice,participantId:recipient.id,to:recipient.email.toLowerCase(),createdAt:at,status:'pending'};queued++;}
  }
  for(const notice of Object.values(c.state.accountNotifications?.mailIntents||{})){
@@ -84,6 +87,19 @@ export function queuePollNudges(c,{planId,poll,scope,recipients,now}){
 /** Organiser-triggered invitation (action invite): ONE per person per poll, ever. The seen ledger key has no request scope,
  * so a replay, a second click or a new Idempotency-Key never mails anyone twice; people added later are invited by the
  * next send. Only queues; delivery re-checks and mints the person's own link (no plaintext token is stored). */
+/** The pick confirmation (manual poll): ONE per poll participant (live pass holder or anyone who answered), queued in the
+ * pick's transaction; replay-safe via the seen ledger. Delivery mints the person's own link and renders ja/nee. */
+const confirmId=(planId,pollId,participantId)=>hash(['poll-confirm',planId,pollId,participantId].join('\0'));
+export function queuePollConfirms(c,{planId,poll,recipients,now}){
+ const ns=namespace(c.state);let queued=0;
+ for(const participantId of recipients){
+  const id=confirmId(planId,poll.id,participantId);if(ns.seen[id])continue;
+  const p=c.authStore.db.prepare('SELECT id,email,onboarded FROM participants WHERE id=?').get(participantId);if(!p?.onboarded)continue;
+  ns.seen[id]={at:now,eventId:poll.id,type:'poll-confirm'};
+  ns.outbox[id]={id,notice:{id:'confirm:'+id.slice(0,20),type:'poll-confirm',planId,eventId:poll.id,occurredAt:now,scheduledDate:poll.scheduledDate},participantId,to:p.email.toLowerCase(),createdAt:now,status:'pending'};queued++;
+ }
+ return queued;
+}
 const inviteId=(planId,pollId,participantId)=>hash(['poll-invite',planId,pollId,participantId].join('\0'));
 export function invitedParticipants(c,planId,pollId){const ns=namespace(c.state);return holder=>!!ns.seen[inviteId(planId,pollId,holder.participantId)]}
 export function queuePollInvites(c,{planId,poll,recipients,now}){
@@ -189,6 +205,18 @@ export function createEventNotifications(options={}){
    // Address changes, account deletion, new opt-outs and local suppression cancel queued delivery.
    if(!p||p.email.toLowerCase()!==m.to||!policyAllows(c,p,options)||(ACTIVITY.has(m.notice.type)&&c.state.accountNotifications?.accounts?.[p.id]?.importantActivityEmail===false)){delete ns.outbox[id];return null;}
    const plan=c.state.plans[m.notice.planId]?.data;
+   if(m.notice.type==='poll-confirm'){
+    // Dropped if the poll moved on, is no longer the confirmed one for that night, or the night is over.
+    const q=plan?.datePoll,who=c.authStore.db.prepare('SELECT name,onboarded FROM participants WHERE id=?').get(p.id);
+    if(!q||q.id!==m.notice.eventId||q.status!=='confirmed'||q.scheduledDate!==m.notice.scheduledDate||!rsvpOpen(q,now())||!who?.onboarded){delete ns.outbox[id];return null;}
+    const day=now().slice(0,10),month=day.slice(0,7);c.state.mailUsage||={};
+    if((c.state.mailUsage[day]||0)>=80||(c.state.mailUsage[month]||0)>=2000)return null;
+    const namen=Object.entries(q.votes||{}).filter(([,v])=>v?.availability?.[q.scheduledDate]===true).map(([a])=>c.authStore.db.prepare('SELECT name,onboarded FROM participants WHERE id=?').get(a.replace(/^p_/,''))).filter(x=>x?.onboarded).map(x=>x.name).sort((x,y)=>x.localeCompare(y,'nl'));
+    const token=createPollPasses({store:c.authStore,now}).mintExtra(m.notice.planId,q,p.id,'confirm');
+    const rendered=renderPollConfirm({name:who.name,date:q.scheduledDate,tijd:q.tijd||'20:00',waar:q.waar||'bij Alec',namen,url:new URL('/filmmaand/wanneer/?pas='+token,origin).href,origin});
+    m.status='attempted';m.attemptedAt=now();c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
+    return {id:m.id,to:m.to,...rendered};
+   }
    if(m.notice.type==='poll-invite'){
     // Dropped if the poll moved on or no longer takes answers, or the person has no profile. (Having answered already,
     // e.g. via a session, also drops it: the invitation has done its job.)

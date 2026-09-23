@@ -1,5 +1,5 @@
 import {resolvedEventTiming} from './event-timing.mjs';
-import {tickCoordination,changeDate,coordinationView,answersOpen,needsPick,responded} from './date-coordination.mjs';
+import {tickCoordination,changeDate,coordinationView,answersOpen,needsPick,responded,writeRsvp,ownRsvp} from './date-coordination.mjs';
 import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.mjs';
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
@@ -30,12 +30,12 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  // Public display identity: account profile for participants (follows profile edits), the per-plan snapshot for anonymous actors.
  const datePollDisplay=(p,a)=>isParticipantActor(a)?identity?.publicProfile?.(a)||null:null;
  // Organiser projection: names per night plus needsPick (a manual poll still undecided from the day before its last night).
- const organizerPoll=p=>{const v=publicDatePoll(p,null,datePollDisplay,{names:true});return v?.mode==='availability'?{...v,needsPick:needsPick(p.datePoll,now()),doodles:organiserDoodles(p,datePollDisplay),chat:organiserChat(p,datePollDisplay)}:v};
+ const organizerPoll=p=>{const v=publicDatePoll(p,null,datePollDisplay,{names:true});return v?.mode==='availability'?{...v,needsPick:needsPick(p.datePoll,now()),doodles:organiserDoodles(p,datePollDisplay),chat:organiserChat(p,datePollDisplay),rsvp:Object.entries(p.datePoll.rsvp||{}).map(([a,r])=>({name:datePollDisplay(p,a)?.name||null,answer:r.answer,at:r.at})).sort((x,y)=>(x.name||'').localeCompare(y.name||'','nl'))}:v};
  const currentPoll=(p,pollId)=>{if(!p.datePoll||p.datePoll.mode!=='availability'||p.datePoll.id!==pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');return p.datePoll};
  // Pass holders who have not answered yet. Anyone who answered, including "none of these nights", is left out.
  const unanswered=(q,holders)=>holders.filter(h=>!responded(q,q.votes?.['p_'+h.participantId]));
  const ownOnly=r=>({doodle:r.doodle});
- const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]}}};
+ const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},rsvp:av?ownRsvp(p.datePoll,a,now()):{answer:null,at:null,open:false}}};
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
  const responseDates=r=>Array.isArray(r.dates)?r.dates:r.start&&r.end?days(r.start,r.end):[];
@@ -135,6 +135,9 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
   // only {message}. No mail.
   async chatDatePollAs(id,a,pollId,key,b,since=0){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-chat',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return {...writeChat(p,a,b,now(),datePollDisplay),chat:chatView(p,a,datePollDisplay,since,now())}},r=>({message:r.message}));},
   async chatDatePoll(id,token,key,b,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-chat',body:b},p=>({...writeChat(p,a,b,now(),datePollDisplay),chat:chatView(p,a,datePollDisplay,since,now())}),r=>({message:r.message}));},
+  // RSVP after a pick: own answer only (strict body {pollId, answer}), until the end of the picked night. No mail.
+  async rsvpDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-rsvp',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return writeRsvp(p,a,b,now())});},
+  async rsvpDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');if(!datePollDisplay({},a))fail(409,'onboarding_required','Kies eerst je naam en avatar.');return mutate(id,a,key,{operation:'date-poll-rsvp',body:b},p=>writeRsvp(p,a,b,now()));},
   async voteDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>writeDatePoll(p,a,b,now()));},
   async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{if(b?.action==='hide-doodle'){hideDoodle(p,b);return {datePoll:organizerPoll(p)};}if(b?.action==='hide-message'){hideMessage(p,b);return {datePoll:organizerPoll(p)};}setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)});return {datePoll:organizerPoll(p)};});},
   // Organiser read (admin bearer or organiser cookie, checked by the api layer): the poll with names per night.

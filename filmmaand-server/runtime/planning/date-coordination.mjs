@@ -41,6 +41,14 @@ export function nightEnd(date){const next=new Date(Date.parse(date+'T00:00:00Z')
  for(const h of [1,2,0,3]){const t=base-h*3600e3,p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(t)).map(x=>[x.type,x.value]));
   if(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`===next+'T00:00')return t}
  return base}
+// RSVP after a pick ("Ja, ik kom!" / "Toch niet"): own answer, changeable until the end of the picked night.
+export const rsvpOpen=(q,now)=>q?.status==='confirmed'&&!!q.scheduledDate&&Date.parse(now)<nightEnd(q.scheduledDate);
+export function writeRsvp(p,a,b,now){const q=p.datePoll;
+ if(!strict(b,['pollId','answer'])||!['ja','nee'].includes(b.answer))fail(400,'rsvp','Kies ja of nee.');
+ if(q?.mode!=='availability'||b.pollId!==q.id)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
+ if(!rsvpOpen(q,now))fail(409,'rsvp_closed','Aanmelden kan niet (meer).');
+ (q.rsvp||={})[a]={answer:b.answer,at:now};return {rsvp:{answer:b.answer,at:now}};}
+export const ownRsvp=(q,a,now)=>({answer:q?.rsvp?.[a]?.answer||null,at:q?.rsvp?.[a]?.at||null,open:rsvpOpen(q,now)});
 // Chat: open while answers are, and after a pick until the end of the picked night. Votes and doodles close at the pick.
 export const chatOpen=(q,now)=>answersOpen(q,now)||(q?.status==='confirmed'&&!!q.scheduledDate&&Date.parse(now)<nightEnd(q.scheduledDate));
 export const answersOpen=(q,now)=>q?.status==='open'&&(q.closesAt==null||Date.parse(now)<Date.parse(q.closesAt));
@@ -51,7 +59,7 @@ export function writeAvailability(p,a,b,now){const q=p.datePoll;if(!strict(b,['p
 const linkedChanged=(p,q)=>{const n=q.programmeId?event(p,q.programmeId):null;return !!q.programmeId&&(!n||revision(n)!==q.eventVersion||eventDate(n)!==q.originalDate||n.selection!=='pending'||n.choices?.length)};
 // Put the chosen night on the programme (the linked night, or a new pending night) and confirm the poll. Shared by the
 // deadline tick (auto) and the organiser's pick (manual).
-function schedule(p,q,date,now){let n=q.programmeId?event(p,q.programmeId):null;if(!n){n={id:'night-'+q.id,selection:'pending',choices:[],coordinationRevision:0};(p.programme||=[]).push(n);}delete n.startsAt;n.scheduledDate=date;n.coordinationRevision=revision(n)+1;n.dateConfirmedAt=now;q.status='confirmed';q.scheduledDate=n.scheduledDate;q.programmeId=n.id;notice(p,n,'date-confirmed',now);}
+function schedule(p,q,date,now,extra={}){let n=q.programmeId?event(p,q.programmeId):null;if(!n){n={id:'night-'+q.id,selection:'pending',choices:[],coordinationRevision:0};(p.programme||=[]).push(n);}delete n.startsAt;n.scheduledDate=date;n.coordinationRevision=revision(n)+1;n.dateConfirmedAt=now;q.status='confirmed';q.scheduledDate=n.scheduledDate;q.programmeId=n.id;notice(p,n,'date-confirmed',now,extra);}
 // Auto polls only. A manual poll is never finalised by time, however far past closesAt.
 export function finalizePoll(p,now,eligible=()=>true){const q=p.datePoll;if(q?.mode!=='availability'||q.pick==='manual'||q.status!=='open'||Date.parse(now)<Date.parse(q.closesAt))return false;const ranks=rankAvailability(q,eligible);q.ranking=ranks;q.closedAt=now;if(!ranks[0]?.available){q.status='needs-organizer';return true;}if(linkedChanged(p,q)){q.status='needs-organizer';q.reason='event_changed';return true;}
  schedule(p,q,ranks[0].date,now);return true;}
@@ -59,12 +67,17 @@ export function finalizePoll(p,now,eligible=()=>true){const q=p.datePoll;if(q?.m
 // open (answers may still be coming in, or its deadline may have passed) and for an auto poll that is still open or that the
 // deadline left as needs-organizer.
 export function pickAvailabilityDate(p,b,now,eligible=()=>true){const q=p.datePoll;
- if(!strict(b,['action','pollId','date'])||b.action!=='pick')fail(400,'date_poll','Ongeldige datumkeuze.');
+ if(!strict(b,['action','pollId','date','tijd','waar'])||b.action!=='pick')fail(400,'date_poll','Ongeldige datumkeuze.');
+ // Optional, for the confirmation mail: a time and a place, plain text (defaults "20:00" / "bij Alec").
+ for(const k of ['tijd','waar'])if(b[k]!==undefined&&(typeof b[k]!=='string'||!b[k].trim()||b[k].length>40||/[\u0000-\u001f\u007f<>]/.test(b[k])))fail(400,'date_poll','Ongeldige '+k+'.');
  if(q?.mode!=='availability'||b.pollId!==q.id)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
  if(q.status!=='open'&&q.status!=='needs-organizer')fail(409,'date_poll_closed','Deze poll is al beslist of gesloten.');
  if(!upcoming(p,b.date,now)||b.date<q.window.start||b.date>q.window.end)fail(400,'date_poll_date','Kies een komende dag binnen deze poll.');
  if(linkedChanged(p,q))fail(409,'event_changed','De gekoppelde avond is elders veranderd.');
- q.ranking=rankAvailability(q,eligible);q.closedAt=now;delete q.reason;schedule(p,q,b.date,now);
+ q.ranking=rankAvailability(q,eligible);q.closedAt=now;delete q.reason;q.tijd=(b.tijd||'20:00').trim();q.waar=(b.waar||'bij Alec').trim();
+ // A manual pick mails its own per-person confirmation (poll-confirm, with a personal ja/nee link) instead of the generic
+ // site-wide "De datum staat vast" fan-out; the coordination event carries pollConfirm so the fan-out skips it.
+ schedule(p,q,b.date,now,q.pick==='manual'?{pollConfirm:q.id}:{});
 }
 export function attendees(p,n,eligible){const d=eventDate(n);return Object.entries(p.responses||{}).filter(([a,r])=>eligible(a)&&(Array.isArray(r.dates)?r.dates.includes(d):r.start<=d&&r.end>=d)).map(([a])=>a).sort();}
 function current(p,b){const n=event(p,b.eventId);if(!n)fail(404,'event','Deze avond bestaat niet.');if(b.eventVersion!==revision(n))fail(409,'event_changed','Deze avond is elders veranderd.');return n;}

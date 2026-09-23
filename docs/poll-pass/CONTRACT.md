@@ -311,6 +311,28 @@ Idempotency-Key: <16–100 chars>           # X-Filmmaand-Reset-Generation as fo
 **Cadence (Chris, "B").** The page reads on open, on tab visible or window focus (at most once per 15 s), and twice after a
 doodle send (+20 s, +60 s, visible tab only). Nothing else is timed: an idle page makes zero requests.
 
+## Confirmation after the pick + RSVP ("Ben je erbij?")
+
+- **The pick** (organiser, Beheer "Deze avond kiezen" or `pick`) takes optional `tijd` and `waar` (plain text, ≤ 40 chars;
+  defaults `"20:00"` / `"bij Alec"`). For a **manual** poll it queues **one confirmation per poll participant** (live pass
+  holders + everyone who answered, onboarded) in the same transaction, type `poll-confirm`. Replays queue nothing more.
+  The generic site-wide "De datum staat vast" fan-out is **skipped** for that pick (the coordination event carries
+  `pollConfirm`), so nobody gets two mails and accounts outside the poll get none (tested, mutation-checked).
+- **Delivery** mints the person's own pass and renders the **pluggable** `filmmaand-server/poll-confirm-template.mjs`
+  (`subject(ctx)`, `text(ctx)`, `html(ctx)`; `ctx = {name, avond, tijd, waar, namen, jaUrl, neeUrl, assetBase}`;
+  `namen` = who said yes to that night; `assetBase` without a trailing slash). The renderer refuses a template without
+  both links. It ships **plain** (Chris, 23 Sept): subject "het wordt zaterdag 26 september!", "Hoi <naam>," /
+  "De avond staat vast: <avond>, <tijd>, <waar>." / "Ben je erbij?" / Ja, ik kom + Toch niet links / "Je kunt het nog
+  aanpassen tot de avond zelf." / "Alec". Dropped at delivery once the night is over or the poll moved on.
+- **Links**: `jaUrl`/`neeUrl` = `/filmmaand/wanneer/?pas=<token>&antwoord=ja|nee`. The page **only pre-selects** from
+  `antwoord` (and strips it from the URL); a GET never saves anything (tested).
+- **RSVP**: `PUT /filmmaand/api/plans/<planId>/date-poll-rsvp` (pass or session, `Idempotency-Key`), strict body
+  `{"pollId","answer":"ja"|"nee"}`: your own answer only (no field selects whose). Open from the pick until the end of
+  the picked night (Amsterdam midnight); then `409 rsvp_closed`; before a pick also `409 rsvp_closed`. Only `PUT`.
+  The date-poll GET carries your own `rsvp: {answer, at, open}`. Organiser views carry `rsvp:[{name, answer, at}]`;
+  Beheer shows Komt / Komt niet / Nog niet gereageerd under the picked night.
+- The pass scope widens to exactly this `PUT` (besides the date-poll GET/PUT, doodle PUT and chat POST).
+
 ## Error codes
 
 | status | code | when |
