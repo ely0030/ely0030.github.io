@@ -129,6 +129,9 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      // A read: the holders query writes nothing.
      const withInvitees=r=>{if(r?.pollId){const names=createPollPasses({store:c.authStore,accounts:auth,now}).holders(id,r.pollId).map(h=>auth.publicProfile(participantActor(h.participantId))?.name).filter(Boolean);
       r.invitees=[...new Set(names)].sort((x,y)=>x.localeCompare(y,'nl'))}else if(r)r.invitees=[];return r};
+     // The anonymous read (?public=1): the public projection only. Checked before ANY identity handling, so a pass header is
+     // never resolved or honoured here (and a session changes nothing): same bytes for everyone, never names, no writes.
+     if(part==='date-poll'&&method==='GET'&&url.searchParams.get('public')==='1')return send(200,await service.datePollPublic(id));
      if(part==='date-poll-rsvp'){
       // After a pick: your own "Ja, ik kom!" / "Toch niet". PUT only, pass or session; a GET (e.g. the mail link's
       // ?antwoord=) never saves anything.
@@ -205,7 +208,6 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
        const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
       }
      }
-     if(method==='GET'&&part==='date-poll'&&url.searchParams.get('public')==='1')return send(200,await service.datePollPublic(id));
      if(method==='GET'&&part==='date-poll'){const since=parseSince(url.searchParams.get('since'));
       if(url.searchParams.get('lite')==='1')return send(200,await service.getDatePollLite(id,token||null,since));
       return send(200,withInvitees(await service.getDatePoll(id,token||null,since)));}

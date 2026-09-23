@@ -182,7 +182,7 @@ async function fixture(){
  assert.equal(minted.status,200,JSON.stringify(minted.body));
  const link=Object.fromEntries(minted.body.passes.map(p=>[p.name,p.url]));
  async function session(email){const ch=await request('POST',{email},{},'auth/code'),r=await request('POST',{challengeId:ch.body.challengeId,code},{},'auth/verify');assert.equal(r.status,200);return r.headers.get('set-cookie').split(';')[0]}
- return {request,pollId,link,session};
+ return {request,pollId,link,session,store};
 }
 // What wanneer.js does with a mail link: read ?pas= once, then send it as the header.
 const passOf=url=>new URL(url).searchParams.get('pas');
@@ -241,14 +241,25 @@ test('a dead pass is dropped and the session is tried; without a session the pag
  assert.equal(s.status,200);assert.deepEqual(s.body.viewer,{name:'Lotte',avatarId:12});assert.equal(s.body.pollId,f.pollId);
 });
 
-test('the anonymous read (?public=1): no auth, the public projection only (never names), no-store, lighter than the plan GET',async()=>{
- const f=await fixture();
- await put(f,passOf(f.link.Lotte),0,[NIGHTS[2]],'wanneer-public-000001');
- const r=await f.request('GET',null,{},'plans/home-picker-lab/date-poll?public=1');
- assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'private, no-store');
- assert.deepEqual(Object.keys(r.body),['datePoll']);assert.equal(r.body.datePoll.id,f.pollId);assert.deepEqual(r.body.datePoll.window,{start:NIGHTS[0],end:NIGHTS[2]});
- assert.equal(r.body.datePoll.ranking.find(x=>x.date===NIGHTS[2]).available,1);
- const text=JSON.stringify(r.body);for(const n of ['Lotte','Daan','Mo'])assert.equal(text.includes(n),false,n);
- for(const k of ['people','no','declined','invitees','chat','doodles','viewer'])assert.equal(new RegExp('"'+k+'":\\[\\{').test(text),false,k);
+test('the anonymous read (?public=1) is pinned: exact public projection, no names, pass ignored, no writes, no-store',async()=>{
+ const f=await fixture(),lotte=passOf(f.link.Lotte);
+ await put(f,lotte,0,[NIGHTS[2]],'wanneer-public-000001');await put(f,passOf(f.link.Mo),0,[],'wanneer-public-000002');// a yes and a decline
+ const read=h=>f.request('GET',null,h,'plans/home-picker-lab/date-poll?public=1');
+ const w=f.store.etag,before=JSON.stringify(f.store.data);
+ const anon=await read({});assert.equal(anon.status,200);assert.equal(anon.headers.get('cache-control'),'private, no-store');
+ // Exactly this projection, nothing personal: no people/no/declined/invitees/viewer/chat/doodles/rsvp/availability.
+ assert.deepEqual(Object.keys(anon.body),['datePoll']);
+ assert.deepEqual(Object.keys(anon.body.datePoll).sort(),['choices','closesAt','id','leaderDates','mode','people','pick','ranking','status','voteCount','window']);
+ assert.deepEqual(anon.body.datePoll.people,[]);// the legacy single-date field, always empty in availability mode
+ for(const r of anon.body.datePoll.ranking)assert.deepEqual(Object.keys(r).sort(),['available','date','favourites','unavailable']);
+ const text=JSON.stringify(anon.body);for(const n of ['Lotte','Daan','Mo','Ies'])assert.equal(text.includes(n),false,n);
+ assert.equal(anon.body.datePoll.voteCount,2);
+ // A pass (valid or dead) is never resolved here: same bytes as anonymous.
+ assert.equal(JSON.stringify((await read({'X-Filmmaand-Poll-Pass':lotte})).body),text);
+ assert.equal(JSON.stringify((await read({'X-Filmmaand-Poll-Pass':'A'.repeat(43)})).body),text);
+ assert.equal((await read({'X-Filmmaand-Poll-Pass':'A'.repeat(43)})).status,200);
+ // No writes, however often it is read.
+ for(let i=0;i<3;i++)await read({});assert.equal(f.store.etag,w);assert.equal(JSON.stringify(f.store.data),before);
+ // Lighter than the public plan GET it replaces for the anonymous view.
  const plan=await f.request('GET',null,{},'plans/home-picker-lab');assert.ok(text.length<JSON.stringify(plan.body).length);
 });
