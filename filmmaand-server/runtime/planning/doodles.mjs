@@ -9,7 +9,9 @@ const fail=(status,code,message,details)=>{throw Object.assign(new Error(message
 const strict=(b,keys)=>b&&typeof b==='object'&&!Array.isArray(b)&&Object.keys(b).every(k=>keys.includes(k));
 // Payload shape = what Capsule's eggs.js produces (kits/…/jasjes2/eggs/CHAT-CADENCE.md): {s:[[ink,[[x,y],…]],…], t}. The client's t
 // (and any name) is never trusted: the server stamps author, `at` and `t` (HH:MM Amsterdam).
-export const DOODLE_MAX_BYTES=4096,DOODLE_MAX_STROKES=64,DOODLE_MAX_POINTS=2000,INKS=['k','r'];
+// Inks (Chris, 23 Sept): letters only, the colours are client-side: k black, w white/eraser, r red, o orange, y yellow,
+// g green, b blue, p purple, n brown, s pink.
+export const DOODLE_MAX_BYTES=4096,DOODLE_MAX_STROKES=64,DOODLE_MAX_POINTS=2000,INKS=['k','w','r','o','y','g','b','p','n','s'];
 // Per person, like the chat: 6 saves a minute, 30 an hour. Computed from q.doodleSaves at write time (reads never write);
 // that log keeps only the last hour, at most 30 entries per person.
 export const DOODLE_RATE=[{ms:60e3,max:6},{ms:3600e3,max:30}];
@@ -30,6 +32,11 @@ export function normaliseStrokes(s){
  if(Buffer.byteLength(JSON.stringify(out))>DOODLE_MAX_BYTES)fail(400,'doodle_too_big','Deze tekening is te groot.');
  return out;
 }
+// One doodle rate for every way of drawing (the chat's doodle messages and the older one-per-person slot): check, then log.
+export function takeDoodleSlot(q,a,now){const t=Date.parse(now),log=((q.doodleSaves||={})[a]||=[]).filter(x=>t-Date.parse(x)<3600e3);
+ for(const {ms,max} of DOODLE_RATE){const recent=log.filter(x=>t-Date.parse(x)<ms);
+  if(recent.length>=max)fail(429,'doodle_rate','Even rustig aan: je kunt zo weer een tekening sturen.',{retryAfter:Math.ceil((Date.parse(recent[0])+ms-t)/1000)})}
+ log.push(now);q.doodleSaves[a]=log.slice(-30);}
 const doodleId=(pollId,a)=>'doodle-'+createHash('sha256').update(pollId+':'+a).digest('hex').slice(0,16);
 
 // PUT body {pollId, s, t?} (t is accepted for the eggs' shape and ignored). Returns {doodle: own, doodles: everyone's visible},
@@ -39,10 +46,7 @@ export function writeDoodle(p,a,b,now,display){
  if(!strict(b,['pollId','s','t'])||typeof b.pollId!=='string'||!('s' in b))fail(400,'doodle','Deze tekening kan niet worden opgeslagen.');
  if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
  if(!answersOpen(q,now))fail(409,'date_poll_closed','Deze poll is gesloten.');
- const s=normaliseStrokes(b.s),t=Date.parse(now),log=((q.doodleSaves||={})[a]||=[]).filter(x=>t-Date.parse(x)<3600e3);
- for(const {ms,max} of DOODLE_RATE){const recent=log.filter(x=>t-Date.parse(x)<ms);
-  if(recent.length>=max)fail(429,'doodle_rate','Even rustig aan: je kunt zo weer een tekening sturen.',{retryAfter:Math.ceil((Date.parse(recent[0])+ms-t)/1000)})}
- log.push(now);q.doodleSaves[a]=log.slice(-30);
+ const s=normaliseStrokes(b.s);takeDoodleSlot(q,a,now);
  const prior=q.doodles?.[a];
  (q.doodles||={})[a]={id:doodleId(q.id,a),at:now,s,...(prior?.hidden?{hidden:true}:{})};
  return {doodle:ownDoodle(p,a),doodles:publicDoodles(p,a,display)};

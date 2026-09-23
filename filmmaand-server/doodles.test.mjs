@@ -71,14 +71,14 @@ test('scope: a pass writes only its holder\'s own doodle and nothing else; no fi
  for(const m of ['GET','POST','DELETE'])assert.equal((await f.request(PLAN+'date-poll-doodle',m,m==='GET'?null:{},{'X-Filmmaand-Poll-Pass':f.pass.Lotte,'Idempotency-Key':f.key()})).status,405,m);
 });
 
-test('hard size cap and shape: 4KB after rounding, 64 strokes, 2000 points, two inks, 0..100',async()=>{
+test('hard size cap and shape: 4KB after rounding, 64 strokes, 2000 points, the ten ink letters, 0..100',async()=>{
  assert.deepEqual(normaliseStrokes([['k',[[-0.3,100.4],[50.04,7]]]]),[['k',[[0,100],[50,7]]]]);// off-canvas is clamped, not refused
  const f=await fixture(),code=async s=>(await f.draw('Lotte',s)).body.error?.code;
  const line=k=>[['k',Array.from({length:k},(_,i)=>[i%100+0.12,(i*7)%100+0.34])]];
  assert.equal(await code(line(900)),'doodle_too_big');
  assert.equal(Buffer.byteLength(JSON.stringify(normaliseStrokes(line(300))))<=4096,true);assert.equal(await code(line(300)),undefined);
  assert.equal(await code(Array.from({length:65},()=>['k',[[1,1]]])),'doodle');
- for(const bad of [[],'x',[['b',[[1,1]]]],[['k',[]]],[['k',[[1,'2']]]],[['k',[[1,2,3]]]],[['k',[[NaN,1]]]],[['k',[[1,1]],'extra']]])
+ for(const bad of [[],'x',[['x',[[1,1]]]],[['k',[]]],[['k',[[1,'2']]]],[['k',[[1,2,3]]]],[['k',[[NaN,1]]]],[['k',[[1,1]],'extra']]])
   assert.match(String(await code(bad)),/^doodle/,JSON.stringify(bad));
 });
 

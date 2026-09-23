@@ -158,3 +158,28 @@ test('the hot-mode lite read: only new chat items + a doodle stamp, tiny, never 
  assert.equal((await f.request(POLL+'?since=0&lite=1','GET',null,{'X-Filmmaand-Poll-Pass':'A'.repeat(43)})).body.error.code,'pass_invalid');
  assert.equal((await f.request(POLL+'?since=0&lite=1','GET')).status,401);
 });
+
+test('drawings are chat messages: several per person, all ten inks, the shared doodle rate, a per-poll cap, hideable',async()=>{
+ const f=await fixture(),S=[['k',[[1,1],[2,2]]],['w',[[3,3]]],['o',[[4,4]]],['y',[[5,5]]],['g',[[6,6]]],['b',[[7,7]]],['p',[[8,8]]],['n',[[9,9]]],['s',[[10,10]]],['r',[[11,11]]]];
+ const draw=(who,s=S,k=f.key())=>f.request('plans/home-picker-lab/date-poll-chat','POST',{pollId:f.pollId,kind:'doodle',s},{'X-Filmmaand-Poll-Pass':f.pass[who],'Idempotency-Key':k});
+ const one=await draw('Lotte');assert.equal(one.status,200,JSON.stringify(one.body));
+ assert.equal(one.body.message.kind,'doodle');assert.deepEqual(one.body.message.s,S);assert.equal('text' in one.body.message,false);
+ tick(f,5);assert.equal((await draw('Lotte',[['r',[[50,50]]]])).status,200);// a second drawing is a new message, not a replacement
+ const msgs=(await f.read('Daan')).body.chat.messages.filter(m=>m.kind==='doodle');assert.equal(msgs.length,2);assert.deepEqual(msgs.map(m=>m.name),['Lotte','Lotte']);
+ // Strict: text and a drawing don't mix; an unknown ink is refused; the text limit is untouched by drawings.
+ assert.equal((await f.request('plans/home-picker-lab/date-poll-chat','POST',{pollId:f.pollId,kind:'doodle',s:S,text:'x'},{'X-Filmmaand-Poll-Pass':f.pass.Lotte,'Idempotency-Key':f.key()})).status,400);
+ assert.equal((await draw('Lotte',[['x',[[1,1]]]])).body.error.code,'doodle');
+ for(let i=0;i<4;i++){tick(f,1);assert.equal((await draw('Lotte')).status,200)}// 6 drawings in the minute
+ tick(f,1);const limited=await draw('Lotte');assert.equal(limited.status,429);assert.equal(limited.body.error.code,'doodle_rate');
+ assert.equal((await f.say('Lotte','tekst mag nog')).status,200);
+ // The rate is shared with the older one-per-person slot: that is limited now too.
+ assert.equal((await f.request('plans/home-picker-lab/date-poll-doodle','PUT',{pollId:f.pollId,s:S},{'X-Filmmaand-Poll-Pass':f.pass.Lotte,'Idempotency-Key':f.key()})).body.error.code,'doodle_rate');
+ // Organiser: listed as [tekening], hideable per message.
+ const org=(await f.request(POLL,'POST',{action:'list-availability',pollId:f.pollId},f.admin())).body.datePoll.chat.filter(m=>m.kind==='doodle');
+ assert.equal(org.length,6);assert.equal(org[0].text,'[tekening]');
+ assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:org[0].id,hidden:true},f.admin('hide-doodle-msg-0001'))).status,200);
+ assert.equal((await f.read('Daan')).body.chat.messages.filter(m=>m.kind==='doodle').length,5);
+ // Per-poll cap: at most 100 drawings (state stays bounded). Fill with other people over time.
+ const q=f.store.data.plans['home-picker-lab'].data.datePoll;for(let i=q.chat.messages.filter(m=>m.kind==='doodle').length;i<100;i++)q.chat.messages.push({id:'msg-x-'+(1000+i),seq:1000+i,a:'p_x',at:'2026-09-23T09:00:00.000Z',kind:'doodle',s:[['k',[[1,1]]]]});q.chat.seq=2000;
+ tick(f,3600);assert.equal((await draw('Daan')).body.error.code,'chat_full');
+});

@@ -2,13 +2,14 @@
 // (p.datePoll.chat), so a new poll starts empty. A pass (or session) may only post as its own person. Never mails, never
 // notifies. Rate limit per person is computed from the stored messages at write time, so reads never write.
 import {chatOpen,ALEC_AUTHOR} from './date-coordination.mjs';
+import {normaliseStrokes,takeDoodleSlot} from './doodles.mjs';
 // Who wrote a message: an account's display profile, or Alec (the system author of the poll's opening sticker).
 const author=(p,a,display)=>a===ALEC_AUTHOR?{name:'Alec',avatarId:null}:display(p,a);
 
 const fail=(status,code,message,details)=>{throw Object.assign(new Error(message),{status,code,...(details?{details}:{})})};
 const strict=(b,keys)=>b&&typeof b==='object'&&!Array.isArray(b)&&Object.keys(b).every(k=>keys.includes(k));
 const hhmm=at=>new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(at));
-export const CHAT_MAX_CHARS=500,CHAT_MAX_LINES=9,CHAT_MAX_MESSAGES=400,CHAT_RATE=[{ms:60e3,max:5},{ms:3600e3,max:40}];
+export const CHAT_MAX_CHARS=500,CHAT_MAX_LINES=9,CHAT_MAX_MESSAGES=400,CHAT_MAX_DOODLES=100,CHAT_RATE=[{ms:60e3,max:5},{ms:3600e3,max:40}];
 
 // Plain text only: NFC, \r removed, no other control characters, trimmed, 1..500 code points, at most 9 lines.
 export function normaliseText(text){
@@ -20,23 +21,32 @@ export function normaliseText(text){
  return t;
 }
 
-// POST body {pollId, text}. Returns {message} (the receipt keeps exactly this); the api adds the chat view since the cursor.
+// POST body {pollId, text} (a text message) or {pollId, kind:'doodle', s} (a drawing, Chris 23 Sept: drawings behave
+// like messages, several per person). Returns {message}; the api adds the chat view since the cursor.
 export function writeChat(p,a,b,now,display){
- const q=p.datePoll;
- if(!strict(b,['pollId','text'])||typeof b.pollId!=='string')fail(400,'chat','Dit bericht kan niet worden verstuurd.');
+ const q=p.datePoll,doodle=b?.kind==='doodle';
+ if(!(doodle?strict(b,['pollId','kind','s']):strict(b,['pollId','text']))||typeof b.pollId!=='string')fail(400,'chat','Dit bericht kan niet worden verstuurd.');
  if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
  if(!chatOpen(q,now))fail(409,'date_poll_closed','Deze chat is gesloten.');// open until the end of the picked night
  if(!display(p,a))fail(409,'onboarding_required','Kies eerst je naam en avatar.');
- const text=normaliseText(b.text),chat=(q.chat||={seq:0,messages:[]}),t=Date.parse(now);
+ const chat=(q.chat||={seq:0,messages:[]}),t=Date.parse(now);
  if(chat.messages.length>=CHAT_MAX_MESSAGES)fail(409,'chat_full','Deze chat is vol.');
- for(const {ms,max} of CHAT_RATE){const recent=chat.messages.filter(m=>m.a===a&&t-Date.parse(m.at)<ms);
-  if(recent.length>=max){const retryAfter=Math.ceil((Date.parse(recent[0].at)+ms-t)/1000);fail(429,'chat_rate','Even rustig aan: je kunt zo weer een bericht sturen.',{retryAfter})}}
- const seq=++chat.seq,m={id:'msg-'+q.id.slice(-8)+'-'+seq,seq,a,at:now,text};chat.messages.push(m);
+ let body;
+ if(doodle){// the doodle rate (shared with the older slot) and at most 100 drawings per poll (state size: 100 × ≤4 KB)
+  const s=normaliseStrokes(b.s);if(chat.messages.filter(m=>m.kind==='doodle').length>=CHAT_MAX_DOODLES)fail(409,'chat_full','Er zijn al genoeg tekeningen in deze chat.');
+  takeDoodleSlot(q,a,now);body={kind:'doodle',s};
+ }else{// the text rate counts text messages only
+  const text=normaliseText(b.text);
+  for(const {ms,max} of CHAT_RATE){const recent=chat.messages.filter(m=>m.a===a&&(m.kind||'text')==='text'&&t-Date.parse(m.at)<ms);
+   if(recent.length>=max){const retryAfter=Math.ceil((Date.parse(recent[0].at)+ms-t)/1000);fail(429,'chat_rate','Even rustig aan: je kunt zo weer een bericht sturen.',{retryAfter})}}
+  body={text};
+ }
+ const seq=++chat.seq,m={id:'msg-'+q.id.slice(-8)+'-'+seq,seq,a,at:now,...body};chat.messages.push(m);
  return {message:view(p,m,a,display)};
 }
 // kind 'text' (default, also for messages stored before kinds existed) carries text; kind 'sticker' carries sticker (0..3).
 function view(p,m,me,display){const who=author(p,m.a,display),kind=m.kind||'text';return {id:m.id,seq:m.seq,kind,name:who?.name||null,avatarId:who?.avatarId??null,at:m.at,t:hhmm(m.at),
- ...(kind==='sticker'?{sticker:m.sticker}:{text:m.text}),...(m.a===ALEC_AUTHOR?{alec:true}:{}),...(m.a===me?{self:true}:{})}}
+ ...(kind==='sticker'?{sticker:m.sticker}:kind==='doodle'?{s:m.s}:{text:m.text}),...(m.a===ALEC_AUTHOR?{alec:true}:{}),...(m.a===me?{self:true}:{})}}
 
 // The reader's view: visible messages after `since` (a seq; 0 = everything), the new cursor, and every hidden id so a
 // client can remove one it already shows. Only people with a display profile, like the names elsewhere.
@@ -47,7 +57,7 @@ export function chatView(p,me,display,since=0,now){
 export const parseSince=v=>/^\d{1,6}$/.test(v||'')?Number(v):0;
 
 // Organiser: every message with its hidden flag, and the kill switch {action:'hide-message', pollId, messageId, hidden}.
-export function organiserChat(p,display){return (p.datePoll?.chat?.messages||[]).map(m=>({id:m.id,kind:m.kind||'text',name:author(p,m.a,display)?.name||null,at:m.at,text:m.kind==='sticker'?'[sticker '+m.sticker+']':m.text,hidden:!!m.hidden}))}
+export function organiserChat(p,display){return (p.datePoll?.chat?.messages||[]).map(m=>({id:m.id,kind:m.kind||'text',name:author(p,m.a,display)?.name||null,at:m.at,text:m.kind==='sticker'?'[sticker '+m.sticker+']':m.kind==='doodle'?'[tekening]':m.text,hidden:!!m.hidden}))}
 export function hideMessage(p,b){
  if(!strict(b,['action','pollId','messageId','hidden'])||typeof b.messageId!=='string'||typeof b.hidden!=='boolean')fail(400,'chat','Ongeldige actie.');
  const q=p.datePoll;if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');

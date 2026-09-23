@@ -320,6 +320,14 @@ bytes; the page does one full read only when the status or the doodle stamp chan
 busy hour = 10 × 1,200 = **12,000 reads ≈ 1.0–1.7 GB-hr**. A realistic chat burst (5 people, 30 min, with pauses that cool
 it down) is ~3,000 reads ≈ 0.25–0.4 GB-hr. Idle, hidden or 20 min without input: **0**.
 
+**Drawings are chat messages** (Chris, 23 Sept). `POST …/date-poll-chat` with `{"pollId","kind":"doodle","s":[…]}` adds a
+`kind:'doodle'` message (item field `s`; the page hook hands `strokes`), several per person, in the same stream and cursor
+as text. Shape and caps as before (≤4096 B after rounding, ≤64 strokes, ≤2000 points); **inks** are the letters
+`k w r o y g b p n s` (black, white/eraser, red, orange, yellow, green, blue, purple, brown, pink; colours client-side).
+The **doodle rate** (6/min, 30/h) applies and is shared with the older one-per-person slot (`date-poll-doodle`, kept for
+back-compat); the text rate counts text only. At most **100 drawings per poll** (inside the 400-message cap). Organiser
+hide per message (listed as `[tekening]`).
+
 **Alec's sticker.** When a poll opens, the server posts one chat message (seq 1): `kind:'sticker'`, `sticker` 0..3
 (drawn once, the same for everyone), author "Alec" (`alec:true`, a system author, not an account: it never votes, never
 gets mail, counts toward nobody's rate limit). Inside the open transaction, so a replay doesn't post it twice. Hideable

@@ -243,9 +243,9 @@ window.filmmaandDoodles={
 // what is new (?since=), and a send's response already carries everything since that cursor. Text is plain: render it
 // with textContent, never innerHTML.
 let chatMsgs=[],chatCursor=0,chatFor=null;const chatSubs=new Set();
-// kind 'text' → text; kind 'sticker' → sticker (0..3, the same for everyone). alec:true = Alec's own (avatar null: the eggs draw him).
+// kind 'text' → text; kind 'doodle' → strokes (a drawing, several per person); kind 'sticker' → sticker (0..3, the same for everyone). alec:true = Alec's own (avatar null: the eggs draw him).
 const chatItem=m=>({id:m.id,seq:m.seq,kind:m.kind||'text',name:m.name,avatarId:m.avatarId,avatar:m.alec?null:avatar(m.avatarId),at:m.at,t:m.t,
- ...(m.kind==='sticker'?{sticker:m.sticker}:{text:m.text}),...(m.alec?{alec:true}:{}),...(m.self?{self:true}:{})});
+ ...(m.kind==='sticker'?{sticker:m.sticker}:m.kind==='doodle'?{strokes:m.s}:{text:m.text}),...(m.alec?{alec:true}:{}),...(m.self?{self:true}:{})});
 // The chat outlives the vote: after the pick it stays open until the end of the picked night (server says chat.open).
 const chatOpenNow=()=>!!data?.viewer&&(data?.chat?.open??open());
 // pickedAt (ISO or null): the eggs place items sent after the pick below the pick block (#rsvp, right after the notice).
@@ -257,19 +257,22 @@ function adoptChat(body){// a new poll or another viewer (pass dropped → sessi
  const who=(body.pollId||'')+'|'+(body.viewer?.name||'');
  if(chatFor!==null&&chatFor!==who){chatFor=who;chatMsgs=[];chatCursor=0;announceChat();void load();return}
  chatFor=who;mergeChat(body.chat)}
-window.filmmaandChat={
- list:chatList,
- subscribe(cb){chatSubs.add(cb);try{cb(chatList())}catch{}return ()=>chatSubs.delete(cb)},
- async send(text,retried=false){
+async function chatPost(msg,retried=false){
   if(!pollId||!chatOpenNow())throw Object.assign(new Error('De chat is gesloten.'),{code:'date_poll_closed'});
   let r;
-  try{r=await call('POST',{pollId,text},newKey(),CHAT_API+'?since='+chatCursor)}
-  catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandChat.send(text,true);throw e}// chat_rate → e.details.retryAfter (seconds)
+  try{r=await call('POST',{pollId,...msg},newKey(),CHAT_API+'?since='+chatCursor)}
+  catch(e){if(!retried&&dropPass(e)&&await load())return chatPost(msg,true);throw e}// chat_rate → e.details.retryAfter (seconds)
   // An exact replay returns only the receipt {message:{id,seq,at}}: then one GET (the cursor brings it in).
   if(r.chat)mergeChat(r.chat);else await load();
   rereadSoon();
   return chatItem(chatMsgs.find(m=>m.id===r.message.id)||r.message);
  }
+window.filmmaandChat={
+ list:chatList,
+ subscribe(cb){chatSubs.add(cb);try{cb(chatList())}catch{}return ()=>chatSubs.delete(cb)},
+ async send(text,retried=false){return chatPost({text},retried)},
+ // A drawing as a chat message (Chris, 23 Sept): the same stream, several per person; the doodle rate applies.
+ async sendDoodle(strokes,retried=false){return chatPost({kind:'doodle',s:strokes},retried)}
 };
 
 // ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;
