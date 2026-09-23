@@ -55,7 +55,7 @@ test('the shipped page is the generated kit page, without sample people or kit s
  for(const src of page.matchAll(/src="(\/filmmaand\/assets\/[^"]+)"/g))assert.ok(src[1].startsWith('/filmmaand/assets/wanneer-pudding-'));
 });
 
-test('the page keeps the pass in memory only and sends it as the header, never in a URL or storage',()=>{
+test('the page keeps the pass in tab history and sends it as the header, never in a URL or persistent storage',()=>{
  assert.equal(/localStorage|sessionStorage|document\.cookie|indexedDB/.test(js),false);
  assert.equal(/Authorization|Bearer/.test(js),false);
  assert.match(js,/headers\['X-Filmmaand-Poll-Pass'\]=pass/);
@@ -71,7 +71,7 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,2);// the chat send + the one silent auto-login (Chris, 23 Sept):
  // only with a pass, once per page load, to the fixed LOGIN_API, with an empty body (the pass travels in the header).
- assert.match(js,/function autoLogin\(\)\{if\(autoLogged\|\|!pass\)return;autoLogged=true;call\('POST',\{\},newKey\(\),LOGIN_API\)\.catch\(\(\)=>\{\}\)\}/);
+ assert.match(js,/if\(pass&&!autoLogged\)\{let login;try\{login=await call\('POST',\{\},newKey\(\),LOGIN_API\)\}/);
  // A caller-supplied Idempotency-Key (Capsule: one stable key per message, reused on retries) is validated like any key.
  assert.match(js,/const KEY_RE=\/\^\[A-Za-z0-9_-\]\{16,100\}\$\/;/);assert.match(js,/acceptsKey:true/);
  assert.match(js,/if\(given!==undefined&&!KEY_RE\.test\(given\)\)throw/);assert.match(js,/const key=given\?\?newKey\(\);/);
@@ -102,19 +102,23 @@ test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and
  assert.match(js,/API\+'\?since='\+chatCursor\+'&lite=1'/);assert.match(js,/skew=served-Date\.now\(\)/);
  assert.match(js,/if\(document\.visibilityState==='visible'\)hot\.loop\(\);else hot\.pause\(\)/);assert.match(js,/window\.addEventListener\('blur',\(\)=>hot\.pause\(\)\)/);
  assert.match(js,/read:\(\)=>dirty\(\)\|\|saving\?Promise\.resolve\(null\):liteLoad\(\)/);
+ assert.match(js,/function load\(\)\{return readGate\.full\(fullRead\)\}/);
+ assert.match(js,/function liteLoad\(\)\{return readGate\.lite\(liteRead\)\}/);
+ assert.match(js,/if\(b\.pollId!==pollId\|\|b\.status!==poll\(\)\?\.status\|\|b\.doodleStamp!==stamp\(data\?\.doodles\)\)return await fullRead\(\)/);
  assert.equal((js.match(/liteLoad\(\)(?!\{)/g)||[]).length,1);// one call site (plus its definition)assert.equal((js.match(/setTimeout\(f,ms\)/g)||[]).length,1);
 });
 
-test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle cap, backoff 6 s / 12 s then off',()=>{
+test('hot-mode scheduler (unit): 15 s hot, 60 s cold, 20-min idle cap, backoff 30 s / 60 s',()=>{
  const src=/const HOT_MS=[^\n]*\n(?:\/\/[^\n]*\n)*(function hotDelay[\s\S]*?\n\})/.exec(js);assert.ok(src,'hotDelay not found');
  const box={};vm.runInNewContext(js.match(/const HOT_MS=[^\n]*/)[0]+'\n'+src[1]+';this.d=hotDelay',box);const d=box.d;
  const base={voted:true,visible:true,focused:true,chatOpen:true,newestAge:10e3,sinceActive:60e3,fails:0};
- assert.equal(d(base),3e3);
- for(const [k,v] of [['voted',false],['visible',false],['focused',false],['chatOpen',false],['newestAge',120e3],['newestAge',Infinity],['newestAge',NaN],['sinceActive',20*60e3+1]])assert.equal(d({...base,[k]:v}),null,k+'='+v);
- assert.equal(d({...base,newestAge:119e3}),3e3);assert.equal(d({...base,sinceActive:20*60e3}),3e3);
+ assert.equal(d(base),15e3);
+ for(const [k,v] of [['voted',false],['visible',false],['focused',false],['chatOpen',false],['sinceActive',20*60e3+1]])assert.equal(d({...base,[k]:v}),null,k+'='+v);
+ for(const age of [120e3,Infinity,NaN])assert.equal(d({...base,newestAge:age}),60e3,'cold age '+age);
+ assert.equal(d({...base,newestAge:119e3}),15e3);assert.equal(d({...base,sinceActive:20*60e3}),15e3);
  // Alec's opening sticker never counts as fresh; the state passes the page's own vote flag.
  assert.match(js,/if\(!chatMsgs\[i\]\.alec\)return Date\.now\(\)\+skew-Date\.parse\(chatMsgs\[i\]\.at\)/);assert.match(js,/state:\(\)=>\(\{voted,visible:document\.visibilityState==='visible'/);
- assert.equal(d({...base,fails:1}),6e3);assert.equal(d({...base,fails:2}),12e3);assert.equal(d({...base,fails:3}),null);
+ assert.equal(d({...base,fails:1}),30e3);assert.equal(d({...base,fails:2}),60e3);assert.equal(d({...base,fails:3}),null);
 });
 
 test('no working link and no login: the page sends you to the login page (and back here), never an anonymous poll',()=>{
@@ -122,45 +126,95 @@ test('no working link and no login: the page sends you to the login page (and ba
  assert.match(js,/if\(!saving&&!loaded&&!anon\)\{location\.replace\('\/filmmaand\/identity\/\?terug=\/filmmaand\/wanneer\/'\);return false\}/);
  assert.equal(/anonPoll|\?public=1/.test(js),false,'the anonymous public poll is gone');
  // A dead pass with a live session retries with the session before any of this (dropPass → load()).
- assert.match(js,/catch\(e\)\{if\(dropPass\(e\)\)return load\(\);return trouble\(e\)\}/);
+ assert.match(js,/catch\(e\)\{if\(attempt===0&&dropPass\(e\)\)continue;return trouble\(e\)\}/);
  assert.equal(/lives in memory only/.test(js),false,'stale comment gone: the pass survives a reload via history.state');
 });
 
-test('hot mode, behaviourally with a fake clock: the 20-min no-input cap, resume on input, backoff, voters only',async()=>{
+test('hot mode, behaviourally with a fake clock: 15-s cadence, 20-min no-input cap, resume on input, backoff, voters only',async()=>{
  const code=js.match(/const HOT_MS=[^\n]*/)[0]+'\n'+/(function hotDelay[\s\S]*?\n\})/.exec(js)[1]+'\n'+/(function createHot[\s\S]*?\n\}\n)/.exec(js)[1];
- function sim({voted=true,visible=true,readResult=()=>true}={}){
+ function sim({voted=true,visible=true,messages=true,serverNewAt=Infinity,readResult=()=>true}={}){
   let clock=0,timer=null,reads=0,lastMsg=0;const box={};
   vm.runInNewContext(code+';this.createHot=createHot',box);
   const hot=box.createHot({now:()=>clock,setT:(f,ms)=>{timer={f,at:clock+ms};return 1},clearT:()=>{timer=null},
-   state:()=>({voted,visible,focused:true,chatOpen:true,newestAge:clock-lastMsg}),read:async()=>{reads++;return readResult(reads)}});
+   state:()=>({voted,visible,focused:true,chatOpen:true,newestAge:clock-lastMsg}),read:async()=>{reads++;if(clock>=serverNewAt&&lastMsg<serverNewAt)lastMsg=clock;return readResult(reads)}});
   // Someone keeps chatting: a new message every 60 s, so the chat stays "fresh" the whole time.
   async function run(ms){const end=clock+ms;while(true){const next=Math.min(timer?timer.at:Infinity,Math.ceil((clock+1)/60e3)*60e3);if(next>end){clock=end;break}
-   clock=next;if(clock%60e3===0)lastMsg=clock;if(timer&&timer.at===clock){const f=timer.f;timer=null;await f()}}}
+   clock=next;if(messages&&clock%60e3===0)lastMsg=clock;if(timer&&timer.at===clock){const f=timer.f;timer=null;await f()}}}
   return {hot,run,reads:()=>reads,armed:()=>hot.armed,now:()=>clock,set:v=>{visible=v}};
  }
- // 1) No input at all: 3 s reads for 20 minutes, then nothing, although messages keep coming.
- const a=sim();a.hot.loop();await a.run(20*60e3);const at20=a.reads();assert.ok(at20>=395&&at20<=401,'reads in 20 min: '+at20);
+ // 1) No input at all: 15 s reads for 20 minutes, then nothing, although messages keep coming.
+ const a=sim();a.hot.loop();await a.run(20*60e3);const at20=a.reads();assert.ok(at20>=79&&at20<=81,'reads in 20 min: '+at20);
  // The cap is checked on each tick, so it stops within a tick or two of 20:00, and then stays off.
  await a.run(60e3);const at21=a.reads();assert.ok(at21-at20<=2,'after 20:00: '+(at21-at20));
  await a.run(9*60e3);assert.equal(a.reads(),at21,'no reads from minute 21 to 30');assert.equal(a.armed(),false);
  // 2) A tap or key resumes it at once, with a fresh 20-minute window.
- a.hot.input();assert.equal(a.armed(),true);const r=a.reads();await a.run(60e3);assert.ok(a.reads()-r>=19,'resumed: '+(a.reads()-r));
+ a.hot.input();assert.equal(a.armed(),true);const r=a.reads();await a.run(60e3);assert.ok(a.reads()-r>=3,'resumed: '+(a.reads()-r));
  // 3) Input every 5 minutes keeps it going past 20 minutes.
- const b=sim();b.hot.loop();for(let i=0;i<8;i++){await b.run(5*60e3);b.hot.input()}assert.ok(b.reads()>=790,'with input: '+b.reads());
- // 4) Errors back off 6 s, then 12 s, then stop (cadence B takes over).
- const c=sim({readResult:()=>false});c.hot.loop();await c.run(3e3);assert.equal(c.reads(),1);await c.run(6e3);assert.equal(c.reads(),2);
- await c.run(12e3);assert.equal(c.reads(),3);await c.run(60e3);assert.equal(c.reads(),3);assert.equal(c.armed(),false);
+ const b=sim();b.hot.loop();for(let i=0;i<8;i++){await b.run(5*60e3);b.hot.input()}assert.ok(b.reads()>=157,'with input: '+b.reads());
+ // 4) Errors back off 30 s, then 60 s, then stop (cadence B takes over).
+ const c=sim({readResult:()=>false});c.hot.loop();await c.run(15e3);assert.equal(c.reads(),1);await c.run(30e3);assert.equal(c.reads(),2);
+ await c.run(60e3);assert.equal(c.reads(),3);await c.run(60e3);assert.equal(c.reads(),3);assert.equal(c.armed(),false);
  // 5) Not voted (the chat isn't on screen) or a hidden tab: never a single read.
  const d=sim({voted:false});d.hot.loop();await d.run(5*60e3);assert.equal(d.reads(),0);
  const h=sim({visible:false});h.hot.loop();await h.run(5*60e3);assert.equal(h.reads(),0);
+ // 6) A quiet open tab keeps a slow cold check. A message posted after a long lull is
+ // discovered within 60 s and the next check returns to the 15 s hot cadence.
+ const quiet=sim({messages:false,serverNewAt:4*60e3+1});quiet.hot.loop();await quiet.run(4*60e3);
+ const before=quiet.reads();assert.ok(before>0&&quiet.armed());await quiet.run(60e3);
+ assert.ok(quiet.reads()>before,'cold check discovered the new message');
+ const after=quiet.reads();await quiet.run(15e3);assert.equal(quiet.reads(),after+1,'hot mode resumed');
+ const dormant=sim({messages:false});dormant.hot.loop();await dormant.run(21*60e3);
+ const stopped=dormant.reads();assert.equal(dormant.armed(),false);await dormant.run(5*60e3);
+ assert.equal(dormant.reads(),stopped,'cold checks also honor the 20-minute cap');
+ dormant.hot.input();assert.equal(dormant.armed(),true);await dormant.run(60e3);
+ assert.equal(dormant.reads(),stopped+1,'a tap resumes the cold check');
+});
+
+test('full and lite poll reads never overlap, even when a slow lite read is interrupted by focus refresh',async()=>{
+ const source=/function createReadGate\(\)\{[\s\S]*?\n\}\}/.exec(js);assert.ok(source,'read gate not found');
+ const box={};vm.runInNewContext(source[0]+';this.createReadGate=createReadGate',box);
+ const gate=box.createReadGate();let active=0,maxActive=0,fullCalls=0,liteCalls=0,release;
+ const slow=new Promise(r=>release=r);
+ const lite=gate.lite(async()=>{liteCalls++;active++;maxActive=Math.max(maxActive,active);await slow;active--;return true});
+ // Simulates focus or visibility calling full load while hot mode's lite request is still pending.
+ const full=gate.full(async()=>{fullCalls++;active++;maxActive=Math.max(maxActive,active);await Promise.resolve();active--;return true});
+ assert.equal(await gate.lite(async()=>{throw new Error('busy lite read must be skipped')}),null);
+ await Promise.resolve();assert.equal(liteCalls,1);assert.equal(fullCalls,0);
+ release();assert.equal(await lite,true);assert.equal(await full,true);
+ assert.equal(maxActive,1);assert.equal(liteCalls,1);assert.equal(fullCalls,1);
+});
+
+test('first pass read checks account identity before rendering and drops a different-person pass',async()=>{
+ const code=[/function clearPass\(\)\{[^\n]*\}/,/function dropPass\(e\)\{[^\n]*\}/,/async function fullRead\(\)\{[\s\S]*?\n\}/]
+  .map(re=>{const m=re.exec(js);assert.ok(m,'missing identity guard');return m[0]}).join('\n');
+ async function scenario(login){
+  const calls=[],adopted=[];const box={Date,API:'/poll',LOGIN_API:'/login',chatCursor:0,lastRead:0,
+   history:{state:{filmmaandPollPass:'pass'},replaceState(s){this.state=s}},withPass:v=>v?{filmmaandPollPass:v}:{},
+   newKey:()=> 'identity-check-key-0001',hot:{resetFails(){}},adopt:b=>adopted.push(b.source),trouble:e=>{throw e},
+   call:async(method,_body,_key,url)=>{calls.push([method,url,box.pass]);if(method==='POST'){if(login instanceof Error)throw login;return login}return {viewer:{name:'Same public name',avatarId:12},source:box.pass?'pass':'session'}}};
+  vm.runInNewContext('var pass="pass",autoLogged=false;'+code+';this.run=fullRead',box);
+  let failure=null;try{await box.run()}catch(e){failure=e}
+  return {calls,adopted,pass:box.pass,state:box.history.state,autoLogged:box.autoLogged,failure};
+ }
+ const other=await scenario({loggedIn:false,switched:false});
+ assert.deepEqual(other.calls.map(([method,url,pass])=>[method,url,pass]),[['GET','/poll','pass'],['POST','/login','pass'],['GET','/poll',null]]);
+ assert.deepEqual(other.adopted,['session']);assert.equal(other.pass,null);assert.deepEqual(other.state,{});
+ const same=await scenario({loggedIn:true,switched:false});
+ assert.deepEqual(same.adopted,['pass']);assert.equal(same.pass,'pass');assert.equal(same.calls.length,2);
+ for(const error of [new Error('timeout'),Object.assign(new Error('storage unavailable'),{status:503}),Object.assign(new Error('expired during check'),{code:'pass_invalid',status:401})]){
+  const failed=await scenario(error);
+  assert.equal(failed.failure,error);assert.equal(failed.pass,'pass');
+  assert.deepEqual(failed.state,{filmmaandPollPass:'pass'});assert.deepEqual(failed.adopted,[]);
+ }
 });
 
 test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{
  const block=js.slice(js.indexOf("const PASS_STATE="),js.indexOf('const hadPass'));
+ const clear=/function clearPass\(\)\{[^\n]*\}/.exec(js)[0];
  const drop=/function dropPass\(e\)\{[^\n]*\}/.exec(js)[0];
  function run(href,state){
   const box={URL,history:{state,replaceState(s,_,url){this.state=s;if(url!==undefined)box.location.href=new URL(url,box.location.href).href;this.calls++},calls:0},location:{href},localStorage:null,sessionStorage:null,document:null};
-  vm.runInNewContext(block+'\n'+drop+'\nthis.get=()=>pass;this.drop=()=>dropPass({code:"pass_invalid"});',box);return box}
+  vm.runInNewContext(block+'\n'+clear+'\n'+drop+'\nthis.get=()=>pass;this.drop=()=>dropPass({code:"pass_invalid"});',box);return box}
  const T='T'.repeat(43);
  const first=run('https://x.test/filmmaand/wanneer/?pas='+T+'&keep=1#h',{other:1});
  assert.equal(first.get(),T);assert.equal(first.location.href,'https://x.test/filmmaand/wanneer/?keep=1#h');
