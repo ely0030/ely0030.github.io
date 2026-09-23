@@ -218,7 +218,7 @@ window.filmmaandDoodles={
   let r;
   try{r=await call('PUT',{pollId,s:strokes},newKey(),DOODLE_API)}
   catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandDoodles.save(strokes,true);throw e}
-  if(data)data.doodles=r.doodles;announceDoodles();// the response carries everyone's doodles: no extra GET
+  if(data&&r.doodles)data.doodles=r.doodles;else if(data&&!r.doodles)void load();announceDoodles();// the response carries everyone's doodles (an exact replay carries only yours: then one GET)
   for(const x of after)clearTimeout(x);
   after=[20e3,60e3].map(ms=>setTimeout(()=>{if(document.visibilityState==='visible'&&!dirty()&&!saving)load()},ms));
   return asItem(r.doodle);

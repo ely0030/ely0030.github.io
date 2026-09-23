@@ -34,6 +34,9 @@ test('a pass holder adds and replaces their own doodle; everyone in the poll see
  assert.equal(own.at,'2026-09-23T10:00:00.000Z');assert.equal(own.t,'12:00');assert.match(own.id,/^doodle-[0-9a-f]{16}$/);
  // The response carries everyone's visible doodles, so the page needs no extra GET after a send.
  assert.deepEqual(saved.body.doodles.map(d=>[d.name,d.self]),[['Lotte',true]]);
+ // The receipt in state keeps only the caller's own doodle, never the list (no state bloat per save).
+ const receipts=Object.values(f.store.data.plans['home-picker-lab'].data.receipts).filter(r=>r.result?.doodle);
+ assert.ok(receipts.length>=1);for(const r of receipts)assert.deepEqual(Object.keys(r.result),['doodle']);
  // The client's t is ignored; the server stamps time and author.
  assert.equal((await f.draw('Lotte',STAR,{t:'03:33'})).body.doodle.t,'12:00');
  const daan=(await f.view('Daan')).body.doodles;
