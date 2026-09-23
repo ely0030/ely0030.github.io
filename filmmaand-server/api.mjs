@@ -16,7 +16,7 @@ import {createImages} from './images.mjs';
 const error=(status,code,message)=>Object.assign(Error(message),{status,code});
 const rewrite=(value,key='')=>typeof value==='string'&&['url','poster','backdrop','image','posterFull','metadataPoster'].includes(key)&&value.startsWith('/planning-api/images/')?'/filmmaand/api/images/'+value.slice('/planning-api/images/'.length):Array.isArray(value)?value.map(v=>rewrite(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v,k)])):value;
 const json=(status,body,headers={})=>new Response(status===204?null:JSON.stringify(rewrite(body)),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
-const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:coordination':'coordinate','POST:coordination':'manageCoordination','PUT:date-poll':'voteDatePoll','POST:date-poll':'manageDatePoll','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
+const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:coordination':'coordinate','POST:coordination':'manageCoordination','PUT:date-poll':'voteDatePoll','PUT:date-poll-doodle':'doodleDatePoll','POST:date-poll':'manageDatePoll','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
 export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,queueEvents,deliverTonight,now,avatars=loadAvatarOptions()}){
  return async function handle(request,context={}){
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
@@ -73,7 +73,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     if(typeof generation!=='string'||!generation||generation.length>128)throw error(503,'reset_generation','De site wordt opnieuw voorbereid.');
     const headers={'X-Filmmaand-Reset-Generation':generation};
     // Everything on the date-poll route names a person (own answers, a pass, a minted link), errors included: never cacheable.
-    if(/^\/api\/plans\/[^/]+\/date-poll$/.test(path))headers['Cache-Control']='private, no-store';
+    if(/^\/api\/plans\/[^/]+\/date-poll(?:-doodle)?$/.test(path))headers['Cache-Control']='private, no-store';
     const auth=createAuthService({store:c.authStore,avatars,now,config:authConfig,mailer:{async send(message){if(!queueMail)throw error(503,'mail_unavailable','E-mail is nog niet ingesteld.');await queueMail(c,message,{plainTextTestToken:request.headers.get('x-filmmaand-plain-text-test')})}}});
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
@@ -114,12 +114,22 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
 
      const notifications=path.match(/^\/api\/notifications(?:\/(read|preferences))?$/);
      if(notifications){const account=auth.authenticate(router.credential(req)?.token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');if(method!=='GET')router.csrf(req);return send(200,notificationRequest(c,account.participantId,{method,part:notifications[1],body,url,at:now?now():new Date().toISOString()}));}
-     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|coordination))?$/);
+     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|date-poll-doodle|coordination))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
      const [,id,part]=match,cred=router.credential(req);
      if(cred?.transport==='cookie'&&method!=='GET')router.csrf(req);
      const token=cred?.token??(req.headers.authorization||'').replace(/^Bearer /,'');
      const service=createPlanningService({store:c.plans,adminToken,movieCatalogue,programmeMovies,imageStore:createImages(blobs,c.state),identity:auth,now});
+     if(part==='date-poll-doodle'){
+      // Shared doodles: PUT only. With a pass the holder may add/replace only their OWN doodle for the pass's poll.
+      if(method!=='PUT')return send(405,{error:{code:'method'}});
+      const pass=req.headers['x-filmmaand-poll-pass'];
+      if(pass!==undefined){
+       const holder=createPollPasses({store:c.authStore,accounts:auth,now}).resolve(pass,id),a=participantActor(holder.participantId);
+       const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
+       const value=await service.doodleDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
+      }
+     }
      if(part==='date-poll'){
       const passes=createPollPasses({store:c.authStore,accounts:auth,now});
       if(method==='POST'&&PASS_ACTIONS.includes(body?.action)){

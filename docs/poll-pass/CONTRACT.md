@@ -243,6 +243,37 @@ the 24–26 poll. It is a flag for Beheer, never a mail. Participants never see 
   touches a manual poll, however far past `closesAt` or past the window. If the organiser never picks,
   the poll just stays open (tested up to three weeks past the window).
 
+## Shared doodles (the /filmmaand/wanneer/ stickers)
+
+One doodle per person per poll, drawn in the page's notebook pad (Capsule's eggs) and shown to everyone in the poll as a
+sticker with name and time. Stored on the poll (`datePoll.doodles`), so a new poll starts empty.
+
+```
+PUT /filmmaand/api/plans/<planId>/date-poll-doodle
+X-Filmmaand-Poll-Pass: <token>            # or the session cookie (onboarded account)
+Idempotency-Key: <16–100 chars>           # X-Filmmaand-Reset-Generation as for any write
+{"pollId":"date-poll-…","strokes":[["k",[[12.3,40.1],[13,41.5]]],["r",[[50,50]]]]}
+```
+
+- **Own only.** Adds or replaces the caller's own doodle. The strict body has no field that selects whose doodle, so a pass
+  can never write anyone else's. This is the one route besides `date-poll` that accepts a pass, and only for `PUT`
+  (every other method → `405`). A dead pass → the uniform `401 pass_invalid`.
+- **Shape.** `[[ink,[[x,y],…]],…]`, ink `"k"`|`"r"`, x/y numbers in 0..100 (percent of the sticker). Coordinates are
+  rounded to 0.1. Hard caps after rounding: **4096 bytes of JSON**, 64 strokes, 2000 points (`400 doodle_too_big`);
+  anything else malformed → `400 doodle`.
+- 200 → `{"id":"doodle-<16 hex>","at":"<ISO>","strokes":[…]}`. The id is stable per person per poll.
+- Only while the poll takes answers (`409 date_poll_closed` after a pick/close/`closesAt`); `409 date_poll_changed` on
+  a stale `pollId`.
+- **Read.** The date-poll GET (pass or session) gets a top-level `doodles`:
+  `[{"id","name","avatarId","at","strokes","self"?}]`, oldest first. It includes only people with a display profile and
+  never includes hidden doodles. The public plan GET never has doodles.
+- **Never mail.** A doodle touches no notice, outbox or notification (tested: the state diff is exactly the caller's
+  slot plus the receipt). Private, `Cache-Control: private, no-store`, no `Set-Cookie`.
+- **Kill switch (organiser).** `POST …/date-poll` `{"action":"hide-doodle","pollId","doodleId","hidden":true|false}`,
+  with organiser auth and an `Idempotency-Key`, like `pick`/`close`. Hiding is per person and sticky: a replacement stays
+  hidden until unhidden. The author doesn't see it either. `list-availability` (and every organiser `datePoll`
+  response) carries `doodles:[{id,name,at,hidden,bytes}]` without strokes. Unknown id → `404 doodle_unknown`.
+
 ## Error codes
 
 | status | code | when |
