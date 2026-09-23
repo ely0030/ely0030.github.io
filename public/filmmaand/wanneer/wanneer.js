@@ -270,11 +270,11 @@ window.filmmaandDoodles={
 let chatMsgs=[],chatCursor=0,chatFor=null;const chatSubs=new Set();
 // kind 'text' → text; kind 'doodle' → strokes (a drawing, several per person); kind 'sticker' → sticker (0..3, the same for everyone). alec:true = Alec's own (avatar null: the eggs draw him).
 const chatItem=m=>({id:m.id,seq:m.seq,kind:m.kind||'text',name:m.name,avatarId:m.avatarId,avatar:m.alec?null:avatar(m.avatarId),at:m.at,t:m.t,
- ...(m.kind==='sticker'?{sticker:m.sticker}:m.kind==='doodle'?{strokes:m.s}:{text:m.text}),...(m.alec?{alec:true}:{}),...(m.self?{self:true}:{})});
+ ...(m.kind==='sticker'?{sticker:m.sticker}:m.kind==='doodle'?{strokes:m.s}:m.kind==='game'?{game:m.game,gid:m.gid,payload:m.payload}:{text:m.text}),...(m.alec?{alec:true}:{}),...(m.self?{self:true}:{})});
 // The chat outlives the vote: after the pick it stays open until the end of the picked night (server says chat.open).
 const chatOpenNow=()=>!!data?.viewer&&(data?.chat?.open??open());
 // pickedAt (ISO or null): the eggs place items sent after the pick below the pick block (#rsvp, right after the notice).
-function chatList(){return {canSend:chatOpenNow(),pickedAt:data?.pickedAt||null,messages:chatMsgs.map(chatItem)}}
+function chatList(){return {canSend:chatOpenNow(),pickedAt:data?.pickedAt||null,pollId:pollId||null,messages:chatMsgs.map(chatItem)}}
 function announceChat(){const l=chatList();for(const cb of chatSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-chat',{detail:l}))}
 function mergeChat(c){if(!c)return;const hidden=new Set(c.hidden||[]),byId=new Map(chatMsgs.map(m=>[m.id,m]));for(const m of c.messages||[])byId.set(m.id,m);
  chatMsgs=[...byId.values()].filter(m=>!hidden.has(m.id)).sort((a,b)=>a.seq-b.seq);chatCursor=Math.max(chatCursor,c.cursor||0);announceChat();hotLoop()}
@@ -309,7 +309,9 @@ window.filmmaandChat={
  acceptsKey:true,// send(text,{key}) / sendDoodle(strokes,{key}): the same key on every retry of one message
  async send(text,opts=false){return chatPost({text},opts)},
  // A drawing as a chat message (Chris, 23 Sept): the same stream, several per person; the doodle rate applies.
- async sendDoodle(strokes,opts=false){return chatPost({kind:'doodle',s:strokes},opts)}
+ async sendDoodle(strokes,opts=false){return chatPost({kind:'doodle',s:strokes},opts)},
+ // A game turn (games.js): {game:'hop'|'pool', gid, payload}; the game rate applies.
+ async sendGame({game,gid,payload},opts=false){return chatPost({kind:'game',game,gid,payload},opts)}
 };
 
 // ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;
