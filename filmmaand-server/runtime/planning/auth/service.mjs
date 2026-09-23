@@ -60,6 +60,21 @@ export function createAuthService({store,mailer,avatars,now=()=>new Date().toISO
    const p=store.transaction(()=>{if(store.q.consumeCode.run(now(),challengeId).changes!==1)fail(410,'code_expired','Deze code is al gebruikt.');let p=store.q.participantByEmail.get(row.email);if(!p){store.q.insertParticipant.run('u_'+b64(12),row.email,now());p=store.q.participantByEmail.get(row.email)}store.q.insertSession.run(hash(token),p.id,now(),iso(ms()+cfg.sessionTtlDays*864e5),now(),cl.agent);return p});
    store.db.prepare('UPDATE email_ownership SET verified_at=? WHERE participant_id=?').run(now(),p.id);store.db.prepare('INSERT INTO session_security(token_hash,method,authenticated_at) VALUES(?,?,?)').run(hash(token),'code',now());
    return {token,participant:participantView(p)}},
+  // Organiser-provisioned account for a poll pass (a friend without an account): the same participants insert as the
+  // code login, with no email_ownership row (like code-login accounts), so the friend can later log in with an email
+  // code. The profile (name + avatar) is set at once, because the poll ignores answers from people without one.
+  // validateProvision is pure; provisionAccount writes and must run inside the caller's store.transaction.
+  validateProvision(e){const email=normalizeEmail(e?.email);if(!emailOk(email))fail(400,'recipients','Vul een geldig e-mailadres in.',{emails:[String(e?.email??'')]});
+   if(!plain(e.name,32)||!e.name.trim())fail(400,'name','Vul een naam in van maximaal 32 tekens.',{emails:[email]});
+   if(e.avatarId!==undefined&&e.avatarId!==null){try{validateAvatar(e.avatarId,null)}catch(x){x.details={emails:[email]};throw x}}
+   return {email,name:e.name.trim(),avatarId:e.avatarId??null}},
+  provisionAccount({email,name,avatarId}){let p=store.q.participantByEmail.get(email);if(p?.onboarded)return {participant:p,created:false};
+   const owners=new Map(store.q.takenAvatars.all().map(r=>[r.avatar_id,r.id]));let id=avatarId;
+   if(id===null){id=avatars.find(a=>a.active&&!owners.has(a.id))?.id;if(id===undefined)fail(409,'avatar_unavailable','Er is geen vrije avatar meer.',{emails:[email]});}
+   else if(owners.has(id)&&owners.get(id)!==p?.id)fail(409,'avatar_taken','Deze avatar is al van iemand anders.',{emails:[email]});
+   const created=!p;if(created){store.q.insertParticipant.run('u_'+b64(12),email,now());p=store.q.participantByEmail.get(email);}
+   if(store.q.updateProfile.run(name,id,null,null,null,null,null,now(),p.id,p.profile_revision).changes!==1)fail(409,'conflict','Dit profiel is net gewijzigd.',{emails:[email]});
+   return {participant:store.q.participantByEmail.get(email),created}},
   issueSession(pid,method){const p=participant(pid),token=SESSION_PREFIX+b64(32);store.q.insertSession.run(hash(token),pid,now(),iso(ms()+cfg.sessionTtlDays*864e5),now(),'');store.db.prepare('INSERT INTO session_security(token_hash,method,authenticated_at) VALUES(?,?,?)').run(hash(token),method,now());return {token,participant:participantView(p)}},
   // Every presented session credential is authoritative: unknown, revoked or expired → 401 with clear:true. Never anonymous.
   authenticate(token){if(!isSessionToken(token))fail(401,'session_invalid','Log opnieuw in.',{clear:true});const s=store.q.sessionByHash.get(hash(token));if(!s||s.revoked_at||Date.parse(s.expires_at)<=ms())fail(401,'session_invalid','Je sessie is verlopen. Log opnieuw in.',{clear:true});if(ms()-Date.parse(s.last_seen_at)>cfg.sessionTouchSeconds*1000)store.q.touchSession.run(now(),iso(ms()+cfg.sessionTtlDays*864e5),s.token_hash);return {participantId:s.participant_id,email:s.email,onboarded:Boolean(s.onboarded),tokenHash:s.token_hash}},

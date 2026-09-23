@@ -12,7 +12,8 @@ async function fixture({manual=false}={}){
  const clock={now:manual?'2026-09-23T10:00:00.000Z':'2026-09-22T10:00:00.000Z'},ids=[];let code;
  const api=createApi({store,blobs:{},adminToken:'secret',organizerIds:ids,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock.now});
  async function request(path,method='GET',body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'fixture'});return {status:r.status,body:await r.json(),headers:r.headers}}
- async function account(email,name,avatarId,onboard=true){const ch=await request('auth/code','POST',{email}),login=await request('auth/verify','POST',{challengeId:ch.body.challengeId,code});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie').split(';')[0],id=login.body.participant.id;if(onboard)assert.equal((await request('auth/profile','PUT',{expectedRevision:0,name,animal:'otter',avatarId},{Cookie:cookie,'Idempotency-Key':'profile-key-'+avatarId+'-000000'})).status,200);return {cookie,id,email,name}}
+ async function login(email){const ch=await request('auth/code','POST',{email}),r=await request('auth/verify','POST',{challengeId:ch.body.challengeId,code});assert.equal(r.status,200,JSON.stringify(r.body));return {cookie:r.headers.get('set-cookie').split(';')[0],participant:r.body.participant}}
+ async function account(email,name,avatarId,onboard=true){const {cookie,participant}=await login(email),id=participant.id;if(onboard)assert.equal((await request('auth/profile','PUT',{expectedRevision:0,name,animal:'otter',avatarId},{Cookie:cookie,'Idempotency-Key':'profile-key-'+avatarId+'-000000'})).status,200);return {cookie,id,email,name}}
  const admin=(key,extra={})=>({Authorization:'Bearer secret','Idempotency-Key':key,...extra});
  async function openPoll(plan,key,window=manual?{start:MANUAL_NIGHTS[0],end:MANUAL_NIGHTS[2]}:{start:NIGHTS[0],end:NIGHTS[3]},closesAt=manual?undefined:CLOSES){const r=await request('plans/'+plan+'/date-poll','POST',{action:'open',mode:'availability',window,choices:[],...(closesAt?{closesAt}:{}),...(manual?{pick:'manual'}:{})},admin(key));assert.equal(r.status,200,JSON.stringify(r.body));return r.body.datePoll.id}
  const noor=await account('noor@example.test','Noor',4),sam=await account('sam@example.test','Sam',7),joep=await account('joep@example.test','Joep',9),nieuw=await account('nieuw@example.test','',11,false);
@@ -21,7 +22,7 @@ async function fixture({manual=false}={}){
  const minted=await issue([noor.email,sam.email,joep.email]);
  const pass=(who,extra={})=>({'X-Filmmaand-Poll-Pass':typeof who==='string'?who:minted[who.email].token,...extra});
  const answer=(revision,yes,favourite=null)=>({pollId,revision,availability:Object.fromEntries((manual?MANUAL_NIGHTS:NIGHTS).map(d=>[d,yes.includes(d)])),favourite});
- return {store,clock,ids,request,admin,openPoll,issue,minted,pass,answer,pollId,otherPollId,noor,sam,joep,nieuw,writes:()=>writes};
+ return {store,clock,ids,request,login,admin,openPoll,issue,minted,pass,answer,pollId,otherPollId,noor,sam,joep,nieuw,writes:()=>writes};
 }
 const snapshot=f=>JSON.stringify(f.store.data)+'#'+f.store.etag;
 
@@ -182,8 +183,8 @@ test('manual poll: GET shows per night who can come (name + avatar, self marked)
  const votes=f.store.data.plans.proof.data.datePoll.votes,ghost={revision:1,availability:{[DO]:true,[ZA]:true},favourite:null,updatedAt:f.clock.now};
  votes['p_'+f.nieuw.id]=ghost;votes['a'.repeat(64)]=ghost;
  const noor=await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor));assert.equal(noor.status,200);
- assert.deepEqual(nightOf(noor,ZA),{date:ZA,available:2,unavailable:0,favourites:1,people:[{name:'Noor',avatarId:4,self:true},{name:'Sam',avatarId:7}]});
- assert.deepEqual(nightOf(noor,DO),{date:DO,available:1,unavailable:1,favourites:0,people:[{name:'Noor',avatarId:4,self:true}]});
+ assert.deepEqual(nightOf(noor,ZA),{date:ZA,available:2,unavailable:0,favourites:1,people:[{name:'Noor',avatarId:4,self:true},{name:'Sam',avatarId:7}],no:[]});
+ assert.deepEqual(nightOf(noor,DO),{date:DO,available:1,unavailable:1,favourites:0,people:[{name:'Noor',avatarId:4,self:true}],no:[{name:'Sam',avatarId:7}]});
  assert.deepEqual(nightOf(noor,VR).people,[]);assert.equal(noor.body.poll.voteCount,2);assert.equal(noor.body.poll.pick,'manual');
  const sam=await f.request('plans/proof/date-poll','GET',null,{Cookie:f.sam.cookie});
  assert.deepEqual(nightOf(sam,ZA).people,[{name:'Noor',avatarId:4},{name:'Sam',avatarId:7,self:true}]);
@@ -258,4 +259,135 @@ test('manual poll: a close by the organiser also starts the 24h grace; the pass 
  for(const [path,method,body] of [['plans/proof/response','GET'],['plans/proof/coordination','PUT',{}],['auth/profile','GET']])assert.equal((await f.request(path,method,body,f.pass(f.sam,{'Idempotency-Key':'other-route-key-0002'}))).status,401,path);
  f.clock.now='2026-09-24T10:00:00.000Z';
  assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(f.sam))).body.error.code,'pass_invalid');
+});
+
+// ---- Follow-up (Chris): accounts at mint time, explicit "no", organiser-triggered reminders, needsPick. ----
+const organizer=(f,who,extra={})=>({Cookie:who.cookie,'X-Filmmaand-Organizer-Id':who.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin',...extra});
+const manage=(f,body,headers)=>f.request('plans/proof/date-poll','POST',{pollId:f.pollId,...body},headers);
+const participantRow=(f,email)=>f.store.data.auth.participants.find(p=>p.email===email);
+const nudges=f=>Object.values(f.store.data.eventNotifications?.outbox||{}).filter(m=>m.notice.type==='poll-nudge');
+
+test('issue-passes creates an account for a friend (name + avatar), so their vote counts; all-or-nothing',async()=>{
+ const f=await fixture({manual:true});
+ const passCount=()=>f.store.data.auth.poll_passes.length,before=passCount();
+ // One bad entry (avatar already Noor's) refuses the whole request: no account, no profile change, no pass.
+ const clash=await manage(f,{action:'issue-passes',people:[{email:'lotte@filmvrienden.nl',name:'Lotte'},{email:'Bram@Filmvrienden.nl',name:'Bram',avatarId:4}]},f.admin('unused-key-000000020'));
+ assert.equal(clash.status,409);assert.equal(clash.body.error.code,'avatar_taken');assert.deepEqual(clash.body.error.details.emails,['bram@filmvrienden.nl']);
+ assert.equal(participantRow(f,'lotte@filmvrienden.nl'),undefined);assert.equal(participantRow(f,'bram@filmvrienden.nl'),undefined);assert.equal(passCount(),before);
+ for(const [people,code] of [[[{email:'x@filmvrienden.nl',name:''}],'name'],[[{email:'nope',name:'X'}],'recipients'],[[{email:'x@filmvrienden.nl',name:'X',avatarId:999}],'avatar'],[[{email:'x@filmvrienden.nl',name:'X',extra:1}],'recipients'],[[{email:'x@filmvrienden.nl',name:'X',avatarId:20},{email:'y@filmvrienden.nl',name:'Y',avatarId:20}],'avatar_taken']]){// the last: two new friends, one avatar; rolled back
+  const r=await manage(f,{action:'issue-passes',people},f.admin('unused-key-000000021'));assert.equal(r.body.error.code,code,JSON.stringify(people));
+ }
+ assert.equal(participantRow(f,'x@filmvrienden.nl'),undefined);
+ // A plain email for an unknown address is still refused; the hint says to give a name.
+ assert.equal((await manage(f,{action:'issue-passes',emails:['wie@filmvrienden.nl']},f.admin('unused-key-000000022'))).body.error.code,'recipient_unknown');
+ const ok=await manage(f,{action:'issue-passes',emails:[f.sam.email],people:[{email:'Lotte@Filmvrienden.nl',name:' Lotte '},{email:'bram@filmvrienden.nl',name:'Bram',avatarId:20},{email:f.nieuw.email,name:'Nieuw',avatarId:21},{email:f.noor.email,name:'Niet Noor',avatarId:22}]},f.admin('unused-key-000000023'));
+ assert.equal(ok.status,200,JSON.stringify(ok.body));
+ assert.deepEqual(ok.body.passes.map(p=>[p.email,p.name,p.created]),[[f.sam.email,'Sam',false],['lotte@filmvrienden.nl','Lotte',true],['bram@filmvrienden.nl','Bram',true],[f.nieuw.email,'Nieuw',false],[f.noor.email,'Noor',false]]);
+ const lotte=participantRow(f,'lotte@filmvrienden.nl');assert.equal(lotte.onboarded,1);assert.equal(lotte.name,'Lotte');assert.ok(Number.isInteger(lotte.avatar_id));
+ assert.equal(participantRow(f,'bram@filmvrienden.nl').avatar_id,20);assert.equal(participantRow(f,f.nieuw.email).onboarded,1);
+ assert.equal(participantRow(f,f.noor.email).name,'Noor');assert.equal(participantRow(f,f.noor.email).avatar_id,4);// an existing profile is never overwritten
+ // The minted friend's answer counts and is named.
+ const token=ok.body.passes.find(p=>p.email==='lotte@filmvrienden.nl').token;
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[VR]),f.pass(token,{'Idempotency-Key':'lotte-vote-key-00001'}))).status,200);
+ const view=await f.request('plans/proof/date-poll','GET',null,f.pass(token));assert.equal(view.body.viewer.name,'Lotte');
+ assert.deepEqual(nightOf(view,VR).people,[{name:'Lotte',avatarId:lotte.avatar_id,self:true}]);assert.equal(view.body.poll.voteCount,1);
+ // The new account is a normal account: the friend can later log in with an email code and is already onboarded.
+ const later=await f.login('lotte@filmvrienden.nl');assert.equal(later.participant.id,lotte.id);assert.equal(later.participant.onboarded,true);
+});
+
+test('"I can\'t make any of these nights" is a saved answer: named under no per night and in declined, counted as responded',async()=>{
+ const f=await fixture({manual:true});
+ const no=await f.request('plans/proof/date-poll','PUT',f.answer(0,[]),f.pass(f.sam,{'Idempotency-Key':'sam-all-no-key-0001'}));
+ assert.equal(no.status,200);assert.deepEqual(no.body.availability,{[DO]:false,[VR]:false,[ZA]:false});assert.equal(no.body.revision,1);
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[ZA]),f.pass(f.noor,{'Idempotency-Key':'noor-za-key-0000001'}))).status,200);
+ assert.equal((await f.request('plans/proof/date-poll','PUT',{pollId:f.pollId,revision:0,availability:{},favourite:null},f.pass(f.joep,{'Idempotency-Key':'joep-empty-key-0001'}))).status,200);// saved, but not an answer
+ const view=await f.request('plans/proof/date-poll','GET',null,f.pass(f.sam));
+ assert.deepEqual(view.body.availability,{[DO]:false,[VR]:false,[ZA]:false});
+ assert.deepEqual(view.body.poll.declined,[{name:'Sam',avatarId:7,self:true}]);
+ assert.deepEqual(nightOf(view,ZA).no,[{name:'Sam',avatarId:7,self:true}]);assert.deepEqual(nightOf(view,ZA).people,[{name:'Noor',avatarId:4}]);
+ assert.deepEqual(nightOf(view,DO).no,[{name:'Noor',avatarId:4},{name:'Sam',avatarId:7,self:true}]);
+ assert.equal(view.body.poll.voteCount,2);// Noor and Sam; Joep's empty answer is "not answered yet"
+ // The public plan GET stays anonymous.
+ const plan=await f.request('plans/proof');assert.equal(JSON.stringify(plan.body.datePoll).includes('Sam'),false);assert.equal('declined' in plan.body.datePoll,false);
+});
+
+test('nudge-list: pass holders who have not answered; anyone who answered (including all-no) is left out',async()=>{
+ const f=await fixture({manual:true});f.ids.push(f.noor.id);
+ await f.request('plans/proof/date-poll','PUT',f.answer(0,[DO]),f.pass(f.noor,{'Idempotency-Key':'noor-do-key-0000001'}));
+ await f.request('plans/proof/date-poll','PUT',f.answer(0,[]),f.pass(f.sam,{'Idempotency-Key':'sam-all-no-key-0002'}));
+ await f.request('plans/proof/date-poll','PUT',{pollId:f.pollId,revision:0,availability:{},favourite:null},f.pass(f.joep,{'Idempotency-Key':'joep-empty-key-0002'}));
+ const list=await manage(f,{action:'nudge-list'},f.admin('unused-key-000000030'));
+ assert.equal(list.status,200,JSON.stringify(list.body));assert.equal(list.body.answersOpen,true);
+ assert.deepEqual(list.body.recipients,[{participantId:f.joep.id,email:f.joep.email,name:'Joep'}]);
+ // Organiser cookie sees the same; a revoked pass drops out; an account without a pass is never listed.
+ assert.deepEqual((await manage(f,{action:'nudge-list'},organizer(f,f.noor))).body,list.body);
+ await manage(f,{action:'revoke-passes',emails:[f.joep.email]},f.admin('unused-key-000000031'));
+ assert.deepEqual((await manage(f,{action:'nudge-list'},f.admin('unused-key-000000032'))).body.recipients,[]);
+ // Organiser only.
+ assert.equal((await manage(f,{action:'nudge-list'},f.pass(f.sam))).status,401);
+ assert.equal((await manage(f,{action:'nudge-list'},organizer(f,f.sam))).status,403);
+ assert.equal((await manage(f,{action:'nudge-list',pollId:'stale'},f.admin('unused-key-000000033'))).body.error.code,'date_poll_changed');
+});
+
+test('nudge queues exactly the unanswered pass holders, once per request key; nothing is ever queued without it',async()=>{
+ const {runCoordinationTick}=await import('./date-coordination-tick.mjs');
+ const f=await fixture({manual:true});f.ids.push(f.noor.id);
+ await f.request('plans/proof/date-poll','PUT',f.answer(0,[]),f.pass(f.sam,{'Idempotency-Key':'sam-all-no-key-0003'}));
+ // Time passes, the scheduled job runs, everyone reads: no reminder appears by itself.
+ for(const at of ['2026-09-24T09:00:00.000Z','2026-09-25T09:00:00.000Z','2026-09-26T09:00:00.000Z']){f.clock.now=at;await runCoordinationTick({store:f.store,now:()=>at});await f.request('plans/proof');await f.request('plans/proof/date-poll','GET',null,f.pass(f.joep));await manage(f,{action:'nudge-list'},f.admin('unused-key-000000040'));}
+ assert.deepEqual(nudges(f),[]);f.clock.now='2026-09-23T12:00:00.000Z';
+ assert.equal((await manage(f,{action:'nudge'},f.admin(undefined))).body.error.code,'request_key');
+ assert.equal((await manage(f,{action:'nudge'},organizer(f,f.noor))).body.error.code,'request_key');
+ assert.equal((await manage(f,{action:'nudge'},f.pass(f.sam,{'Idempotency-Key':'nudge-by-pass-00001'}))).status,401);
+ assert.equal((await manage(f,{action:'nudge'},organizer(f,f.sam,{'Idempotency-Key':'nudge-by-sam-000001'}))).status,403);
+ assert.deepEqual(nudges(f),[]);
+ const r=await manage(f,{action:'nudge'},organizer(f,f.noor,{'Idempotency-Key':'nudge-first-000001'}));
+ assert.equal(r.status,200,JSON.stringify(r.body));
+ assert.deepEqual(r.body,{pollId:f.pollId,recipients:[{participantId:f.noor.id,name:'Noor'},{participantId:f.joep.id,name:'Joep'}]});// Sam said no to all: never reminded
+ assert.deepEqual(nudges(f).map(m=>[m.to,m.status,m.notice.eventId]).sort(),[[f.joep.email,'pending',f.pollId],[f.noor.email,'pending',f.pollId]]);
+ // No plaintext pass in state: the link is minted at delivery.
+ assert.equal(JSON.stringify(f.store.data.eventNotifications).includes('pas='),false);
+ // Exact retry: same receipt, nothing queued twice. Same key, other body: refused.
+ const again=await manage(f,{action:'nudge'},organizer(f,f.noor,{'Idempotency-Key':'nudge-first-000001'}));assert.deepEqual(again.body,r.body);assert.equal(nudges(f).length,2);
+ assert.equal((await manage(f,{action:'nudge',pollId:'other-poll'},organizer(f,f.noor,{'Idempotency-Key':'nudge-first-000001'}))).body.error.code,'key_reused');
+ // Once someone answers, a new nudge leaves them out.
+ await f.request('plans/proof/date-poll','PUT',f.answer(0,[ZA]),f.pass(f.noor,{'Idempotency-Key':'noor-za-key-0000002'}));
+ assert.deepEqual((await manage(f,{action:'nudge'},f.admin('nudge-second-00001'))).body.recipients,[{participantId:f.joep.id,name:'Joep'}]);
+ // After the pick: no more reminders.
+ await manage(f,{action:'pick',date:ZA},f.admin('pick-before-nudge1'));
+ assert.equal((await manage(f,{action:'nudge'},f.admin('nudge-third-000001'))).body.error.code,'date_poll_closed');
+});
+
+test('nudge delivery: rendered from the Dutch template with a fresh working pass link; dropped if the person answered meanwhile',async()=>{
+ const {createEventNotifications}=await import('./event-notifications.mjs');
+ const f=await fixture({manual:true}),sent=[];
+ const minted=(await manage(f,{action:'issue-passes',people:[{email:'lotte@filmvrienden.nl',name:'Lotte'},{email:'bram@filmvrienden.nl',name:'Bram'}]},f.admin('unused-key-000000050'))).body.passes;
+ const events=createEventNotifications({store:f.store,enabled:true,activatedAt:'2026-01-01T00:00:00.000Z',allowAnyRecipient:true,origin:ORIGIN,now:()=>f.clock.now,send:async(m,{id})=>{sent.push(m);return {providerId:'stub-'+id}}});
+ await events.drain({limit:20});assert.equal(sent.length,0);// nothing queued, nothing sent
+ await manage(f,{action:'nudge'},f.admin('nudge-delivery-0001'));
+ // Bram answers "no to everything" before the drain: his reminder is dropped, not sent.
+ const bram=minted.find(p=>p.name==='Bram').token;
+ await f.request('plans/proof/date-poll','PUT',f.answer(0,[]),f.pass(bram,{'Idempotency-Key':'bram-all-no-key-001'}));
+ await events.drain({limit:20});
+ assert.deepEqual(sent.map(m=>m.to),['lotte@filmvrienden.nl']);// .test addresses are never mailed by policy; Bram answered
+ const [mail]=sent;assert.equal(mail.subject,'Movie deze week?');
+ assert.match(mail.text,/^Hoi Lotte,\n\nMovie deze week\? Je hebt nog niet gestemd\.\n\nWelke avond kun jij: do 24, vr 25 of za 26 september\?/);
+ const link=mail.text.match(/Stemmen: (https:\/\/example\.test\/filmmaand\/\?pas=([A-Za-z0-9_-]{43}))/);assert.ok(link,mail.text);assert.ok(mail.html.includes(link[1]));
+ assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(link[2]))).body.viewer.name,'Lotte');
+ assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(minted.find(p=>p.name==='Lotte').token))).status,200);// the earlier link still works
+ assert.deepEqual(nudges(f),[]);assert.equal(JSON.stringify(f.store.data).includes(link[2]),false);
+ await events.drain({limit:20});assert.equal(sent.length,1);
+ // Replaying the same nudge request after delivery queues nothing again.
+ assert.deepEqual((await manage(f,{action:'nudge'},f.admin('nudge-delivery-0001'))).body.recipients.map(r=>r.name),['Noor','Sam','Joep','Lotte','Bram']);
+ assert.deepEqual(nudges(f),[]);await events.drain({limit:20});assert.equal(sent.length,1);
+});
+
+test('needsPick: organiser flag from the day before the last night while nothing is picked; never a mail',async()=>{
+ const f=await fixture({manual:true}),flag=async()=>(await manage(f,{action:'list-availability'},f.admin('unused-key-000000060'))).body.datePoll.needsPick;
+ assert.equal(await flag(),false);f.clock.now='2026-09-24T21:59:00.000Z';assert.equal(await flag(),false);// do 24, 23:59
+ f.clock.now='2026-09-24T22:00:00.000Z';assert.equal(await flag(),true);// vr 25, 00:00 Amsterdam
+ assert.equal(nudges(f).length,0);assert.equal(Object.keys(f.store.data.eventNotifications?.outbox||{}).length,0);
+ const picked=await manage(f,{action:'pick',date:ZA},f.admin('pick-needs-flag-001'));assert.equal(picked.body.datePoll.needsPick,false);assert.equal(await flag(),false);
+ // Participants never see the flag.
+ assert.equal('needsPick' in (await f.request('plans/proof/date-poll','GET',null,{Cookie:f.sam.cookie})).body.poll,false);
 });

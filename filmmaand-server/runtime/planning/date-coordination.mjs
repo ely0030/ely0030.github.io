@@ -27,6 +27,13 @@ export function openAvailabilityPoll(p,b,{id,now}){
  if(p.datePoll)(p.datePollHistory||=[]).push(structuredClone(p.datePoll));
  p.datePoll={id,mode:'availability',status:'open',window:{...b.window},choices:[],votes:{},openedAt:now,closesAt:noDeadline?null:b.closesAt,...(manual?{pick:'manual'}:{}),...(linked?{programmeId:b.programmeId,eventVersion:revision(linked),originalDate:eventDate(linked)}:{})};
 }
+// Responded = at least one night explicitly answered (true or false). An all-false answer is a real "I can't make any
+// of these nights": it counts as responded (never nudged) and is listed as declined. {} (or nothing) is "not answered yet".
+const answered=(q,v)=>days(q.window.start,q.window.end).filter(d=>typeof v?.availability?.[d]==='boolean');
+export const responded=(q,v)=>answered(q,v).length>0;
+export const declined=(q,v)=>{const nights=days(q.window.start,q.window.end);return nights.every(d=>v?.availability?.[d]===false);};
+// Organiser reminder flag: a manual poll still open from the day before its last night.
+export const needsPick=(q,now)=>q?.mode==='availability'&&q.pick==='manual'&&q.status==='open'&&localDate(Date.parse(now)+86400000)>=q.window.end;
 // Answers are accepted while the poll is open and, when it has a deadline, before it.
 export const answersOpen=(q,now)=>q?.status==='open'&&(q.closesAt==null||Date.parse(now)<Date.parse(q.closesAt));
 export function ownAvailability(p,a){const q=p.datePoll,v=q.votes?.[a];return {pollId:q.id,revision:v?.revision||0,availability:{...v?.availability},favourite:v?.favourite||null};}

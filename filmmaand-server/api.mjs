@@ -3,6 +3,7 @@ import {captureActivity,commitActivity,notificationRequest} from './account-noti
 import {createPasswords,admitPasswordAttempt,passwordWork} from './runtime/planning/auth/passwords.mjs';
 import {createHash} from 'node:crypto';
 import {createPollPasses,PASS_ACTIONS} from './runtime/planning/auth/poll-passes.mjs';
+import {queuePollNudges} from './event-notifications.mjs';
 import {participantActor} from './runtime/planning/auth/credentials.mjs';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
 import {transact,openState} from './state.mjs';
@@ -120,11 +121,21 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      const token=cred?.token??(req.headers.authorization||'').replace(/^Bearer /,'');
      const service=createPlanningService({store:c.plans,adminToken,movieCatalogue,programmeMovies,imageStore:createImages(blobs,c.state),identity:auth,now});
      if(part==='date-poll'){
-      const passes=createPollPasses({store:c.authStore,now});
+      const passes=createPollPasses({store:c.authStore,accounts:auth,now});
       if(method==='POST'&&PASS_ACTIONS.includes(body?.action)){
        let createdBy='admin';
        if(organizerCookie){const account=organizerAccount();if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');createdBy=account.participantId;}
        else service.assertAdmin(token);
+       if(body.action==='nudge-list')return send(200,await service.datePollNudgeList(id,body.pollId,passes.holders(id,body.pollId)));
+       if(body.action==='nudge'){
+        // Organiser-triggered only. Same receipt pattern as the other organiser writes: an exact retry replays the receipt
+        // and the seen ledger queues nothing twice.
+        const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
+        const scoped=createdBy==='admin'?key:'organizer-'+createHash('sha256').update(JSON.stringify([createdBy,key])).digest('hex');
+        const at=now?now():new Date().toISOString(),result=await service.nudgeDatePoll(id,adminToken,scoped,body,passes.holders(id,body.pollId));
+        const poll=c.state.plans[id].data.datePoll;queuePollNudges(c,{planId:id,poll,scope:scoped,recipients:result.recipients,now:at});
+        return send(200,result);
+       }
        if(body.action==='list-passes')return send(200,passes.list(id,body));
        if(body.action==='revoke-passes')return send(200,passes.revoke(id,body));
        if(body.action==='list-availability')return send(200,await service.datePollOrganizerView(id,body.pollId));

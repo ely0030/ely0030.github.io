@@ -2,8 +2,11 @@
 import {createHash} from 'node:crypto';
 import {transact} from './state.mjs';
 import {providerAcceptanceId} from './mail-diagnostics.mjs';
+import {answersOpen,responded} from './runtime/planning/date-coordination.mjs';
+import {createPollPasses} from './runtime/planning/auth/poll-passes.mjs';
+import {renderPollNudge} from './poll-nudge-mail.mjs';
 const ACTIVITY=new Set(['round-opened','round-concluded']);
-const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder']);
+const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge']);
 const DAY=86400000, hash=value=>createHash('sha256').update(value).digest('hex');
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const validTime=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
@@ -64,6 +67,18 @@ export function queueCoordinationEvents(c,options={}){
   }
  }
  return {queued,enabled:true};
+}
+/** Organiser-triggered poll reminder (action nudge), in the SAME state transaction as its receipt. Only queues; delivery
+ * re-checks everything and mints the link. The seen ledger makes a replayed request (same scoped key) queue nothing. */
+export function queuePollNudges(c,{planId,poll,scope,recipients,now}){
+ const ns=namespace(c.state);let queued=0;
+ for(const {participantId} of recipients){
+  const id=hash(['poll-nudge',planId,poll.id,scope,participantId].join('\0'));if(ns.seen[id])continue;
+  const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(participantId);if(!p)continue;
+  ns.seen[id]={at:now,eventId:poll.id,type:'poll-nudge'};
+  ns.outbox[id]={id,notice:{id:'nudge:'+id.slice(0,20),type:'poll-nudge',planId,eventId:poll.id,occurredAt:now,scheduledDate:poll.window.end,window:{...poll.window}},participantId,to:p.email.toLowerCase(),createdAt:now,status:'pending'};queued++;
+ }
+ return queued;
 }
 function displayDate(value){return new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Amsterdam'}).format(new Date(value+'T12:00:00Z'));}
 export function renderEventNotification(notice,{participantId,origin='https://ely0030.xyz'}={}){
@@ -158,6 +173,17 @@ export function createEventNotifications(options={}){
    // Address changes, account deletion, new opt-outs and local suppression cancel queued delivery.
    if(!p||p.email.toLowerCase()!==m.to||!policyAllows(c,p,options)||(ACTIVITY.has(m.notice.type)&&c.state.accountNotifications?.accounts?.[p.id]?.importantActivityEmail===false)){delete ns.outbox[id];return null;}
    const plan=c.state.plans[m.notice.planId]?.data;
+   if(m.notice.type==='poll-nudge'){
+    // Dropped if the poll moved on, answers closed, or the person answered since (including "none of these nights").
+    const q=plan?.datePoll,who=c.authStore.db.prepare('SELECT name,onboarded FROM participants WHERE id=?').get(p.id);
+    if(!q||q.id!==m.notice.eventId||!answersOpen(q,now())||responded(q,q.votes?.['p_'+p.id])||!who?.onboarded){delete ns.outbox[id];return null;}
+    const day=now().slice(0,10),month=day.slice(0,7);c.state.mailUsage||={};
+    if((c.state.mailUsage[day]||0)>=80||(c.state.mailUsage[month]||0)>=2000)return null;
+    const token=createPollPasses({store:c.authStore,now}).mintExtra(m.notice.planId,q,p.id,'nudge');
+    const rendered=renderPollNudge({name:who.name,window:q.window,url:new URL('/filmmaand/?pas='+token,origin).href});
+    m.status='attempted';m.attemptedAt=now();c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
+    return {id:m.id,to:m.to,...rendered};
+   }
    const current=[...(plan?.programme||[]),...(plan?.confirmation?[{id:'confirmation',...plan.confirmation}]:[])].find(e=>e.id===m.notice.eventId);
    if(!ACTIVITY.has(m.notice.type)&&(!current||(current.coordinationRevision||0)>(m.notice.eventVersion??0))){delete ns.outbox[id];return null;}
    if(ACTIVITY.has(m.notice.type)&&(!plan||m.notice.type==='round-opened'&&(plan.round?.id!==m.notice.eventId||plan.round?.closedAt||plan.round?.result||plan.round?.closesAt&&Date.parse(plan.round.closesAt)<=Date.parse(now())))){delete ns.outbox[id];return null;}

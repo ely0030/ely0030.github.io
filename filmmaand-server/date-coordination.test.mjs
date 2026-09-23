@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {openAvailabilityPoll,writeAvailability,finalizePoll,pickAvailabilityDate,rankAvailability,changeDate,resolveChanges,tickCoordination,coordinationView} from './runtime/planning/date-coordination.mjs';
+import {openAvailabilityPoll,writeAvailability,finalizePoll,pickAvailabilityDate,responded,declined,needsPick,rankAvailability,changeDate,resolveChanges,tickCoordination,coordinationView} from './runtime/planning/date-coordination.mjs';
 const now='2026-09-10T10:00:00Z',closed='2026-09-11T11:00:00Z',eligible=a=>['p_a','p_b','p_c'].includes(a);
 const plan=()=>({id:'qa',version:1,window:{start:'2026-09-01',end:'2026-09-30'},options:[],responses:{},programme:[],receipts:{}});
 function poll(p){openAvailabilityPoll(p,{action:'open',mode:'availability',window:{start:'2026-09-12',end:'2026-09-14'},choices:[],closesAt:'2026-09-11T10:00:00Z'},{id:'poll-qa',now});}
@@ -67,4 +67,13 @@ test('pick puts the chosen night on the programme exactly like the deadline did,
  // A linked night that changed elsewhere is not silently rescheduled.
  const l=plan();l.programme=[{id:'night',scheduledDate:'2026-09-20',selection:'pending',choices:[]}];openAvailabilityPoll(l,manualBody({programmeId:'night'}),{id:'poll-m',now});l.programme[0].coordinationRevision=1;
  assert.equal(pick('2026-09-13',now,'poll-m',l),'event_changed');assert.equal(l.datePoll.status,'open');assert.equal(l.programme[0].scheduledDate,'2026-09-20');
+});
+test('responded / declined / needsPick',()=>{
+ const q={mode:'availability',pick:'manual',status:'open',window:{start:'2026-09-12',end:'2026-09-14'}},v=availability=>({availability});
+ assert.equal(responded(q,undefined),false);assert.equal(responded(q,v({})),false);assert.equal(responded(q,v({'2026-09-20':false})),false);
+ assert.equal(responded(q,v({'2026-09-13':false})),true);assert.equal(responded(q,v({'2026-09-13':true})),true);
+ assert.equal(declined(q,v({'2026-09-12':false,'2026-09-13':false,'2026-09-14':false})),true);
+ assert.equal(declined(q,v({'2026-09-12':false,'2026-09-13':false})),false);assert.equal(declined(q,v({'2026-09-12':false,'2026-09-13':true,'2026-09-14':false})),false);
+ assert.equal(needsPick(q,'2026-09-12T21:59:00Z'),false);assert.equal(needsPick(q,'2026-09-12T22:00:00Z'),true);assert.equal(needsPick(q,'2026-09-20T00:00:00Z'),true);
+ assert.equal(needsPick({...q,pick:undefined},'2026-09-13T12:00:00Z'),false);assert.equal(needsPick({...q,status:'confirmed'},'2026-09-13T12:00:00Z'),false);
 });

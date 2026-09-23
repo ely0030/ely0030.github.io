@@ -1,5 +1,5 @@
 import {resolvedEventTiming} from './event-timing.mjs';
-import {tickCoordination,changeDate,coordinationView} from './date-coordination.mjs';
+import {tickCoordination,changeDate,coordinationView,answersOpen,needsPick,responded} from './date-coordination.mjs';
 import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.mjs';
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
@@ -27,6 +27,11 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  function guard(p,a){if(claimedTo(p,a))fail(410,'claimed','Deze browsersleutel is overgezet naar je account. Log in om verder te gaan.',{clear:true})}
  // Public display identity: account profile for participants (follows profile edits), the per-plan snapshot for anonymous actors.
  const datePollDisplay=(p,a)=>isParticipantActor(a)?identity?.publicProfile?.(a)||null:null;
+ // Organiser projection: names per night plus needsPick (a manual poll still undecided from the day before its last night).
+ const organizerPoll=p=>{const v=publicDatePoll(p,null,datePollDisplay,{names:true});return v?.mode==='availability'?{...v,needsPick:needsPick(p.datePoll,now())}:v};
+ const currentPoll=(p,pollId)=>{if(!p.datePoll||p.datePoll.mode!=='availability'||p.datePoll.id!==pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');return p.datePoll};
+ // Pass holders who have not answered yet. Anyone who answered, including "none of these nights", is left out.
+ const unanswered=(q,holders)=>holders.filter(h=>!responded(q,q.votes?.['p_'+h.participantId]));
  const datePollView=(p,a)=>({...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a)});
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
@@ -118,9 +123,14 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
   async datePollInfo(id){const q=(await load(id)).data.datePoll;return q?{id:q.id,mode:q.mode||null,pick:q.pick||'auto',status:q.status,window:q.window?{...q.window}:null,closesAt:q.closesAt||null}:null;},
   assertAdmin(token){admin(token);},
   async voteDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>writeDatePoll(p,a,b,now()));},
-  async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)});return {datePoll:publicDatePoll(p,null,datePollDisplay,{names:true})};});},
+  async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)});return {datePoll:organizerPoll(p)};});},
   // Organiser read (admin bearer or organiser cookie, checked by the api layer): the poll with names per night.
-  async datePollOrganizerView(id,pollId){const p=(await load(id)).data;if(!p.datePoll||p.datePoll.id!==pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');return {datePoll:publicDatePoll(p,null,datePollDisplay,{names:true})};},
+  async datePollOrganizerView(id,pollId){const p=(await load(id)).data;currentPoll(p,pollId);return {datePoll:organizerPoll(p)};},
+  // Organiser reads/actions for reminders (auth checked by the api layer / admin()). holders: working passes for this poll.
+  async datePollNudgeList(id,pollId,holders){const p=(await load(id)).data,q=currentPoll(p,pollId);return {pollId,answersOpen:answersOpen(q,now()),recipients:answersOpen(q,now())?unanswered(q,holders):[]};},
+  // The receipt (existing Idempotency-Key pattern) fixes who this request reminds; the api queues exactly that set.
+  async nudgeDatePoll(id,token,key,b,holders){admin(token);if(!b||Object.keys(b).some(k=>!['action','pollId'].includes(k))||b.action!=='nudge'||typeof b.pollId!=='string')fail(400,'date_poll','Ongeldige herinnering.');
+   return mutate(id,'admin',key,{operation:'date-poll-nudge',body:b},p=>{const q=currentPoll(p,b.pollId);if(!answersOpen(q,now()))fail(409,'date_poll_closed','Deze poll neemt geen antwoorden meer aan.');const recipients=unanswered(q,holders).map(({participantId,name})=>({participantId,name}));(q.nudges||=[]).push({at:now(),count:recipients.length});return {pollId:q.id,recipients};});},
   async coordination(id,token){const a=token?actor(token):null;const p=(await load(id)).data;return coordinationView(p,a,x=>datePollDisplay(p,x));},
   async coordinate(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-coordination',body:b},p=>changeDate(p,a,b,{id:'change-'+hash(a+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)}));},
   async manageCoordination(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-coordination-manage',body:b},p=>changeDate(p,'admin',b,{id:'change-'+hash(id+':'+key).slice(0,20),now:now(),admin:true,eligible:x=>!!datePollDisplay(p,x)}));},
