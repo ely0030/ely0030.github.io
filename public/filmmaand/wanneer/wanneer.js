@@ -333,11 +333,11 @@ document.addEventListener('visibilitychange',fresh);window.addEventListener('foc
 // Hot reads are LITE (?since=<cursor>&lite=1): only new chat items + a doodle stamp; a full read only when that or the poll
 // status changes. Cost (docs/netlify-cost/FINDINGS.md, ~0.3-0.5 GB-s per read at 1024 MB): a busy hour with 10 tabs all hot
 // is at most 10 x 1200 = 12,000 reads ~ 1-1.7 GB-hr; realistic chat bursts are a fraction of that; idle = 0.
-const HOT_MS=120e3,HOT_EVERY=3e3,HOT_IDLE_CAP=20*60e3;
+const HOT_MS=120e3,HOT_EVERY=15e3,HOT_IDLE_CAP=20*60e3;
 // voted: the chat is only on screen after voting (the eggs render nothing before), so a non-voter never runs hot mode.
 function hotDelay({voted,visible,focused,chatOpen,newestAge,sinceActive,fails}){
  if(!voted||!visible||!focused||!chatOpen||!(newestAge<HOT_MS)||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
- return fails===1?6e3:fails===2?12e3:HOT_EVERY;
+ return fails===1?30e3:fails===2?60e3:HOT_EVERY;
 }
 // The scheduler around hotDelay(): one timer at most, the 20-min no-input window, the error backoff. Environment-injected
 // (clock, timers, page state, the read) so it is tested behaviourally with a fake clock.
