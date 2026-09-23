@@ -193,14 +193,19 @@ test('first pass read checks account identity before rendering and drops a diffe
    newKey:()=> 'identity-check-key-0001',hot:{resetFails(){}},adopt:b=>adopted.push(b.source),trouble:e=>{throw e},
    call:async(method,_body,_key,url)=>{calls.push([method,url,box.pass]);if(method==='POST'){if(login instanceof Error)throw login;return login}return {viewer:{name:'Same public name',avatarId:12},source:box.pass?'pass':'session'}}};
   vm.runInNewContext('var pass="pass",autoLogged=false;'+code+';this.run=fullRead',box);
-  await box.run();return {calls,adopted,pass:box.pass,state:box.history.state,autoLogged:box.autoLogged};
+  let failure=null;try{await box.run()}catch(e){failure=e}
+  return {calls,adopted,pass:box.pass,state:box.history.state,autoLogged:box.autoLogged,failure};
  }
  const other=await scenario({loggedIn:false,switched:false});
  assert.deepEqual(other.calls.map(([method,url,pass])=>[method,url,pass]),[['GET','/poll','pass'],['POST','/login','pass'],['GET','/poll',null]]);
  assert.deepEqual(other.adopted,['session']);assert.equal(other.pass,null);assert.deepEqual(other.state,{});
  const same=await scenario({loggedIn:true,switched:false});
  assert.deepEqual(same.adopted,['pass']);assert.equal(same.pass,'pass');assert.equal(same.calls.length,2);
- await assert.rejects(scenario(new Error('login unavailable')));
+ for(const error of [new Error('timeout'),Object.assign(new Error('storage unavailable'),{status:503})]){
+  const failed=await scenario(error);
+  assert.equal(failed.failure,error);assert.equal(failed.pass,'pass');
+  assert.deepEqual(failed.state,{filmmaandPollPass:'pass'});assert.deepEqual(failed.adopted,[]);
+ }
 });
 
 test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{
