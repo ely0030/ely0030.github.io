@@ -12,7 +12,7 @@ const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-dood
 // The intro film (Cairn; Chris 23 Sept: "if they've seen the full movie once, that login account shouldn't get it again").
 // The loader (film-loader.js) waits for AFM_FILM_READY (resolved once the first poll read settled, on every path), then reads
 // AFM_FILM_SEEN (from the server, per account). It calls AFM_FILM_ONDONE({completed}); only a FULL viewing is recorded.
-let filmReady;window.AFM_FILM_SEEN=false;window.AFM_FILM_READY=new Promise(r=>filmReady=r);
+let filmReady;window.AFM_FILM_SEEN=null;window.AFM_FILM_READY=new Promise(r=>filmReady=r);// null = unknown (anonymous): the loader's own local memory decides; true/false = the server knows this account
 window.AFM_FILM_ONDONE=r=>{if(r&&r.completed)window.filmmaandFilm.markSeen()};window.AFM_FILM_DONE=window.AFM_FILM_ONDONE;// Cairn's loader calls AFM_FILM_DONE; the video-button replay uses ONDONE
 
 // ---- the pass: out of the address bar before anything else can copy it. Kept in memory and in this tab's history.state
