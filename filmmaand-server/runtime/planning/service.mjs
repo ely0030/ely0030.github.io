@@ -34,6 +34,12 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  const currentPoll=(p,pollId)=>{if(!p.datePoll||p.datePoll.mode!=='availability'||p.datePoll.id!==pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');return p.datePoll};
  // Pass holders who have not answered yet. Anyone who answered, including "none of these nights", is left out.
  const unanswered=(q,holders)=>holders.filter(h=>!responded(q,q.votes?.['p_'+h.participantId]));
+// The hot-mode read (?lite=1): only what live chat needs. Same auth and the same no-write read as the full GET, but the
+ // response stays tiny: the chat since the cursor plus a doodle stamp (count:newest time); when that or the poll status
+ // changes, the page does one full read.
+ const doodleStamp=(p,a)=>{const d=p.datePoll?.mode==='availability'?publicDoodles(p,a,datePollDisplay):[];return d.length+':'+(d.length?d[d.length-1].at:'')};
+ const liteView=(p,a,since)=>{const q=p.datePoll,av=q?.mode==='availability';return {pollId:q?.id||null,status:q?.status||null,pickedAt:av&&q.status==='confirmed'?q.closedAt||null:null,
+  chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},doodleStamp:doodleStamp(p,a)}};
  const ownOnly=r=>({doodle:{id:r.doodle.id,at:r.doodle.at}});// the receipt: id + time only, never the strokes
  const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},rsvp:av?ownRsvp(p.datePoll,a,now()):{answer:null,at:null,open:false},pickedAt:av&&p.datePoll.status==='confirmed'?p.datePoll.closedAt||null:null}};
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
@@ -132,6 +138,8 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
    const planned=plannedIds(p);if(!Array.isArray(b?.shortlist)||b.shortlist.length!==3||new Set(b.shortlist).size!==3||b.shortlist.some(x=>!p.options.some(o=>o.id===x)||planned.has(x)))fail(400,'shortlist','Kies drie verschillende, nog niet geplande opties.');p.round={id:'round-'+hash(id+':'+key).slice(0,20),revision:0,shortlist:[...b.shortlist],derived:false,since:now()};return {round:roundOf(p)};
   })},
   // A date for the open round is not a programme decision and never selects/locks a film.
+  async getDatePollLite(id,token,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return liteView((await loadFor(id,a)).data,a,since);},
+  async getDatePollLiteAs(id,a,pollId,since=0){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return liteView(p,a,since);},
   async getDatePoll(id,token,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return datePollView((await loadFor(id,a)).data,a,since);},
   // Poll-pass identity (PUT returns exactly the receipted own answer, like voteDatePoll, so a replay is byte-exact): the api layer resolved the pass to exactly one participant actor and the poll it was minted for.
   // The pass works only while that poll is the plan's current poll; otherwise it is indistinguishable from an unknown pass.

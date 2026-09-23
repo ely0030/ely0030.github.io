@@ -11,11 +11,12 @@ const PORT=Number(process.env.WANNEER_QA_PORT||4419),ORIGIN='http://localhost:'+
 const c=openState(emptyState());
 await createPlanningService({store:c.plans,adminToken:'isolated-admin'}).seed({id:'home-picker-lab',title:'Isolated wanneer preview',window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c'].map(id=>({id,title:'Fictional '+id}))});
 const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}},async setJSON(k,v,{onlyIfMatch}){if(onlyIfMatch!==String(this.etag))return {modified:false};this.data=structuredClone(v);this.etag++;return {modified:true}}};c.close();
-// The QA clock is fixed (reproducible), but steps one minute on each organiser action below, so things said before and
-// after a pick get different times (Capsule's timeline splits at pickedAt).
-let code,clock=process.env.QA_NOW||'2026-09-23T10:00:00.000Z';const tick=()=>{clock=new Date(Date.parse(clock)+60e3).toISOString()};
+// Live QA clock: starts at QA_NOW (default 23 Sept 10:00Z) and runs in real time from there, so chat times, hot mode and
+// its 2-minute cool-down behave as in production. The server's Date header carries this clock (see below).
+let code,offset=0;const start=Date.parse(process.env.QA_NOW||'2026-09-23T10:00:00.000Z'),t0=Date.now();
+const qaNow=()=>new Date(start+(Date.now()-t0)+offset).toISOString(),tick=()=>{offset+=60e3};
 const organizerIds=[];const api=createApi({store,blobs:{},adminToken:'isolated-admin',organizerIds,mailActive:()=>true,// queues only: this server has no mail transport, nothing is ever sent
- origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock});
+ origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:qaNow});
 async function request(path,method='GET',body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'qa-wanneer'});return {status:r.status,body:await r.json(),headers:r.headers}}
 const admin=key=>({Authorization:'Bearer isolated-admin',...(key?{'Idempotency-Key':key}:{})});
 const NIGHTS=['2026-09-24','2026-09-25','2026-09-26'];
@@ -30,7 +31,7 @@ const pass=n=>new URL(links[n]).searchParams.get('pas');
 const vote=async(n,yes,key)=>{const r=await request('plans/home-picker-lab/date-poll','PUT',{pollId,revision:0,availability:Object.fromEntries(NIGHTS.map(d=>[d,yes.includes(d)])),favourite:null},{'X-Filmmaand-Poll-Pass':pass(n),'Idempotency-Key':key});if(r.status!==200)throw Error(JSON.stringify(r.body))};
 await vote('Daan (voorbeeld)',[NIGHTS[0],NIGHTS[2]],'qa-wanneer-daan-0001');await vote('Mo (voorbeeld)',[NIGHTS[2]],'qa-wanneer-mo-00001');
 const index=()=>`<!doctype html><meta charset="utf-8"><title>wanneer · QA</title><body style="font:15px system-ui;margin:40px">
-<h1>/filmmaand/wanneer/ · isolated QA (in-memory, fictional people, no mail)</h1><p>Poll ${pollId}, clock ${clock} (steps 1 min per organiser action). Daan and Mo have answered.</p><ul>
+<h1>/filmmaand/wanneer/ · isolated QA (in-memory, fictional people, no mail)</h1><p>Poll ${pollId}, clock ${qaNow()} (live; +1 min per organiser pick). Daan and Mo have answered.</p><ul>
 ${Object.entries(links).map(([n,u])=>`<li>${n}: <a href="${u}">pass link</a> · <a href="/__session/${encodeURIComponent(n)}">log in as (session)</a></li>`).join('')}
 <li><a href="/filmmaand/wanneer/?pas=${'A'.repeat(43)}">dead pass, no session</a></li><li><a href="/filmmaand/wanneer/">no pass</a></li></ul>
 <p><a href="/__organiser">Beheer as the organiser (Alec, session cookie)</a> · reminder mails queued (never sent here): ${(JSON.stringify(store.data).match(/"notice":\{"id":"nudge:/g)||[]).length}</p>
@@ -48,7 +49,7 @@ http.createServer(async(req,res)=>{try{
   res.writeHead(303,{Location:'/filmmaand/wanneer/','Set-Cookie':r.headers.get('set-cookie').replace(/;\s*Secure/i,'')});return res.end()}
  if(url.pathname.startsWith('/filmmaand/api/')){const chunks=[];for await(const x of req)chunks.push(x);const body=Buffer.concat(chunks);
   const r=await api(new Request(url,{method:req.method,headers:req.headers,...(body.length?{body}:{})}),{ip:'qa-wanneer'});
-  res.writeHead(r.status,Object.fromEntries(r.headers));return res.end(Buffer.from(await r.arrayBuffer()))}
+  res.writeHead(r.status,{...Object.fromEntries(r.headers),Date:new Date(qaNow()).toUTCString()});return res.end(Buffer.from(await r.arrayBuffer()))}
  if(url.pathname==='/filmmaand/'&&url.searchParams.has('pas')){res.writeHead(302,{Location:'/filmmaand/wanneer/'+url.search});return res.end()}
  const path=fileURLToPath(new URL('.'+url.pathname+(url.pathname.endsWith('/')?'index.html':''),'file://'+root+'/'));if(!path.startsWith(root+'/'))throw Error();
  const data=await readFile(path);const ext=path.split('.').pop();

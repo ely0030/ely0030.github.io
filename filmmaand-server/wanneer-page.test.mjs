@@ -44,7 +44,7 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
  // URLs: the three fixed endpoints and one numeric chat cursor; nothing else is ever put in a URL.
- assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'?since='+since:API","API+'?since='+chatCursor"]);
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'?since='+since:API","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
@@ -63,6 +63,23 @@ test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and
  assert.equal((js.match(/setTimeout\([^;]*load\(\)/g)||[]).length,1);
  assert.match(js,/Date\.now\(\)-lastRead<15e3\)return;load\(\)/);
  assert.match(js,/addEventListener\('visibilitychange',fresh\);window\.addEventListener\('focus',fresh\)/);
+ // Hot mode (Chris; Cameo's guardrails): the only other timed read, a LITE read, one timer at most, re-armed only while
+ // hotDelay() says so; paused on hidden and on blur; the server clock (Date header) decides freshness.
+ assert.match(js,/hotTimer=setTimeout\(async\(\)=>\{hotTimer=0;if\(dirty\(\)\|\|saving\)\{hotLoop\(\);return\}const ok=await liteLoad\(\);hotFails=ok\?0:hotFails\+1;hotLoop\(\)\},ms\)/);
+ assert.match(js,/function hotLoop\(\)\{clearTimeout\(hotTimer\);hotTimer=0;const st=hotState\(\),ms=hotDelay\(st\);/);
+ assert.match(js,/API\+'\?since='\+chatCursor\+'&lite=1'/);assert.match(js,/skew=served-Date\.now\(\)/);
+ assert.match(js,/if\(document\.visibilityState==='visible'\)hotLoop\(\);else hotPause\(\)/);assert.match(js,/window\.addEventListener\('blur',hotPause\)/);
+ assert.equal((js.match(/await liteLoad\(\)/g)||[]).length,1);
+});
+
+test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle cap, backoff 6 s / 12 s then off',()=>{
+ const src=/const HOT_MS=[^\n]*\n(function hotDelay[\s\S]*?\n\})/.exec(js);assert.ok(src,'hotDelay not found');
+ const box={};vm.runInNewContext(js.match(/const HOT_MS=[^\n]*/)[0]+'\n'+src[1]+';this.d=hotDelay',box);const d=box.d;
+ const base={visible:true,focused:true,chatOpen:true,newestAge:10e3,sinceActive:60e3,fails:0};
+ assert.equal(d(base),3e3);
+ for(const [k,v] of [['visible',false],['focused',false],['chatOpen',false],['newestAge',120e3],['newestAge',Infinity],['newestAge',NaN],['sinceActive',20*60e3+1]])assert.equal(d({...base,[k]:v}),null,k+'='+v);
+ assert.equal(d({...base,newestAge:119e3}),3e3);assert.equal(d({...base,sinceActive:20*60e3}),3e3);
+ assert.equal(d({...base,fails:1}),6e3);assert.equal(d({...base,fails:2}),12e3);assert.equal(d({...base,fails:3}),null);
 });
 
 test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{

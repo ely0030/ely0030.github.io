@@ -143,3 +143,18 @@ test("Alec's sticker: a real first message when the poll opens, the same style f
  assert.deepEqual([...seen].sort(),[0,1,2,3]);
 });
 
+test('the hot-mode lite read: only new chat items + a doodle stamp, tiny, never writes; same auth as the full read',async()=>{
+ const f=await fixture();await f.say('Lotte','een');tick(f,20);await f.say('Daan','twee');
+ await f.request('plans/home-picker-lab/date-poll-doodle','PUT',{pollId:f.pollId,s:[['k',Array.from({length:200},(_,i)=>[i%100,i%50])]]},{'X-Filmmaand-Poll-Pass':f.pass.Daan,'Idempotency-Key':f.key()});
+ const lite=q=>f.request(POLL+q,'GET',null,{'X-Filmmaand-Poll-Pass':f.pass.Lotte});
+ const w=f.writes(),before=JSON.stringify(f.store.data);
+ const cur=(await lite('?since=2&lite=1')).body;
+ assert.deepEqual(Object.keys(cur).sort(),['chat','doodleStamp','pickedAt','pollId','status']);
+ assert.deepEqual(cur.chat.messages.map(m=>m.text),['twee']);assert.equal(cur.chat.cursor,3);assert.match(cur.doodleStamp,/^1:2026-/);
+ assert.deepEqual((await lite('?since=3&lite=1')).body.chat.messages,[]);
+ const full=JSON.stringify((await lite('?since=3')).body).length,small=JSON.stringify((await lite('?since=3&lite=1')).body).length;
+ assert.ok(small<300&&small*5<full,'lite '+small+' B vs full '+full+' B');
+ assert.equal(f.writes(),w);assert.equal(JSON.stringify(f.store.data),before);
+ assert.equal((await f.request(POLL+'?since=0&lite=1','GET',null,{'X-Filmmaand-Poll-Pass':'A'.repeat(43)})).body.error.code,'pass_invalid');
+ assert.equal((await f.request(POLL+'?since=0&lite=1','GET')).status,401);
+});

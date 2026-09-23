@@ -31,7 +31,7 @@ function days(w){const out=[];if(!w?.start||!w?.end)return out;for(let t=Date.pa
 
 // ---- state. Server truth in `data`; the viewer's own ticks in `mine`/`none` (instant, like the prototype).
 let data=null,NIGHTS=[],mine=new Set(),none=false,voted=false,revision=0,pollId=null;
-let seq=0,savedSeq=0,saving=false,again=false,timer=0,loaded=false,eggs=false;
+let seq=0,savedSeq=0,saving=false,again=false,timer=0,loaded=false,eggs=false,skew=0;
 const dirty=()=>seq!==savedSeq;
 const poll=()=>data?.poll||null;
 const open=()=>{const p=poll();return !!p&&p.status==='open'&&(!p.closesAt||Date.now()<Date.parse(p.closesAt))};
@@ -49,6 +49,7 @@ async function call(method,body,key,url=API){
  if(body){headers['Content-Type']='application/json';headers['Idempotency-Key']=key}
  let r;for(let i=0;;i++){try{r=await fetch(url,{method,headers,credentials:'same-origin',cache:'no-store',...(body?{body:JSON.stringify(body)}:{})});break}
   catch(e){if(e?.code==='reset_generation'||i>0)throw e;await new Promise(x=>setTimeout(x,800))}}// one retry, same key
+ const served=Date.parse(r.headers.get('date')||'');if(Number.isFinite(served))skew=served-Date.now();// server clock, for hot mode
  let json=null;try{json=await r.json()}catch{}
  if(!r.ok)throw Object.assign(new Error(json?.error?.message||'HTTP '+r.status),{status:r.status,code:json?.error?.code||'http',details:json?.error?.details||null});
  return json;
@@ -62,7 +63,7 @@ async function load(){
  let body;lastRead=Date.now();const since=chatCursor;
  try{body=await call('GET',null,null,since?API+'?since='+since:API)}
  catch(e){if(dropPass(e))return load();return trouble(e)}
- adopt(body);return true;
+ hotFails=0;adopt(body);return true;
 }
 function adopt(body){
  data=body;pollId=body.pollId||poll()?.id||null;revision=body.revision??0;
@@ -251,7 +252,7 @@ const chatOpenNow=()=>!!data?.viewer&&(data?.chat?.open??open());
 function chatList(){return {canSend:chatOpenNow(),pickedAt:data?.pickedAt||null,messages:chatMsgs.map(chatItem)}}
 function announceChat(){const l=chatList();for(const cb of chatSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-chat',{detail:l}))}
 function mergeChat(c){if(!c)return;const hidden=new Set(c.hidden||[]),byId=new Map(chatMsgs.map(m=>[m.id,m]));for(const m of c.messages||[])byId.set(m.id,m);
- chatMsgs=[...byId.values()].filter(m=>!hidden.has(m.id)).sort((a,b)=>a.seq-b.seq);chatCursor=Math.max(chatCursor,c.cursor||0);announceChat()}
+ chatMsgs=[...byId.values()].filter(m=>!hidden.has(m.id)).sort((a,b)=>a.seq-b.seq);chatCursor=Math.max(chatCursor,c.cursor||0);announceChat();hotLoop()}
 function adoptChat(body){// a new poll or another viewer (pass dropped → session) starts the chat over, with one full read
  const who=(body.pollId||'')+'|'+(body.viewer?.name||'');
  if(chatFor!==null&&chatFor!==who){chatFor=who;chatMsgs=[];chatCursor=0;announceChat();void load();return}
@@ -276,6 +277,39 @@ window.filmmaandChat={
 let lastRead=Date.now();
 function fresh(){if(document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<15e3)return;load()}
 document.addEventListener('visibilitychange',fresh);window.addEventListener('focus',fresh);
+
+// ---- hot mode (Chris, 23 Sept; guardrails Cameo): live while people are chatting.
+// hotDelay() is the whole policy, pure so it is unit-tested: re-read every 3 s only while the tab is visible AND focused,
+// the chat is open, the newest message (anyone's) is under 2 minutes old by the SERVER clock (Date header, so a wrong local
+// clock can't keep it hot), and there was user input (pointer/key) in the last 20 minutes of hot mode. On errors: 6 s, 12 s,
+// then give up (cadence B) until the next successful read. null = not hot: only cadence B, and an idle page reads nothing.
+// Hot reads are LITE (?since=<cursor>&lite=1): only new chat items + a doodle stamp; a full read only when that or the poll
+// status changes. Cost (docs/netlify-cost/FINDINGS.md, ~0.3-0.5 GB-s per read at 1024 MB): a busy hour with 10 tabs all hot
+// is at most 10 x 1200 = 12,000 reads ~ 1-1.7 GB-hr; realistic chat bursts are a fraction of that; idle = 0.
+const HOT_MS=120e3,HOT_EVERY=3e3,HOT_IDLE_CAP=20*60e3;
+function hotDelay({visible,focused,chatOpen,newestAge,sinceActive,fails}){
+ if(!visible||!focused||!chatOpen||!(newestAge<HOT_MS)||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
+ return fails===1?6e3:fails===2?12e3:HOT_EVERY;
+}
+let hotTimer=0,hotStarted=0,lastInput=0,hotFails=0;
+const newestAge=()=>{const m=chatMsgs[chatMsgs.length-1];return m?Date.now()+skew-Date.parse(m.at):Infinity};
+const hotState=()=>({visible:document.visibilityState==='visible',focused:document.hasFocus(),chatOpen:chatOpenNow(),newestAge:newestAge(),
+ sinceActive:hotStarted?Date.now()-Math.max(hotStarted,lastInput):0,fails:hotFails});
+async function liteLoad(){
+ try{const b=await call('GET',null,null,API+'?since='+chatCursor+'&lite=1');lastRead=Date.now();
+  const stamp=d=>(d||[]).length+':'+((d||[]).length?d[d.length-1].at:'');
+  if(b.pollId!==pollId||b.status!==poll()?.status||b.doodleStamp!==stamp(data?.doodles))return await load();// something else changed
+  mergeChat(b.chat);return true}
+ catch(e){if(dropPass(e))return await load();return false}
+}
+function hotLoop(){clearTimeout(hotTimer);hotTimer=0;const st=hotState(),ms=hotDelay(st);
+ if(ms===null){if(!(st.newestAge<HOT_MS)||!st.chatOpen)hotStarted=0;return}// cooled down: the next hot spell starts a fresh idle window
+ if(!hotStarted)hotStarted=Date.now();
+ hotTimer=setTimeout(async()=>{hotTimer=0;if(dirty()||saving){hotLoop();return}const ok=await liteLoad();hotFails=ok?0:hotFails+1;hotLoop()},ms)}
+const hotPause=()=>{clearTimeout(hotTimer);hotTimer=0};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')hotLoop();else hotPause()});
+window.addEventListener('blur',hotPause);window.addEventListener('focus',()=>hotLoop());
+for(const ev of ['pointerdown','keydown'])window.addEventListener(ev,()=>{const capped=hotTimer===0&&hotStarted&&Date.now()-Math.max(hotStarted,lastInput)>HOT_IDLE_CAP;lastInput=Date.now();if(capped)hotLoop()},{passive:true});
 
 render();load();
 })();

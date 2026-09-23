@@ -197,13 +197,17 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       const pass=req.headers['x-filmmaand-poll-pass'];
       if(pass!==undefined){
        const holder=passes.resolve(pass,id),a=participantActor(holder.participantId);
-       if(method==='GET')return send(200,withInvitees(await service.getDatePollAs(id,a,holder.pollId,parseSince(url.searchParams.get('since')))));
+       if(method==='GET'){const since=parseSince(url.searchParams.get('since'));
+        if(url.searchParams.get('lite')==='1')return send(200,await service.getDatePollLiteAs(id,a,holder.pollId,since));
+        return send(200,withInvitees(await service.getDatePollAs(id,a,holder.pollId,since)));}
        if(method!=='PUT')return send(405,{error:{code:'method'}});
        const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
        const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
       }
      }
-     if(method==='GET'&&part==='date-poll')return send(200,withInvitees(await service.getDatePoll(id,token||null,parseSince(url.searchParams.get('since')))));
+     if(method==='GET'&&part==='date-poll'){const since=parseSince(url.searchParams.get('since'));
+      if(url.searchParams.get('lite')==='1')return send(200,await service.getDatePollLite(id,token||null,since));
+      return send(200,withInvitees(await service.getDatePoll(id,token||null,since)));}
      if(method==='GET'){const fn={response:'own',profile:'getProfile',vote:'voteView',proposals:'proposals','date-poll':'getDatePoll',coordination:'coordination'}[part]||'get';const result=await service[fn](id,token||null);if(fn==='get'){const fixture=c.state.plans[id]?.data.fixtureGroups?.['social-friends-v1'];if(fixture)result.demo={active:true,label:'Voorbeeldgegevens · fictieve deelnemers',participants:fixture.actors.length}}return send(200,result)}
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.

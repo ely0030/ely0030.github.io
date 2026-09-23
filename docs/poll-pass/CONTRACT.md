@@ -308,6 +308,23 @@ Idempotency-Key: <16–100 chars>           # X-Filmmaand-Reset-Generation as fo
   (+ `Idempotency-Key`). Hidden for everyone, including the writer. Organiser views carry `chat:[{id,name,at,text,hidden}]`;
   Beheer lists them under "Berichten" with Verbergen / Weer tonen. Unknown id → `404 message_unknown`.
 
+**Hot mode (Chris, 23 Sept; guardrails Cameo).** While people are chatting, the page re-reads every **3 s**, but only while
+the tab is **visible and focused**, the chat is open, the **newest message is < 2 min old by the server clock** (the
+response `Date` header, so a wrong local clock can't keep it hot) and there was **pointer/key input within the last 20
+minutes** of hot mode. On errors it backs off 6 s, then 12 s, then stops until the next successful read. Hidden or
+blurred: paused at once. The policy is one pure function (`hotDelay`, unit-tested). Hot reads are **lite**:
+`GET …/date-poll?since=<cursor>&lite=1` → `{pollId, status, pickedAt, chat:{open,messages since cursor,cursor,hidden},
+doodleStamp}` (count:newest doodle time). Same auth and the same no-write read as the full GET, but only a few hundred
+bytes; the page does one full read only when the status or the doodle stamp changes.
+**Cost** (docs/netlify-cost/FINDINGS.md: a read is ~0.3–0.5 GB-s at 1024 MB): the worst case is 10 tabs hot for a whole
+busy hour = 10 × 1,200 = **12,000 reads ≈ 1.0–1.7 GB-hr**. A realistic chat burst (5 people, 30 min, with pauses that cool
+it down) is ~3,000 reads ≈ 0.25–0.4 GB-hr. Idle, hidden or 20 min without input: **0**.
+
+**Alec's sticker.** When a poll opens, the server posts one chat message (seq 1): `kind:'sticker'`, `sticker` 0..3
+(drawn once, the same for everyone), author "Alec" (`alec:true`, a system author, not an account: it never votes, never
+gets mail, counts toward nobody's rate limit). Inside the open transaction, so a replay doesn't post it twice. Hideable
+with `hide-message`. Chat items now carry `kind` (`'text'` default, also for older messages) and `text` or `sticker`.
+
 **Cadence (Chris, "B").** The page reads on open, on tab visible or window focus (at most once per 15 s), and twice after a
 doodle send (+20 s, +60 s, visible tab only). Nothing else is timed: an idle page makes zero requests.
 
