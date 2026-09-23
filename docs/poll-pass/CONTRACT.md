@@ -307,6 +307,21 @@ doodle send (+20 s, +60 s, visible tab only). Nothing else is timed: an idle pag
 | 409 | `avatar_taken` / `avatar_unavailable` | `issue`: chosen avatar belongs to someone else (or twice in the request) / no free avatar left. Nothing created. |
 | 503 | `pass_limit` | More than 2000 stored passes (rows >30 days past expiry are pruned on issue). |
 
+## Beheer: "Wie kan wanneer" (the organiser panel, no curl needed)
+
+`/filmmaand/beheer/`, logged in as the organiser. It appears when the current poll is an availability poll:
+- a **needsPick banner** ("Tijd om een avond te kiezen…") from `list-availability`;
+- **per night**, best first: yes names, no names; plus "Kan geen enkele avond" (declined) and "Nog niet geantwoord"
+  (active pass holders who haven't answered);
+- **Deze avond kiezen** per night → confirm: "Dit MAILT iedereen in de poll meteen 'De datum staat vast'…" → `pick`;
+- **Herinnering**: the exact `nudge-list` names → "Herinnering sturen aan N mensen" → confirm naming them → `nudge`;
+- **Tekeningen**: every doodle with Verbergen / Weer tonen → confirm → `hide-doodle`.
+
+Reads are the read-only `list-availability`, `list-passes` and `nudge-list`. Every action uses Beheer's existing path:
+the confirm dialog (focus on "Terug", never on "Bevestigen"), a stored receipt with an `Idempotency-Key`, then the send.
+Tests: `filmmaand-server/beheer-poll-panel.test.mjs`. Opening a manual poll is still the curl step below (the old
+"Datumpoll openen" form in Beheer opens an *auto* poll with a deadline).
+
 ## Organiser steps (do 24 – za 26 September, manual)
 
 `$ORIGIN` = `https://ely0030.xyz`, `$PLAN` = the plan id. With the organiser cookie instead of the bearer,
