@@ -3,9 +3,9 @@
    ported from appje2.js sha256:17a7b32b5bdd2e61fa465196da64d57fb5184dc7ee63aec843a82adf1a01b742
    (same render + flow; the kit's sample people and browser-stored state are replaced by GET/PUT, see docs/poll-pass/WANNEER.md).
 
-   Identity: a poll pass from ?pas= (kept in memory only, removed from the URL, sent as X-Filmmaand-Poll-Pass),
-   otherwise the normal session cookie. An invalid pass is dropped and the session is tried once; if neither works
-   a calm system chip says so. Nothing is written on load: a PUT only follows a tap. reset-guard.js (loaded first)
+   Identity: a poll pass from ?pas= (kept in this tab's history.state, removed from the URL, sent as X-Filmmaand-Poll-Pass),
+   otherwise the normal session cookie. An invalid pass or a pass for another logged-in person is dropped before rendering.
+   A vote PUT only follows a tap. reset-guard.js (loaded first)
    adds X-Filmmaand-Reset-Generation to every API request. */
 (()=>{'use strict';
 const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat',RSVP_API=API+'-rsvp',FILM_API=API+'-film',LOGIN_API=API+'-login';
@@ -62,14 +62,31 @@ async function call(method,body,key,url=API){
 const newKey=()=>'wanneer-'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');
 
 // A pass that stopped working is dropped once; the session gets one try. Returns true when that fallback happened.
-function dropPass(e){if(e.code==='pass_invalid'&&pass){pass=null;history.replaceState(withPass(null),'');return true}return false}
+function clearPass(){if(!pass)return false;pass=null;history.replaceState(withPass(null),'');return true}
+function dropPass(e){return e.code==='pass_invalid'&&clearPass()}
 
-async function load(){
+// Serialize every poll GET. Full reads queue behind an outstanding request; hot lite reads
+// skip when anything is active or queued, so focus/visibility cannot overlap a hot read.
+function createReadGate(){let tail=Promise.resolve(),pending=0;return {
+ full(run){pending++;const p=tail.then(run);tail=p.then(()=>{pending--},()=>{pending--});return p},
+ lite(run){if(pending)return Promise.resolve(null);pending++;const p=tail.then(run);tail=p.then(()=>{pending--},()=>{pending--});return p}
+}}
+const readGate=createReadGate();
+async function fullRead(){
  let body;lastRead=Date.now();const since=chatCursor;
- try{body=await call('GET',null,null,since?API+'?since='+since:API)}
- catch(e){if(dropPass(e))return load();return trouble(e)}
+ for(let attempt=0;;attempt++)try{
+  body=await call('GET',null,null,since?API+'?since='+since:API);
+  // The login route compares the pass holder with the current cookie session by participant ID.
+  // Check before rendering, so a friend's link cannot briefly let this tab act as them.
+  if(pass&&!autoLogged){const login=await call('POST',{},newKey(),LOGIN_API);
+   if(login.loggedIn===false){clearPass();continue}
+   if(login.loggedIn!==true)throw new Error('De uitnodiging kon niet worden gecontroleerd.');
+   autoLogged=true}
+  break}
+ catch(e){if(attempt===0&&dropPass(e))continue;return trouble(e)}
  hot.resetFails();adopt(body);return true;
 }
+function load(){return readGate.full(fullRead)}
 function adopt(body){
  data=body;pollId=body.pollId||poll()?.id||null;revision=body.revision??0;if(typeof body.filmSeen==='boolean')window.AFM_FILM_SEEN=body.filmSeen;
  const p=poll();NIGHTS=p?days(p.window):[];
@@ -79,13 +96,12 @@ function adopt(body){
   voted=said.length>0;mine=new Set(NIGHTS.filter(d=>own[d]===true));none=voted&&mine.size===0;
  }
  note('');setSub();render();if(revealed)pollEl.hidden=!poll();announceDoodles();adoptChat(body);
- if(!loaded){loaded=true;arrived();autoLogin();}
+ if(!loaded){loaded=true;arrived();}
 }
 // Chris, 23 Sept: "our auto log in should handle this". Opening your invite link also logs you in on this device (the
 // server turns the pass into a normal session for your own account; it never switches another account already logged in),
-// so coming back later without the link just works. Once per page load, only with a pass, silently.
+// so coming back later without the link just works. Checked once before the first pass view is rendered.
 let autoLogged=false;
-function autoLogin(){if(autoLogged||!pass)return;autoLogged=true;call('POST',{},newKey(),LOGIN_API).catch(()=>{})}
 
 // ---- saving: "Klaar", then every later tap (debounced). PUT → re-GET for everyone's counts.
 function availability(){return Object.fromEntries(NIGHTS.map(d=>[d,mine.has(d)]))}
@@ -319,47 +335,48 @@ window.filmmaandChat={
 
 // ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;
 // after a doodle send the two bounded re-GETs above; filmmaandChat.refresh on request (a game closing), at most every 5 s.
-// Nothing else is timed: an idle page makes zero requests.
+// A visible chat checks slowly for new messages after a lull, then stops after 20 minutes without input.
 let lastRead=Date.now();
 function fresh(){if(anon)return;// anonymous: every re-read would 401 again; nothing to refresh
  if(document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<15e3)return;load()}
 document.addEventListener('visibilitychange',fresh);window.addEventListener('focus',fresh);
 
 // ---- hot mode (Chris, 23 Sept; guardrails Cameo): live while people are chatting.
-// hotDelay() is the whole policy, pure so it is unit-tested: re-read every 3 s only while the tab is visible AND focused,
+// hotDelay() is the whole policy, pure so it is unit-tested: re-read every 15 s only while the tab is visible AND focused,
 // the chat is open, the newest message (anyone's) is under 2 minutes old by the SERVER clock (Date header, so a wrong local
-// clock can't keep it hot), and there was user input (pointer/key) in the last 20 minutes of hot mode. On errors: 6 s, 12 s,
-// then give up (cadence B) until the next successful read. null = not hot: only cadence B, and an idle page reads nothing.
+// clock can't keep it hot), and there was user input (pointer/key) in the last 20 minutes of hot mode. On errors: 30 s, 60 s,
+// then give up (cadence B) until the next successful read. A lull uses a 60 s cold check; null stops timed reads.
 // Hot reads are LITE (?since=<cursor>&lite=1): only new chat items + a doodle stamp; a full read only when that or the poll
 // status changes. Cost (docs/netlify-cost/FINDINGS.md, ~0.3-0.5 GB-s per read at 1024 MB): a busy hour with 10 tabs all hot
-// is at most 10 x 1200 = 12,000 reads ~ 1-1.7 GB-hr; realistic chat bursts are a fraction of that; idle = 0.
-const HOT_MS=120e3,HOT_EVERY=15e3,HOT_IDLE_CAP=20*60e3;
+// is at most 10 x 240 = 2,400 reads ~ 0.2-0.33 GB-hr; realistic chat bursts are a fraction of that; idle = 0.
+const HOT_MS=120e3,HOT_EVERY=15e3,COLD_EVERY=60e3,HOT_IDLE_CAP=20*60e3;
 // voted: the chat is only on screen after voting (the eggs render nothing before), so a non-voter never runs hot mode.
 function hotDelay({voted,visible,focused,chatOpen,newestAge,sinceActive,fails}){
- if(!voted||!visible||!focused||!chatOpen||!(newestAge<HOT_MS)||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
- return fails===1?30e3:fails===2?60e3:HOT_EVERY;
+ if(!voted||!visible||!focused||!chatOpen||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
+ return fails===1?30e3:fails===2?60e3:newestAge<HOT_MS?HOT_EVERY:COLD_EVERY;
 }
 // The scheduler around hotDelay(): one timer at most, the 20-min no-input window, the error backoff. Environment-injected
 // (clock, timers, page state, the read) so it is tested behaviourally with a fake clock.
 function createHot({now,setT,clearT,state,read}){
- let timer=0,started=0,lastInput=0,fails=0;
- function loop(){clearT(timer);timer=0;const st={...state(),sinceActive:started?now()-Math.max(started,lastInput):0,fails},ms=hotDelay(st);
-  if(ms===null){if(!(st.newestAge<HOT_MS)||!st.chatOpen)started=0;return}// cooled down: the next hot spell starts a fresh idle window
-  if(!started)started=now();
+ let timer=0,started=null,lastInput=0,fails=0;
+ function loop(){clearT(timer);timer=0;const st={...state(),sinceActive:started===null?0:now()-Math.max(started,lastInput),fails},ms=hotDelay(st);
+  if(ms===null){if(!st.chatOpen||!st.voted)started=null;return}
+  if(started===null)started=now();
   timer=setT(async()=>{timer=0;const ok=await read();if(ok!==null)fails=ok?0:fails+1;loop()},ms)}
  return {loop,pause(){clearT(timer);timer=0},resetFails(){fails=0},get armed(){return timer!==0},
-  input(){const capped=timer===0&&started&&now()-Math.max(started,lastInput)>HOT_IDLE_CAP;lastInput=now();if(capped)loop()}};
+  input(){const capped=timer===0&&started!==null&&now()-Math.max(started,lastInput)>HOT_IDLE_CAP;lastInput=now();if(capped)loop()}};
 }
 // Freshness counts people's messages only: Alec's opening sticker (posted by the server when the poll opens) never makes the
 // first two minutes of a new poll 'hot'.
 const newestAge=()=>{for(let i=chatMsgs.length-1;i>=0;i--)if(!chatMsgs[i].alec)return Date.now()+skew-Date.parse(chatMsgs[i].at);return Infinity};
-async function liteLoad(){
+async function liteRead(){
  try{const b=await call('GET',null,null,API+'?since='+chatCursor+'&lite=1');lastRead=Date.now();
   const stamp=d=>(d||[]).length+':'+((d||[]).length?d[d.length-1].at:'');
-  if(b.pollId!==pollId||b.status!==poll()?.status||b.doodleStamp!==stamp(data?.doodles))return await load();// something else changed
+  if(b.pollId!==pollId||b.status!==poll()?.status||b.doodleStamp!==stamp(data?.doodles))return await fullRead();// something else changed
   mergeChat(b.chat);return true}
- catch(e){if(dropPass(e))return await load();return false}
+ catch(e){if(dropPass(e))return await fullRead();return false}
 }
+function liteLoad(){return readGate.lite(liteRead)}
 const hot=createHot({now:()=>Date.now(),setT:(f,ms)=>setTimeout(f,ms),clearT:x=>clearTimeout(x),
  state:()=>({voted,visible:document.visibilityState==='visible',focused:document.hasFocus(),chatOpen:chatOpenNow(),newestAge:newestAge()}),
  read:()=>dirty()||saving?Promise.resolve(null):liteLoad()});// null: skipped (an unsaved tap), not an error
