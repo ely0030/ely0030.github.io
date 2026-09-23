@@ -70,9 +70,9 @@ test('the Beheer page sends pick / reminder / doodle hide only through the confi
  assert.deepEqual([...js.matchAll(/'Idempotency-Key':/g)].length,1);
  const calls=js.match(/.{0,40}void execute\(\)/g);assert.equal(calls.length,2);
  assert.ok(calls[0].endsWith("$('#confirm').close();void execute()"));assert.ok(calls[1].endsWith("$('#retry').onclick=()=>void execute()"));
- // The panel's own reads are the three read-only organiser actions, nothing else.
+ // The panel's own reads are the four read-only organiser actions, nothing else.
  const reads=[...js.matchAll(/organizerRead\(\{action:'([a-z-]+)'/g)].map(m=>m[1]).sort();
- assert.deepEqual(reads,['list-availability','list-passes','nudge-list']);
+ assert.deepEqual(reads,['invite-list','list-availability','list-passes','nudge-list']);
  // Plain words about mail in the two sending confirms.
  assert.match(js,/Dit MAILT iedereen in de poll meteen "De datum staat vast"/);assert.match(js,/'Dit MAILT precies deze '\+who\.length/);
 });
