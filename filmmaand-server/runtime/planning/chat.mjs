@@ -10,6 +10,36 @@ const fail=(status,code,message,details)=>{throw Object.assign(new Error(message
 const strict=(b,keys)=>b&&typeof b==='object'&&!Array.isArray(b)&&Object.keys(b).every(k=>keys.includes(k));
 const hhmm=at=>new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(at));
 export const CHAT_MAX_CHARS=500,CHAT_MAX_LINES=9,CHAT_MAX_MESSAGES=400,CHAT_MAX_DOODLES=100,CHAT_RATE=[{ms:60e3,max:5},{ms:3600e3,max:40}];
+// Chat games (Chris, 23 Sept: "where are the games accessible on the chat page?"): a game turn is a chat message kind 'game'.
+// hop  = a Pudding Hop run: {seed, frames (delta-encoded press/release frames), score}; the client re-simulates it for ghosts.
+// pool = one 8-ball turn: {shots, start, end (the authoritative ball state after the turn), turn, groups, over}.
+export const GAME_MAX_BYTES=2048,GAME_MAX_MESSAGES=150,GAME_RATE=[{ms:60e3,max:6},{ms:3600e3,max:30}];
+const int=(v,lo,hi)=>Number.isInteger(v)&&v>=lo&&v<=hi;
+const num=(v,lo,hi)=>typeof v==='number'&&Number.isFinite(v)&&v>=lo&&v<=hi;
+const round=(v,d)=>Math.round(v*10**d)/10**d;
+const badGame=()=>fail(400,'game','Dit spel kan niet worden verstuurd.');
+const balls=a=>{if(!Array.isArray(a)||a.length!==16)badGame();return a.map(b=>{if(b===null)return null;if(!Array.isArray(b)||b.length!==2||!num(b[0],-20,240)||!num(b[1],-20,400))badGame();return [round(b[0],1),round(b[1],1)]})};
+export function normaliseGame(b){
+ const {game,gid,payload}=b;
+ if(!['hop','pool'].includes(game)||typeof gid!=='string'||!/^[a-z0-9-]{6,48}$/.test(gid)||!payload||typeof payload!=='object'||Array.isArray(payload))badGame();
+ let out;
+ if(game==='hop'){
+  if(!strict(payload,['seed','frames','score'])||!int(payload.seed,0,4294967295)||!int(payload.score,0,100000)||!Array.isArray(payload.frames)||payload.frames.length>2000||!payload.frames.every(f=>int(f,0,20000)))badGame();
+  out={seed:payload.seed,frames:payload.frames.slice(),score:payload.score};
+ }else{
+  if(!strict(payload,['shots','start','end','turn','groups','over'])||!Array.isArray(payload.shots)||payload.shots.length<1||payload.shots.length>8)badGame();
+  const shots=payload.shots.map(x=>{if(!strict(x,['dx','dy','p'])||!num(x.dx,-1,1)||!num(x.dy,-1,1)||!num(x.p,0,1))badGame();return {dx:round(x.dx,4),dy:round(x.dy,4),p:round(x.p,3)}});
+  const g=payload.groups;if(!Array.isArray(g)||g.length!==2||!g.every(x=>x===null||x==='hele'||x==='halve'))badGame();
+  if(!int(payload.turn,0,1)||!(payload.over===null||int(payload.over,0,1)))badGame();
+  out={shots,start:balls(payload.start),end:balls(payload.end),turn:payload.turn,groups:g.slice(),over:payload.over};
+ }
+ if(JSON.stringify(out).length>GAME_MAX_BYTES)fail(400,'game_too_big','Dit spel is te groot om te versturen.');
+ return {game,gid,payload:out};
+}
+function takeGameSlot(q,a,now){const t=Date.parse(now),log=((q.gameSaves||={})[a]||=[]).filter(x=>t-Date.parse(x)<3600e3);
+ for(const {ms,max} of GAME_RATE){const recent=log.filter(x=>t-Date.parse(x)<ms);
+  if(recent.length>=max)fail(429,'game_rate','Even rustig aan: je kunt zo weer spelen.',{retryAfter:Math.ceil((Date.parse(recent[0])+ms-t)/1000)})}
+ log.push(now);q.gameSaves[a]=log.slice(-30);}
 
 // Plain text only: NFC, \r removed, no other control characters, trimmed, 1..500 code points, at most 9 lines.
 export function normaliseText(text){
@@ -24,15 +54,18 @@ export function normaliseText(text){
 // POST body {pollId, text} (a text message) or {pollId, kind:'doodle', s} (a drawing, Chris 23 Sept: drawings behave
 // like messages, several per person). Returns {message}; the api adds the chat view since the cursor.
 export function writeChat(p,a,b,now,display){
- const q=p.datePoll,doodle=b?.kind==='doodle';
- if(!(doodle?strict(b,['pollId','kind','s']):strict(b,['pollId','text']))||typeof b.pollId!=='string')fail(400,'chat','Dit bericht kan niet worden verstuurd.');
+ const q=p.datePoll,doodle=b?.kind==='doodle',game=b?.kind==='game';
+ if(!(doodle?strict(b,['pollId','kind','s']):game?strict(b,['pollId','kind','game','gid','payload']):strict(b,['pollId','text']))||typeof b.pollId!=='string')fail(400,'chat','Dit bericht kan niet worden verstuurd.');
  if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
  if(!chatOpen(q,now))fail(409,'date_poll_closed','Deze chat is gesloten.');// open until the end of the picked night
  if(!display(p,a))fail(409,'onboarding_required','Kies eerst je naam en avatar.');
  const chat=(q.chat||={seq:0,messages:[]}),t=Date.parse(now);
  if(chat.messages.length>=CHAT_MAX_MESSAGES)fail(409,'chat_full','Deze chat is vol.');
  let body;
- if(doodle){// the doodle rate (shared with the older slot) and at most 100 drawings per poll (state size: 100 × ≤4 KB)
+ if(game){// its own rate (a pool turn or a Hop run), and at most 150 game turns per poll
+  const g=normaliseGame(b);if(chat.messages.filter(m=>m.kind==='game').length>=GAME_MAX_MESSAGES)fail(409,'chat_full','Er is genoeg gespeeld in deze chat.');
+  takeGameSlot(q,a,now);body={kind:'game',...g};
+ }else if(doodle){// the doodle rate (shared with the older slot) and at most 100 drawings per poll (state size: 100 × ≤4 KB)
   const s=normaliseStrokes(b.s);if(chat.messages.filter(m=>m.kind==='doodle').length>=CHAT_MAX_DOODLES)fail(409,'chat_full','Er zijn al genoeg tekeningen in deze chat.');
   takeDoodleSlot(q,a,now);body={kind:'doodle',s};
  }else{// the text rate counts text messages only
@@ -46,7 +79,7 @@ export function writeChat(p,a,b,now,display){
 }
 // kind 'text' (default, also for messages stored before kinds existed) carries text; kind 'sticker' carries sticker (0..3).
 function view(p,m,me,display){const who=author(p,m.a,display),kind=m.kind||'text';return {id:m.id,seq:m.seq,kind,name:who?.name||null,avatarId:who?.avatarId??null,at:m.at,t:hhmm(m.at),
- ...(kind==='sticker'?{sticker:m.sticker}:kind==='doodle'?{s:m.s}:{text:m.text}),...(m.a===ALEC_AUTHOR?{alec:true}:{}),...(m.a===me?{self:true}:{})}}
+ ...(kind==='sticker'?{sticker:m.sticker}:kind==='doodle'?{s:m.s}:kind==='game'?{game:m.game,gid:m.gid,payload:m.payload}:{text:m.text}),...(m.a===ALEC_AUTHOR?{alec:true}:{}),...(m.a===me?{self:true}:{})}}
 
 // The reader's view: visible messages after `since` (a seq; 0 = everything), the new cursor, and every hidden id so a
 // client can remove one it already shows. Only people with a display profile, like the names elsewhere.
@@ -57,7 +90,7 @@ export function chatView(p,me,display,since=0,now){
 export const parseSince=v=>/^\d{1,6}$/.test(v||'')?Number(v):0;
 
 // Organiser: every message with its hidden flag, and the kill switch {action:'hide-message', pollId, messageId, hidden}.
-export function organiserChat(p,display){return (p.datePoll?.chat?.messages||[]).map(m=>({id:m.id,kind:m.kind||'text',name:author(p,m.a,display)?.name||null,at:m.at,text:m.kind==='sticker'?'[sticker '+m.sticker+']':m.kind==='doodle'?'[tekening]':m.text,hidden:!!m.hidden}))}
+export function organiserChat(p,display){return (p.datePoll?.chat?.messages||[]).map(m=>({id:m.id,kind:m.kind||'text',name:author(p,m.a,display)?.name||null,at:m.at,text:m.kind==='sticker'?'[sticker '+m.sticker+']':m.kind==='doodle'?'[tekening]':m.kind==='game'?'[spel '+(m.game==='hop'?'Pudding Hop '+m.payload.score:'biljart')+']':m.text,hidden:!!m.hidden}))}
 export function hideMessage(p,b){
  if(!strict(b,['action','pollId','messageId','hidden'])||typeof b.messageId!=='string'||typeof b.hidden!=='boolean')fail(400,'chat','Ongeldige actie.');
  const q=p.datePoll;if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
