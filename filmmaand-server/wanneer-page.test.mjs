@@ -71,7 +71,7 @@ test('the page keeps the pass in tab history and sends it as the header, never i
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,2);// the chat send + the one silent auto-login (Chris, 23 Sept):
  // only with a pass, once per page load, to the fixed LOGIN_API, with an empty body (the pass travels in the header).
- assert.match(js,/if\(pass&&!autoLogged\)\{const login=await call\('POST',\{\},newKey\(\),LOGIN_API\)/);
+ assert.match(js,/if\(pass&&!autoLogged\)\{let login;try\{login=await call\('POST',\{\},newKey\(\),LOGIN_API\)\}/);
  // A caller-supplied Idempotency-Key (Capsule: one stable key per message, reused on retries) is validated like any key.
  assert.match(js,/const KEY_RE=\/\^\[A-Za-z0-9_-\]\{16,100\}\$\/;/);assert.match(js,/acceptsKey:true/);
  assert.match(js,/if\(given!==undefined&&!KEY_RE\.test\(given\)\)throw/);assert.match(js,/const key=given\?\?newKey\(\);/);
@@ -126,7 +126,7 @@ test('no working link and no login: the page sends you to the login page (and ba
  assert.match(js,/if\(!saving&&!loaded&&!anon\)\{location\.replace\('\/filmmaand\/identity\/\?terug=\/filmmaand\/wanneer\/'\);return false\}/);
  assert.equal(/anonPoll|\?public=1/.test(js),false,'the anonymous public poll is gone');
  // A dead pass with a live session retries with the session before any of this (dropPass → load()).
- assert.match(js,/if\(attempt===0&&dropPass\(e\)\)continue;return trouble\(e\)/);
+ assert.match(js,/catch\(e\)\{if\(attempt===0&&dropPass\(e\)\)continue;return trouble\(e\)\}/);
  assert.equal(/lives in memory only/.test(js),false,'stale comment gone: the pass survives a reload via history.state');
 });
 
@@ -201,7 +201,7 @@ test('first pass read checks account identity before rendering and drops a diffe
  assert.deepEqual(other.adopted,['session']);assert.equal(other.pass,null);assert.deepEqual(other.state,{});
  const same=await scenario({loggedIn:true,switched:false});
  assert.deepEqual(same.adopted,['pass']);assert.equal(same.pass,'pass');assert.equal(same.calls.length,2);
- for(const error of [new Error('timeout'),Object.assign(new Error('storage unavailable'),{status:503})]){
+ for(const error of [new Error('timeout'),Object.assign(new Error('storage unavailable'),{status:503}),Object.assign(new Error('expired during check'),{code:'pass_invalid',status:401})]){
   const failed=await scenario(error);
   assert.equal(failed.failure,error);assert.equal(failed.pass,'pass');
   assert.deepEqual(failed.state,{filmmaandPollPass:'pass'});assert.deepEqual(failed.adopted,[]);

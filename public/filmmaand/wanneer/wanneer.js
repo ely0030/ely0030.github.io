@@ -74,16 +74,17 @@ function createReadGate(){let tail=Promise.resolve(),pending=0;return {
 const readGate=createReadGate();
 async function fullRead(){
  let body;lastRead=Date.now();const since=chatCursor;
- for(let attempt=0;;attempt++)try{
-  body=await call('GET',null,null,since?API+'?since='+since:API);
+ for(let attempt=0;;attempt++){
+  try{body=await call('GET',null,null,since?API+'?since='+since:API)}
+  catch(e){if(attempt===0&&dropPass(e))continue;return trouble(e)}
   // The login route compares the pass holder with the current cookie session by participant ID.
   // Check before rendering, so a friend's link cannot briefly let this tab act as them.
-  if(pass&&!autoLogged){const login=await call('POST',{},newKey(),LOGIN_API);
+  if(pass&&!autoLogged){let login;try{login=await call('POST',{},newKey(),LOGIN_API)}
+   catch(e){return trouble(e)}// a failed identity check must keep the pass for this tab and its reload
    if(login.loggedIn===false){clearPass();continue}
-   if(login.loggedIn!==true)throw new Error('De uitnodiging kon niet worden gecontroleerd.');
+   if(login.loggedIn!==true)return trouble(new Error('De uitnodiging kon niet worden gecontroleerd.'));
    autoLogged=true}
   break}
- catch(e){if(attempt===0&&dropPass(e))continue;return trouble(e)}
  hot.resetFails();adopt(body);return true;
 }
 function load(){return readGate.full(fullRead)}
