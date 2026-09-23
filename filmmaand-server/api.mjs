@@ -189,6 +189,10 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
        if(organizerCookie){const account=organizerAccount();if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');createdBy=account.participantId;}
        else service.assertAdmin(token);
        if(body.action==='nudge-list')return send(200,await service.datePollNudgeList(id,body.pollId,passes.holders(id,body.pollId)));
+       // Chris, 23 Sept: "friends list will be everyone who has an account". Organiser/admin only (the check above): every
+       // account with its e-mail, so the organiser can review the list (and leave out test accounts) before issuing links.
+       if(body.action==='list-accounts'){const rows=c.authStore.db.prepare('SELECT id,name,email,onboarded,created_at FROM participants ORDER BY created_at').all();
+        return send(200,{accounts:rows.map(r=>({participantId:r.id,name:r.name||null,email:r.email,onboarded:!!r.onboarded,createdAt:r.created_at}))});}
        const mailOff=()=>error(409,'mail_disabled','Mail staat uit, er is niets verstuurd.');
        if(body.action==='nudge'){
         if(!mailActive())throw mailOff();
