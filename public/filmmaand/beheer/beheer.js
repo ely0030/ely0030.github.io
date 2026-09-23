@@ -80,6 +80,11 @@ function renderPollPanel(){
  if(!v.doodles?.length)add('p','Nog geen tekeningen.');
  for(const d of v.doodles||[]){const row=add('p',(d.name||'Onbekend')+' · '+localDate(d.at)+(d.hidden?' · verborgen':'')+' ');const b=add('button',d.hidden?'Weer tonen':'Verbergen',row);b.dataset.doodle=d.id;
   b.onclick=()=>coordinate('date-poll',{action:'hide-doodle',pollId:v.id,doodleId:d.id,hidden:!d.hidden},d.hidden?'De tekening van '+(d.name||'deze persoon')+' weer voor iedereen tonen?':'De tekening van '+(d.name||'deze persoon')+' verbergen voor iedereen, ook voor de maker? Een nieuwe tekening van deze persoon blijft ook verborgen tot je hem weer toont.')}
+ // (f) chat messages: hide/unhide, same confirm path.
+ add('h2','Berichten');
+ if(!v.chat?.length)add('p','Nog geen berichten.');
+ for(const m of v.chat||[]){const row=add('p',(m.name||'Onbekend')+' · '+localDate(m.at)+(m.hidden?' · verborgen':'')+': ');add('span',m.text,row);row.append(' ');const b=add('button',m.hidden?'Weer tonen':'Verbergen',row);b.dataset.message=m.id;
+  b.onclick=()=>coordinate('date-poll',{action:'hide-message',pollId:v.id,messageId:m.id,hidden:!m.hidden},m.hidden?'Dit bericht van '+(m.name||'deze persoon')+' weer voor iedereen tonen?':'Dit bericht van '+(m.name||'deze persoon')+' verbergen voor iedereen, ook voor de schrijver?')}
  lock();
 }
 

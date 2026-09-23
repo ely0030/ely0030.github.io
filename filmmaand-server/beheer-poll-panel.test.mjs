@@ -30,7 +30,7 @@ const snap=f=>JSON.stringify(f.store.data)+'#'+f.store.etag;
 
 test('panel actions (pick, reminder, doodle hide) are organiser-only; refused callers write and queue nothing',async()=>{
  const f=await fixture();
- const actions=[{action:'pick',pollId:f.pollId,date:NIGHTS[2]},{action:'nudge',pollId:f.pollId},{action:'hide-doodle',pollId:f.pollId,doodleId:f.doodleId,hidden:true}];
+ const actions=[{action:'pick',pollId:f.pollId,date:NIGHTS[2]},{action:'nudge',pollId:f.pollId},{action:'hide-doodle',pollId:f.pollId,doodleId:f.doodleId,hidden:true},{action:'hide-message',pollId:f.pollId,messageId:'msg-any',hidden:true}];
  const before=snap(f);
  for(const body of actions){
   const tag=body.action;
@@ -58,7 +58,7 @@ test('panel actions (pick, reminder, doodle hide) are organiser-only; refused ca
 test('the Beheer page sends pick / reminder / doodle hide only through the confirm dialog, with focus on "Terug"',async()=>{
  const js=await readFile(new URL('../public/filmmaand/beheer/beheer.js',import.meta.url),'utf8');
  // Each sending body is built only as an argument of coordinate(...), which opens the dialog and never fetches.
- for(const action of ['pick','nudge','hide-doodle']){
+ for(const action of ['pick','nudge','hide-doodle','hide-message']){
   const uses=[...js.matchAll(new RegExp(`action:'${action}'`,'g'))].map(m=>js.slice(Math.max(0,m.index-40),m.index));
   assert.ok(uses.length>=1,action);for(const u of uses)assert.match(u,/coordinate\('date-poll',\{$/,action+' outside coordinate()');
  }

@@ -68,6 +68,17 @@ window.filmmaandDoodles.subscribe(cb) // cb(list()) now and after every poll GET
 // plus a 'filmmaand-doodles' CustomEvent on window after every GET (detail = list())
 ```
 
+## Text chat: the page hook (phase 3)
+
+```js
+window.filmmaandChat.list()        // {canSend, messages:[{id,seq,name,avatarId,avatar,at,t,text,self?}]} (hidden ones removed)
+window.filmmaandChat.send(text)    // Promise<message>; rejects with Error.code (chat_rate → e.details.retryAfter, chat_too_long, …)
+window.filmmaandChat.subscribe(cb) // cb(list()) now and after every read/send; returns unsubscribe
+// plus a 'filmmaand-chat' CustomEvent on window
+```
+The page keeps a cursor: every GET asks `?since=<cursor>`, and a send's response carries everything since it. A different
+poll or viewer resets the chat with one full read. Render `text` with `textContent`.
+
 ## Run it
 
 ```sh

@@ -38,7 +38,11 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  assert.match(js,/const API='\/filmmaand\/api\/plans\/home-picker-lab\/date-poll'/);
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
- assert.deepEqual(js.match(/API\s*\+[^;,]*/g),["API+'-doodle'"]);assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);
+ // URLs: the three fixed endpoints and one numeric chat cursor; nothing else is ever put in a URL.
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'?since='+since:API","API+'?since='+chatCursor"]);
+ assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
+ assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
+ assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
  // Nothing writes on load: the only PUT is inside saveOnce, reached from a tap (Klaar / a night / the quick buttons).
  assert.equal((js.match(/call\('PUT'/g)||[]).length,2);// the vote (saveOnce) and the doodle (filmmaandDoodles.save)
 });

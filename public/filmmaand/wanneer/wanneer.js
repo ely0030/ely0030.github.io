@@ -8,7 +8,7 @@
    a calm system chip says so. Nothing is written on load: a PUT only follows a tap. reset-guard.js (loaded first)
    adds X-Filmmaand-Reset-Generation to every API request. */
 (()=>{'use strict';
-const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle';
+const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat';
 
 // ---- the pass: out of the address bar before anything else can copy it. Kept in memory and in this tab's history.state
 // (Cameo, 23 Sept: a reload must keep working), never in the URL, cookies or web storage. Cleared when it stops working.
@@ -49,7 +49,7 @@ async function call(method,body,key,url=API){
  let r;for(let i=0;;i++){try{r=await fetch(url,{method,headers,credentials:'same-origin',cache:'no-store',...(body?{body:JSON.stringify(body)}:{})});break}
   catch(e){if(e?.code==='reset_generation'||i>0)throw e;await new Promise(x=>setTimeout(x,800))}}// one retry, same key
  let json=null;try{json=await r.json()}catch{}
- if(!r.ok)throw Object.assign(new Error(json?.error?.message||'HTTP '+r.status),{status:r.status,code:json?.error?.code||'http'});
+ if(!r.ok)throw Object.assign(new Error(json?.error?.message||'HTTP '+r.status),{status:r.status,code:json?.error?.code||'http',details:json?.error?.details||null});
  return json;
 }
 const newKey=()=>'wanneer-'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -58,8 +58,8 @@ const newKey=()=>'wanneer-'+Array.from(crypto.getRandomValues(new Uint8Array(12)
 function dropPass(e){if(e.code==='pass_invalid'&&pass){pass=null;history.replaceState(withPass(null),'');return true}return false}
 
 async function load(){
- let body;lastRead=Date.now();
- try{body=await call('GET')}
+ let body;lastRead=Date.now();const since=chatCursor;
+ try{body=await call('GET',null,null,since?API+'?since='+since:API)}
  catch(e){if(dropPass(e))return load();return trouble(e)}
  adopt(body);return true;
 }
@@ -71,7 +71,7 @@ function adopt(body){
   const said=NIGHTS.filter(d=>own[d]===true||own[d]===false);
   voted=said.length>0;mine=new Set(NIGHTS.filter(d=>own[d]===true));none=voted&&mine.size===0;
  }
- note('');setSub();render();if(revealed)pollEl.hidden=!poll();announceDoodles();
+ note('');setSub();render();if(revealed)pollEl.hidden=!poll();announceDoodles();adoptChat(body);
  if(!loaded){loaded=true;arrived();}
 }
 
@@ -209,7 +209,8 @@ function doodleList(){const all=data?.doodles||[],own=all.find(d=>d.self);
  return {canSave:!!data?.viewer&&open(),mine:own?asItem(own):null,
          others:all.filter(d=>!d.self).map(d=>({...asItem(d),name:d.name,avatarId:d.avatarId,avatar:avatar(d.avatarId)}))}}
 function announceDoodles(){const l=doodleList();for(const cb of doodleSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-doodles',{detail:l}))}
-let after=[];// the two bounded re-GETs after a send (+20s, +60s), restarted by the next send
+let after=[];// the two bounded re-GETs after a send (+20s, +60s), restarted by the next send (doodle or chat)
+function rereadSoon(){for(const x of after)clearTimeout(x);after=[20e3,60e3].map(ms=>setTimeout(()=>{if(document.visibilityState==='visible'&&!dirty()&&!saving)load()},ms))}
 window.filmmaandDoodles={
  list:doodleList,
  subscribe(cb){doodleSubs.add(cb);try{cb(doodleList())}catch{}return ()=>doodleSubs.delete(cb)},
@@ -219,9 +220,35 @@ window.filmmaandDoodles={
   try{r=await call('PUT',{pollId,s:strokes},newKey(),DOODLE_API)}
   catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandDoodles.save(strokes,true);throw e}
   if(data&&r.doodles)data.doodles=r.doodles;else if(data&&!r.doodles)void load();announceDoodles();// the response carries everyone's doodles (an exact replay carries only yours: then one GET)
-  for(const x of after)clearTimeout(x);
-  after=[20e3,60e3].map(ms=>setTimeout(()=>{if(document.visibilityState==='visible'&&!dirty()&&!saving)load()},ms));
+  rereadSoon();
   return asItem(r.doodle);
+ }
+};
+
+// ---- text chat (phase 3): a data hook for eggs.js, like the doodles. The page keeps a cursor so every GET asks only for
+// what is new (?since=), and a send's response already carries everything since that cursor. Text is plain: render it
+// with textContent, never innerHTML.
+let chatMsgs=[],chatCursor=0,chatFor=null;const chatSubs=new Set();
+const chatItem=m=>({id:m.id,seq:m.seq,name:m.name,avatarId:m.avatarId,avatar:avatar(m.avatarId),at:m.at,t:m.t,text:m.text,...(m.self?{self:true}:{})});
+function chatList(){return {canSend:!!data?.viewer&&open(),messages:chatMsgs.map(chatItem)}}
+function announceChat(){const l=chatList();for(const cb of chatSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-chat',{detail:l}))}
+function mergeChat(c){if(!c)return;const hidden=new Set(c.hidden||[]),byId=new Map(chatMsgs.map(m=>[m.id,m]));for(const m of c.messages||[])byId.set(m.id,m);
+ chatMsgs=[...byId.values()].filter(m=>!hidden.has(m.id)).sort((a,b)=>a.seq-b.seq);chatCursor=Math.max(chatCursor,c.cursor||0);announceChat()}
+function adoptChat(body){// a new poll or another viewer (pass dropped → session) starts the chat over, with one full read
+ const who=(body.pollId||'')+'|'+(body.viewer?.name||'');
+ if(chatFor!==null&&chatFor!==who){chatFor=who;chatMsgs=[];chatCursor=0;announceChat();void load();return}
+ chatFor=who;mergeChat(body.chat)}
+window.filmmaandChat={
+ list:chatList,
+ subscribe(cb){chatSubs.add(cb);try{cb(chatList())}catch{}return ()=>chatSubs.delete(cb)},
+ async send(text,retried=false){
+  if(!pollId||!open())throw Object.assign(new Error('Stemmen is gesloten.'),{code:'date_poll_closed'});
+  let r;
+  try{r=await call('POST',{pollId,text},newKey(),CHAT_API+'?since='+chatCursor)}
+  catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandChat.send(text,true);throw e}// chat_rate → e.details.retryAfter (seconds)
+  mergeChat(r.chat||{messages:[r.message],cursor:chatCursor});// an exact replay has no view: keep the cursor, dedupe by id
+  rereadSoon();
+  return chatItem(r.message);
  }
 };
 
