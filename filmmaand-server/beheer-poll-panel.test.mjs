@@ -74,5 +74,5 @@ test('the Beheer page sends pick / reminder / doodle hide only through the confi
  const reads=[...js.matchAll(/organizerRead\(\{action:'([a-z-]+)'/g)].map(m=>m[1]).sort();
  assert.deepEqual(reads,['invite-list','list-availability','list-passes','nudge-list']);
  // Plain words about mail in the two sending confirms.
- assert.match(js,/Dit MAILT iedereen in de poll meteen "De datum staat vast"/);assert.match(js,/'Dit MAILT precies deze '\+who\.length/);
+ assert.match(js,/Dit MAILT iedereen in de poll meteen een bevestiging/);assert.match(js,/'Dit MAILT precies deze '\+who\.length/);
 });

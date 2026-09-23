@@ -24,7 +24,7 @@ test('the shipped page is the generated kit page, without sample people or kit s
  assert.deepEqual([...page.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]),['/filmmaand/identity/reset-guard.js','/filmmaand/identity/avatars.js','/filmmaand/wanneer/wanneer.js']);
  assert.equal(/<script>/.test(page),false);
  assert.match(page,/<meta name="referrer" content="no-referrer">/);
- for(const id of ['poll','nights','go','all','none','sys','note','tally','sub','prev','m1','typing'])assert.ok(page.includes(`id="${id}"`),id);
+ for(const id of ['poll','nights','go','all','none','sys','note','tally','sub','prev','m1','typing','rsvp','rsvp-ja','rsvp-nee','rsvp-sub'])assert.ok(page.includes(`id="${id}"`),id);
  for(const src of page.matchAll(/src="(\/filmmaand\/assets\/[^"]+)"/g))assert.ok(src[1].startsWith('/filmmaand/assets/wanneer-pudding-'));
 });
 
@@ -39,12 +39,14 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
  // URLs: the three fixed endpoints and one numeric chat cursor; nothing else is ever put in a URL.
- assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'?since='+since:API","API+'?since='+chatCursor"]);
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'?since='+since:API","API+'?since='+chatCursor"]);
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
+ // ?antwoord= only pre-selects: sendRsvp (the only RSVP write) is reached from the two buttons alone.
+ assert.deepEqual(js.match(/sendRsvp\(a\)|sendRsvp\(answer,true\)/g),['sendRsvp(answer,true)','sendRsvp(a)']);assert.equal(/preselect[^;\n]*sendRsvp/.test(js),false);
  // Nothing writes on load: the only PUT is inside saveOnce, reached from a tap (Klaar / a night / the quick buttons).
- assert.equal((js.match(/call\('PUT'/g)||[]).length,2);// the vote (saveOnce) and the doodle (filmmaandDoodles.save)
+ assert.equal((js.match(/call\('PUT'/g)||[]).length,3);// the vote (saveOnce), the doodle (filmmaandDoodles.save), the rsvp (a tap)
 });
 
 test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and two bounded ones after a doodle send',()=>{

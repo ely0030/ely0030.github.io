@@ -64,7 +64,17 @@ function renderPollPanel(){
  const v=pollView.poll,open=v.status==='open';
  // (e) needsPick: a banner, never a mail.
  if(v.needsPick){const b=add('p','Tijd om een avond te kiezen: de laatste avond komt eraan.');b.id='needs-pick';b.style.cssText='background:#f4ead8;padding:14px 16px'}
- if(v.status==='confirmed')add('p','Gekozen: '+nightName(v.scheduledDate)+'.');else if(!open)add('p','Deze poll is gesloten.');
+ if(v.status==='confirmed'){add('p','Gekozen: '+nightName(v.scheduledDate)+'.');
+  // (i) RSVP per person for the picked night: ja / nee / nog niet.
+  const rs=v.rsvp||[],said=new Set(rs.map(r=>r.name)),everyone=new Set([...pollView.passes.filter(x=>x.status==='active').map(x=>x.name),...v.ranking.flatMap(r=>[...r.people,...r.no]).map(x=>x.name),...v.declined.map(x=>x.name)]);
+  add('p','Komt: '+names(rs.filter(r=>r.answer==='ja')));add('p','Komt niet: '+names(rs.filter(r=>r.answer==='nee')));
+  add('p','Nog niet gereageerd: '+names([...everyone].filter(n=>!said.has(n)).sort((a,b)=>a.localeCompare(b,'nl')).map(name=>({name}))));}
+ else if(!open)add('p','Deze poll is gesloten.');
+ // Time and place for the confirmation mail, used by "Deze avond kiezen" below.
+ let tijdInput=null,waarInput=null;
+ if(open||v.status==='needs-organizer'){const f=add('form');f.onsubmit=e=>e.preventDefault();
+  const mk=(label,val)=>{const l=add('label',label,f),i=document.createElement('input');i.value=val;i.maxLength=40;l.append(i);return i};
+  tijdInput=mk('Tijd (voor de bevestiging)','20:00');waarInput=mk('Waar','bij Alec')}
  // (g) invitees → personal links (no mail yet). Anyone who already has a live link is skipped: issuing again would ROTATE
  // it and kill a link that may already be in their mailbox.
  if(open){
@@ -95,7 +105,7 @@ function renderPollPanel(){
   add('p','Ja: '+names(r.people),d);add('p','Nee: '+names(r.no),d);
   // (b) pick: mails everyone. Plain words in the confirm; focus stays on "Terug".
   if(open||v.status==='needs-organizer'){const b=add('button','Deze avond kiezen',d);b.dataset.pick=r.date;
-   b.onclick=()=>coordinate('date-poll',{action:'pick',pollId:v.id,date:r.date},'Kies je '+nightName(r.date)+'? Dit MAILT iedereen in de poll meteen "De datum staat vast". Daarna kan niemand meer stemmen. Dit kun je niet terugdraaien.')}
+   b.onclick=()=>{const tijd=tijdInput.value.trim()||'20:00',waar=waarInput.value.trim()||'bij Alec';coordinate('date-poll',{action:'pick',pollId:v.id,date:r.date,tijd,waar},'Kies je '+nightName(r.date)+', '+tijd+', '+waar+'? Dit MAILT iedereen in de poll meteen een bevestiging ("het wordt '+nightName(r.date)+'!") met Ja, ik kom / Toch niet. Daarna kan niemand meer stemmen. Dit kun je niet terugdraaien.')}}
  }
  add('p','Kan geen enkele avond: '+names(v.declined));
  add('p','Nog niet geantwoord: '+names(waiting));

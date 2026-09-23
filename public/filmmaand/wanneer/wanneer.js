@@ -8,16 +8,17 @@
    a calm system chip says so. Nothing is written on load: a PUT only follows a tap. reset-guard.js (loaded first)
    adds X-Filmmaand-Reset-Generation to every API request. */
 (()=>{'use strict';
-const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat';
+const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat',RSVP_API=API+'-rsvp';
 
 // ---- the pass: out of the address bar before anything else can copy it. Kept in memory and in this tab's history.state
 // (Cameo, 23 Sept: a reload must keep working), never in the URL, cookies or web storage. Cleared when it stops working.
 const PASS_STATE='filmmaandPollPass';
 const withPass=v=>{const s={...(history.state&&typeof history.state==='object'?history.state:{})};if(v)s[PASS_STATE]=v;else delete s[PASS_STATE];return s};
-let pass=null;
-{const u=new URL(location.href),p=u.searchParams.get('pas'),kept=history.state?.[PASS_STATE];
+let pass=null,preselect=null;// preselect: ?antwoord=ja|nee from the confirmation mail; it only PRE-SELECTS, a tap saves
+{const u=new URL(location.href),p=u.searchParams.get('pas'),kept=history.state?.[PASS_STATE],ant=u.searchParams.get('antwoord');
+ if(ant==='ja'||ant==='nee')preselect=ant;u.searchParams.delete('antwoord');
  if(p!==null){if(p)pass=p;u.searchParams.delete('pas');history.replaceState(withPass(pass),'',u.pathname+u.search+u.hash)}
- else if(typeof kept==='string'&&kept)pass=kept}
+ else{if(typeof kept==='string'&&kept)pass=kept;if(ant!==null)history.replaceState(history.state,'',u.pathname+u.search+u.hash)}}
 const hadPass=!!pass;
 
 const $=s=>document.querySelector(s);
@@ -151,11 +152,22 @@ function render(){
  $('#none').disabled=$('#all').disabled=!can;
  $('#sys').textContent=none?'Genoteerd. Dan de volgende keer!':'Genoteerd. Hou je mail in de gaten.';
  $('#sys').hidden=!voted;
+ renderRsvp();
  const p=poll();
  if(data&&!p)note('Er staat nu geen vraag open.');
  else if(p&&p.status==='confirmed'&&p.scheduledDate)note('De avond staat vast: '+fmt(p.scheduledDate,{weekday:'long',day:'numeric',month:'long'})+'.');
  else if(p&&!can&&loaded&&!$('#note').textContent)note('Stemmen is gesloten.');
 }
+// ---- after the pick: "Ben je erbij?" Own answer, saved only by a tap; the mail link's ?antwoord= just pre-selects it.
+function renderRsvp(){const box=$('#rsvp');if(!box)return;const p=poll(),r=data?.rsvp;
+ if(!p||p.status!=='confirmed'||!r){box.hidden=true;return}box.hidden=false;
+ for(const a of ['ja','nee']){const b=$('#rsvp-'+a);b.setAttribute('aria-pressed',String(r.answer===a));b.disabled=!r.open;if(!r.answer&&preselect===a)b.dataset.pre='true';else delete b.dataset.pre}
+ $('#rsvp-sub').textContent=!r.open?(r.answer==='ja'?'Je was erbij.':'De avond is voorbij.'):r.answer==='ja'?'Genoteerd: je komt! Je kunt het nog aanpassen tot de avond zelf.':r.answer==='nee'?'Jammer! Je kunt het nog aanpassen tot de avond zelf.':preselect?'Klopt dit? Tik op je antwoord om het door te geven.':'Tik op je antwoord. Je kunt het nog aanpassen tot de avond zelf.';
+}
+async function sendRsvp(answer,retried=false){const r=data?.rsvp;if(!pollId||!r?.open)return;
+ try{const out=await call('PUT',{pollId,answer},newKey(),RSVP_API);data.rsvp={...r,...out.rsvp};preselect=null;renderRsvp()}
+ catch(e){if(!retried&&dropPass(e)&&await load())return sendRsvp(answer,true);if(e.code==='rsvp_closed'){await load();note('Aanmelden kan niet meer.')}else trouble(e,false)}}
+for(const a of ['ja','nee']){const b=document.getElementById('rsvp-'+a);if(b)b.onclick=()=>void sendRsvp(a)}
 $('#all').onclick=()=>{if(!open())return;mine=mine.size===NIGHTS.length?new Set():new Set(NIGHTS);none=false;if(voted)schedule();render()};
 $('#none').onclick=()=>{if(!open())return;none=!none;if(none)mine=new Set();if(voted)schedule();render()};
 $('#go').onclick=()=>{if(!open()||(mine.size===0&&!none))return;voted=true;seq++;render();$('#sys').scrollIntoView({block:'nearest'});save()};

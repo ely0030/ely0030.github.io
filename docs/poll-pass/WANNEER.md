@@ -79,6 +79,14 @@ window.filmmaandChat.subscribe(cb) // cb(list()) now and after every read/send; 
 The page keeps a cursor: every GET asks `?since=<cursor>`, and a send's response carries everything since it. A different
 poll or viewer resets the chat with one full read. Render `text` with `textContent`.
 
+## After the pick: "Ben je erbij?"
+
+When the poll is confirmed, the page shows the `#note` chip "De avond staat vast: <avond>." and the `#rsvp` block
+(the kit's `.wrapx`/`.ask`/`.quick`/`.sub` pieces, added by the builder): **Ja, ik kom!** / **Toch niet**. A tap PUTs your
+own RSVP (`aria-pressed` shows the saved answer). `?antwoord=ja|nee` from the confirmation mail only marks the button
+(`data-pre="true"`, for Cameo/Capsule to style) with "Klopt dit? Tik op je antwoord om het door te geven."; it never saves.
+Changeable until the end of the picked night; the chat stays open until then too.
+
 ## Run it
 
 ```sh
