@@ -269,5 +269,7 @@ export function createEventNotifications(options={}){
   const ids=Object.keys(row.data.eventNotifications?.outbox||{}).filter(id=>row.data.eventNotifications.outbox[id].status==='pending').slice(0,Math.max(0,Math.min(Number.isInteger(limit)?limit:10,20)));
   const results=[];for(const id of ids)results.push(await deliver(id));return results;
  }
- return {queue:c=>queueCoordinationEvents(c,options),deliver,drain};
+ // Are event mails on right now (enabled + activated)? The api refuses to queue poll mails while this is false.
+ const active=()=>!!enabled&&validTime(options.activatedAt)&&Date.parse(options.activatedAt)<=Date.parse(now());
+ return {queue:c=>queueCoordinationEvents(c,options),deliver,drain,active};
 }

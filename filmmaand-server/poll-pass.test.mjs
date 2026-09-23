@@ -10,7 +10,7 @@ async function fixture({manual=false}={}){
  for(const id of ['proof','other'])await s.seed({id,title:id,window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c'].map(x=>({id:x,title:x}))});
  let writes=0;const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}},async setJSON(k,v,{onlyIfMatch}){if(onlyIfMatch!==String(this.etag))return {modified:false};writes++;this.data=structuredClone(v);this.etag++;return {modified:true}}};c.close();
  const clock={now:manual?'2026-09-23T10:00:00.000Z':'2026-09-22T10:00:00.000Z'},ids=[];let code;
- const api=createApi({store,blobs:{},adminToken:'secret',organizerIds:ids,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock.now});
+ const api=createApi({store,mailActive:()=>true,blobs:{},adminToken:'secret',organizerIds:ids,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock.now});
  async function request(path,method='GET',body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'fixture'});return {status:r.status,body:await r.json(),headers:r.headers}}
  async function login(email){const ch=await request('auth/code','POST',{email}),r=await request('auth/verify','POST',{challengeId:ch.body.challengeId,code});assert.equal(r.status,200,JSON.stringify(r.body));return {cookie:r.headers.get('set-cookie').split(';')[0],participant:r.body.participant}}
  async function account(email,name,avatarId,onboard=true){const {cookie,participant}=await login(email),id=participant.id;if(onboard)assert.equal((await request('auth/profile','PUT',{expectedRevision:0,name,animal:'otter',avatarId},{Cookie:cookie,'Idempotency-Key':'profile-key-'+avatarId+'-000000'})).status,200);return {cookie,id,email,name}}
@@ -18,7 +18,7 @@ async function fixture({manual=false}={}){
  async function openPoll(plan,key,window=manual?{start:MANUAL_NIGHTS[0],end:MANUAL_NIGHTS[2]}:{start:NIGHTS[0],end:NIGHTS[3]},closesAt=manual?undefined:CLOSES){const r=await request('plans/'+plan+'/date-poll','POST',{action:'open',mode:'availability',window,choices:[],...(closesAt?{closesAt}:{}),...(manual?{pick:'manual'}:{})},admin(key));assert.equal(r.status,200,JSON.stringify(r.body));return r.body.datePoll.id}
  const noor=await account('noor@example.test','Noor',4),sam=await account('sam@example.test','Sam',7),joep=await account('joep@example.test','Joep',9),nieuw=await account('nieuw@example.test','',11,false);
  const pollId=await openPoll('proof','open-poll-proof-0001'),otherPollId=await openPoll('other','open-poll-other-0001');
- async function issue(emails,plan='proof',poll=pollId){const r=await request('plans/'+plan+'/date-poll','POST',{action:'issue-passes',pollId:poll,emails},admin('unused-key-000000001'));assert.equal(r.status,200,JSON.stringify(r.body));return Object.fromEntries(r.body.passes.map(p=>[p.email,p]))}
+ async function issue(emails,plan='proof',poll=pollId,extra={}){const r=await request('plans/'+plan+'/date-poll','POST',{action:'issue-passes',pollId:poll,emails,...extra},admin('unused-key-000000001'));assert.equal(r.status,200,JSON.stringify(r.body));return Object.fromEntries(r.body.passes.map(p=>[p.email,p]))}
  const minted=await issue([noor.email,sam.email,joep.email]);
  const pass=(who,extra={})=>({'X-Filmmaand-Poll-Pass':typeof who==='string'?who:minted[who.email].token,...extra});
  const answer=(revision,yes,favourite=null)=>({pollId,revision,availability:Object.fromEntries((manual?MANUAL_NIGHTS:NIGHTS).map(d=>[d,yes.includes(d)])),favourite});
@@ -90,7 +90,8 @@ test('revoked, rotated and expired passes are rejected; within grace the poll is
  assert.deepEqual(revoke.body,{pollId:f.pollId,revoked:1});
  assert.equal((await get(f.noor)).body.error.code,'pass_invalid');
  assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[NIGHTS[0]]),f.pass(f.noor,{'Idempotency-Key':'revoked-vote-key-001'}))).body.error.code,'pass_invalid');
- const oldSam=f.minted[f.sam.email].token,rotated=await f.issue([f.sam.email]);
+ // Re-issuing to someone with a live link only rotates with an explicit rotate:true (Beheer never sends it).
+ const oldSam=f.minted[f.sam.email].token,rotated=await f.issue([f.sam.email],'proof',f.pollId,{rotate:true});
  assert.notEqual(rotated[f.sam.email].token,oldSam);
  assert.equal((await get(oldSam)).body.error.code,'pass_invalid');assert.equal((await get(rotated[f.sam.email].token)).status,200);
  const list=await f.request('plans/proof/date-poll','POST',{action:'list-passes',pollId:f.pollId},f.admin('unused-key-000000004'));
@@ -124,7 +125,7 @@ test('personal date-poll responses are private, no-store — success, error, org
   await f.request('plans/proof/date-poll','PUT',f.answer(0,[NIGHTS[2]]),f.pass(f.noor,{'Idempotency-Key':'cache-vote-key-00001'})),
   await f.request('plans/proof/date-poll','GET',null,f.pass('B'.repeat(43))),
   await f.request('plans/proof/date-poll','GET',null,{Cookie:f.sam.cookie}),
-  await f.request('plans/proof/date-poll','POST',{action:'issue-passes',pollId:f.pollId,emails:[f.sam.email]},{Cookie:f.noor.cookie,'X-Filmmaand-Organizer-Id':f.noor.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin'}),
+  await f.request('plans/proof/date-poll','POST',{action:'issue-passes',pollId:f.pollId,emails:[f.sam.email],rotate:true},{Cookie:f.noor.cookie,'X-Filmmaand-Organizer-Id':f.noor.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin'}),
  ];
  responses.push(await f.request('plans/proof/date-poll','POST',{action:'list-passes',pollId:f.pollId},{Cookie:f.noor.cookie,'X-Filmmaand-Organizer-Id':f.noor.id,'Sec-Fetch-Site':'same-origin'}));assert.equal(responses[5].body.error.code,'reset_generation');
  for(const r of responses)assert.equal(r.headers.get('cache-control'),'private, no-store');
@@ -283,7 +284,9 @@ test('issue-passes creates an account for a friend (name + avatar), so their vot
  assert.equal((await manage(f,{action:'issue-passes',emails:['wie@filmvrienden.nl']},f.admin('unused-key-000000022'))).body.error.code,'recipient_unknown');
  const ok=await manage(f,{action:'issue-passes',emails:[f.sam.email],people:[{email:'Lotte@Filmvrienden.nl',name:' Lotte '},{email:'bram@filmvrienden.nl',name:'Bram',avatarId:20},{email:f.nieuw.email,name:'Nieuw',avatarId:21},{email:f.noor.email,name:'Niet Noor',avatarId:22}]},f.admin('unused-key-000000023'));
  assert.equal(ok.status,200,JSON.stringify(ok.body));
- assert.deepEqual(ok.body.passes.map(p=>[p.email,p.name,p.created]),[[f.sam.email,'Sam',false],['lotte@filmvrienden.nl','Lotte',true],['bram@filmvrienden.nl','Bram',true],[f.nieuw.email,'Nieuw',false],[f.noor.email,'Noor',false]]);
+ // Sam and Noor already hold a live pass for this poll: skipped, not rotated (their mailed links keep working).
+ assert.deepEqual(ok.body.passes.map(p=>[p.email,p.name,p.created]),[['lotte@filmvrienden.nl','Lotte',true],['bram@filmvrienden.nl','Bram',true],[f.nieuw.email,'Nieuw',false]]);
+ assert.deepEqual(ok.body.skipped.map(p=>[p.email,p.name]),[[f.sam.email,'Sam'],[f.noor.email,'Noor']]);
  const lotte=participantRow(f,'lotte@filmvrienden.nl');assert.equal(lotte.onboarded,1);assert.equal(lotte.name,'Lotte');assert.ok(Number.isInteger(lotte.avatar_id));
  assert.equal(participantRow(f,'bram@filmvrienden.nl').avatar_id,20);assert.equal(participantRow(f,f.nieuw.email).onboarded,1);
  assert.equal(participantRow(f,f.noor.email).name,'Noor');assert.equal(participantRow(f,f.noor.email).avatar_id,4);// an existing profile is never overwritten

@@ -231,9 +231,10 @@ window.filmmaandDoodles={
   let r;
   try{r=await call('PUT',{pollId,s:strokes},newKey(),DOODLE_API)}
   catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandDoodles.save(strokes,true);throw e}
-  if(data&&r.doodles)data.doodles=r.doodles;else if(data&&!r.doodles)void load();announceDoodles();// the response carries everyone's doodles (an exact replay carries only yours: then one GET)
+  // The response carries everyone's doodles. An exact replay carries only {doodle:{id,at}} (the receipt): then one GET.
+  if(r.doodles){if(data)data.doodles=r.doodles;announceDoodles()}else await load();
   rereadSoon();
-  return asItem(r.doodle);
+  return doodleList().mine||asItem(r.doodle);
  }
 };
 
@@ -261,9 +262,10 @@ window.filmmaandChat={
   let r;
   try{r=await call('POST',{pollId,text},newKey(),CHAT_API+'?since='+chatCursor)}
   catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandChat.send(text,true);throw e}// chat_rate → e.details.retryAfter (seconds)
-  mergeChat(r.chat||{messages:[r.message],cursor:chatCursor});// an exact replay has no view: keep the cursor, dedupe by id
+  // An exact replay returns only the receipt {message:{id,seq,at}}: then one GET (the cursor brings it in).
+  if(r.chat)mergeChat(r.chat);else await load();
   rereadSoon();
-  return chatItem(r.message);
+  return chatItem(chatMsgs.find(m=>m.id===r.message.id)||r.message);
  }
 };
 

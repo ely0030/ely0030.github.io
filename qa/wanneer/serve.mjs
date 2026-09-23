@@ -14,7 +14,8 @@ const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structu
 // The QA clock is fixed (reproducible), but steps one minute on each organiser action below, so things said before and
 // after a pick get different times (Capsule's timeline splits at pickedAt).
 let code,clock=process.env.QA_NOW||'2026-09-23T10:00:00.000Z';const tick=()=>{clock=new Date(Date.parse(clock)+60e3).toISOString()};
-const organizerIds=[];const api=createApi({store,blobs:{},adminToken:'isolated-admin',organizerIds,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock});
+const organizerIds=[];const api=createApi({store,blobs:{},adminToken:'isolated-admin',organizerIds,mailActive:()=>true,// queues only: this server has no mail transport, nothing is ever sent
+ origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock});
 async function request(path,method='GET',body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'qa-wanneer'});return {status:r.status,body:await r.json(),headers:r.headers}}
 const admin=key=>({Authorization:'Bearer isolated-admin',...(key?{'Idempotency-Key':key}:{})});
 const NIGHTS=['2026-09-24','2026-09-25','2026-09-26'];

@@ -14,7 +14,10 @@ export const PASS_ACTIONS=['issue-passes','revoke-passes','list-passes','list-av
 // Manual poll (the organiser picks): valid while the poll is open, then 24h read-only grace after the pick/close (checked
 // against the loaded poll by passLive). Its row carries only a hard ceiling: 24h after the last candidate night ends.
 const DAY=86400e3;
-export const passExpiry=poll=>new Date(poll.pick==='manual'?Date.parse(poll.window.end)+2*DAY:Date.parse(poll.closesAt)+PASS_GRACE_MS).toISOString();
+// Hard cap stored with a pass. Once a night is picked (also an auto poll the organiser picked late), a pass minted then (the
+// confirmation mail's) must reach the end of that night + the grace, so the cap is at least that.
+export const passExpiry=poll=>new Date(Math.max(poll.pick==='manual'?Date.parse(poll.window.end)+2*DAY:Date.parse(poll.closesAt)+PASS_GRACE_MS,
+ poll.scheduledDate?nightEnd(poll.scheduledDate)+PASS_GRACE_MS:0)).toISOString();
 // Manual poll: live while open; after close/pick 24h read-only; after a PICK also until the end of the picked night (chat
 // stays open) plus the same 24h. The stored hard cap (window.end + 2 days) always covers that: a pick lies inside the window.
 export const passLive=(poll,now)=>poll.pick!=='manual'||poll.status==='open'||(!!poll.closedAt&&Date.parse(now)<Date.parse(poll.closedAt)+PASS_GRACE_MS)
@@ -46,16 +49,23 @@ export function createPollPasses({store,accounts=null,now=()=>new Date().toISOSt
   return poll;
  }
  return {
-  // Minting for someone who already holds a pass for this poll rotates it: the old link stops working.
+  // Someone who already holds a LIVE pass for this poll is SKIPPED (listed in `skipped`), because rotating would kill a
+  // link that may already be in their mailbox (invite, reminder or confirmation). Only an explicit rotate:true rotates
+  // (revokes all their passes for this poll and mints one new one). Beheer never sends rotate.
   issue(planId,poll,body,createdBy,origin){
-   openPoll(poll,body);const {people,planned}=recipients(body,{allowNew:true});
+   openPoll(poll,body);if(body?.rotate!==undefined&&body.rotate!==true&&body.rotate!==false)fail(400,'recipients','rotate is true of false.');
+   const rotate=body?.rotate===true,live=pid=>!!q('SELECT 1 FROM poll_passes WHERE plan_id=? AND poll_id=? AND participant_id=? AND revoked_at IS NULL AND expires_at>? LIMIT 1').get(planId,poll.id,pid,now());
+   const {people:all,planned:allPlanned}=recipients(body,{allowNew:true}),existing=v=>store.q.participantByEmail.get(v.email);
+   const skipped=rotate?[]:[...all.filter(p=>live(p.participantId)).map(({participantId,email,name})=>({participantId,email,name})),
+    ...allPlanned.filter(v=>{const e=existing(v);return e&&live(e.id)}).map(v=>{const e=existing(v);return {participantId:e.id,email:v.email,name:e.name}})];
+   const people=all.filter(p=>!skipped.some(s=>s.participantId===p.participantId)),planned=allPlanned.filter(v=>!skipped.some(s=>s.email===v.email));
    q('DELETE FROM poll_passes WHERE expires_at<?').run(new Date(at()-30*86400000).toISOString());
    if(q('SELECT count(*) n FROM poll_passes').get().n+people.length+planned.length>2000)fail(503,'pass_limit','Er zijn te veel links opgeslagen.');
    const expiresAt=passExpiry(poll);
    return store.transaction(()=>{
     // Accounts are created inside the same transaction as the passes: any failure (e.g. an avatar taken) rolls back all.
     const everyone=[...people.map(p=>({...p,created:false})),...planned.map(v=>{const r=accounts.provisionAccount(v);return {participantId:r.participant.id,email:v.email,name:r.participant.name,created:r.created}})];
-    return {pollId:poll.id,expiresAt,passes:everyone.map(p=>{
+    return {pollId:poll.id,expiresAt,skipped,passes:everyone.map(p=>{
     q('UPDATE poll_passes SET revoked_at=? WHERE plan_id=? AND poll_id=? AND participant_id=? AND revoked_at IS NULL').run(now(),planId,poll.id,p.participantId);
     const token=randomBytes(32).toString('base64url');
     q('INSERT INTO poll_passes(token_hash,plan_id,poll_id,participant_id,created_by,created_at,expires_at) VALUES(?,?,?,?,?,?,?)').run(sha(token),planId,poll.id,p.participantId,createdBy,now(),expiresAt);

@@ -6,6 +6,7 @@ import {createPollPasses,PASS_ACTIONS} from './runtime/planning/auth/poll-passes
 import {queuePollNudges,queuePollInvites,invitedParticipants,queuePollConfirms} from './event-notifications.mjs';
 import {participantActor} from './runtime/planning/auth/credentials.mjs';
 import {parseSince} from './runtime/planning/chat.mjs';
+import {responded} from './runtime/planning/date-coordination.mjs';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
 import {transact,openState} from './state.mjs';
 import {createPlanningService} from './runtime/planning/service.mjs';
@@ -18,7 +19,9 @@ const error=(status,code,message)=>Object.assign(Error(message),{status,code});
 const rewrite=(value,key='')=>typeof value==='string'&&['url','poster','backdrop','image','posterFull','metadataPoster'].includes(key)&&value.startsWith('/planning-api/images/')?'/filmmaand/api/images/'+value.slice('/planning-api/images/'.length):Array.isArray(value)?value.map(v=>rewrite(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v,k)])):value;
 const json=(status,body,headers={})=>new Response(status===204?null:JSON.stringify(rewrite(body)),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
 const mutations={'POST:images':'uploadImage','POST:suggestions':'suggest','PUT:profile':'updateProfile','PUT:response':'submit','PUT:proposals':'proposeNight','PUT:coordination':'coordinate','POST:coordination':'manageCoordination','PUT:date-poll':'voteDatePoll','PUT:date-poll-doodle':'doodleDatePoll','POST:date-poll':'manageDatePoll','PUT:vote':'vote','POST:round':'setRound','POST:round-date':'scheduleRound','POST:programme':'planNight','POST:confirmation':'confirm'};
-export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,queueEvents,deliverTonight,now,avatars=loadAvatarOptions()}){
+export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},adminToken,organizerIds=[],origin='https://ely0030.xyz',authConfig={},queueMail,deliverMail,queueEvents,deliverTonight,now,avatars=loadAvatarOptions(),mailActive=()=>false}){
+ // mailActive(): are event mails switched on (FILMMAAND_EVENT_EMAILS + activation)? Poll mails (reminder, invitation,
+ // confirmation) are never queued while it is off, so switching mail on later cannot deliver stale mail. Default: off.
  return async function handle(request,context={}){
   const url=new URL(request.url),path=url.pathname.replace(/^\/filmmaand\/api(?=\/|$)/,'/api'),method=request.method;
   if(!url.pathname.startsWith('/filmmaand/api/'))return json(404,{error:{code:'not_found'}});
@@ -162,7 +165,9 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
        if(organizerCookie){const account=organizerAccount();if(req.headers['x-filmmaand-organizer-id']!==account.participantId)throw error(409,'organizer_changed','Je account is veranderd. Heropen het beheer voor dit account.');createdBy=account.participantId;}
        else service.assertAdmin(token);
        if(body.action==='nudge-list')return send(200,await service.datePollNudgeList(id,body.pollId,passes.holders(id,body.pollId)));
+       const mailOff=()=>error(409,'mail_disabled','Mail staat uit, er is niets verstuurd.');
        if(body.action==='nudge'){
+        if(!mailActive())throw mailOff();
         // Organiser-triggered only. Same receipt pattern as the other organiser writes: an exact retry replays the receipt
         // and the seen ledger queues nothing twice.
         const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
@@ -175,6 +180,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
        const notInvited=()=>{const invited=invitedParticipants(c,id,body.pollId);return passes.holders(id,body.pollId).filter(h=>!invited(h))};
        if(body.action==='invite-list')return send(200,await service.datePollNudgeList(id,body.pollId,notInvited()));
        if(body.action==='invite'){
+        if(!mailActive())throw mailOff();
         const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
         const scoped=createdBy==='admin'?key:'organizer-'+createHash('sha256').update(JSON.stringify([createdBy,key])).digest('hex');
         const at=now?now():new Date().toISOString(),result=await service.inviteDatePoll(id,adminToken,scoped,body,notInvited());
@@ -203,11 +209,16 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.
      if(!['setRound','scheduleRound','planNight','confirm','manageDatePoll','manageCoordination'].includes(fn)){const account=auth.authenticate(token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');}
      const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
-     const committed=async operation=>{const value=await operation;commitActivity(c,activityBefore,activityAt);afterPick();return value;};
+     let pickMailOff=false;
+     const committed=async operation=>{const value=await operation;commitActivity(c,activityBefore,activityAt);afterPick();return pickMailOff&&value&&typeof value==='object'?{...value,mail:'off'}:value;};
      // A manual date-poll pick queues ONE confirmation per poll participant (live pass holders + everyone who answered),
      // in this same transaction. Replays are no-ops via the seen ledger. Only reachable through the organiser pick.
-     const afterPick=()=>{if(fn!=='manageDatePoll'||body?.action!=='pick')return;const q=c.state.plans[id]?.data.datePoll;if(q?.mode!=='availability'||q.pick!=='manual'||q.status!=='confirmed')return;
-      const who=new Set(createPollPasses({store:c.authStore,accounts:auth,now}).holders(id,q.id).map(h=>h.participantId));for(const a of Object.keys(q.votes||{}))if(a.startsWith('p_'))who.add(a.slice(2));
+     const afterPick=()=>{if(fn!=='manageDatePoll'||body?.action!=='pick')return;const q=c.state.plans[id]?.data.datePoll;if(q?.mode!=='availability'||q.status!=='confirmed')return;
+      if(!mailActive()){pickMailOff=true;return}
+      // Who gets the confirmation (Chris, 23 Sept): everyone who said YES to the picked night, plus live pass holders who
+      // never answered. NOT people who declined every night or said no to this night.
+      const who=new Set(createPollPasses({store:c.authStore,accounts:auth,now}).holders(id,q.id).filter(h=>!responded(q,q.votes?.['p_'+h.participantId])).map(h=>h.participantId));
+      for(const [a,v] of Object.entries(q.votes||{}))if(a.startsWith('p_')&&v?.availability?.[q.scheduledDate]===true)who.add(a.slice(2));
       queuePollConfirms(c,{planId:id,poll:q,recipients:[...who].sort(),now:activityAt});};
      if(organizerCookie){
       const account=organizerAccount();

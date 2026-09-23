@@ -333,6 +333,32 @@ doodle send (+20 s, +60 s, visible tab only). Nothing else is timed: an idle pag
   Beheer shows Komt / Komt niet / Nog niet gereageerd under the picked night.
 - The pass scope widens to exactly this `PUT` (besides the date-poll GET/PUT, doodle PUT and chat POST).
 
+## Pre-merge review fixes (23 Sept) — rules that changed
+
+- **Doodle rate limit**: 6 saves a minute and 30 an hour per person → `429 doodle_rate` (`details.retryAfter`). Computed
+  from a per-person save log on the poll (`doodleSaves`, last hour, at most 30 entries), written only on a save.
+- **Receipts are bounded.** Every receipt written from now on carries `at`; on the next write to the plan, receipts older
+  than **7 days** are dropped, and each actor keeps at most **50** timestamped receipts (their most recent). This bounds the
+  total whatever the pace (at 30 doodles an hour, age alone would allow ~5000 receipts a week, which is the plan's 503 cap).
+  Older receipts without `at` are left as they are. Receipt contents: doodle `{doodle:{id,at}}`, chat
+  `{message:{id,seq,at}}`, organiser `manageDatePoll` a small `datePoll` summary (id, mode, pick, status, window,
+  scheduledDate, programmeId), RSVP `{rsvp:{answer,at}}`. The **vote** receipt keeps its full own answer (~150 B):
+  the contract promises a byte-identical replay, and the per-actor cap bounds it. An exact replay of a doodle or chat
+  write therefore returns only that minimal receipt; the page then does one GET.
+- **Archive**: a replaced poll goes into `datePollHistory` without `chat`, `doodles`, `rsvp`, `doodleSaves`, `nudges`,
+  `invites`. It keeps the poll itself, votes included, for the existing legacy-preservation invariant.
+- **Every organiser pick** (manual or auto) sends the per-person confirmation and skips the generic site-wide
+  "De datum staat vast" fan-out. Only an auto poll decided by its deadline still uses the generic notice. A pass minted
+  after a pick is valid at least until the end of the picked night + 24h (`passExpiry`).
+- **Who gets the confirmation** (Chris): everyone who said **yes to the picked night**, plus **live pass holders who
+  never answered**. Not people who declined every night or said no to that night.
+- **Mail off = nothing queued.** While event mails are off (`FILMMAAND_EVENT_EMAILS`/activation; `mailActive` in the api,
+  default off), `nudge` and `invite` are refused with `409 mail_disabled` ("Mail staat uit, er is niets verstuurd."), and a
+  pick still happens but queues no confirmation and answers with `"mail":"off"`; Beheer says so. Switching mail on later
+  therefore cannot deliver stale mail.
+- **issue-passes never silently rotates.** Anyone who already holds a live pass for this poll is **skipped** (listed in
+  `skipped`) and keeps their link; only an explicit `"rotate": true` revokes and re-mints. Beheer never sends `rotate`.
+
 ## Error codes
 
 | status | code | when |

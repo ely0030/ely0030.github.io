@@ -11,7 +11,7 @@ async function fixture(){
  await s.seed({id:'home-picker-lab',title:'Filmmaand',window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c'].map(x=>({id:x,title:x}))});
  let writes=0;const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}},async setJSON(k,v,{onlyIfMatch}){if(onlyIfMatch!==String(this.etag))return {modified:false};writes++;this.data=structuredClone(v);this.etag++;return {modified:true}}};c.close();
  let code;const organizerIds=[];
- const api=createApi({store,blobs:{},adminToken:'secret',organizerIds,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>'2026-09-23T10:00:00.000Z'});
+ const api=createApi({store,mailActive:()=>true,blobs:{},adminToken:'secret',organizerIds,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>'2026-09-23T10:00:00.000Z'});
  async function request(path,method,body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'fixture'});return {status:r.status,body:await r.json()}}
  async function account(email,name,avatarId){const ch=await request('auth/code','POST',{email}),r=await api(new Request(ORIGIN+'/filmmaand/api/auth/verify',{method:'POST',headers:{Origin:ORIGIN},body:JSON.stringify({challengeId:ch.body.challengeId,code})}),{ip:'fixture'});const b=await r.json(),cookie=r.headers.get('set-cookie').split(';')[0];
   await request('auth/profile','PUT',{expectedRevision:0,name,animal:'otter',avatarId},{Cookie:cookie,'Idempotency-Key':'profile-key-'+avatarId+'-0000000'});return {cookie,id:b.participant.id}}

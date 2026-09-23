@@ -14,7 +14,7 @@ async function fixture(){
  let code;const clock={now:'2026-09-23T10:00:00.000Z'};
  const mailOptions={enabled:true,activatedAt:'2026-01-01T00:00:00.000Z',allowAnyRecipient:true};
  // queueEvents runs the real site-wide fan-out after every request, as production does.
- const api=createApi({store,blobs:{},adminToken:'secret',organizerIds:[],origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},queueEvents:async c=>queueCoordinationEvents(c,{...mailOptions,now:clock.now}),now:()=>clock.now});
+ const api=createApi({store,mailActive:()=>true,blobs:{},adminToken:'secret',organizerIds:[],origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},queueEvents:async c=>queueCoordinationEvents(c,{...mailOptions,now:clock.now}),now:()=>clock.now});
  async function request(path,method,body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'fixture'});return {status:r.status,body:await r.json()}}
  const admin=key=>({Authorization:'Bearer secret',...(key?{'Idempotency-Key':key}:{})});
  const pollId=(await request(POLL,'POST',{action:'open',mode:'availability',pick:'manual',window:{start:NIGHTS[0],end:NIGHTS[2]},choices:[]},admin('open-confirm-poll-01'))).body.datePoll.id;

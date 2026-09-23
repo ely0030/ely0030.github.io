@@ -58,7 +58,7 @@ test('scope: a pass writes only its holder\'s own doodle and nothing else; no fi
  assert.equal((await f.draw('Lotte',STAR,{doodleId:'x'})).status,400);
  const ok=await f.draw('Lotte',STAR);assert.equal(ok.status,200);const okId=ok.body.doodle.id;
  const after=f.store.data,strip=s=>{s=structuredClone(s);const d=s.plans['home-picker-lab'].data;
-  for(const [a,v] of Object.entries(d.datePoll.doodles))if(v.id===okId)delete d.datePoll.doodles[a];
+  for(const [a,v] of Object.entries(d.datePoll.doodles))if(v.id===okId){delete d.datePoll.doodles[a];delete d.datePoll.doodleSaves?.[a]}// own slot + own save log (rate limit)
   d.receipts=Object.fromEntries(Object.entries(d.receipts).filter(([,v])=>v.result?.doodle?.id!==okId));delete d.version;delete s.plans['home-picker-lab'].version;return s};
  assert.deepEqual(strip(after),strip(before));// Daan's doodle, votes, auth, notices: untouched
  // A pass cannot reach the organiser kill switch.

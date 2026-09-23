@@ -24,7 +24,7 @@ export function openAvailabilityPoll(p,b,{id,now}){
  if(!noDeadline&&(manual?localDate(b.closesAt)>b.window.end:localDate(b.closesAt)>=b.window.start))fail(400,'date_poll_deadline',manual?'Laat de poll uiterlijk op de laatste kandidaatdag sluiten.':'Laat de poll vóór de eerste kandidaatdag sluiten.');
  if(!Array.isArray(b.choices)||b.choices.length)fail(400,'date_poll_choices','De filmkeuze blijft onafhankelijk van deze datumkeuze.');
  let linked=null;if(b.programmeId!==undefined){linked=event(p,b.programmeId);if(!linked||linked.selection!=='pending'||linked.choices?.length)fail(409,'date_poll_event','Kies een bestaande avond met open filmkeuze.');}
- if(p.datePoll)(p.datePollHistory||=[]).push(structuredClone(p.datePoll));
+ if(p.datePoll)(p.datePollHistory||=[]).push(archivePoll(p.datePoll));
  p.datePoll={id,mode:'availability',status:'open',window:{...b.window},choices:[],votes:{},openedAt:now,closesAt:noDeadline?null:b.closesAt,...(manual?{pick:'manual'}:{}),...(linked?{programmeId:b.programmeId,eventVersion:revision(linked),originalDate:eventDate(linked)}:{})};
 }
 // Responded = at least one night explicitly answered (true or false). An all-false answer is a real "I can't make any
@@ -41,6 +41,11 @@ export function nightEnd(date){const next=new Date(Date.parse(date+'T00:00:00Z')
  for(const h of [1,2,0,3]){const t=base-h*3600e3,p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(t)).map(x=>[x.type,x.value]));
   if(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`===next+'T00:00')return t}
  return base}
+// What a replaced poll keeps in datePollHistory: the poll itself (window, votes, ranking, pick, times; the votes stay, as
+// before, for legacy preservation) but none of the per-poll social state added for the wanneer page: chat, doodles,
+// RSVPs, the doodle-save log and the nudge/invite logs. Those can be large and have no use once the poll is replaced.
+export const ARCHIVE_DROP=['chat','doodles','rsvp','doodleSaves','nudges','invites'];
+export function archivePoll(q){const out=structuredClone(q);for(const k of ARCHIVE_DROP)delete out[k];return out}
 // RSVP after a pick ("Ja, ik kom!" / "Toch niet"): own answer, changeable until the end of the picked night.
 export const rsvpOpen=(q,now)=>q?.status==='confirmed'&&!!q.scheduledDate&&Date.parse(now)<nightEnd(q.scheduledDate);
 export function writeRsvp(p,a,b,now){const q=p.datePoll;
@@ -75,9 +80,10 @@ export function pickAvailabilityDate(p,b,now,eligible=()=>true){const q=p.datePo
  if(!upcoming(p,b.date,now)||b.date<q.window.start||b.date>q.window.end)fail(400,'date_poll_date','Kies een komende dag binnen deze poll.');
  if(linkedChanged(p,q))fail(409,'event_changed','De gekoppelde avond is elders veranderd.');
  q.ranking=rankAvailability(q,eligible);q.closedAt=now;delete q.reason;q.tijd=(b.tijd||'20:00').trim();q.waar=(b.waar||'bij Alec').trim();
- // A manual pick mails its own per-person confirmation (poll-confirm, with a personal ja/nee link) instead of the generic
- // site-wide "De datum staat vast" fan-out; the coordination event carries pollConfirm so the fan-out skips it.
- schedule(p,q,b.date,now,q.pick==='manual'?{pollConfirm:q.id}:{});
+ // An ORGANISER pick (manual or auto poll) mails its own per-person confirmation (poll-confirm, with a personal ja/nee
+ // link) instead of the generic site-wide "De datum staat vast" fan-out; the event carries pollConfirm so the fan-out
+ // skips it. (Only an auto poll decided by its deadline, finalizePoll, still uses the generic notice.)
+ schedule(p,q,b.date,now,{pollConfirm:q.id});
 }
 export function attendees(p,n,eligible){const d=eventDate(n);return Object.entries(p.responses||{}).filter(([a,r])=>eligible(a)&&(Array.isArray(r.dates)?r.dates.includes(d):r.start<=d&&r.end>=d)).map(([a])=>a).sort();}
 function current(p,b){const n=event(p,b.eventId);if(!n)fail(404,'event','Deze avond bestaat niet.');if(b.eventVersion!==revision(n))fail(409,'event_changed','Deze avond is elders veranderd.');return n;}

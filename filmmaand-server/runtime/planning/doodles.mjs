@@ -10,6 +10,9 @@ const strict=(b,keys)=>b&&typeof b==='object'&&!Array.isArray(b)&&Object.keys(b)
 // Payload shape = what Capsule's eggs.js produces (kits/…/jasjes2/eggs/CHAT-CADENCE.md): {s:[[ink,[[x,y],…]],…], t}. The client's t
 // (and any name) is never trusted: the server stamps author, `at` and `t` (HH:MM Amsterdam).
 export const DOODLE_MAX_BYTES=4096,DOODLE_MAX_STROKES=64,DOODLE_MAX_POINTS=2000,INKS=['k','r'];
+// Per person, like the chat: 6 saves a minute, 30 an hour. Computed from q.doodleSaves at write time (reads never write);
+// that log keeps only the last hour, at most 30 entries per person.
+export const DOODLE_RATE=[{ms:60e3,max:6},{ms:3600e3,max:30}];
 const clamp=n=>Math.min(100,Math.max(0,n));
 const hhmm=at=>new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(at));
 const round=n=>Math.round(n*10)/10;
@@ -36,7 +39,10 @@ export function writeDoodle(p,a,b,now,display){
  if(!strict(b,['pollId','s','t'])||typeof b.pollId!=='string'||!('s' in b))fail(400,'doodle','Deze tekening kan niet worden opgeslagen.');
  if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
  if(!answersOpen(q,now))fail(409,'date_poll_closed','Deze poll is gesloten.');
- const s=normaliseStrokes(b.s);
+ const s=normaliseStrokes(b.s),t=Date.parse(now),log=((q.doodleSaves||={})[a]||=[]).filter(x=>t-Date.parse(x)<3600e3);
+ for(const {ms,max} of DOODLE_RATE){const recent=log.filter(x=>t-Date.parse(x)<ms);
+  if(recent.length>=max)fail(429,'doodle_rate','Even rustig aan: je kunt zo weer een tekening sturen.',{retryAfter:Math.ceil((Date.parse(recent[0])+ms-t)/1000)})}
+ log.push(now);q.doodleSaves[a]=log.slice(-30);
  const prior=q.doodles?.[a];
  (q.doodles||={})[a]={id:doodleId(q.id,a),at:now,s,...(prior?.hidden?{hidden:true}:{})};
  return {doodle:ownDoodle(p,a),doodles:publicDoodles(p,a,display)};
