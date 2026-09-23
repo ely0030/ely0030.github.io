@@ -6,6 +6,8 @@ test('public entry redirects before opening private storage and preserves legacy
  ['/filmmaand','/filmmaand/programma/'],
  ['/filmmaand/?intro=1','/filmmaand/programma/?intro=1'],
  ['/filmmaand/?edit=1','/filmmaand/stemmen/?edit=1'],
- ['/filmmaand/?screen=thanks','/filmmaand/stemmen/?screen=thanks']
+ ['/filmmaand/?screen=thanks','/filmmaand/stemmen/?screen=thanks'],
+ // A poll-pass link in its older /filmmaand/?pas= form lands on the date poll page, query intact.
+ ['/filmmaand/?pas=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA','/filmmaand/wanneer/?pas=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA']
  ]){const r=await handler(new Request('https://ely0030.xyz'+path),{});assert.equal(r.status,302);assert.equal(r.headers.get('location'),'https://ely0030.xyz'+target);}
 });

@@ -55,7 +55,7 @@ export function createPollPasses({store,accounts=null,now=()=>new Date().toISOSt
     q('UPDATE poll_passes SET revoked_at=? WHERE plan_id=? AND poll_id=? AND participant_id=? AND revoked_at IS NULL').run(now(),planId,poll.id,p.participantId);
     const token=randomBytes(32).toString('base64url');
     q('INSERT INTO poll_passes(token_hash,plan_id,poll_id,participant_id,created_by,created_at,expires_at) VALUES(?,?,?,?,?,?,?)').run(sha(token),planId,poll.id,p.participantId,createdBy,now(),expiresAt);
-    return {...p,token,url:origin+'/filmmaand/?pas='+token};
+    return {...p,token,url:origin+'/filmmaand/wanneer/?pas='+token};
    })};});
   },
   revoke(planId,body){

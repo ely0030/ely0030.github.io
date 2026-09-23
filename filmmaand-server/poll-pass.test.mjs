@@ -128,7 +128,7 @@ test('personal date-poll responses are private, no-store — success, error, org
  ];
  responses.push(await f.request('plans/proof/date-poll','POST',{action:'list-passes',pollId:f.pollId},{Cookie:f.noor.cookie,'X-Filmmaand-Organizer-Id':f.noor.id,'Sec-Fetch-Site':'same-origin'}));assert.equal(responses[5].body.error.code,'reset_generation');
  for(const r of responses)assert.equal(r.headers.get('cache-control'),'private, no-store');
- assert.equal(responses[4].status,200);assert.match(responses[4].body.passes[0].url,/^https:\/\/example\.test\/filmmaand\/\?pas=[A-Za-z0-9_-]{43}$/);
+ assert.equal(responses[4].status,200);assert.match(responses[4].body.passes[0].url,/^https:\/\/example\.test\/filmmaand\/wanneer\/\?pas=[A-Za-z0-9_-]{43}$/);
 });
 
 test('an existing session still works; organiser-only minting; unknown and not-onboarded recipients refused',async()=>{
@@ -372,7 +372,7 @@ test('nudge delivery: rendered from the Dutch template with a fresh working pass
  assert.deepEqual(sent.map(m=>m.to),['lotte@filmvrienden.nl']);// .test addresses are never mailed by policy; Bram answered
  const [mail]=sent;assert.equal(mail.subject,'Movie deze week?');
  assert.match(mail.text,/^Hoi Lotte,\n\nMovie deze week\? Je hebt nog niet gestemd\.\n\nWelke avond kun jij: do 24, vr 25 of za 26 september\?/);
- const link=mail.text.match(/Stemmen: (https:\/\/example\.test\/filmmaand\/\?pas=([A-Za-z0-9_-]{43}))/);assert.ok(link,mail.text);assert.ok(mail.html.includes(link[1]));
+ const link=mail.text.match(/Stemmen: (https:\/\/example\.test\/filmmaand\/wanneer\/\?pas=([A-Za-z0-9_-]{43}))/);assert.ok(link,mail.text);assert.ok(mail.html.includes(link[1]));
  assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(link[2]))).body.viewer.name,'Lotte');
  assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(minted.find(p=>p.name==='Lotte').token))).status,200);// the earlier link still works
  assert.deepEqual(nudges(f),[]);assert.equal(JSON.stringify(f.store.data).includes(link[2]),false);

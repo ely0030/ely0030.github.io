@@ -34,7 +34,7 @@ async function initialize(context={}){
 export default async function handler(request,context){
  try{
   const url=new URL(request.url);
-  if(url.pathname==='/filmmaand'||url.pathname==='/filmmaand/')return Response.redirect(url.origin+'/filmmaand/'+(url.searchParams.has('edit')||url.searchParams.get('screen')==='thanks'?'stemmen/':'programma/')+url.search,302);
+  if(url.pathname==='/filmmaand'||url.pathname==='/filmmaand/')return Response.redirect(url.origin+'/filmmaand/'+(url.searchParams.has('pas')?'wanneer/':url.searchParams.has('edit')||url.searchParams.get('screen')==='thanks'?'stemmen/':'programma/')+url.search,302);
   const {api,mail,events}=await(instance||=(initialize(context).catch(e=>{instance=null;throw e})));
   // A mutation can rescue a committed but unacknowledged send; the scheduled tick is the
   // standing drain worker. Read-only polling used to pay for both drains, which cost two

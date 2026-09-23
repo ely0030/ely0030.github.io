@@ -30,9 +30,10 @@ Branch `feat/poll-pass`. Design: `kits/invitations/POLL-PASS.md` (Cameo, 22 Sept
 
 ## How the page carries the token
 
-1. The mail link is `https://ely0030.xyz/filmmaand/?pas=<token>`. The existing handler 302-redirects
-   `/filmmaand/?…` to `/filmmaand/programma/?…` **with the query string preserved** and without touching
-   state (the redirect happens before any store access).
+1. The mail link is `https://ely0030.xyz/filmmaand/wanneer/?pas=<token>` (the date poll page, see `WANNEER.md`);
+   `issue-passes` and the reminder mail both mint this form. The older form `/filmmaand/?pas=…` is 302-redirected
+   to `/filmmaand/wanneer/?…` **with the query string preserved** and without touching state (the redirect happens
+   before any store access).
 2. On first load the page reads `pas` from `location.search`, keeps it **in memory only** (not
    localStorage/cookies), and removes it from the visible URL:
    `history.replaceState(null, '', location.pathname + location.hash)` (keep any other params you need).
