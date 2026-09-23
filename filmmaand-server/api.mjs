@@ -77,7 +77,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     if(typeof generation!=='string'||!generation||generation.length>128)throw error(503,'reset_generation','De site wordt opnieuw voorbereid.');
     const headers={'X-Filmmaand-Reset-Generation':generation};
     // Everything on the date-poll route names a person (own answers, a pass, a minted link), errors included: never cacheable.
-    if(/^\/api\/plans\/[^/]+\/date-poll(?:-doodle|-chat|-rsvp|-film)?$/.test(path))headers['Cache-Control']='private, no-store';
+    if(/^\/api\/plans\/[^/]+\/date-poll(?:-doodle|-chat|-rsvp|-film|-login)?$/.test(path))headers['Cache-Control']='private, no-store';
     const auth=createAuthService({store:c.authStore,avatars,now,config:authConfig,mailer:{async send(message){if(!queueMail)throw error(503,'mail_unavailable','E-mail is nog niet ingesteld.');await queueMail(c,message,{plainTextTestToken:request.headers.get('x-filmmaand-plain-text-test')})}}});
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
@@ -118,7 +118,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
 
      const notifications=path.match(/^\/api\/notifications(?:\/(read|preferences))?$/);
      if(notifications){const account=auth.authenticate(router.credential(req)?.token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');if(method!=='GET')router.csrf(req);return send(200,notificationRequest(c,account.participantId,{method,part:notifications[1],body,url,at:now?now():new Date().toISOString()}));}
-     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|date-poll-doodle|date-poll-chat|date-poll-rsvp|date-poll-film|coordination))?$/);
+     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|date-poll-doodle|date-poll-chat|date-poll-rsvp|date-poll-film|date-poll-login|coordination))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
      const [,id,part]=match,cred=router.credential(req);
      if(cred?.transport==='cookie'&&method!=='GET')router.csrf(req);
@@ -132,6 +132,19 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      // The anonymous read (?public=1): the public projection only. Checked before ANY identity handling, so a pass header is
      // never resolved or honoured here (and a session changes nothing): same bytes for everyone, never names, no writes.
      if(part==='date-poll'&&method==='GET'&&url.searchParams.get('public')==='1')return send(200,await service.datePollPublic(id));
+     if(part==='date-poll-login'){
+      // Chris, 23 Sept: "our auto log in should handle this". Opening YOUR invite link logs you in on this device: a normal
+      // session for the pass holder's own account (method 'poll-pass'), so coming back later (history, the menu) just works.
+      // Rules: POST only, with the pass header. An account already logged in here is never switched (a friend's link opened
+      // on your phone does nothing). A poll-pass session is not a fresh e-mail code, so it can't set a password.
+      if(method!=='POST')return send(405,{error:{code:'method'}});
+      const pass=req.headers['x-filmmaand-poll-pass'];if(pass===undefined)throw error(401,'pass_invalid','Deze link werkt niet (meer).');
+      const holder=createPollPasses({store:c.authStore,accounts:auth,now}).resolve(pass,id);
+      if(cred){let current=null;try{current=auth.authenticate(cred.token)}catch{}
+       if(current)return send(200,{loggedIn:current.participantId===holder.participantId,switched:false});}
+      const session=auth.issueSession(holder.participantId,'poll-pass');c.state.format=2;
+      headers['Set-Cookie']=router.setCookie(session.token);return send(200,{loggedIn:true,switched:false});
+     }
      if(part==='date-poll-film'){
       // The intro film was watched to the END: remember it for this account (own flag only). PUT only, pass or session.
       if(method!=='PUT')return send(405,{error:{code:'method'}});

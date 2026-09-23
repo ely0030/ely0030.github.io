@@ -8,7 +8,7 @@
    a calm system chip says so. Nothing is written on load: a PUT only follows a tap. reset-guard.js (loaded first)
    adds X-Filmmaand-Reset-Generation to every API request. */
 (()=>{'use strict';
-const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat',RSVP_API=API+'-rsvp',FILM_API=API+'-film';
+const API='/filmmaand/api/plans/home-picker-lab/date-poll',DOODLE_API=API+'-doodle',CHAT_API=API+'-chat',RSVP_API=API+'-rsvp',FILM_API=API+'-film',LOGIN_API=API+'-login';
 // The intro film (Cairn; Chris 23 Sept: "if they've seen the full movie once, that login account shouldn't get it again").
 // The loader (film-loader.js) waits for AFM_FILM_READY (resolved once the first poll read settled, on every path), then reads
 // AFM_FILM_SEEN (from the server, per account). It calls AFM_FILM_ONDONE({completed}); only a FULL viewing is recorded.
@@ -79,8 +79,13 @@ function adopt(body){
   voted=said.length>0;mine=new Set(NIGHTS.filter(d=>own[d]===true));none=voted&&mine.size===0;
  }
  note('');setSub();render();if(revealed)pollEl.hidden=!poll();announceDoodles();adoptChat(body);
- if(!loaded){loaded=true;arrived();}
+ if(!loaded){loaded=true;arrived();autoLogin();}
 }
+// Chris, 23 Sept: "our auto log in should handle this". Opening your invite link also logs you in on this device (the
+// server turns the pass into a normal session for your own account; it never switches another account already logged in),
+// so coming back later without the link just works. Once per page load, only with a pass, silently.
+let autoLogged=false;
+function autoLogin(){if(autoLogged||!pass)return;autoLogged=true;call('POST',{},newKey(),LOGIN_API).catch(()=>{})}
 
 // ---- saving: "Klaar", then every later tap (debounced). PUT → re-GET for everyone's counts.
 function availability(){return Object.fromEntries(NIGHTS.map(d=>[d,mine.has(d)]))}

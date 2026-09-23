@@ -46,10 +46,12 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
  // URLs: the four fixed endpoints (+ the intro film's own flag, 23 Sept) and one numeric chat cursor; nothing else is ever put in a URL.
- assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'-film'","API+'?since='+since:API","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'-film'","API+'-login'","API+'?since='+since:API","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
- assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
+ assert.equal((js.match(/call\('POST'/g)||[]).length,2);// the chat send + the one silent auto-login (Chris, 23 Sept):
+ // only with a pass, once per page load, to the fixed LOGIN_API, with an empty body (the pass travels in the header).
+ assert.match(js,/function autoLogin\(\)\{if\(autoLogged\|\|!pass\)return;autoLogged=true;call\('POST',\{\},newKey\(\),LOGIN_API\)\.catch\(\(\)=>\{\}\)\}/);
  // A caller-supplied Idempotency-Key (Capsule: one stable key per message, reused on retries) is validated like any key.
  assert.match(js,/const KEY_RE=\/\^\[A-Za-z0-9_-\]\{16,100\}\$\/;/);assert.match(js,/acceptsKey:true/);
  assert.match(js,/if\(given!==undefined&&!KEY_RE\.test\(given\)\)throw/);assert.match(js,/const key=given\?\?newKey\(\);/);
