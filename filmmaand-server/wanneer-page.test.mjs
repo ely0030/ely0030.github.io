@@ -73,12 +73,14 @@ test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and
 });
 
 test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle cap, backoff 6 s / 12 s then off',()=>{
- const src=/const HOT_MS=[^\n]*\n(function hotDelay[\s\S]*?\n\})/.exec(js);assert.ok(src,'hotDelay not found');
+ const src=/const HOT_MS=[^\n]*\n(?:\/\/[^\n]*\n)*(function hotDelay[\s\S]*?\n\})/.exec(js);assert.ok(src,'hotDelay not found');
  const box={};vm.runInNewContext(js.match(/const HOT_MS=[^\n]*/)[0]+'\n'+src[1]+';this.d=hotDelay',box);const d=box.d;
- const base={visible:true,focused:true,chatOpen:true,newestAge:10e3,sinceActive:60e3,fails:0};
+ const base={voted:true,visible:true,focused:true,chatOpen:true,newestAge:10e3,sinceActive:60e3,fails:0};
  assert.equal(d(base),3e3);
- for(const [k,v] of [['visible',false],['focused',false],['chatOpen',false],['newestAge',120e3],['newestAge',Infinity],['newestAge',NaN],['sinceActive',20*60e3+1]])assert.equal(d({...base,[k]:v}),null,k+'='+v);
+ for(const [k,v] of [['voted',false],['visible',false],['focused',false],['chatOpen',false],['newestAge',120e3],['newestAge',Infinity],['newestAge',NaN],['sinceActive',20*60e3+1]])assert.equal(d({...base,[k]:v}),null,k+'='+v);
  assert.equal(d({...base,newestAge:119e3}),3e3);assert.equal(d({...base,sinceActive:20*60e3}),3e3);
+ // Alec's opening sticker never counts as fresh; the state passes the page's own vote flag.
+ assert.match(js,/if\(!chatMsgs\[i\]\.alec\)return Date\.now\(\)\+skew-Date\.parse\(chatMsgs\[i\]\.at\)/);assert.match(js,/const hotState=\(\)=>\(\{voted,/);
  assert.equal(d({...base,fails:1}),6e3);assert.equal(d({...base,fails:2}),12e3);assert.equal(d({...base,fails:3}),null);
 });
 

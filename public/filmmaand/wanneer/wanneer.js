@@ -308,13 +308,16 @@ document.addEventListener('visibilitychange',fresh);window.addEventListener('foc
 // status changes. Cost (docs/netlify-cost/FINDINGS.md, ~0.3-0.5 GB-s per read at 1024 MB): a busy hour with 10 tabs all hot
 // is at most 10 x 1200 = 12,000 reads ~ 1-1.7 GB-hr; realistic chat bursts are a fraction of that; idle = 0.
 const HOT_MS=120e3,HOT_EVERY=3e3,HOT_IDLE_CAP=20*60e3;
-function hotDelay({visible,focused,chatOpen,newestAge,sinceActive,fails}){
- if(!visible||!focused||!chatOpen||!(newestAge<HOT_MS)||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
+// voted: the chat is only on screen after voting (the eggs render nothing before), so a non-voter never runs hot mode.
+function hotDelay({voted,visible,focused,chatOpen,newestAge,sinceActive,fails}){
+ if(!voted||!visible||!focused||!chatOpen||!(newestAge<HOT_MS)||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
  return fails===1?6e3:fails===2?12e3:HOT_EVERY;
 }
 let hotTimer=0,hotStarted=0,lastInput=0,hotFails=0;
-const newestAge=()=>{const m=chatMsgs[chatMsgs.length-1];return m?Date.now()+skew-Date.parse(m.at):Infinity};
-const hotState=()=>({visible:document.visibilityState==='visible',focused:document.hasFocus(),chatOpen:chatOpenNow(),newestAge:newestAge(),
+// Freshness counts people's messages only: Alec's opening sticker (posted by the server when the poll opens) never makes the
+// first two minutes of a new poll 'hot'.
+const newestAge=()=>{for(let i=chatMsgs.length-1;i>=0;i--)if(!chatMsgs[i].alec)return Date.now()+skew-Date.parse(chatMsgs[i].at);return Infinity};
+const hotState=()=>({voted,visible:document.visibilityState==='visible',focused:document.hasFocus(),chatOpen:chatOpenNow(),newestAge:newestAge(),
  sinceActive:hotStarted?Date.now()-Math.max(hotStarted,lastInput):0,fails:hotFails});
 async function liteLoad(){
  try{const b=await call('GET',null,null,API+'?since='+chatCursor+'&lite=1');lastRead=Date.now();
