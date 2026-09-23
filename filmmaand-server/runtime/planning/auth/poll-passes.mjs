@@ -1,4 +1,5 @@
 import {randomBytes,createHash} from 'node:crypto';
+import {nightEnd} from '../date-coordination.mjs';
 // Poll pass: a per-recipient, per-poll bearer that identifies ONE participant for ONE date poll.
 // It is never a session. Only its SHA-256 is stored (same house pattern as auth_invites).
 // Resolving a pass is a pure read: it never records use, never rate-limits, never consumes, so a
@@ -14,7 +15,10 @@ export const PASS_ACTIONS=['issue-passes','revoke-passes','list-passes','list-av
 // against the loaded poll by passLive). Its row carries only a hard ceiling: 24h after the last candidate night ends.
 const DAY=86400e3;
 export const passExpiry=poll=>new Date(poll.pick==='manual'?Date.parse(poll.window.end)+2*DAY:Date.parse(poll.closesAt)+PASS_GRACE_MS).toISOString();
-export const passLive=(poll,now)=>poll.pick!=='manual'||poll.status==='open'||(!!poll.closedAt&&Date.parse(now)<Date.parse(poll.closedAt)+PASS_GRACE_MS);
+// Manual poll: live while open; after close/pick 24h read-only; after a PICK also until the end of the picked night (chat
+// stays open) plus the same 24h. The stored hard cap (window.end + 2 days) always covers that: a pick lies inside the window.
+export const passLive=(poll,now)=>poll.pick!=='manual'||poll.status==='open'||(!!poll.closedAt&&Date.parse(now)<Date.parse(poll.closedAt)+PASS_GRACE_MS)
+ ||(poll.status==='confirmed'&&!!poll.scheduledDate&&Date.parse(now)<nightEnd(poll.scheduledDate)+PASS_GRACE_MS);
 export const isPassToken=t=>typeof t==='string'&&/^[A-Za-z0-9_-]{43}$/.test(t);
 // One message for malformed, unknown, revoked, expired, wrong plan and wrong poll: the caller learns nothing about existence.
 export const passInvalid=()=>fail(401,'pass_invalid','Deze link werkt niet (meer). Vraag de organisator om een nieuwe link.');

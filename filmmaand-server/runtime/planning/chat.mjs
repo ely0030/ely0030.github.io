@@ -1,7 +1,7 @@
 // Text group chat on the date poll (phase 3, Chris 23 Sept), the same channel as the shared doodles. Stored on the poll
 // (p.datePoll.chat), so a new poll starts empty. A pass (or session) may only post as its own person. Never mails, never
 // notifies. Rate limit per person is computed from the stored messages at write time, so reads never write.
-import {answersOpen} from './date-coordination.mjs';
+import {chatOpen} from './date-coordination.mjs';
 
 const fail=(status,code,message,details)=>{throw Object.assign(new Error(message),{status,code,...(details?{details}:{})})};
 const strict=(b,keys)=>b&&typeof b==='object'&&!Array.isArray(b)&&Object.keys(b).every(k=>keys.includes(k));
@@ -23,7 +23,7 @@ export function writeChat(p,a,b,now,display){
  const q=p.datePoll;
  if(!strict(b,['pollId','text'])||typeof b.pollId!=='string')fail(400,'chat','Dit bericht kan niet worden verstuurd.');
  if(!q||q.mode!=='availability'||q.id!==b.pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');
- if(!answersOpen(q,now))fail(409,'date_poll_closed','Deze poll is gesloten.');
+ if(!chatOpen(q,now))fail(409,'date_poll_closed','Deze chat is gesloten.');// open until the end of the picked night
  if(!display(p,a))fail(409,'onboarding_required','Kies eerst je naam en avatar.');
  const text=normaliseText(b.text),chat=(q.chat||={seq:0,messages:[]}),t=Date.parse(now);
  if(chat.messages.length>=CHAT_MAX_MESSAGES)fail(409,'chat_full','Deze chat is vol.');
@@ -36,9 +36,9 @@ function view(p,m,me,display){const who=display(p,m.a);return {id:m.id,seq:m.seq
 
 // The reader's view: visible messages after `since` (a seq; 0 = everything), the new cursor, and every hidden id so a
 // client can remove one it already shows. Only people with a display profile, like the names elsewhere.
-export function chatView(p,me,display,since=0){
+export function chatView(p,me,display,since=0,now){
  const chat=p.datePoll?.chat,all=chat?.messages||[];
- return {messages:all.filter(m=>m.seq>since&&!m.hidden&&display(p,m.a)).map(m=>view(p,m,me,display)),cursor:chat?.seq||0,hidden:all.filter(m=>m.hidden).map(m=>m.id)};
+ return {open:!!now&&chatOpen(p.datePoll,now),messages:all.filter(m=>m.seq>since&&!m.hidden&&display(p,m.a)).map(m=>view(p,m,me,display)),cursor:chat?.seq||0,hidden:all.filter(m=>m.hidden).map(m=>m.id)};
 }
 export const parseSince=v=>/^\d{1,6}$/.test(v||'')?Number(v):0;
 

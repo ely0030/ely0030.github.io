@@ -35,6 +35,14 @@ export const declined=(q,v)=>{const nights=days(q.window.start,q.window.end);ret
 // Organiser reminder flag: a manual poll still open from the day before its last night.
 export const needsPick=(q,now)=>q?.mode==='availability'&&q.pick==='manual'&&q.status==='open'&&localDate(Date.parse(now)+86400000)>=q.window.end;
 // Answers are accepted while the poll is open and, when it has a deadline, before it.
+// The end of a night in Amsterdam: the instant local midnight after `date` (DST-safe). Chat stays open until then
+// after the organiser picks that night (Cameo/Chris, 23 Sept: that's when "ik neem chips mee" happens).
+export function nightEnd(date){const next=new Date(Date.parse(date+'T00:00:00Z')+864e5).toISOString().slice(0,10),base=Date.parse(next+'T00:00:00Z');
+ for(const h of [1,2,0,3]){const t=base-h*3600e3,p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(t)).map(x=>[x.type,x.value]));
+  if(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`===next+'T00:00')return t}
+ return base}
+// Chat: open while answers are, and after a pick until the end of the picked night. Votes and doodles close at the pick.
+export const chatOpen=(q,now)=>answersOpen(q,now)||(q?.status==='confirmed'&&!!q.scheduledDate&&Date.parse(now)<nightEnd(q.scheduledDate));
 export const answersOpen=(q,now)=>q?.status==='open'&&(q.closesAt==null||Date.parse(now)<Date.parse(q.closesAt));
 export function ownAvailability(p,a){const q=p.datePoll,v=q.votes?.[a];return {pollId:q.id,revision:v?.revision||0,availability:{...v?.availability},favourite:v?.favourite||null};}
 export function rankAvailability(q,eligible=()=>true){return days(q.window.start,q.window.end).map(date=>{let available=0,unavailable=0,favourites=0;for(const [a,v]of Object.entries(q.votes||{})){if(!eligible(a))continue;if(v.availability?.[date]===true){available++;if(v.favourite===date)favourites++;}if(v.availability?.[date]===false)unavailable++;}return {date,available,unavailable,favourites};}).sort((a,b)=>b.available-a.available||b.favourites-a.favourites||a.date.localeCompare(b.date));}

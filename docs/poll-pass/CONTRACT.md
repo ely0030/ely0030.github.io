@@ -17,7 +17,9 @@ Branch `feat/poll-pass`. Design: `kits/invitations/POLL-PASS.md` (Cameo, 22 Sept
   participant still has a name/avatar (is onboarded).
 - **Expiry** depends on how the poll is decided:
   - **Manual poll** (`pick:"manual"`, the organiser picks; this is the September poll): valid **while the
-    poll is open**, then **24h read-only** after the organiser picks or closes it (`closedAt + 24h`). During
+    poll is open**, then **24h read-only** after the organiser closes it (`closedAt + 24h`). After a **pick** it also
+    stays valid until the **end of the picked night** (Amsterdam midnight), when the chat closes, plus the same 24h
+    read-only (Cameo/Chris, 23 Sept). Voting and doodles close at the pick; the chat does not. During
     those 24h the GET works (shows the picked night) and the PUT returns `409 date_poll_closed`. A hard
     ceiling is stored with the pass: `window.end + 2 days` 00:00Z (about 24h after the last night ends),
     which is the `expiresAt` that `issue-passes`/`list-passes` report. `list-passes` compares against that
@@ -294,7 +296,8 @@ Idempotency-Key: <16–100 chars>           # X-Filmmaand-Reset-Generation as fo
   bidi-override characters (incl. tab, U+2028/2029) → `400 chat`. **Render with `textContent`**: HTML stays text.
 - **Rate limit** per person: 5 per minute and 40 per hour → `429 chat_rate` with `details.retryAfter` (seconds). It is
   computed from the stored messages at write time, so reads never write. Per poll at most 400 messages
-  (`409 chat_full`). Only while the poll takes answers (`409 date_poll_closed` after a pick/close).
+  (`409 chat_full`). Open while the poll takes answers **and after a pick until the end of the picked night**
+  (Amsterdam 23:59; `chat.open` on the GET says which). A close without a pick closes it at once (`409 date_poll_closed`).
 - 200 → `{"message":{id,seq,name,avatarId,at,t,text,self:true},"chat":{"messages":[…seq > since…],"cursor":<n>,"hidden":[ids]}}`.
   The receipt stores only `{message}`, so an exact retry returns just that (keep your cursor and dedupe by `id`).
 - **Read** = the date-poll GET with `?since=<cursor>` (pass or session): top-level

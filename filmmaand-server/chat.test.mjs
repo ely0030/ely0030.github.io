@@ -35,7 +35,7 @@ test('post as yourself, read with a cursor: the POST returns the chat since your
  assert.deepEqual(reply.body.chat.messages.map(m=>[m.name,m.text,!!m.self]),[['Daan','ja!\nzaterdag',true]]);assert.equal(reply.body.chat.cursor,2);
  const all=(await f.read('Lotte')).body.chat;assert.deepEqual(all.messages.map(m=>[m.seq,m.name,!!m.self]),[[1,'Lotte',true],[2,'Daan',false]]);assert.equal(all.cursor,2);
  assert.deepEqual((await f.read('Lotte',1)).body.chat.messages.map(m=>m.seq),[2]);
- assert.deepEqual((await f.read('Lotte',2)).body.chat,{messages:[],cursor:2,hidden:[]});
+ assert.deepEqual((await f.read('Lotte',2)).body.chat,{open:true,messages:[],cursor:2,hidden:[]});
  // A bad cursor reads as 0 (everything), never an error.
  assert.equal((await f.read('Lotte','abc')).body.chat.messages.length,2);
  // The public plan GET has no chat.
@@ -97,6 +97,27 @@ test('organiser hide: gone for everyone (the hidden id is listed so clients remo
  assert.deepEqual((await f.read('Daan')).body.chat.messages.map(x=>x.text),['oeps','hoi']);
  assert.equal((await f.request(POLL,'POST',{action:'hide-message',pollId:f.pollId,messageId:'msg-nope',hidden:true},f.admin('hide-message-key-0003'))).body.error.code,'message_unknown');
  assert.equal(notices(),before);
- assert.equal((await f.request(POLL,'POST',{action:'pick',pollId:f.pollId,date:NIGHTS[2]},f.admin('pick-chat-poll-00001'))).status,200);
- tick(f,60);assert.equal((await f.say('Lotte','na de keuze')).body.error.code,'date_poll_closed');
+});
+
+test('after the pick the chat stays open until the end of the picked night (Amsterdam); voting and doodles are closed',async()=>{
+ const f=await fixture();await f.say('Lotte','wanneer?');
+ // Pick the LAST night (za 26): the hardest case for the pass hard cap (window.end + 2 days).
+ assert.equal((await f.request(POLL,'POST',{action:'pick',pollId:f.pollId,date:NIGHTS[2]},f.admin('pick-chat-poll-00002'))).status,200);
+ const vote=(k)=>f.request(POLL,'PUT',{pollId:f.pollId,revision:0,availability:{[NIGHTS[2]]:true},favourite:null},{'X-Filmmaand-Poll-Pass':f.pass.Daan,'Idempotency-Key':k});
+ const doodle=(k)=>f.request('plans/home-picker-lab/date-poll-doodle','PUT',{pollId:f.pollId,s:[['k',[[1,1]]]]},{'X-Filmmaand-Poll-Pass':f.pass.Daan,'Idempotency-Key':k});
+ tick(f,60);
+ assert.equal((await f.say('Daan','ik neem chips mee')).status,200);assert.equal((await f.read('Daan')).body.chat.open,true);
+ assert.equal((await vote('vote-after-pick-0001')).body.error.code,'date_poll_closed');// voting stays closed while chat is open
+ assert.equal((await doodle('doodle-after-pick-01')).body.error.code,'date_poll_closed');
+ // za 26 September 23:59 Amsterdam (21:59Z, summer time): still open.
+ f.clock.now='2026-09-26T21:59:00.000Z';assert.equal((await f.say('Lotte','tot zo!')).status,200);
+ assert.equal((await vote('vote-after-pick-0002')).body.error.code,'date_poll_closed');
+ // 00:00 Amsterdam (22:00Z): the chat closes; the pass is read-only for 24h more.
+ f.clock.now='2026-09-26T22:00:00.000Z';assert.equal((await f.say('Lotte','te laat')).body.error.code,'date_poll_closed');
+ const late=await f.read('Daan');assert.equal(late.status,200);assert.equal(late.body.chat.open,false);assert.deepEqual(late.body.chat.messages.map(m=>m.text),['wanneer?','ik neem chips mee','tot zo!']);
+ f.clock.now='2026-09-27T21:59:00.000Z';assert.equal((await f.read('Daan')).status,200);// grace, still under the hard cap (28 Sept 00:00Z)
+ f.clock.now='2026-09-27T22:00:00.000Z';assert.equal((await f.read('Daan')).body.error.code,'pass_invalid');
+ // A poll CLOSED without a pick closes the chat at once (no night to talk about).
+ const g=await fixture();assert.equal((await g.request(POLL,'POST',{action:'close',pollId:g.pollId},g.admin('close-chat-poll-0001'))).status,200);
+ assert.equal((await g.say('Lotte','hallo?')).body.error.code,'date_poll_closed');assert.equal((await g.read('Lotte')).body.chat.open,false);
 });

@@ -240,11 +240,12 @@ test('manual poll: the organiser picks, the night goes on the programme; pass ho
  assert.deepEqual(p.coordinationEvents.map(e=>[e.type,e.scheduledDate]),[['date-confirmed',VR]]);
  assert.equal((await f.request('plans/proof')).body.programme.some(n=>n.id===night.id),true);
  assert.equal((await f.request('plans/proof/date-poll','POST',pickBody(f,ZA),f.admin('pick-again-0000001'))).body.error.code,'date_poll_closed');
- // After the pick: 24h read-only grace for pass holders, then the link stops working.
- f.clock.now='2026-09-25T14:59:00.000Z';
+ // After the pick (Cameo/Chris 23 Sept): the pass stays live until the end of the picked night (vr 25, Amsterdam) for
+ // the chat, then 24h read-only, so until 26 Sept 22:00Z. Voting is closed from the pick on.
+ f.clock.now='2026-09-26T21:59:00.000Z';
  const late=await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor));assert.equal(late.status,200);assert.equal(late.body.poll.scheduledDate,VR);
  assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(1,[ZA]),f.pass(f.noor,{'Idempotency-Key':'noor-after-pick-001'}))).body.error.code,'date_poll_closed');
- f.clock.now='2026-09-25T15:00:00.000Z';
+ f.clock.now='2026-09-26T22:00:00.000Z';
  const gone=await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor));assert.equal(gone.status,401);assert.equal(gone.body.error.code,'pass_invalid');
  assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(1,[ZA]),f.pass(f.joep,{'Idempotency-Key':'joep-after-pick-001'}))).body.error.code,'pass_invalid');
  // The session path is not limited by the pass grace.

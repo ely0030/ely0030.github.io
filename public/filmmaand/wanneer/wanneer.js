@@ -230,7 +230,9 @@ window.filmmaandDoodles={
 // with textContent, never innerHTML.
 let chatMsgs=[],chatCursor=0,chatFor=null;const chatSubs=new Set();
 const chatItem=m=>({id:m.id,seq:m.seq,name:m.name,avatarId:m.avatarId,avatar:avatar(m.avatarId),at:m.at,t:m.t,text:m.text,...(m.self?{self:true}:{})});
-function chatList(){return {canSend:!!data?.viewer&&open(),messages:chatMsgs.map(chatItem)}}
+// The chat outlives the vote: after the pick it stays open until the end of the picked night (server says chat.open).
+const chatOpenNow=()=>!!data?.viewer&&(data?.chat?.open??open());
+function chatList(){return {canSend:chatOpenNow(),messages:chatMsgs.map(chatItem)}}
 function announceChat(){const l=chatList();for(const cb of chatSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-chat',{detail:l}))}
 function mergeChat(c){if(!c)return;const hidden=new Set(c.hidden||[]),byId=new Map(chatMsgs.map(m=>[m.id,m]));for(const m of c.messages||[])byId.set(m.id,m);
  chatMsgs=[...byId.values()].filter(m=>!hidden.has(m.id)).sort((a,b)=>a.seq-b.seq);chatCursor=Math.max(chatCursor,c.cursor||0);announceChat()}
@@ -242,7 +244,7 @@ window.filmmaandChat={
  list:chatList,
  subscribe(cb){chatSubs.add(cb);try{cb(chatList())}catch{}return ()=>chatSubs.delete(cb)},
  async send(text,retried=false){
-  if(!pollId||!open())throw Object.assign(new Error('Stemmen is gesloten.'),{code:'date_poll_closed'});
+  if(!pollId||!chatOpenNow())throw Object.assign(new Error('De chat is gesloten.'),{code:'date_poll_closed'});
   let r;
   try{r=await call('POST',{pollId,text},newKey(),CHAT_API+'?since='+chatCursor)}
   catch(e){if(!retried&&dropPass(e)&&await load())return window.filmmaandChat.send(text,true);throw e}// chat_rate → e.details.retryAfter (seconds)
