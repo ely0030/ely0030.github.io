@@ -6,6 +6,7 @@ import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,g
 import {isSessionToken,isAnonymousBearer,isParticipantActor} from './auth/credentials.mjs';
 import {passInvalid,passLive} from './auth/poll-passes.mjs';
 import {writeDoodle,publicDoodles,organiserDoodles,hideDoodle} from './doodles.mjs';
+import {writeChat,chatView,organiserChat,hideMessage} from './chat.mjs';
 // Warm entries resolve without any provider call, so a warm instance still enriches the whole
 // plan inside this budget. A cold one stops early and serves what it has instead of blocking a
 // public poll on one MDBList/TMDB round trip per film; the next poll continues where it left off.
@@ -29,12 +30,12 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  // Public display identity: account profile for participants (follows profile edits), the per-plan snapshot for anonymous actors.
  const datePollDisplay=(p,a)=>isParticipantActor(a)?identity?.publicProfile?.(a)||null:null;
  // Organiser projection: names per night plus needsPick (a manual poll still undecided from the day before its last night).
- const organizerPoll=p=>{const v=publicDatePoll(p,null,datePollDisplay,{names:true});return v?.mode==='availability'?{...v,needsPick:needsPick(p.datePoll,now()),doodles:organiserDoodles(p,datePollDisplay)}:v};
+ const organizerPoll=p=>{const v=publicDatePoll(p,null,datePollDisplay,{names:true});return v?.mode==='availability'?{...v,needsPick:needsPick(p.datePoll,now()),doodles:organiserDoodles(p,datePollDisplay),chat:organiserChat(p,datePollDisplay)}:v};
  const currentPoll=(p,pollId)=>{if(!p.datePoll||p.datePoll.mode!=='availability'||p.datePoll.id!==pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');return p.datePoll};
  // Pass holders who have not answered yet. Anyone who answered, including "none of these nights", is left out.
  const unanswered=(q,holders)=>holders.filter(h=>!responded(q,q.votes?.['p_'+h.participantId]));
  const ownOnly=r=>({doodle:r.doodle});
- const datePollView=(p,a)=>({...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:p.datePoll?.mode==='availability'?publicDoodles(p,a,datePollDisplay):[]});
+ const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since):{messages:[],cursor:0,hidden:[]}}};
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
  const responseDates=r=>Array.isArray(r.dates)?r.dates:r.start&&r.end?days(r.start,r.end):[];
@@ -118,10 +119,10 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
    const planned=plannedIds(p);if(!Array.isArray(b?.shortlist)||b.shortlist.length!==3||new Set(b.shortlist).size!==3||b.shortlist.some(x=>!p.options.some(o=>o.id===x)||planned.has(x)))fail(400,'shortlist','Kies drie verschillende, nog niet geplande opties.');p.round={id:'round-'+hash(id+':'+key).slice(0,20),revision:0,shortlist:[...b.shortlist],derived:false,since:now()};return {round:roundOf(p)};
   })},
   // A date for the open round is not a programme decision and never selects/locks a film.
-  async getDatePoll(id,token){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return datePollView((await loadFor(id,a)).data,a);},
+  async getDatePoll(id,token,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return datePollView((await loadFor(id,a)).data,a,since);},
   // Poll-pass identity (PUT returns exactly the receipted own answer, like voteDatePoll, so a replay is byte-exact): the api layer resolved the pass to exactly one participant actor and the poll it was minted for.
   // The pass works only while that poll is the plan's current poll; otherwise it is indistinguishable from an unknown pass.
-  async getDatePollAs(id,a,pollId){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return datePollView(p,a);},
+  async getDatePollAs(id,a,pollId,since=0){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return datePollView(p,a,since);},
   async voteDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();const own=await mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return writeDatePoll(p,a,b,now())});return own;},
   // Organiser pass minting needs the current poll's identity and deadline; nothing personal.
   async datePollInfo(id){const q=(await load(id)).data.datePoll;return q?{id:q.id,mode:q.mode||null,pick:q.pick||'auto',status:q.status,window:q.window?{...q.window}:null,closesAt:q.closesAt||null}:null;},
@@ -130,8 +131,12 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
   // Shared doodles: add or replace the caller's OWN doodle (pass or session). Same receipt pattern as the vote; no mail.
   async doodleDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-doodle',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return writeDoodle(p,a,b,now(),datePollDisplay)},ownOnly);},
   async doodleDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');if(!datePollDisplay({},a))fail(409,'onboarding_required','Kies eerst je naam en avatar.');return mutate(id,a,key,{operation:'date-poll-doodle',body:b},p=>writeDoodle(p,a,b,now(),datePollDisplay),ownOnly);},
+  // Text chat (phase 3): post as yourself only; the response adds the chat since the caller's cursor, the receipt keeps
+  // only {message}. No mail.
+  async chatDatePollAs(id,a,pollId,key,b,since=0){if(!isParticipantActor(a))passInvalid();return mutate(id,a,key,{operation:'date-poll-chat',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return {...writeChat(p,a,b,now(),datePollDisplay),chat:chatView(p,a,datePollDisplay,since)}},r=>({message:r.message}));},
+  async chatDatePoll(id,token,key,b,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-chat',body:b},p=>({...writeChat(p,a,b,now(),datePollDisplay),chat:chatView(p,a,datePollDisplay,since)}),r=>({message:r.message}));},
   async voteDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>writeDatePoll(p,a,b,now()));},
-  async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{if(b?.action==='hide-doodle'){hideDoodle(p,b);return {datePoll:organizerPoll(p)};}setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)});return {datePoll:organizerPoll(p)};});},
+  async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{if(b?.action==='hide-doodle'){hideDoodle(p,b);return {datePoll:organizerPoll(p)};}if(b?.action==='hide-message'){hideMessage(p,b);return {datePoll:organizerPoll(p)};}setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)});return {datePoll:organizerPoll(p)};});},
   // Organiser read (admin bearer or organiser cookie, checked by the api layer): the poll with names per night.
   async datePollOrganizerView(id,pollId){const p=(await load(id)).data;currentPoll(p,pollId);return {datePoll:organizerPoll(p)};},
   // Organiser reads/actions for reminders (auth checked by the api layer / admin()). holders: working passes for this poll.

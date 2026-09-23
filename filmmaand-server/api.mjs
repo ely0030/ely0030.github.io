@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {createPollPasses,PASS_ACTIONS} from './runtime/planning/auth/poll-passes.mjs';
 import {queuePollNudges} from './event-notifications.mjs';
 import {participantActor} from './runtime/planning/auth/credentials.mjs';
+import {parseSince} from './runtime/planning/chat.mjs';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
 import {transact,openState} from './state.mjs';
 import {createPlanningService} from './runtime/planning/service.mjs';
@@ -73,7 +74,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
     if(typeof generation!=='string'||!generation||generation.length>128)throw error(503,'reset_generation','De site wordt opnieuw voorbereid.');
     const headers={'X-Filmmaand-Reset-Generation':generation};
     // Everything on the date-poll route names a person (own answers, a pass, a minted link), errors included: never cacheable.
-    if(/^\/api\/plans\/[^/]+\/date-poll(?:-doodle)?$/.test(path))headers['Cache-Control']='private, no-store';
+    if(/^\/api\/plans\/[^/]+\/date-poll(?:-doodle|-chat)?$/.test(path))headers['Cache-Control']='private, no-store';
     const auth=createAuthService({store:c.authStore,avatars,now,config:authConfig,mailer:{async send(message){if(!queueMail)throw error(503,'mail_unavailable','E-mail is nog niet ingesteld.');await queueMail(c,message,{plainTextTestToken:request.headers.get('x-filmmaand-plain-text-test')})}}});
     const router=createAuthRouter({auth,transfer:createActorTransfer({store:c.plans}),origins:[origin],cookie:{secure:true}});
     const send=(status,value)=>({status,body:value,headers});
@@ -114,7 +115,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
 
      const notifications=path.match(/^\/api\/notifications(?:\/(read|preferences))?$/);
      if(notifications){const account=auth.authenticate(router.credential(req)?.token);if(!account.onboarded)throw error(409,'onboarding_required','Kies eerst je naam en avatar.');if(method!=='GET')router.csrf(req);return send(200,notificationRequest(c,account.participantId,{method,part:notifications[1],body,url,at:now?now():new Date().toISOString()}));}
-     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|date-poll-doodle|coordination))?$/);
+     const match=path.match(/^\/api\/plans\/([a-z0-9-]+)(?:\/(response|confirmation|suggestions|profile|images|vote|round|round-date|programme|proposals|date-poll|date-poll-doodle|date-poll-chat|coordination))?$/);
      if(!match)return send(404,{error:{code:'not_found'}});
      const [,id,part]=match,cred=router.credential(req);
      if(cred?.transport==='cookie'&&method!=='GET')router.csrf(req);
@@ -125,6 +126,15 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
      // A read: the holders query writes nothing.
      const withInvitees=r=>{if(r?.pollId){const names=createPollPasses({store:c.authStore,accounts:auth,now}).holders(id,r.pollId).map(h=>auth.publicProfile(participantActor(h.participantId))?.name).filter(Boolean);
       r.invitees=[...new Set(names)].sort((x,y)=>x.localeCompare(y,'nl'))}else if(r)r.invitees=[];return r};
+     if(part==='date-poll-chat'){
+      // Text chat: POST only, as yourself (pass or session). ?since=<cursor> → the response carries the chat since then.
+      if(method!=='POST')return send(405,{error:{code:'method'}});
+      const since=parseSince(url.searchParams.get('since')),pass=req.headers['x-filmmaand-poll-pass'],key=req.headers['idempotency-key'];
+      const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);let value;
+      if(pass!==undefined){const holder=createPollPasses({store:c.authStore,accounts:auth,now}).resolve(pass,id);value=await service.chatDatePollAs(id,participantActor(holder.participantId),holder.pollId,key,body,since)}
+      else value=await service.chatDatePoll(id,token,key,body,since);
+      commitActivity(c,activityBefore,activityAt);return send(200,value);
+     }
      if(part==='date-poll-doodle'){
       // Shared doodles: PUT only. With a pass the holder may add/replace only their OWN doodle for the pass's poll.
       if(method!=='PUT')return send(405,{error:{code:'method'}});
@@ -161,13 +171,13 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
       const pass=req.headers['x-filmmaand-poll-pass'];
       if(pass!==undefined){
        const holder=passes.resolve(pass,id),a=participantActor(holder.participantId);
-       if(method==='GET')return send(200,withInvitees(await service.getDatePollAs(id,a,holder.pollId)));
+       if(method==='GET')return send(200,withInvitees(await service.getDatePollAs(id,a,holder.pollId,parseSince(url.searchParams.get('since')))));
        if(method!=='PUT')return send(405,{error:{code:'method'}});
        const activityAt=now?now():new Date().toISOString(),activityBefore=captureActivity(c,activityAt);
        const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
       }
      }
-     if(method==='GET'&&part==='date-poll')return send(200,withInvitees(await service.getDatePoll(id,token||null)));
+     if(method==='GET'&&part==='date-poll')return send(200,withInvitees(await service.getDatePoll(id,token||null,parseSince(url.searchParams.get('since')))));
      if(method==='GET'){const fn={response:'own',profile:'getProfile',vote:'voteView',proposals:'proposals','date-poll':'getDatePoll',coordination:'coordination'}[part]||'get';const result=await service[fn](id,token||null);if(fn==='get'){const fixture=c.state.plans[id]?.data.fixtureGroups?.['social-friends-v1'];if(fixture)result.demo={active:true,label:'Voorbeeldgegevens · fictieve deelnemers',participants:fixture.actors.length}}return send(200,result)}
      const fn=mutations[method+':'+part];if(!fn)return send(405,{error:{code:'method'}});
      // Public launch requires an onboarded account for participant writes. Organizer actions retain their separate secret validator.

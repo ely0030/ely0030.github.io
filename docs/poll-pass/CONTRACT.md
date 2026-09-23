@@ -279,6 +279,32 @@ Idempotency-Key: <16–100 chars>           # X-Filmmaand-Reset-Generation as fo
   hidden until unhidden. The author doesn't see it either. `list-availability` (and every organiser `datePoll`
   response) carries `doodles:[{id,name,at,hidden,bytes}]` without strokes. Unknown id → `404 doodle_unknown`.
 
+## Text chat (phase 3, same channel)
+
+```
+POST /filmmaand/api/plans/<planId>/date-poll-chat?since=<cursor>
+X-Filmmaand-Poll-Pass: <token>            # or the session cookie (onboarded account)
+Idempotency-Key: <16–100 chars>           # X-Filmmaand-Reset-Generation as for any write
+{"pollId":"date-poll-…","text":"movie zaterdag?"}
+```
+
+- **Own person only.** The strict body `{pollId, text}` has no field for author, name, time or seq; the server stamps
+  them. A pass writes as its holder; a dead pass → `401 pass_invalid`. Only `POST` (other methods → `405`).
+- **Text.** Plain text, NFC, `\r` dropped, trimmed; 1..500 code points, at most 9 lines (`400 chat_too_long`). Control and
+  bidi-override characters (incl. tab, U+2028/2029) → `400 chat`. **Render with `textContent`**: HTML stays text.
+- **Rate limit** per person: 5 per minute and 40 per hour → `429 chat_rate` with `details.retryAfter` (seconds). It is
+  computed from the stored messages at write time, so reads never write. Per poll at most 400 messages
+  (`409 chat_full`). Only while the poll takes answers (`409 date_poll_closed` after a pick/close).
+- 200 → `{"message":{id,seq,name,avatarId,at,t,text,self:true},"chat":{"messages":[…seq > since…],"cursor":<n>,"hidden":[ids]}}`.
+  The receipt stores only `{message}`, so an exact retry returns just that (keep your cursor and dedupe by `id`).
+- **Read** = the date-poll GET with `?since=<cursor>` (pass or session): top-level
+  `chat:{messages:[{id,seq,name,avatarId,at,t,text,self?}], cursor, hidden:[ids]}`. `since` absent or invalid = 0 =
+  everything. `hidden` lists every hidden id so a client can remove one it already shows. Never on the public plan GET.
+- **Never mail**, private, `no-store`, no cookie.
+- **Kill switch (organiser):** `POST …/date-poll` `{"action":"hide-message","pollId","messageId","hidden":true|false}`
+  (+ `Idempotency-Key`). Hidden for everyone, including the writer. Organiser views carry `chat:[{id,name,at,text,hidden}]`;
+  Beheer lists them under "Berichten" with Verbergen / Weer tonen. Unknown id → `404 message_unknown`.
+
 **Cadence (Chris, "B").** The page reads on open, on tab visible or window focus (at most once per 15 s), and twice after a
 doodle send (+20 s, +60 s, visible tab only). Nothing else is timed: an idle page makes zero requests.
 
