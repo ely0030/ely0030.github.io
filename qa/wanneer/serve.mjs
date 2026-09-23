@@ -11,7 +11,9 @@ const PORT=Number(process.env.WANNEER_QA_PORT||4419),ORIGIN='http://localhost:'+
 const c=openState(emptyState());
 await createPlanningService({store:c.plans,adminToken:'isolated-admin'}).seed({id:'home-picker-lab',title:'Isolated wanneer preview',window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c'].map(id=>({id,title:'Fictional '+id}))});
 const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}},async setJSON(k,v,{onlyIfMatch}){if(onlyIfMatch!==String(this.etag))return {modified:false};this.data=structuredClone(v);this.etag++;return {modified:true}}};c.close();
-let code;const clock=process.env.QA_NOW||'2026-09-23T10:00:00.000Z';
+// The QA clock is fixed (reproducible), but steps one minute on each organiser action below, so things said before and
+// after a pick get different times (Capsule's timeline splits at pickedAt).
+let code,clock=process.env.QA_NOW||'2026-09-23T10:00:00.000Z';const tick=()=>{clock=new Date(Date.parse(clock)+60e3).toISOString()};
 const organizerIds=[];const api=createApi({store,blobs:{},adminToken:'isolated-admin',organizerIds,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock});
 async function request(path,method='GET',body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'qa-wanneer'});return {status:r.status,body:await r.json(),headers:r.headers}}
 const admin=key=>({Authorization:'Bearer isolated-admin',...(key?{'Idempotency-Key':key}:{})});
@@ -27,7 +29,7 @@ const pass=n=>new URL(links[n]).searchParams.get('pas');
 const vote=async(n,yes,key)=>{const r=await request('plans/home-picker-lab/date-poll','PUT',{pollId,revision:0,availability:Object.fromEntries(NIGHTS.map(d=>[d,yes.includes(d)])),favourite:null},{'X-Filmmaand-Poll-Pass':pass(n),'Idempotency-Key':key});if(r.status!==200)throw Error(JSON.stringify(r.body))};
 await vote('Daan (voorbeeld)',[NIGHTS[0],NIGHTS[2]],'qa-wanneer-daan-0001');await vote('Mo (voorbeeld)',[NIGHTS[2]],'qa-wanneer-mo-00001');
 const index=()=>`<!doctype html><meta charset="utf-8"><title>wanneer · QA</title><body style="font:15px system-ui;margin:40px">
-<h1>/filmmaand/wanneer/ · isolated QA (in-memory, fictional people, no mail)</h1><p>Poll ${pollId}, clock ${clock}. Daan and Mo have answered.</p><ul>
+<h1>/filmmaand/wanneer/ · isolated QA (in-memory, fictional people, no mail)</h1><p>Poll ${pollId}, clock ${clock} (steps 1 min per organiser action). Daan and Mo have answered.</p><ul>
 ${Object.entries(links).map(([n,u])=>`<li>${n}: <a href="${u}">pass link</a> · <a href="/__session/${encodeURIComponent(n)}">log in as (session)</a></li>`).join('')}
 <li><a href="/filmmaand/wanneer/?pas=${'A'.repeat(43)}">dead pass, no session</a></li><li><a href="/filmmaand/wanneer/">no pass</a></li></ul>
 <p><a href="/__organiser">Beheer as the organiser (Alec, session cookie)</a> · reminder mails queued (never sent here): ${(JSON.stringify(store.data).match(/"notice":\{"id":"nudge:/g)||[]).length}</p>
@@ -37,7 +39,7 @@ http.createServer(async(req,res)=>{try{
  const url=new URL(req.url,ORIGIN);
  if(url.pathname==='/'){res.setHeader('Content-Type','text/html');return res.end(index())}
  if(req.method==='POST'&&url.pathname==='/__rotate'){await mint();res.writeHead(303,{Location:'/'});return res.end()}
- if(req.method==='POST'&&url.pathname==='/__pick'){await request('plans/home-picker-lab/date-poll','POST',{action:'pick',pollId,date:NIGHTS[2]},admin('qa-wanneer-pick-0001'));res.writeHead(303,{Location:'/'});return res.end()}
+ if(req.method==='POST'&&url.pathname==='/__pick'){tick();await request('plans/home-picker-lab/date-poll','POST',{action:'pick',pollId,date:NIGHTS[2]},admin('qa-wanneer-pick-0001'));res.writeHead(303,{Location:'/'});return res.end()}
  if(url.pathname==='/__organiser'){const ch=await request('auth/code','POST',{email:'alec@example.test'}),r=await request('auth/verify','POST',{challengeId:ch.body.challengeId,code});const cookie=r.headers.get('set-cookie');
   if(!organizerIds.includes(r.body.participant.id)){organizerIds.push(r.body.participant.id);await request('auth/profile','PUT',{expectedRevision:0,name:'Alec (voorbeeld)',animal:'otter',avatarId:6},{Cookie:cookie.split(';')[0],'Idempotency-Key':'qa-wanneer-alec-profile'})}
   res.writeHead(303,{Location:'/filmmaand/beheer/','Set-Cookie':cookie.replace(/;\s*Secure/i,'')});return res.end()}
