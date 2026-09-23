@@ -24,8 +24,9 @@ export function normaliseGame(b){
  if(!['hop','pool'].includes(game)||typeof gid!=='string'||!/^[a-z0-9-]{6,48}$/.test(gid)||!payload||typeof payload!=='object'||Array.isArray(payload))badGame();
  let out;
  if(game==='hop'){
-  if(!strict(payload,['seed','frames','score'])||!int(payload.seed,0,4294967295)||!int(payload.score,0,100000)||!Array.isArray(payload.frames)||payload.frames.length>2000||!payload.frames.every(f=>int(f,0,20000)))badGame();
-  out={seed:payload.seed,frames:payload.frames.slice(),score:payload.score};
+  // v (Pudding Hop v2, 23 Sept): absent = the original rules (old runs keep replaying), 2 = the harder course.
+  const hv=Object.hasOwn(payload,'v');if(!strict(payload,hv?['v','seed','frames','score']:['seed','frames','score'])||(hv&&payload.v!==2)||!int(payload.seed,0,4294967295)||!int(payload.score,0,100000)||!Array.isArray(payload.frames)||payload.frames.length>2000||!payload.frames.every(f=>int(f,0,20000)))badGame();
+  out={...(hv?{v:2}:{}),seed:payload.seed,frames:payload.frames.slice(),score:payload.score};
  }else{
   if(!strict(payload,['shots','start','end','turn','groups','over'])||!Array.isArray(payload.shots)||payload.shots.length<1||payload.shots.length>8)badGame();
   const shots=payload.shots.map(x=>{if(!strict(x,['dx','dy','p'])||!num(x.dx,-1,1)||!num(x.dy,-1,1)||!num(x.p,0,1))badGame();return {dx:round(x.dx,4),dy:round(x.dy,4),p:round(x.p,3)}});

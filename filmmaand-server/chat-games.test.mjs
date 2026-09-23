@@ -87,3 +87,12 @@ test('the organiser can clear one vote: it stops counting, the voter can answer 
  assert.equal((await f.request(POLL,'POST',{action:'clear-vote',pollId:f.pollId,voter:'participant:nobody'},f.admin('clear-vote-key-000002'))).status,404);
  assert.equal((await f.request(POLL,'POST',{action:'clear-vote',pollId:f.pollId,voter:lotte.voter,extra:1},f.admin('clear-vote-key-000003'))).status,400);
 });
+
+test('Pudding Hop v2 runs carry v:2; v1 runs (no v) still pass; any other v is refused',async()=>{
+ const f=await fixture();
+ const ok2=await play(f,'Lotte','hop','hop-abcdef12',{v:2,...HOP});assert.equal(ok2.status,200);
+ assert.equal(games((await f.read('Daan',0)).body)[0].payload.v,2);
+ assert.equal((await play(f,'Lotte','hop','hop-abcdef12',HOP)).status,200);
+ assert.equal((await play(f,'Lotte','hop','hop-abcdef12',{v:3,...HOP})).status,400);
+ assert.equal((await play(f,'Lotte','hop','hop-abcdef12',{v:'2',...HOP})).status,400);
+});
