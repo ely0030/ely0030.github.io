@@ -374,8 +374,8 @@ test('nudge delivery: rendered from the Dutch template with a fresh working pass
  await f.request('plans/proof/date-poll','PUT',f.answer(0,[]),f.pass(bram,{'Idempotency-Key':'bram-all-no-key-001'}));
  await events.drain({limit:20});
  assert.deepEqual(sent.map(m=>m.to),['lotte@filmvrienden.nl']);// .test addresses are never mailed by policy; Bram answered
- const [mail]=sent;assert.equal(mail.subject,'je popcorn staat klaar');
- assert.match(mail.text,/^je plekje op de bank is nog vrij\.\n\nMovie deze week: do 24, vr 25 of za 26 september\. Je hebt nog niet gestemd\./);assert.match(mail.html,/\/filmmaand\/assets\/mail\/herinnering\.gif/);
+ const [mail]=sent;assert.equal(mail.subject,'nog niet gestemd?');
+ assert.match(mail.text,/^vergeet niet te stemmen… 👀😈\n\nMovie deze week: do 24, vr 25 of za 26 september\. Je hebt nog niet gestemd\./);assert.match(mail.html,/\/filmmaand\/assets\/mail\/herinnering\.gif/);
  const link=mail.text.match(/Kies je avond: (https:\/\/example\.test\/filmmaand\/wanneer\/\?pas=([A-Za-z0-9_-]{43}))/);assert.ok(link,mail.text);assert.ok(mail.html.includes(link[1]));
  assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(link[2]))).body.viewer.name,'Lotte');
  assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(minted.find(p=>p.name==='Lotte').token))).status,200);// the earlier link still works

@@ -2,11 +2,11 @@
 // `nudge` action; nothing schedules it. Chris edits the wording here (mirrored in docs/poll-pass/CONTRACT.md).
 // Placeholders: {{NAME}}, {{NIGHTS}} (e.g. "do 24, vr 25 of za 26 september"), {{POLL_URL}} (personal pass link).
 // Chris, 23 Sept: the reminder is a card like the invite, with Cairn's sofa GIF (herinnering.gif, locked in by Chris).
-// Version A of the three in jasjes2/herinnering/mail-herinnering.html; swap NUDGE_SUBJECT/NUDGE_LINE for B or C.
-export const NUDGE_SUBJECT='je popcorn staat klaar';
-export const NUDGE_LINE='je plekje op de bank is nog vrij.';
+// Chris picked version B with his own line (23 Sept, keuzes artifact): "vergeet niet te stemmen... 👀😈".
+export const NUDGE_SUBJECT='nog niet gestemd?';
+export const NUDGE_LINE='vergeet niet te stemmen… 👀😈';
 export const NUDGE_ALT='Alec zit op de bank en kijkt je aan. De film staat op pauze, naast hem staat jouw popcorn klaar.';
-export const NUDGE_TEXT=`je plekje op de bank is nog vrij.
+export const NUDGE_TEXT=`vergeet niet te stemmen… 👀😈
 
 Movie deze week: {{NIGHTS}}. Je hebt nog niet gestemd.
 
