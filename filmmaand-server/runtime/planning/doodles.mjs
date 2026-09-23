@@ -25,9 +25,11 @@ export function normaliseStrokes(s){
  if(!Array.isArray(s)||s.length<1||s.length>DOODLE_MAX_STROKES)bad();
  let points=0;
  const out=s.map(stroke=>{
-  if(!Array.isArray(stroke)||stroke.length!==2||!INKS.includes(stroke[0])||!Array.isArray(stroke[1])||stroke[1].length<1)bad();
+  // [ink, points] or [ink, points, size] with size 1|2|3 (pen width; optional, Chris 23 Sept).
+  if(!Array.isArray(stroke)||(stroke.length!==2&&stroke.length!==3)||!INKS.includes(stroke[0])||!Array.isArray(stroke[1])||stroke[1].length<1)bad();
+  if(stroke.length===3&&![1,2,3].includes(stroke[2]))bad();
   points+=stroke[1].length;if(points>DOODLE_MAX_POINTS)fail(400,'doodle_too_big','Deze tekening is te groot.');
-  return [stroke[0],stroke[1].map(pt=>{if(!Array.isArray(pt)||pt.length!==2||!pt.every(v=>typeof v==='number'&&Number.isFinite(v)))bad();return [round(clamp(pt[0])),round(clamp(pt[1]))]})];
+  return [stroke[0],stroke[1].map(pt=>{if(!Array.isArray(pt)||pt.length!==2||!pt.every(v=>typeof v==='number'&&Number.isFinite(v)))bad();return [round(clamp(pt[0])),round(clamp(pt[1]))]}),...(stroke.length===3?[stroke[2]]:[])];
  });
  if(Buffer.byteLength(JSON.stringify(out))>DOODLE_MAX_BYTES)fail(400,'doodle_too_big','Deze tekening is te groot.');
  return out;

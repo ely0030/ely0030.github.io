@@ -73,6 +73,9 @@ test('scope: a pass writes only its holder\'s own doodle and nothing else; no fi
 
 test('hard size cap and shape: 4KB after rounding, 64 strokes, 2000 points, the ten ink letters, 0..100',async()=>{
  assert.deepEqual(normaliseStrokes([['k',[[-0.3,100.4],[50.04,7]]]]),[['k',[[0,100],[50,7]]]]);// off-canvas is clamped, not refused
+ // Optional pen size 1|2|3 as a third element; kept as sent. Anything else is refused.
+ assert.deepEqual(normaliseStrokes([['b',[[1,1]],3],['k',[[2,2]]]]),[['b',[[1,1]],3],['k',[[2,2]]]]);
+ for(const bad of [[['k',[[1,1]],0]],[['k',[[1,1]],4]],[['k',[[1,1]],'2']],[['k',[[1,1]],2,'x']]])assert.throws(()=>normaliseStrokes(bad),JSON.stringify(bad));
  const f=await fixture(),code=async s=>(await f.draw('Lotte',s)).body.error?.code;
  const line=k=>[['k',Array.from({length:k},(_,i)=>[i%100+0.12,(i*7)%100+0.34])]];
  assert.equal(await code(line(900)),'doodle_too_big');
