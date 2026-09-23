@@ -128,10 +128,10 @@ function trouble(e,saving){
  if(!loaded)lock();return false;
 }
 function lock(){if(!loaded){loaded=true;arrived()}render()}
-// The anonymous poll: the public plan's date poll (id, window, status, counts; never names), nothing to save it with.
-let anon=false;const PLAN_API='/filmmaand/api/plans/home-picker-lab';
+// The anonymous poll: the public date-poll projection (?public=1: id, window, status, counts; never names), nothing to save it with.
+let anon=false;
 async function anonPoll(){
- try{const dp=(await call('GET',null,null,PLAN_API)).datePoll;
+ try{const dp=(await call('GET',null,null,API+'?public=1')).datePoll;// one read per page load, at most
   if(!dp||dp.mode!=='availability'){lock();note('Er staat nu geen vraag open.');return}
   anon=true;adopt({pollId:dp.id,revision:0,availability:{},favourite:null,viewer:null,doodles:[],invitees:[],rsvp:null,pickedAt:null,
    chat:{open:false,messages:[],cursor:0,hidden:[]},poll:{...dp,ranking:(dp.ranking||[]).map(r=>({...r,people:[],no:[]})),declined:[]}});
@@ -296,7 +296,8 @@ window.filmmaandChat={
 // ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;
 // after a doodle send the two bounded re-GETs above. Nothing else is timed: an idle page makes zero requests.
 let lastRead=Date.now();
-function fresh(){if(document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<15e3)return;load()}
+function fresh(){if(anon)return;// anonymous: every re-read would 401 again; nothing to refresh
+ if(document.visibilityState!=='visible'||!loaded||!data||dirty()||saving||Date.now()-lastRead<15e3)return;load()}
 document.addEventListener('visibilitychange',fresh);window.addEventListener('focus',fresh);
 
 // ---- hot mode (Chris, 23 Sept; guardrails Cameo): live while people are chatting.

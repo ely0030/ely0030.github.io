@@ -138,6 +138,9 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
    const planned=plannedIds(p);if(!Array.isArray(b?.shortlist)||b.shortlist.length!==3||new Set(b.shortlist).size!==3||b.shortlist.some(x=>!p.options.some(o=>o.id===x)||planned.has(x)))fail(400,'shortlist','Kies drie verschillende, nog niet geplande opties.');p.round={id:'round-'+hash(id+':'+key).slice(0,20),revision:0,shortlist:[...b.shortlist],derived:false,since:now()};return {round:roundOf(p)};
   })},
   // A date for the open round is not a programme decision and never selects/locks a film.
+  // The anonymous view (no pass, no session): only the public poll projection, the same data the public plan GET already
+  // exposes (id, window, status, counts; never names), without the plan's movies/programme payload or its enrichment.
+  async datePollPublic(id){const p=(await load(id)).data;return {datePoll:publicDatePoll(p,null,datePollDisplay)};},
   async getDatePollLite(id,token,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return liteView((await loadFor(id,a)).data,a,since);},
   async getDatePollLiteAs(id,a,pollId,since=0){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return liteView(p,a,since);},
   async getDatePoll(id,token,since=0){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return datePollView((await loadFor(id,a)).data,a,since);},

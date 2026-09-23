@@ -328,6 +328,10 @@ The **doodle rate** (6/min, 30/h) applies and is shared with the older one-per-p
 back-compat); the text rate counts text only. At most **100 drawings per poll** (inside the 400-message cap). Organiser
 hide per message (listed as `[tekening]`).
 
+**Anonymous read** (no pass, no session): `GET …/date-poll?public=1` → `{datePoll}`: the public projection only (id, window,
+status, counts; never names), the same data the public plan GET already exposes, without the plan's movies/programme payload.
+`private, no-store`. The page uses it at most once per load, and makes no other reads while anonymous.
+
 **Alec's sticker.** When a poll opens, the server posts one chat message (seq 1): `kind:'sticker'`, `sticker` 0..3
 (drawn once, the same for everyone), author "Alec" (`alec:true`, a system author, not an account: it never votes, never
 gets mail, counts toward nobody's rate limit). Inside the open transaction, so a replay doesn't post it twice. Hideable

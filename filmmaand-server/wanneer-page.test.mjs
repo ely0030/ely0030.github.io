@@ -44,7 +44,7 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
  // URLs: the three fixed endpoints and one numeric chat cursor; nothing else is ever put in a URL.
- assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'?since='+since:API","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'?since='+since:API","API+'?public=1'","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
@@ -88,7 +88,9 @@ test('no working link: the first read shows the poll anonymously; the login note
  // Chris: don't greet people with an error. The anonymous poll starts only from the FIRST read's 401...
  assert.deepEqual(js.match(/void anonPoll\(\)/g),['void anonPoll()']);assert.match(js,/if\(!saving&&!loaded&&!anon\)\{void anonPoll\(\);return false\}/);
  // ...background reads while anonymous stay quiet, and it reads the PUBLIC plan (no names), never with a pass.
- assert.match(js,/if\(!saving&&anon\)return false;/);assert.match(js,/const PLAN_API='\/filmmaand\/api\/plans\/home-picker-lab';/);
+ assert.match(js,/if\(!saving&&anon\)return false;/);assert.match(js,/call\('GET',null,null,API\+'\?public=1'\)/);
+ // No re-reads at all while anonymous (each would 401): fresh() returns first thing, hot mode needs voted + chat.
+ assert.match(js,/function fresh\(\)\{if\(anon\)return;/);
  assert.match(js,/ranking:\(dp\.ranking\|\|\[\]\)\.map\(r=>\(\{\.\.\.r,people:\[\],no:\[\]\}\)\)/);
  // Pressing send while anonymous: no request, back to ticking, then the note.
  assert.match(js,/if\(anon\)\{savedSeq=seq;if\(!serverVoted\(\)\)voted=false;render\(\);authNote\(\);return\}/);
@@ -234,4 +236,16 @@ test('a dead pass is dropped and the session is tried; without a session the pag
  // With a session (Lotte's account was created at mint time and can log in by email code): the same shape as the pass GET.
  const cookie=await f.session('lotte@example.test'),s=await f.request('GET',null,{Cookie:cookie});
  assert.equal(s.status,200);assert.deepEqual(s.body.viewer,{name:'Lotte',avatarId:12});assert.equal(s.body.pollId,f.pollId);
+});
+
+test('the anonymous read (?public=1): no auth, the public projection only (never names), no-store, lighter than the plan GET',async()=>{
+ const f=await fixture();
+ await put(f,passOf(f.link.Lotte),0,[NIGHTS[2]],'wanneer-public-000001');
+ const r=await f.request('GET',null,{},'plans/home-picker-lab/date-poll?public=1');
+ assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'private, no-store');
+ assert.deepEqual(Object.keys(r.body),['datePoll']);assert.equal(r.body.datePoll.id,f.pollId);assert.deepEqual(r.body.datePoll.window,{start:NIGHTS[0],end:NIGHTS[2]});
+ assert.equal(r.body.datePoll.ranking.find(x=>x.date===NIGHTS[2]).available,1);
+ const text=JSON.stringify(r.body);for(const n of ['Lotte','Daan','Mo'])assert.equal(text.includes(n),false,n);
+ for(const k of ['people','no','declined','invitees','chat','doodles','viewer'])assert.equal(new RegExp('"'+k+'":\\[\\{').test(text),false,k);
+ const plan=await f.request('GET',null,{},'plans/home-picker-lab');assert.ok(text.length<JSON.stringify(plan.body).length);
 });

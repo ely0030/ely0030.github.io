@@ -205,6 +205,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
        const value=await service.voteDatePollAs(id,a,holder.pollId,req.headers['idempotency-key'],body);commitActivity(c,activityBefore,activityAt);return send(200,value);
       }
      }
+     if(method==='GET'&&part==='date-poll'&&url.searchParams.get('public')==='1')return send(200,await service.datePollPublic(id));
      if(method==='GET'&&part==='date-poll'){const since=parseSince(url.searchParams.get('since'));
       if(url.searchParams.get('lite')==='1')return send(200,await service.getDatePollLite(id,token||null,since));
       return send(200,withInvitees(await service.getDatePoll(id,token||null,since)));}
