@@ -46,7 +46,7 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  // The token never goes into a URL: the one fetch goes to the fixed API constant.
  assert.deepEqual(js.match(/fetch\([^,]*,/g),['fetch(url,']);assert.match(js,/async function call\(method,body,key,url=API\)/);
  // URLs: the four fixed endpoints (+ the intro film's own flag, 23 Sept) and one numeric chat cursor; nothing else is ever put in a URL.
- assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'-film'","API+'?since='+since:API","API+'?public=1'","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
+ assert.deepEqual(js.match(/API\s*\+[^;,)]*/g),["API+'-doodle'","API+'-chat'","API+'-rsvp'","API+'-film'","API+'?since='+since:API","API+'?since='+chatCursor","API+'?since='+chatCursor+'&lite=1'"]);
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
@@ -92,19 +92,13 @@ test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle 
  assert.equal(d({...base,fails:1}),6e3);assert.equal(d({...base,fails:2}),12e3);assert.equal(d({...base,fails:3}),null);
 });
 
-test('no working link: the first read shows the poll anonymously; the login note only comes after pressing send',()=>{
- // Chris: don't greet people with an error. The anonymous poll starts only from the FIRST read's 401...
- assert.deepEqual(js.match(/void anonPoll\(\)/g),['void anonPoll()']);assert.match(js,/if\(!saving&&!loaded&&!anon\)\{void anonPoll\(\);return false\}/);
- // ...background reads while anonymous stay quiet, and it reads the PUBLIC plan (no names), never with a pass.
- assert.match(js,/if\(!saving&&anon\)return false;/);assert.match(js,/call\('GET',null,null,API\+'\?public=1'\)/);
- // No re-reads at all while anonymous (each would 401): fresh() returns first thing, hot mode needs voted + chat.
- assert.match(js,/function fresh\(\)\{if\(anon\)return;/);
- assert.match(js,/ranking:\(dp\.ranking\|\|\[\]\)\.map\(r=>\(\{\.\.\.r,people:\[\],no:\[\]\}\)\)/);
- // Pressing send while anonymous: no request, back to ticking, then the note.
- assert.match(js,/if\(anon\)\{savedSeq=seq;if\(!serverVoted\(\)\)voted=false;render\(\);authNote\(\);return\}/);
+test('no working link and no login: the page sends you to the login page (and back here), never an anonymous poll',()=>{
+ // Chris, 23 Sept: "when you're not logged in you shouldn't be able to access the wanneer page entirely".
+ assert.match(js,/if\(!saving&&!loaded&&!anon\)\{location\.replace\('\/filmmaand\/identity\/\?terug=\/filmmaand\/wanneer\/'\);return false\}/);
+ assert.equal(/anonPoll|\?public=1/.test(js),false,'the anonymous public poll is gone');
+ // A dead pass with a live session retries with the session before any of this (dropPass → load()).
+ assert.match(js,/catch\(e\)\{if\(dropPass\(e\)\)return load\(\);return trouble\(e\)\}/);
  assert.equal(/lives in memory only/.test(js),false,'stale comment gone: the pass survives a reload via history.state');
- // ...and from the first tick (not only on Klaar) the note is shown inline under the poll.
- assert.match(js,/if\(anon&&\(mine\.size\|\|none\)\)authNote\(\);/);
 });
 
 test('hot mode, behaviourally with a fake clock: the 20-min no-input cap, resume on input, backoff, voters only',async()=>{

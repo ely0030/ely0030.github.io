@@ -124,7 +124,10 @@ function trouble(e,saving){
  if(e.status===401){
   // Chris, 23 Sept: on the FIRST read, don't greet people with an error. Show the poll anonymously (from the public plan:
   // nights and counts, no names) so the arrival and the poll play as usual; the note only comes when they press send.
-  if(!saving&&!loaded&&!anon){void anonPoll();return false}
+  // Chris, 23 Sept (later): "when you're not logged in you shouldn't be able to access the wanneer page entirely". The mail
+  // link logs you in; if there's no working link AND no login, go to the login page, which brings you back here afterwards.
+  // (A dead pass with a live session never gets here: dropPass() retries with the session first.)
+  if(!saving&&!loaded&&!anon){location.replace('/filmmaand/identity/?terug=/filmmaand/wanneer/');return false}
   if(!saving&&anon)return false;// a background re-read while anonymous: stay quiet
   lock();authNote();return false}
  if(e.status===404||e.code==='not_found'){lock();note('Er staat nu geen vraag open.');return false}
@@ -133,15 +136,8 @@ function trouble(e,saving){
  if(!loaded)lock();return false;
 }
 function lock(){if(!loaded){loaded=true;arrived()}render()}
-// The anonymous poll: the public date-poll projection (?public=1: id, window, status, counts; never names), nothing to save it with.
+// (The anonymous public poll was removed 23 Sept: no login → the login page instead, see trouble().)
 let anon=false;
-async function anonPoll(){
- try{const dp=(await call('GET',null,null,API+'?public=1')).datePoll;// one read per page load, at most
-  if(!dp||dp.mode!=='availability'){lock();note('Er staat nu geen vraag open.');return}
-  anon=true;adopt({pollId:dp.id,revision:0,availability:{},favourite:null,viewer:null,doodles:[],invitees:[],rsvp:null,pickedAt:null,
-   chat:{open:false,messages:[],cursor:0,hidden:[]},poll:{...dp,ranking:(dp.ranking||[]).map(r=>({...r,people:[],no:[]})),declined:[]}});
- }catch{lock();authNote()}
-}
 
 // ---- render (appje2.js, with server data)
 function setSub(){const s=['Alec',...members(),'jij'].join(', ');subText=s;if(!typingNow)$('#sub').textContent=s;
