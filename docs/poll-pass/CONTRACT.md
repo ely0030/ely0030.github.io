@@ -7,8 +7,9 @@ Branch `feat/poll-pass`. Design: `kits/invitations/POLL-PASS.md` (Cameo, 22 Sept
 
 ## What a pass is
 
-- A random 43-character base64url token (32 random bytes). One per recipient per poll. Only its SHA-256 is
-  stored (`poll_passes.token_hash`). No plaintext token is written to state, to receipts, or to logs.
+- A random 43-character base64url token (32 random bytes). One per recipient per poll, plus one extra per
+  reminder mail (see `nudge`). Only its SHA-256 is stored (`poll_passes.token_hash`). No plaintext token is
+  written to state, to receipts, to the mail outbox, or to logs.
 - It identifies **one participant for one date poll on one plan**. With it you can read that poll
   (`GET`) and set **your own** availability (`PUT`). Nothing else: every other route ignores the header.
 - It is valid while **all** of these hold: the plan in the URL is the plan it was minted for, that plan's
@@ -76,15 +77,19 @@ X-Filmmaand-Poll-Pass: <token>          # or: a normal session cookie, no pass h
     "choices": [],
     "closesAt": null,
     "ranking": [
-      {"date": "2026-09-26", "available": 2, "unavailable": 0, "favourites": 1,
-       "people": [{"name": "Noor", "avatarId": 4}, {"name": "Sam", "avatarId": 7, "self": true}]},
-      {"date": "2026-09-24", "available": 1, "unavailable": 1, "favourites": 0,
-       "people": [{"name": "Noor", "avatarId": 4}]},
-      {"date": "2026-09-25", "available": 0, "unavailable": 2, "favourites": 0, "people": []}
+      {"date": "2026-09-26", "available": 2, "unavailable": 1, "favourites": 1,
+       "people": [{"name": "Noor", "avatarId": 4}, {"name": "Sam", "avatarId": 7, "self": true}],
+       "no": [{"name": "Joep", "avatarId": 9}]},
+      {"date": "2026-09-24", "available": 1, "unavailable": 2, "favourites": 0,
+       "people": [{"name": "Noor", "avatarId": 4}],
+       "no": [{"name": "Joep", "avatarId": 9}, {"name": "Sam", "avatarId": 7, "self": true}]},
+      {"date": "2026-09-25", "available": 0, "unavailable": 3, "favourites": 0, "people": [],
+       "no": [{"name": "Joep", "avatarId": 9}, {"name": "Noor", "avatarId": 4}, {"name": "Sam", "avatarId": 7, "self": true}]}
     ],
     "leaderDates": ["2026-09-26"],
-    "voteCount": 2,
-    "people": []
+    "voteCount": 3,
+    "people": [],
+    "declined": [{"name": "Joep", "avatarId": 9}]
   },
   "viewer": {"name": "Sam", "avatarId": 7}
 }
@@ -92,13 +97,20 @@ X-Filmmaand-Poll-Pass: <token>          # or: a normal session cookie, no pass h
 
 - Top level (`pollId`, `revision`, `availability`, `favourite`) is **your own** answer, the same shape
   the session GET returned before. `revision` must be echoed on the next PUT.
-- `poll` is the public projection (`publicDatePoll`) **plus names**: per night, sorted best first, the
-  counts and `people` = everyone who said **yes** to that night (`name`, `avatarId`), sorted by name. The
-  viewer's own entry carries `"self": true`. Only people with a display profile (onboarded account) are
-  counted or named, exactly as for the counts. Nobody is listed for "no"; `unavailable` stays a count.
-  The top-level `poll.people` is always `[]` in availability mode (legacy field of the old single-date poll).
+- `poll` is the public projection (`publicDatePoll`) **plus names**, like a WhatsApp poll. Per night,
+  sorted best first: the counts, `people` = who said **yes** and `no` = who said **no** to that night
+  (`name`, `avatarId`), each sorted by name. `declined` (top level) = who said no to **every** night.
+  The viewer's own entries carry `"self": true`. Only people with a display profile (onboarded account) are
+  counted or named, exactly as for the counts. The top-level `poll.people` is always `[]` in availability
+  mode (legacy field of the old single-date poll).
+- **Answered vs. not answered.** A person has *responded* once at least one night is explicitly `true` or
+  `false`. "I can't make any of these nights" is a PUT with every night `false` (and `favourite: null`): a
+  saved answer, listed in `declined`, counted in `voteCount`, and **never reminded**. An empty
+  `availability: {}` (or no PUT) is "not answered yet". The page should offer an explicit
+  "Ik kan geen van deze avonden" button that sends all nights `false`. `voteCount` = number of people who
+  responded.
 - Names are only on this route (pass GET, session GET) and in organiser responses. The **public plan GET**
-  (`GET /plans/<planId>`) still shows **counts only**, no `people` per night.
+  (`GET /plans/<planId>`) still shows **counts only**: no `people`/`no` per night, no `declined`.
 - `pick` is `"manual"` (organiser picks) or `"auto"` (deadline picks). `closesAt` is `null` for a manual
   poll without a deadline. `scheduledDate` / `programmeId` appear once the poll is decided
   (`status: "confirmed"`). Answers are accepted while `status` is `"open"` and, if `closesAt` is set, before
@@ -145,12 +157,70 @@ Same URL, `POST`, JSON body with an `action`. Authenticated as organiser, exactl
 
 | action | body | 200 response |
 |---|---|---|
-| `issue-passes` | `{"action":"issue-passes","pollId":"…","emails":["a@…","b@…"]}` (1–50) | `{"pollId","expiresAt","passes":[{"participantId","email","name","token","url"}]}` |
+| `issue-passes` | `{"action":"issue-passes","pollId":"…","emails":["a@…"],"people":[{"email":"lotte@…","name":"Lotte","avatarId":12}]}` (1–50 in total; either list may be left out) | `{"pollId","expiresAt","passes":[{"participantId","email","name","created","token","url"}]}` |
 | `revoke-passes` | `{"action":"revoke-passes","pollId":"…","emails":[…]}` | `{"pollId","revoked":<count>}` |
 | `list-passes` | `{"action":"list-passes","pollId":"…"}` | `{"pollId","passes":[{"participantId","email","name","createdAt","expiresAt","status":"active"\|"revoked"\|"expired"}]}` |
-| `list-availability` | `{"action":"list-availability","pollId":"…"}` | `{"datePoll":{…}}`: the `poll` object above with names per night, no `self` flags. Read-only, no `Idempotency-Key` needed. |
+| `list-availability` | `{"action":"list-availability","pollId":"…"}` | `{"datePoll":{…,"needsPick":true\|false}}`: the `poll` object above with names, no `self` flags. Read-only. |
+| `nudge-list` | `{"action":"nudge-list","pollId":"…"}` | `{"pollId","answersOpen","recipients":[{"participantId","email","name"}]}`. Read-only. |
+| `nudge` | `{"action":"nudge","pollId":"…"}` + **`Idempotency-Key`** | `{"pollId","recipients":[{"participantId","name"}]}`: who was queued a reminder. |
 
-- These four need no `Idempotency-Key` (with the organiser cookie they still need `X-Filmmaand-Reset-Generation`).
+- All but `nudge` need no `Idempotency-Key` (with the organiser cookie they still need `X-Filmmaand-Reset-Generation`).
+
+**Accounts at mint time (`people`).** `emails` = people who already have an onboarded account (unchanged
+rules: unknown → `404 recipient_unknown`, no name/avatar → `409 recipient_not_onboarded`). `people` = friends
+who may not have one: `{email, name, avatarId?}` (name 1–32 chars, no markup; `avatarId` optional, an
+active avatar from the collection; if left out, the first free avatar is assigned).
+- No account: one is created with that name + avatar (`created: true`). It is created exactly like the
+  email-code login creates accounts, so the friend can later log in with an email code as that account,
+  already onboarded.
+- Account without name/avatar: that name + avatar is set (`created: false`).
+- Account with a profile: nothing about it changes; the supplied name/avatar is ignored (`created: false`).
+- The profile is set at mint time because the poll ignores answers from people without one. So every
+  minted friend's vote counts.
+- **All-or-nothing**: accounts and passes are written in one transaction. Any bad entry (invalid name or
+  email, avatar already someone else's or chosen twice, unknown plain email) refuses the whole request
+  with `details.emails`, and nothing is created or minted.
+- Test addresses (`*.test`, `example.com`, …) never receive notification mail.
+
+**Reminders (`nudge-list`, `nudge`).** Organiser-triggered only. Nothing schedules, queues or sends a
+reminder by itself (the tick and every read leave the outbox untouched; tested).
+- Who: people with a working pass for this poll (not revoked, not expired, onboarded) who have **not
+  responded**. Anyone who answered, **including all-no**, is left out. People without a pass are never
+  included. When the poll no longer takes answers (picked, closed, past `closesAt`), `nudge-list` is empty
+  and `nudge` is `409 date_poll_closed`.
+- `nudge` records a plan receipt under the `Idempotency-Key` (the existing pattern: an exact retry returns
+  the same body and queues nothing again, even after delivery; the same key with another body is
+  `409 key_reused`). It queues one mail per recipient into the **existing event-notification outbox**
+  (type `poll-nudge`). Delivery goes through the normal event drain (after a write request or on the
+  scheduled tick) and only when event notifications are enabled, with the usual recipient policy
+  (opt-outs, suppressions, allow-list, daily/monthly caps).
+- At delivery the reminder is dropped if the poll moved on, stopped taking answers, or the person answered
+  in the meantime.
+- **The link.** Only token hashes are stored, so the literal earlier link cannot be put in the reminder.
+  Delivery mints **one extra pass** for the same person and poll inside the delivery transaction, puts it
+  in the mail, and keeps only its hash. The earlier link keeps working. `issue-passes` (rotate) and
+  `revoke-passes` revoke all of that person's passes for the poll.
+
+**Reminder text** (edit in `filmmaand-server/poll-nudge-mail.mjs`; `{{NIGHTS}}` becomes e.g.
+"do 24, vr 25 of za 26 september"):
+
+```
+Onderwerp: Movie deze week?
+
+Hoi {{NAME}},
+
+Movie deze week? Je hebt nog niet gestemd.
+
+Welke avond kun jij: {{NIGHTS}}? Kun je geen enkele avond, laat dat dan ook even weten. Dan krijg je hierover geen herinnering meer.
+
+Stemmen: {{POLL_URL}}
+
+Alec Filmmaand
+```
+
+**`needsPick`** (organiser responses only: `list-availability`, and `open`/`pick`/`close`): `true` while a
+manual poll is still open from the day before its last night (Amsterdam), i.e. from vr 25 Sept 00:00 for
+the 24–26 poll. It is a flag for Beheer, never a mail. Participants never see it.
 
 - `issue-passes` is **all-or-nothing** and requires an **open availability poll** whose id equals
   `pollId`. Issuing for someone who already has an active pass for this poll **rotates** it: the old link
@@ -189,10 +259,12 @@ Same URL, `POST`, JSON body with an `action`. Authenticated as organiser, exactl
 | 409 | `key_reused` | Same Idempotency-Key with a different body. |
 | 409 | `reset_generation` | Missing/stale `X-Filmmaand-Reset-Generation` on a write. Reload. |
 | 401 / 403 / 409 | `unauthorized`, `session_required`, `organizer_required`, `organizer_changed` | Organiser actions without valid organiser auth. |
-| 404 | `recipient_unknown` | `issue`/`revoke`: an email has no account. `details.emails` lists them. Nothing minted. |
+| 404 | `recipient_unknown` | `issue`/`revoke`: a plain email has no account (use `people` with a name). `details.emails`. Nothing minted. |
 | 409 | `recipient_not_onboarded` | An account has no name/avatar yet, so their answers would not be counted. `details.emails`. |
 | 409 | `date_poll_not_open` | `issue`: no open availability poll. |
-| 409 | `date_poll_changed` | `pollId` is not the current poll (`issue`, `pick`, `close`, `list-availability`). |
+| 409 | `date_poll_changed` | `pollId` is not the current poll (`issue`, `pick`, `close`, `list-availability`, `nudge-list`, `nudge`). |
+| 400 | `recipients` / `name` / `avatar` | `issue`: bad recipient list or `people` entry. `details.emails`. Nothing created. |
+| 409 | `avatar_taken` / `avatar_unavailable` | `issue`: chosen avatar belongs to someone else (or twice in the request) / no free avatar left. Nothing created. |
 | 503 | `pass_limit` | More than 2000 stored passes (rows >30 days past expiry are pruned on issue). |
 
 ## Organiser steps (do 24 – za 26 September, manual)
@@ -212,13 +284,14 @@ add `X-Filmmaand-Organizer-Id` and `X-Filmmaand-Reset-Generation` as in Beheer.
    Optional: add `"closesAt":"2026-09-26T16:00:00Z"` to stop answers at a time (any moment up to
    za 26 Sept 23:59 Amsterdam). If an older poll is still open, `close` it first (`409 date_poll_open`).
    Note the returned `datePoll.id`.
-2. **Every recipient needs an onboarded account** (name + avatar). `issue-passes` names anyone who doesn't.
+2. **Recipients**: people with an account go in `emails`; friends without one (or without name/avatar) go
+   in `people` with a name (and optionally an avatar). Their account is created on the spot.
 3. **Mint the passes**:
 
    ```sh
    curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
      -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H 'Content-Type: application/json' \
-     -d '{"action":"issue-passes","pollId":"<datePoll.id>","emails":["noor@…","sam@…"]}'
+     -d '{"action":"issue-passes","pollId":"<datePoll.id>","emails":["noor@…","sam@…"],"people":[{"email":"lotte@…","name":"Lotte"}]}'
    ```
 
    Put each `passes[i].url` into that person's own mail as `{{POLL_URL}}`. Treat the response as a
@@ -231,8 +304,27 @@ add `X-Filmmaand-Organizer-Id` and `X-Filmmaand-Reset-Generation` as in Beheer.
      -d '{"action":"list-availability","pollId":"<datePoll.id>"}'
    ```
 
-   Or open the poll page logged in as yourself (session GET shows the same names).
-5. **Pick the night** (e.g. vr 25):
+   Or open the poll page logged in as yourself (session GET shows the same names). `needsPick: true`
+   from vr 25 means: time to pick.
+5. **Remind who hasn't answered** (optional, only when you decide to). First look:
+
+   ```sh
+   curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
+     -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H 'Content-Type: application/json' \
+     -d '{"action":"nudge-list","pollId":"<datePoll.id>"}'
+   ```
+
+   Then send (this queues real mail to exactly that list; people who said no to everything are never on it):
+
+   ```sh
+   curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
+     -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H "Idempotency-Key: nudge-sept-poll-0001" \
+     -H 'Content-Type: application/json' \
+     -d '{"action":"nudge","pollId":"<datePoll.id>"}'
+   ```
+
+   A second reminder later needs a new `Idempotency-Key`; retrying with the same key sends nothing new.
+6. **Pick the night** (e.g. vr 25):
 
    ```sh
    curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
@@ -243,9 +335,9 @@ add `X-Filmmaand-Organizer-Id` and `X-Filmmaand-Reset-Generation` as in Beheer.
 
    The night goes on the programme, the poll becomes `confirmed`, and the normal "De datum staat vast"
    notification is queued. Retrying with the same `Idempotency-Key` returns the same result.
-6. **Rotate** one person's link: `issue-passes` with just their email. **Revoke**: `revoke-passes`.
+7. **Rotate** one person's link: `issue-passes` with just their email. **Revoke**: `revoke-passes`.
    **Check**: `list-passes`.
-7. Nothing to clean up: passes stop working 24h after the pick (or `close`), and at the latest 28 Sept
+8. Nothing to clean up: passes stop working 24h after the pick (or `close`), and at the latest 28 Sept
    00:00Z, or when a new poll replaces this one.
 
 ## Cost notes
@@ -263,16 +355,18 @@ add `X-Filmmaand-Organizer-Id` and `X-Filmmaand-Reset-Generation` as in Beheer.
 - The organiser picks the night (`pick:"manual"`); nothing is auto-scheduled. The old auto mode stays for
   polls opened without `pick`.
 - Manual `closesAt` is optional and may fall on or before the last night.
-- Names per night are visible to everyone in the poll (pass/session GET) and to the organiser.
+- Names per night, for yes **and** no, are visible to everyone in the poll (pass/session GET) and to the
+  organiser. Not on the public plan GET.
 - Pass grace: valid while open, 24h read-only after the pick/close.
+- Friends without an account: `issue-passes` creates it from email + name (+ avatar).
+- "None of these nights" is a real answer and is never reminded.
+- Reminders only when the organiser runs `nudge`; the "nobody picked yet" reminder is the `needsPick` flag,
+  not a mail.
 
 ## Open questions for the product owner
 
-1. **Names on the public plan page.** Names are shown on the date-poll route only, not on the public plan
-   GET (which anyone with the plan URL can read). If the plan page should show them too, that is a one-line
-   change (`names:true` in the plan projection), but it makes names public to anyone with the link.
-2. **Friends without an account.** A pass needs an existing, onboarded account. Minting for a new email
-   is refused, not auto-created. OK, or should minting create accounts?
-3. **Nobody picks.** A manual poll with no pick simply stays open, and its passes stop working at the
-   ceiling (28 Sept). No reminder is sent to the organiser. Wanted?
-4. **"Nee" names.** Only "yes" is named per night; "no" is a count. Show who said no too?
+1. **Names on the public plan page.** Still date-poll route only (see above). If the plan page should show
+   them too, that is a one-line change, but it makes names public to anyone with the plan link.
+2. **Unverified addresses.** An account created at mint time trusts the email the organiser typed (like the
+   organiser mailing the link himself). It can receive reminders and, later, log in with an email code
+   sent to that address. OK?
