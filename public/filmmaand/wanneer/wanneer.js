@@ -79,11 +79,11 @@ async function fullRead(){
   catch(e){if(attempt===0&&dropPass(e))continue;return trouble(e)}
   // The login route compares the pass holder with the current cookie session by participant ID.
   // Check before rendering, so a friend's link cannot briefly let this tab act as them.
-  if(pass&&!autoLogged){let login;try{login=await call('POST',{},newKey(),LOGIN_API)}
-   catch(e){return trouble(e)}// a failed identity check must keep the pass for this tab and its reload
-   if(login.loggedIn===false){clearPass();continue}
-   if(login.loggedIn!==true)return trouble(new Error('De uitnodiging kon niet worden gecontroleerd.'));
-   autoLogged=true}
+  if(pass&&!autoLogged){let login=null;try{login=await call('POST',{},newKey(),LOGIN_API)}
+   catch(e){}// Capsule, 23 Sept: a failed check (a storage hiccup) must not cost a friend the poll. Render with the pass as
+   // before; the pass stays for this tab and its reload, and the check runs again on the next full read.
+   if(login&&login.loggedIn===false){clearPass();continue}
+   if(login&&login.loggedIn===true)autoLogged=true}
   break}
  hot.resetFails();adopt(body);return true;
 }

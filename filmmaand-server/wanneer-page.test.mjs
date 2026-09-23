@@ -71,7 +71,7 @@ test('the page keeps the pass in tab history and sends it as the header, never i
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,2);// the chat send + the one silent auto-login (Chris, 23 Sept):
  // only with a pass, once per page load, to the fixed LOGIN_API, with an empty body (the pass travels in the header).
- assert.match(js,/if\(pass&&!autoLogged\)\{let login;try\{login=await call\('POST',\{\},newKey\(\),LOGIN_API\)\}/);
+ assert.match(js,/if\(pass&&!autoLogged\)\{let login=null;try\{login=await call\('POST',\{\},newKey\(\),LOGIN_API\)\}/);
  // A caller-supplied Idempotency-Key (Capsule: one stable key per message, reused on retries) is validated like any key.
  assert.match(js,/const KEY_RE=\/\^\[A-Za-z0-9_-\]\{16,100\}\$\/;/);assert.match(js,/acceptsKey:true/);
  assert.match(js,/if\(given!==undefined&&!KEY_RE\.test\(given\)\)throw/);assert.match(js,/const key=given\?\?newKey\(\);/);
@@ -184,7 +184,7 @@ test('full and lite poll reads never overlap, even when a slow lite read is inte
  assert.equal(maxActive,1);assert.equal(liteCalls,1);assert.equal(fullCalls,1);
 });
 
-test('first pass read checks account identity before rendering and drops a different-person pass',async()=>{
+test('first pass read checks account identity before rendering, drops a different-person pass, and still renders when the check fails',async()=>{
  const code=[/function clearPass\(\)\{[^\n]*\}/,/function dropPass\(e\)\{[^\n]*\}/,/async function fullRead\(\)\{[\s\S]*?\n\}/]
   .map(re=>{const m=re.exec(js);assert.ok(m,'missing identity guard');return m[0]}).join('\n');
  async function scenario(login){
@@ -202,9 +202,10 @@ test('first pass read checks account identity before rendering and drops a diffe
  const same=await scenario({loggedIn:true,switched:false});
  assert.deepEqual(same.adopted,['pass']);assert.equal(same.pass,'pass');assert.equal(same.calls.length,2);
  for(const error of [new Error('timeout'),Object.assign(new Error('storage unavailable'),{status:503}),Object.assign(new Error('expired during check'),{code:'pass_invalid',status:401})]){
+  // Capsule, 23 Sept: a failed identity check must not cost a friend the poll: render with the pass (kept), check again later.
   const failed=await scenario(error);
-  assert.equal(failed.failure,error);assert.equal(failed.pass,'pass');
-  assert.deepEqual(failed.state,{filmmaandPollPass:'pass'});assert.deepEqual(failed.adopted,[]);
+  assert.equal(failed.failure,null);assert.equal(failed.pass,'pass');assert.equal(failed.autoLogged,false);
+  assert.deepEqual(failed.state,{filmmaandPollPass:'pass'});assert.deepEqual(failed.adopted,['pass']);
  }
 });
 
