@@ -169,6 +169,9 @@ function render(){
  $('#sys').textContent=none?'Genoteerd. Dan de volgende keer!':'Genoteerd. Hou je mail in de gaten.';
  $('#sys').hidden=!voted;
  renderRsvp();
+ // Anonymous (no working link): the poll plays without an error, but from the first tick the note says how to get in
+ // (Cameo: telling people only after Klaar would feel like a bait).
+ if(anon&&(mine.size||none))authNote();
  const p=poll();
  if(data&&!p)note('Er staat nu geen vraag open.');
  else if(p&&p.status==='confirmed'&&p.scheduledDate)note('De avond staat vast: '+fmt(p.scheduledDate,{weekday:'long',day:'numeric',month:'long'})+'.');

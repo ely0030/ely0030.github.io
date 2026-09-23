@@ -91,6 +91,8 @@ test('no working link: the first read shows the poll anonymously; the login note
  // Pressing send while anonymous: no request, back to ticking, then the note.
  assert.match(js,/if\(anon\)\{savedSeq=seq;if\(!serverVoted\(\)\)voted=false;render\(\);authNote\(\);return\}/);
  assert.equal(/lives in memory only/.test(js),false,'stale comment gone: the pass survives a reload via history.state');
+ // ...and from the first tick (not only on Klaar) the note is shown inline under the poll.
+ assert.match(js,/if\(anon&&\(mine\.size\|\|none\)\)authNote\(\);/);
 });
 
 test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{
