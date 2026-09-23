@@ -1,0 +1,401 @@
+<!-- Hidden preview of the Filmmaand chat games (Capsule, 23 Sept). Static, no server, fake friends. Source: kits/invitations/05-calendly-study/jasjes2/eggs/games/games.html -->
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Filmmaand · spelletjes</title>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#0b141a;font:15px/1.4 'Segoe UI',Helvetica,Arial,sans-serif;color:#111b21;display:flex;justify-content:center;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+.app{position:relative;width:100%;max-width:640px;height:100vh;height:100dvh;display:flex;flex-direction:column;background:#efeae2;overflow:hidden}
+.bar{display:flex;align-items:center;gap:10px;background:#008069;color:#fff;padding:8px 12px 8px 8px;flex:0 0 auto}
+.bar svg{width:22px;height:22px;fill:#fff;display:block}
+.bar img{width:38px;height:38px;border-radius:50%;background:#fff;display:block}
+.bar .tt{flex:1;min-width:0}.bar b{display:block;font-size:16px;font-weight:600}
+#sub{display:block;font-size:12.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sub.typing{opacity:1;color:#c8f7e4}
+.site{flex:1;overflow-y:auto;padding:8px 0 14px;background-color:#efeae2;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' fill='none' stroke='%23000' stroke-opacity='.045' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='22' cy='24' r='9'/%3E%3Cpath d='M60 14l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z'/%3E%3Crect x='98' y='16' width='24' height='17' rx='3'/%3E%3Cpath d='M104 16v17M116 16v17'/%3E%3Cpath d='M16 78c6-8 14-8 20 0s14 8 20 0'/%3E%3Cpath d='M86 70h22l-3 22H89z'/%3E%3Cpath d='M90 70l2-6M97 70v-7M104 70l-2-6'/%3E%3Ccircle cx='40' cy='118' r='3'/%3E%3Cpath d='M68 110l10 10M78 110l-10 10'/%3E%3Cpath d='M112 112c0-6 8-6 8 0 0-6 8-6 8 0 0 7-8 11-8 11s-8-4-8-11z'/%3E%3C/svg%3E");background-size:150px 150px}
+.chip{display:block;width:max-content;margin:10px auto 8px;background:#fff;color:#54656f;font-size:12.5px;padding:4px 12px;border-radius:8px;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.msg{position:relative;background:#fff;margin:4px 56px 3px 48px;border-radius:0 8px 8px 8px;padding:6px 9px 7px;box-shadow:0 1px .5px rgba(11,20,26,.13);width:max-content;max-width:calc(100% - 104px)}
+.msg:before{content:'';position:absolute;top:0;left:-8px;border-style:solid;border-width:0 8px 10px 0;border-color:transparent #fff transparent transparent}
+.msg .from{font-size:12.5px;font-weight:600;margin-bottom:1px}
+.msg .av{position:absolute;left:-40px;top:0;width:30px;height:30px;border-radius:50%;display:block}
+.msg.cont{margin-top:2px;border-radius:8px}.msg.cont:before,.msg.cont .av,.msg.cont .from{display:none}
+.msg.out{background:#d9fdd3;margin:4px 12px 3px auto;border-radius:8px 0 8px 8px}
+.msg.out:before{left:auto;right:-8px;border-width:0 0 10px 8px;border-color:transparent transparent transparent #d9fdd3}
+.msg.out.cont{border-radius:8px}
+.tx{white-space:pre-wrap;overflow-wrap:anywhere}
+.t{float:right;font-size:11px;color:#667781;margin:7px 0 -5px 10px;line-height:1}
+.t b{color:#53bdeb;font-weight:400;letter-spacing:-3px}
+.card{cursor:pointer;padding:4px 4px 7px;-webkit-tap-highlight-color:transparent}
+.card canvas{display:block;width:260px;height:130px;image-rendering:pixelated;border-radius:6px;background:#fff}
+.cap{font-size:14px;margin:6px 4px 0;line-height:1.3}
+.cap small{display:block;color:#667781;font-size:12px;margin-top:1px}
+.card.live .cap small{color:#008069;font-weight:600}
+.pop{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+.foot{display:flex;gap:8px;align-items:center;padding:6px 8px calc(8px + env(safe-area-inset-bottom));background:#f0f2f5;flex:0 0 auto}
+.dice{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:23px;flex:0 0 42px}
+.dice.on{background:#d9fdd3}
+.comp{flex:1;min-width:0;background:#fff;border-radius:22px;padding:10px 16px}
+.comp input{border:0;outline:0;width:100%;font:inherit;background:transparent}
+.send{width:44px;height:44px;border-radius:50%;background:#00a884;display:grid;place-items:center;flex:0 0 44px}
+.send svg{width:20px;height:20px;fill:#fff;margin-left:3px}
+.ov{position:absolute;inset:0;z-index:10;background:#0b141a;display:flex;flex-direction:column;color:#e9edef}
+.ovbar{display:flex;align-items:center;gap:12px;padding:10px 12px;flex:0 0 auto}
+.ovbar svg{width:22px;height:22px;fill:#e9edef;display:block}
+.ovbar b{font-size:16px;font-weight:600}
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:6px 10px 18px;touch-action:none;user-select:none;-webkit-user-select:none}
+.paper{background:#fff;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);overflow:hidden;line-height:0;max-width:100%}
+.paper canvas{display:block;image-rendering:pixelated;touch-action:none}
+#hopc{width:min(calc(100vw - 20px),900px);max-width:100%;aspect-ratio:320/150;height:auto}
+#poolc{height:min(calc(100dvh - 190px),720px);aspect-ratio:200/356;width:auto;max-width:calc(100vw - 20px)}
+.hint{color:#aebac1;font-size:13.5px;text-align:center;margin:0;max-width:440px;min-height:1.4em}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.btn{font-weight:600;background:#00a884;color:#fff;border-radius:22px;padding:11px 20px}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px #3b4a54;color:#e9edef}
+.rank{font-size:14px;color:#e9edef;text-align:center;line-height:1.55;margin:0}
+.rank .me{color:#6fe3b8;font-weight:700}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:5;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);padding:14px 14px 22px}
+.sheet h3{margin:0 0 10px;font-size:15px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{background:#f0f2f5;border-radius:12px;padding:8px;text-align:left}
+.tile canvas{display:block;width:100%;aspect-ratio:2/1;height:auto;image-rendering:pixelated;background:#fff;border-radius:6px}
+.tile b{display:block;margin:6px 2px 0;font-size:14px}.tile span{display:block;margin:0 2px;font-size:12px;color:#667781}
+.toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:#233138;color:#e9edef;padding:8px 14px;border-radius:18px;font-size:13.5px;z-index:20;box-shadow:0 4px 14px rgba(0,0,0,.3);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}}
+</style></head><body>
+<div class="app" id="app">
+ <div class="bar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.4 1.4L7.8 11H20v2H7.8l5.6 5.6L12 20l-8-8z"/></svg><img id="gav" alt=""><span class="tt"><b>Filmmaand</b><span id="sub">Bas, Fre, Koen, jij</span></span></div>
+ <div class="site" id="site"></div>
+ <div class="foot"><button class="dice" id="dice" aria-label="Spelletjes">🎲</button><div class="comp"><input id="txt" placeholder="Bericht" aria-label="Bericht" autocomplete="off"></div><button class="send" id="sendb" aria-label="Versturen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg></button></div>
+ <div class="sheet" id="sheet" hidden><h3>Spelletjes</h3><div class="tiles" id="tiles"></div></div>
+ <div class="ov" id="ov" hidden><div class="ovbar"><button id="ovback" aria-label="Terug"><svg viewBox="0 0 24 24"><path d="M12 4l1.4 1.4L7.8 11H20v2H7.8l5.6 5.6L12 20l-8-8z"/></svg></button><b id="ovtitle"></b></div><div class="stage" id="stage"></div></div>
+ <div class="toast" id="toast" hidden></div>
+</div>
+<script>
+'use strict';
+/* Filmmaand spelletjes: a sampler. A game lives in the chat as a card; tap it to play full-screen; your result goes back
+   into the chat as a card; friends answer. Pudding Hop = same seeded course for everyone, runs recorded as jump frames and
+   replayed as ghosts. Biljart = turn-based 8-ball, a turn = shots + the authoritative end state. Everything local, no network. */
+const $=s=>document.querySelector(s);
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let FRAME=0;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261>>>0;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0}return h>>>0}
+const ell=(cx,cy,rx,ry,n=16)=>Array.from({length:n},(_,i)=>[cx+Math.cos(i/n*Math.PI*2)*rx,cy+Math.sin(i/n*Math.PI*2)*ry]);
+const RGB=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const FONT='"Segoe Print","Comic Sans MS","Chalkboard SE","Marker Felt",cursive';
+// a pen whose lines are redrawn by hand 12 times a second (they boil); the same seed + frame = the same wobble
+function pen(c,seed){const R=mulberry32(((Math.imul(seed|0,2654435761))^Math.imul(still?0:FRAME,40503))>>>0),j=a=>(R()-.5)*a;
+ const path=(P,a,close)=>{c.beginPath();P.forEach(([x,y],i)=>{const X=x+j(a),Y=y+j(a);i?c.lineTo(X,Y):c.moveTo(X,Y)});if(close)c.closePath()};
+ const p={j,
+  line(P,col,w=1.4,a=.9,close=false){c.lineJoin=c.lineCap='round';c.strokeStyle=col;c.lineWidth=w;path(P,a,close);c.stroke()},
+  shape(P,fill,col,w=1.4,a=.9){c.lineJoin=c.lineCap='round';path(P,a,true);if(fill){c.fillStyle=fill;c.fill()}if(col){c.strokeStyle=col;c.lineWidth=w;c.stroke()}},
+  dot(x,y,r,col){c.fillStyle=col;c.beginPath();c.arc(x+j(.4),y+j(.4),r,0,7);c.fill()},
+  ring(x,y,r,col,w=1.2,a=.6,n=14){p.line(ell(x,y,r,r,n),col,w,a,true)},
+  text(s,x,y,size,col,align){c.font='bold '+size+'px '+FONT;c.fillStyle=col;c.textBaseline='alphabetic';c.textAlign='left';
+   let w=0;for(const ch of s)w+=c.measureText(ch).width;let cx=align==='center'?x-w/2:align==='right'?x-w:x;
+   for(const ch of s){c.fillText(ch,cx+j(.6),y+j(.6));cx+=c.measureText(ch).width}return w}};
+ return p}
+// three inks, hard pixels: paper, red, black
+function ink3(c,w,h){const im=c.getImageData(0,0,w,h),d=im.data;
+ for(let i=0;i<d.length;i+=4){const r=d[i],g=d[i+1],b=d[i+2];const lum=.3*r+.59*g+.11*b;
+  if(lum>175){d[i]=d[i+1]=d[i+2]=255}else if(r-g>70){d[i]=224;d[i+1]=48;d[i+2]=42}else{d[i]=d[i+1]=d[i+2]=17}d[i+3]=255}
+ c.putImageData(im,0,0)}
+// the jelly cat (same outline as the chat's sticker), in a 100-unit box, base at y=74
+const K=[[24,74],[23,61],[26,47],[31,37],[35,31],[36,18],[45,27],[55,27],[64,18],[65,31],[69,37],[74,47],[77,61],[76,74]];
+const OUT=(()=>{const P=[],n=6;for(let i=0;i<K.length-1;i++){const p0=K[Math.max(0,i-1)],p1=K[i],p2=K[i+1],p3=K[Math.min(K.length-1,i+2)];
+ for(let s=0;s<n;s++){const t=s/n,t2=t*t,t3=t2*t;P.push([0,1].map(j=>.5*(2*p1[j]+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3)))}}
+ P.push(K[K.length-1]);return P})();
+function cat(p,x,y,s,o={}){const sx=o.sx||1,sy=o.sy||1,rot=o.rot||0,cs=Math.cos(rot),sn=Math.sin(rot);
+ const tr=([a,b])=>{let X=(a-50)*s*sx,Y=(b-74)*s*sy;if(rot){const Y0=Y+14*s;const X2=X*cs-Y0*sn,Y2=X*sn+Y0*cs-14*s;X=X2;Y=Y2}return[x+X,y+Y]};
+ const col=o.col||'#e0302a';p.shape(OUT.map(tr),o.fill===undefined?'#fff':o.fill,col,o.w||Math.max(1.2,2.6*s),o.a===undefined?.8:o.a);
+ if(o.bare)return;
+ for(const [a,b,l] of [[64,48,7],[67,56,6]])p.line([tr([a,b]),tr([a-3,b+l])],col,Math.max(1,1.5*s),.4);
+ const ink=o.eyes||'#111';
+ for(const ex of [43,56]){const [X,Y]=tr([ex,47]);
+  if(o.dead){p.line([[X-1.7,Y-1.7],[X+1.7,Y+1.7]],ink,1.1,.2);p.line([[X-1.7,Y+1.7],[X+1.7,Y-1.7]],ink,1.1,.2)}
+  else if(o.blink)p.line([[X-1.8,Y],[X+1.8,Y]],ink,1.1,.2);else p.dot(X,Y,Math.max(.9,1.9*s),ink)}}
+const hhmm=()=>new Date().toTimeString().slice(0,5);
+const toastEl=$('#toast');let toastT=0;function toast(t,ms=1800){toastEl.textContent=t;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>toastEl.hidden=true,ms)}
+
+/* ================================================================ PUDDING HOP (runner + ghosts) */
+const HOP={W:320,H:150,G:128,PX:46,DT:1/60,MAXF:60*180};
+const SPD=d=>Math.min(400,150+d*.0105);
+const COURSES=new Map();
+// the course is a pure function of the seed: every phone builds the same obstacles in the same places
+function getCourse(seed){if(COURSES.has(seed))return COURSES.get(seed);const R=mulberry32(seed),obs=[];let x=620;
+ const c={obs,ensure(d){while(x<d+HOP.W+120){const v=SPD(x),r=R();let k;
+   if(x>3200&&r<.13)k='double';else if(x>1700&&r<.33)k='tall';else k=['bucket','reel','clap'][(R()*3)|0];
+   const o=k==='bucket'?{w:14,h:18}:k==='tall'?{w:15,h:26}:k==='reel'?{w:17,h:17}:k==='clap'?{w:22,h:15}:{w:38,h:18};
+   o.k=k;o.x=x;o.id=obs.length+1;obs.push(o);x+=o.w+v*.6+38+R()*v*.9}}};
+ COURSES.set(seed,c);return c}
+function hopRun(seed,frames){return{seed,course:getCourse(seed),f:0,d:0,y:0,vy:0,ground:true,prevHeld:false,holdT:0,landT:0,dead:false,score:0,frames:frames||null,ip:0}}
+// a recorded run = [press, release, press, release…] in simulation frames; held means press <= f < release
+function ghostHeld(r){const a=r.frames;if(!a)return false;while(r.ip<a.length&&(a[r.ip+1]??Infinity)<=r.f)r.ip+=2;return r.ip<a.length&&a[r.ip]<=r.f}
+function hopStep(s,held){if(s.dead)return;const dt=HOP.DT,v=SPD(s.d);s.d+=v*dt;s.course.ensure(s.d);
+ if(held&&!s.prevHeld&&s.ground){s.vy=-330;s.ground=false;s.holdT=0}
+ s.prevHeld=held;
+ if(!s.ground){const lift=held&&s.vy<0&&s.holdT<.22;if(held)s.holdT+=dt;s.vy+=(lift?700:1900)*dt;s.y+=s.vy*dt;if(s.y>=0){s.y=0;s.vy=0;s.ground=true;s.landT=.16}}
+ else if(s.landT>0)s.landT-=dt;
+ const x0=s.d+HOP.PX-9,x1=s.d+HOP.PX+9,bot=HOP.G+s.y;
+ for(const o of s.course.obs){if(o.x>x1)break;if(o.x+o.w<x0)continue;
+  if(bot>HOP.G-o.h+3&&x1>o.x+3&&x0<o.x+o.w-3){s.dead=true;break}}
+ s.f++;s.score=Math.floor(s.d/25);if(s.f>=HOP.MAXF)s.dead=true}
+// a friend who "played earlier": a bot plays the same simulation and we keep only its button frames
+function botRun(seed,name,target){let best=null;
+ for(let attempt=0;attempt<40;attempt++){const R=mulberry32(hashStr(name+':'+attempt)^seed),s=hopRun(seed),frames=[];let pressed=false,until=0,planned=null;
+  const skill=.09+.04*R();
+  while(!s.dead){const px=s.d+HOP.PX;let nx=null;for(const o of s.course.obs){if(o.x+o.w>px-9){nx=o;break}}
+   if(nx&&s.ground&&!pressed&&nx!==planned){const big=nx.h>20||nx.w>30,v=SPD(s.d),lead=(big?.17:.12)+(R()-.5)*skill*(1+s.d/9000);
+    if(nx.x-(px+9)<v*lead){planned=nx;pressed=true;until=s.f+Math.max(1,Math.round((big?.2:.05)*60*(1+(R()-.5)*.6)));frames.push(s.f)}}
+   if(pressed&&s.f>=until){pressed=false;frames.push(s.f)}
+   hopStep(s,pressed)}
+  if(pressed)frames.push(s.f);
+  if(!best||Math.abs(s.score-target)<Math.abs(best.score-target))best={frames,score:s.score};
+  if(Math.abs(s.score-target)<target*.06)break}
+ return best}
+function drawObs(p,o,sx){const G=HOP.G;
+ if(o.k==='reel'){const r=o.h/2,cx=sx+o.w/2,cy=G-r;p.shape(ell(cx,cy,r,r,16),'#fff','#111',1.4,.7);const a0=o.x*.05;
+  for(let i=0;i<5;i++){const a=a0+i*1.2566;p.ring(cx+Math.cos(a)*r*.55,cy+Math.sin(a)*r*.55,r*.2,'#111',1,.3,8)}p.dot(cx,cy,1.1,'#111');return}
+ if(o.k==='clap'){p.shape([[sx,G-10],[sx+o.w,G-10],[sx+o.w,G],[sx,G]],'#fff','#111',1.4,.6);
+  p.shape([[sx,G-11],[sx+o.w,G-15],[sx+o.w+1,G-12],[sx+1,G-8]],'#fff','#111',1.2,.5);for(const f of [.25,.55,.85])p.line([[sx+o.w*f,G-10.5-f*3],[sx+o.w*f+3,G-9-f*3]],'#e0302a',2,.3);return}
+ const one=(x,w,h)=>{const P=[[x,G-h],[x+w,G-h],[x+w-3,G],[x+3,G]];p.shape(P,'#fff','#111',1.4,.6);
+  for(const f of [.3,.5,.7])p.line([[x+w*f,G-h+2],[x+w*f+(f-.5)*2,G-1]],'#e0302a',1.8,.3);p.shape(P,null,'#111',1.3,.5);
+  for(const [dx,dy,r] of [[.25,-1,2.6],[.55,-3,3],[.8,-1,2.4]])p.shape(ell(x+w*dx,G-h+dy,r,r,8),'#fff','#111',1,.4)};
+ if(o.k==='double'){one(sx,18,18);one(sx+20,18,18)}else one(sx,o.w,o.h)}
+const hopGhostCv=document.createElement('canvas');hopGhostCv.width=HOP.W;hopGhostCv.height=HOP.H;const hopGhostCx=hopGhostCv.getContext('2d');
+function hopDraw(c,st){const {W,H,G,PX}=HOP,pl=st.player,d=pl.d;c.setTransform(1,0,0,1,0,0);c.fillStyle='#fff';c.fillRect(0,0,W,H);
+ const p=pen(c,1);const gp=[];for(let x=-6;x<=W+8;x+=16)gp.push([x,G]);p.line(gp,'#111',1.3,.7);
+ const tp=pen(c,2);for(let k=0;k<14;k++){const span=W+40,x=((k*41-d)%span+span)%span-20,yy=G+6+(k%3)*5;tp.line([[x,yy],[x+4+(k%2)*5,yy]],'#111',1,.3)}
+ for(const o of pl.course.obs){const sx=o.x-d;if(sx>W+40)break;if(sx+o.w<-40)continue;drawObs(pen(c,o.id*13+5),o,sx)}
+ // ghosts' names (solid ink) and the player
+ const gx=hopGhostCx;gx.clearRect(0,0,W,H);let li=0;
+ for(const g of st.ghosts){const sx=PX+(g.run.d-d);if(sx<-40||sx>W+40)continue;const gy=G+g.run.y;
+  cat(pen(gx,70+li),sx,gy,.44,{fill:null,col:'#000',w:1.5,a:.6,dead:g.run.dead,rot:g.run.dead?.5:0,eyes:'#000'});
+  const lp=pen(c,90+li);lp.text(g.name+(g.run.dead?' '+g.run.score:''),sx,gy-27-(li%3)*9,8,'#111','center');li++}
+ const sq=pl.landT>0?pl.landT/.16:0,air=!pl.ground&&!pl.dead;
+ cat(pen(c,3),PX,G+pl.y,.44,{sx:air?.92:1+.18*sq,sy:air?1.08:1-.18*sq,dead:pl.dead,rot:pl.dead?.45:0,blink:!pl.dead&&(FRAME%37===0)});
+ const hp=pen(c,4);hp.text(String(pl.score),W-8,17,15,'#e0302a','right');
+ if(st.next)hp.text(st.next,8,14,9,'#111');
+ if(st.flash&&st.flash.n>0){hp.text(st.flash.t,W/2,48,13,'#e0302a','center');st.flash.n--}
+ if(st.phase==='ready'){hp.text('tik = springen · vasthouden = hoger',W/2,62,10,'#111','center');hp.text('tik om te starten',W/2,80,12,'#e0302a','center')}
+ if(st.phase==='dead'&&st.showRetry)hp.text('tik = meteen opnieuw',W/2,64,11,'#111','center');
+ // ink the page, then the ghosts as 1-bit "half ink" (checkerboard): translucent the way old notebooks did it
+ const im=c.getImageData(0,0,W,H),dd=im.data,gi=gx.getImageData(0,0,W,H).data;
+ for(let y=0,i=0;y<H;y++)for(let x=0;x<W;x++,i+=4){const r=dd[i],g=dd[i+1],b=dd[i+2],lum=.3*r+.59*g+.11*b;
+  if(lum>175){if(gi[i+3]>90&&((x+y)&1)===0){dd[i]=dd[i+1]=dd[i+2]=40}else{dd[i]=dd[i+1]=dd[i+2]=255}}
+  else if(r-g>70){dd[i]=224;dd[i+1]=48;dd[i+2]=42}else{dd[i]=dd[i+1]=dd[i+2]=17}dd[i+3]=255}
+ c.putImageData(im,0,0)}
+
+/* ================================================================ BILJART (turn-based 8-ball) */
+const PT={x0:18,y0:18,x1:182,y1:338,r:6,W:200,H:356};
+const POCKETS=[[18,18],[182,18],[16,178],[184,178],[18,338],[182,338]];
+const BALLCOL={0:'#ffffff',1:'#ffd400',2:'#1f6fe0',3:'#e0302a',4:'#8a3ffc',5:'#ff8c1a',6:'#2fa84f',7:'#8b5a2b',8:'#111111'};for(let i=9;i<16;i++)BALLCOL[i]=BALLCOL[i-8];
+const SPRITES={};function sprite(id){if(SPRITES[id])return SPRITES[id];const S=13,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d'),im=x.createImageData(S,S),d=im.data,col=RGB(BALLCOL[id]);
+ for(let j=0;j<S;j++)for(let i=0;i<S;i++){const dx=i-6,dy=j-6,r=Math.hypot(dx,dy),k=(j*S+i)*4;if(r>6.4)continue;let o;
+  if(r>5.3)o=[17,17,17];else if(id===0)o=[255,255,255];else if(id>8)o=Math.abs(dy)<2.6?col:[255,255,255];else o=col;
+  if(id===8&&r<1.6)o=[255,255,255];if(id>0&&id<8&&dx===-2&&dy===-2)o=[255,255,255];
+  d[k]=o[0];d[k+1]=o[1];d[k+2]=o[2];d[k+3]=255}
+ x.putImageData(im,0,0);return SPRITES[id]=c}
+function rack(){const b=[{id:0,x:100,y:272,vx:0,vy:0,in:false}];const rows=[[1],[9,2],[3,8,10],[11,4,12,5],[13,6,14,15,7]],dx=2*PT.r+.3,dy=PT.r*Math.sqrt(3)+.3;
+ rows.forEach((row,ri)=>row.forEach((id,ci)=>b.push({id,x:100+(ci-(row.length-1)/2)*dx,y:110-ri*dy,vx:0,vy:0,in:false})));return b}
+const cloneB=bs=>bs.map(b=>({id:b.id,x:b.x,y:b.y,vx:0,vy:0,in:b.in}));
+// one physics step: move, roll friction, pockets, cushions, ball–ball (equal masses, nearly elastic)
+function poolStep(B,dt,ev){const {x0,y0,x1,y1,r}=PT;
+ for(const b of B){if(b.in)continue;b.x+=b.vx*dt;b.y+=b.vy*dt;const sp=Math.hypot(b.vx,b.vy);
+  if(sp>0){const ns=Math.max(0,sp-55*dt)*(1-.32*dt);if(ns<2.5){b.vx=b.vy=0}else{b.vx*=ns/sp;b.vy*=ns/sp}}
+  let near=false;for(const [px,py] of POCKETS){const dd=Math.hypot(b.x-px,b.y-py);if(dd<10.5){b.in=true;b.vx=b.vy=0;ev.pocketed.push(b.id);break}if(dd<18)near=true}
+  if(b.in)continue;
+  if(!near){if(b.x<x0+r){b.x=x0+r;b.vx=Math.abs(b.vx)*.8}if(b.x>x1-r){b.x=x1-r;b.vx=-Math.abs(b.vx)*.8}if(b.y<y0+r){b.y=y0+r;b.vy=Math.abs(b.vy)*.8}if(b.y>y1-r){b.y=y1-r;b.vy=-Math.abs(b.vy)*.8}}
+  else if(b.x<x0-6||b.x>x1+6||b.y<y0-6||b.y>y1+6){b.in=true;b.vx=b.vy=0;ev.pocketed.push(b.id)}}
+ for(let i=0;i<B.length;i++){const a=B[i];if(a.in)continue;for(let j=i+1;j<B.length;j++){const c=B[j];if(c.in)continue;
+  let dx=c.x-a.x,dy=c.y-a.y;const dd=Math.hypot(dx,dy);if(dd>=2*r||dd===0)continue;dx/=dd;dy/=dd;
+  const ov=(2*r-dd)/2;a.x-=dx*ov;a.y-=dy*ov;c.x+=dx*ov;c.y+=dy*ov;
+  const vr=(a.vx-c.vx)*dx+(a.vy-c.vy)*dy;if(vr>0){const imp=vr*.97;a.vx-=dx*imp;a.vy-=dy*imp;c.vx+=dx*imp;c.vy+=dy*imp;
+   if(ev.first==null&&(a.id===0||c.id===0))ev.first=a.id===0?c.id:a.id}}}}
+const moving=B=>B.some(b=>!b.in&&(b.vx||b.vy));
+const SUB=4,PDT=1/240;
+function shoot(B,shot){const c=B.find(b=>b.id===0);const v=60+shot.p*680;c.vx=shot.dx*v;c.vy=shot.dy*v}
+function simulate(B0,shot){const B=cloneB(B0),ev={pocketed:[],first:null};shoot(B,shot);let n=0;while(moving(B)&&n<240*25){poolStep(B,PDT,ev);n++}for(const b of B){b.vx=b.vy=0}return{B,ev}}
+const groupOf=id=>id===0||id===8?null:id<8?'hele':'halve';
+const left=(B,g)=>B.filter(b=>!b.in&&groupOf(b.id)===g).length;
+// the house rules, kept short: pot your own group to keep the turn; scratch = cue back on the spot + turn over; the 8 last
+function judge(st,B,ev,who){const other=who==='me'?st.opp:'me';const pk=ev.pocketed.filter(id=>id!==0),scratch=ev.pocketed.includes(0);let over=null,cont=false,note='';
+ if(pk.includes(8)){const g=st.groups[who];over=(g&&left(B,g)===0&&!scratch)?who:other;note=over===who?'de 8 erin!':'de 8 te vroeg…'}
+ else{if(!st.groups[who]){const f=pk.find(id=>id!==8);if(f){st.groups[who]=groupOf(f);st.groups[other]=groupOf(f)==='hele'?'halve':'hele'}}
+  const g=st.groups[who],mine=pk.filter(id=>g?groupOf(id)===g:true);cont=!scratch&&mine.length>0;
+  note=scratch?'wit erin (fout)':pk.length?pk.length+' gepot':'mis'}
+ if(scratch&&!over){const c=B.find(b=>b.id===0);c.in=false;c.x=100;c.y=272;for(let k=0;k<30&&B.some(b=>b!==c&&!b.in&&Math.hypot(b.x-c.x,b.y-c.y)<2*PT.r+1);k++)c.x=100+((k%2)?1:-1)*(k+1)*4}
+ st.balls=B;st.over=over;st.turn=over?null:cont?who:other;return{note,cont,over,pk,scratch}}
+function botShot(st,name,err){const B=st.balls,cue=B.find(b=>b.id===0),g=st.groups[name];let targets=B.filter(b=>!b.in&&b.id!==0&&(g?groupOf(b.id)===g:b.id!==8));
+ if(g&&!targets.length)targets=B.filter(b=>!b.in&&b.id===8);let best=null;
+ for(const t of targets)for(const [px,py] of POCKETS){let ux=px-t.x,uy=py-t.y;const dp=Math.hypot(ux,uy);ux/=dp;uy/=dp;const gxp=t.x-ux*2*PT.r,gyp=t.y-uy*2*PT.r;
+  let sx=gxp-cue.x,sy=gyp-cue.y;const ds=Math.hypot(sx,sy);sx/=ds;sy/=ds;const cut=sx*ux+sy*uy;if(cut<.35)continue;
+  const sc=cut*1.6-ds/320-dp/420;if(!best||sc>best.sc)best={sc,dx:sx,dy:sy,p:Math.min(.95,Math.max(.32,(ds+dp)/430+.18))}}
+ const R=Math.random;if(!best){const a=R()*Math.PI*2;return{dx:Math.cos(a),dy:Math.sin(a),p:.7}}
+ const a=Math.atan2(best.dy,best.dx)+(R()-.5)*err;return{dx:Math.cos(a),dy:Math.sin(a),p:best.p}}
+const tableCv=document.createElement('canvas');tableCv.width=PT.W;tableCv.height=PT.H;let tableFrame=-1;
+function drawTable(){if(tableFrame===FRAME)return tableCv;tableFrame=FRAME;const c=tableCv.getContext('2d'),p=pen(c,21);c.fillStyle='#fff';c.fillRect(0,0,PT.W,PT.H);
+ p.line([[6,6],[194,6],[194,350],[6,350]],'#111',2,.9,true);p.line([[PT.x0,PT.y0],[PT.x1,PT.y0],[PT.x1,PT.y1],[PT.x0,PT.y1]],'#111',1.3,.7,true);
+ for(const [x,y] of POCKETS)p.shape(ell(x,y,8.5,8.5,14),'#111','#111',1,.5);
+ for(let x=26;x<176;x+=9)p.line([[x,272],[x+4,272]],'#111',1,.3);p.dot(100,110,1.4,'#e0302a');
+ for(const y of [70,110,150,210,250,290])for(const x of [11,189])p.dot(x,y,1,'#111');
+ ink3(c,PT.W,PT.H);return tableCv}
+function px(c,x,y,col,s=1){c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),s,s)}
+function drawPool(c,st,aim){c.imageSmoothingEnabled=false;c.drawImage(drawTable(),0,0);
+ for(const b of st.balls)if(!b.in)c.drawImage(sprite(b.id),Math.round(b.x-6),Math.round(b.y-6));
+ if(aim&&aim.p>0){const cue=st.balls.find(b=>b.id===0),{dx,dy}=aim;
+  // where does the line first touch a ball or a cushion?
+  let tHit=Infinity,hit=null;for(const b of st.balls){if(b.in||b.id===0)continue;const ox=b.x-cue.x,oy=b.y-cue.y,pr=ox*dx+oy*dy;if(pr<=0)continue;const q=ox*ox+oy*oy-pr*pr,rr=4*PT.r*PT.r;if(q>rr)continue;const t=pr-Math.sqrt(rr-q);if(t<tHit){tHit=t;hit=b}}
+  const tx=dx>0?(PT.x1-PT.r-cue.x)/dx:dx<0?(PT.x0+PT.r-cue.x)/dx:Infinity,ty=dy>0?(PT.y1-PT.r-cue.y)/dy:dy<0?(PT.y0+PT.r-cue.y)/dy:Infinity,tw=Math.min(tx,ty);
+  const L=Math.min(tHit,tw);for(let t=9;t<L;t+=4)px(c,cue.x+dx*t,cue.y+dy*t,'#111');
+  if(hit){const gx=cue.x+dx*L,gy=cue.y+dy*L;for(let a=0;a<6.28;a+=.35)px(c,gx+Math.cos(a)*6,gy+Math.sin(a)*6,'#111');let ux=hit.x-gx,uy=hit.y-gy;const u=Math.hypot(ux,uy);ux/=u;uy/=u;for(let t=8;t<36;t+=3)px(c,hit.x+ux*t,hit.y+uy*t,'#e0302a')}
+  const back=10+aim.p*30;for(let t=back;t<back+95;t+=1){const col=t<back+6?'#111':((t|0)%14<7?'#8b5a2b':'#6b4420');px(c,cue.x-dx*t-.5,cue.y-dy*t-.5,col,2)}}}
+
+/* ================================================================ chat shell */
+const site=$('#site'),subEl=$('#sub'),SUB0=subEl.textContent;
+const CREW={Bas:'#fc9775',Fre:'#e542a3',Koen:'#1f7aec'};
+const AV={};
+for(const [n,col] of Object.entries(CREW)){const c=document.createElement('canvas');c.width=c.height=60;const x=c.getContext('2d');x.fillStyle=col+'38';x.beginPath();x.arc(30,30,30,0,7);x.fill();pen(x,hashStr(n)).text(n[0],30,41,28,col,'center');AV[n]=c.toDataURL()}
+{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,64,64);cat(pen(x,5),34,86,.95,{w:3});ink3(x,64,64);$('#gav').src=c.toDataURL()}
+let lastWho=null;const lastCard={};const CARDS=new Set(),VISIBLE=new Set();
+const io=new IntersectionObserver(es=>{for(const e of es){const cd=[...CARDS].find(x=>x.el===e.target);if(!cd)continue;e.isIntersecting?VISIBLE.add(cd):VISIBLE.delete(cd)}});
+function addMsg(m){const out=m.who==='me';if(m.kind==='sys'){const el=document.createElement('div');el.className='chip';el.textContent=m.text;site.append(el);lastWho=null;return el}
+ const el=document.createElement('div');el.className='msg '+(out?'out':'in')+(m.kind==='card'?' card':'')+(lastWho===m.who?' cont':'')+(m.anim?' pop':'');
+ if(!out){const a=document.createElement('img');a.className='av';a.alt='';a.src=AV[m.who];el.append(a);const f=document.createElement('div');f.className='from';f.textContent=m.who;f.style.color=CREW[m.who];el.append(f)}
+ if(m.kind==='text'){const s=document.createElement('span');s.className='tx';s.textContent=m.text;el.append(s)}
+ else{const cv=document.createElement('canvas');cv.width=130;cv.height=65;el.append(cv);const cap=document.createElement('div');cap.className='cap';cap.textContent=m.cap;const sm=document.createElement('small');cap.append(sm);el.append(cap);
+  const cd={el,cv,m,sm};CARDS.add(cd);io.observe(el);drawCard(cd);el.addEventListener('click',()=>openGame(m.game,m.gid));
+  if(lastCard[m.gid]){lastCard[m.gid].el.classList.remove('live');lastCard[m.gid].sm.textContent=''}lastCard[m.gid]=cd;refreshLive(m.gid)}
+ const t=document.createElement('span');t.className='t';t.textContent=m.time||hhmm();if(out){const b=document.createElement('b');b.textContent='✓✓';t.append(' ',b)}el.append(t);
+ site.append(el);lastWho=m.who;requestAnimationFrame(()=>site.scrollTop=site.scrollHeight);return el}
+function refreshLive(gid){const cd=lastCard[gid];if(!cd)return;const m=cd.m;let live=false,s='';
+ if(m.game==='hop'){live=true;s='▶ tik om te racen tegen de spookjes'}
+ else{const st=POOLS[gid];if(!st)return;if(st.over){s=st.over==='me'?'gewonnen · tik voor een nieuw potje':st.over+' won · tik voor een revanche';live=true}else if(st.turn==='me'){live=true;s='▶ jouw beurt · tik om te spelen'}else s=st.opp+' is aan de beurt'}
+ cd.sm.textContent=s;cd.el.classList.toggle('live',live)}
+function typing(name,on){subEl.textContent=on?name+' is aan het typen…':SUB0;subEl.classList.toggle('typing',on)}
+// card previews, redrawn 12×/s while visible
+function drawCard(cd){const c=cd.cv.getContext('2d'),m=cd.m,W=130,H=65;c.setTransform(1,0,0,1,0,0);c.fillStyle='#fff';c.fillRect(0,0,W,H);
+ if(m.game==='hop'){const p=pen(c,hashStr(m.gid)+7),G=54;p.line([[-2,G],[40,G],[80,G],[132,G]],'#111',1.1,.6);
+  const ph=(FRAME%14)/14,hy=-Math.sin(ph*Math.PI)*16;drawObs(pen(c,31),{k:'bucket',w:10,h:12,x:0,id:1},34-ph*6);
+  cat(pen(c,32),18,G+hy,.27,{w:1.3});p.text(String(m.score),W-6,26,17,'#e0302a','right');p.text(m.who==='me'?'jij':m.who,W-6,40,9,'#111','right');p.text('PUDDING HOP',6,12,8,'#111')}
+ else{c.imageSmoothingEnabled=false;const p=pen(c,hashStr(m.gid)+9);p.line([[4,4],[126,4],[126,61],[4,61]],'#111',1.2,.5,true);
+  for(const [x,y] of [[4,4],[65,3],[126,4],[4,61],[65,62],[126,61]])p.dot(x,y,2.4,'#111');ink3(c,W,H);
+  for(const b of m.snap){if(b.in)continue;const X=4+(b.y-18)/320*122,Y=61-(b.x-18)/164*57;const col=BALLCOL[b.id];c.fillStyle=b.id>8?'#fff':col;c.fillRect(Math.round(X)-1,Math.round(Y)-1,3,3);if(b.id>8){c.fillStyle=col;c.fillRect(Math.round(X)-1,Math.round(Y),3,1)}c.fillStyle='#111';c.fillRect(Math.round(X)-1,Math.round(Y)-2,3,1)}}}
+setInterval(()=>{if(!still)FRAME++;for(const cd of VISIBLE)drawCard(cd);if(OV&&OV.tick12)OV.tick12()},83);
+
+/* ================================================================ overlay */
+const ov=$('#ov'),stage=$('#stage'),ovt=$('#ovtitle');let OV=null;
+function openOv(title,mod){closeOv();ovt.textContent=title;stage.replaceChildren();ov.hidden=false;OV=mod;mod.mount(stage)}
+function closeOv(){if(OV&&OV.unmount)OV.unmount();OV=null;ov.hidden=true;stage.replaceChildren()}
+$('#ovback').onclick=closeOv;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!ov.hidden)closeOv()});
+function openGame(game,gid){if(game==='hop')openOv('Pudding Hop',hopModule());else openPool(gid)}
+
+/* ---- Hop: today's course, runs, ghosts */
+const HOPSEED=hashStr('filmmaand-2026-09-24');
+const HOPG={gid:'hop-2026-09-24',runs:[]};
+function bestOf(name){return HOPG.runs.filter(r=>r.name===name).sort((a,b)=>b.score-a.score)[0]}
+function ghostList(){const names=[...new Set(HOPG.runs.map(r=>r.name))].filter(n=>n!=='me');const g=names.map(n=>bestOf(n)).sort((a,b)=>b.score-a.score).slice(0,3).map(r=>({name:r.name,score:r.score,frames:r.frames}));
+ const mine=bestOf('me');if(mine)g.push({name:'jouw beste',score:mine.score,frames:mine.frames});return g}
+function hopModule(){let cv,cx,panel,hint,sim,ghosts,rec,held,phase,raf=0,acc=0,last=0,deadAt=0,flash=null,passed,next='';
+ function reset(){sim=hopRun(HOPSEED);rec=[];held=false;phase='ready';passed=new Set();flash=null;ghosts=ghostList().map(g=>({name:g.name,score:g.score,run:hopRun(HOPSEED,g.frames)}));panel.hidden=true;
+  hint.textContent=ghosts.length?'Je racet tegen: '+ghosts.map(g=>g.name+' '+g.score).join(' · '):'Zet de eerste score neer.'}
+ function start(){phase='run';last=performance.now();acc=0}
+ function press(){if(phase==='ready'){start();return}if(phase==='dead'){if(performance.now()-deadAt>380){reset();start()}return}if(!held){held=true;rec.push(sim.f)}}
+ function release(){if(held){held=false;if(phase==='run')rec.push(sim.f)}}
+ function die(){phase='dead';deadAt=performance.now();if(held){rec.push(sim.f);held=false}if(rec.length%2)rec.push(sim.f);
+  const all=[{name:'jij',score:sim.score,me:true},...ghosts.filter(g=>g.name!=='jouw beste').map(g=>({name:g.name,score:g.score}))].sort((a,b)=>b.score-a.score);
+  const rank=all.findIndex(x=>x.me)+1,mb=bestOf('me');
+  setTimeout(()=>{if(phase!=='dead')return;panel.hidden=false;
+   panel.querySelector('.rank').innerHTML=all.map((x,i)=>'<div class="'+(x.me?'me':'')+'">'+(i+1)+'. '+x.name+' · '+x.score+'</div>').join('')+(mb&&sim.score>mb.score?'<div class="me">nieuw record!</div>':'');
+   hint.textContent='#'+rank+' van '+all.length+(rank===1?' · jij staat bovenaan':'')},380)}
+ function frame(ts){raf=requestAnimationFrame(frame);
+  if(phase==='run'){acc+=Math.min(.1,(ts-last)/1000);last=ts;
+   while(acc>=HOP.DT){acc-=HOP.DT;hopStep(sim,held);for(const g of ghosts){g.run.f=g.run.f;hopStep(g.run,ghostHeld(g.run))}
+    for(const g of ghosts){if(g.run.dead&&!passed.has(g.name)&&sim.score>g.run.score){passed.add(g.name);flash={t:g.name+' ingehaald!',n:70}}}
+    if(sim.dead){die();break}}}
+  const up=ghosts.filter(g=>g.score>sim.score).sort((a,b)=>a.score-b.score)[0];next=up?'volgende: '+up.name+' '+up.score:(ghosts.length?'je staat vooraan':'');
+  hopDraw(cx,{player:sim,ghosts,phase,flash,next,showRetry:phase==='dead'&&performance.now()-deadAt>380})}
+ const kd=e=>{if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){e.preventDefault();if(!e.repeat)press()}},ku=e=>{if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')release()};
+ return{mount(st){const pap=document.createElement('div');pap.className='paper';cv=document.createElement('canvas');cv.id='hopc';cv.width=HOP.W;cv.height=HOP.H;pap.append(cv);cx=cv.getContext('2d');
+   hint=document.createElement('p');hint.className='hint';panel=document.createElement('div');panel.className='row';panel.style.flexDirection='column';
+   panel.innerHTML='<p class="rank"></p><div class="row"><button class="btn" id="hsend">Stuur je run</button><button class="btn ghost" id="hagain">Opnieuw</button></div>';
+   st.append(pap,hint,panel);
+   st.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();press()});st.addEventListener('pointerup',release);st.addEventListener('pointercancel',release);st.addEventListener('pointerleave',release);
+   addEventListener('keydown',kd);addEventListener('keyup',ku);
+   panel.querySelector('#hagain').onclick=()=>{reset();start()};
+   panel.querySelector('#hsend').onclick=()=>{const run={name:'me',score:sim.score,frames:rec.slice()};closeOv();postRun(run)};
+   reset();raf=requestAnimationFrame(frame)},
+  unmount(){cancelAnimationFrame(raf);removeEventListener('keydown',kd);removeEventListener('keyup',ku)},
+  test:{press,release,state:()=>({phase,score:sim.score,f:sim.f,dead:sim.dead,ghosts:ghosts.map(g=>[g.name,g.run.score,g.run.dead])})}}}
+function postRun(run){HOPG.runs.push(run);const others=[...new Set(HOPG.runs.map(r=>r.name))].filter(n=>n!=='me').map(n=>bestOf(n)).sort((a,b)=>b.score-a.score);
+ const rank=others.filter(o=>o.score>run.score).length+1;
+ addMsg({who:'me',kind:'card',game:'hop',gid:HOPG.gid,score:run.score,cap:'Jij: '+run.score+' 🍿 · #'+rank+' van '+(others.length+1),anim:true});
+ const top=others[0],beaten=others.filter(o=>o.score<run.score);
+ if(beaten.length){const rival=beaten[0].name;setTimeout(()=>typing(rival,true),900);
+  setTimeout(()=>{typing(rival,false);const r=botRun(HOPSEED,rival+'-revanche-'+HOPG.runs.length,run.score+12+Math.round(Math.random()*30));
+   if(r.score>run.score){HOPG.runs.push({name:rival,score:r.score,frames:r.frames});addMsg({who:rival,kind:'card',game:'hop',gid:HOPG.gid,score:r.score,cap:rival+': '+r.score+' 🍿 · pak terug 😤',anim:true})}
+   else addMsg({who:rival,kind:'text',text:['ok jij wint 🙄','hoe dan??','die ene emmer 😭'][Math.random()*3|0],anim:true})},2600+Math.random()*1400)}
+ else if(top){setTimeout(()=>addMsg({who:top.name,kind:'text',text:['bijna 😏','haha nog '+(top.score-run.score)+' te gaan','spookje zegt hoi 👻'][Math.random()*3|0],anim:true}),2000+Math.random()*1200)}}
+
+/* ---- Biljart */
+const POOLS={};let poolN=0;
+function newPool(opp,who){const gid='pool-'+(++poolN);POOLS[gid]={gid,opp,balls:rack(),groups:{me:null,[opp]:null},turn:who,over:null,replay:null};return gid}
+function openPool(gid){const st=POOLS[gid];if(!st)return;
+ if(st.over){const g=newPool(st.opp,st.over==='me'?st.opp:'me');addMsg({who:'me',kind:'card',game:'pool',gid:g,snap:cloneB(POOLS[g].balls),cap:'Nog een potje? 🎱',anim:true});if(POOLS[g].turn!=='me')botTurnLater(g);else openOv('Biljart',poolModule(g));return}
+ if(st.turn!=='me'&&!st.replay){toast(st.opp+' is aan de beurt…');return}
+ openOv('Biljart · tegen '+st.opp,poolModule(gid))}
+function poolModule(gid){const st=POOLS[gid];let cv,cx,hint,raf=0,phase='idle',aim=null,drag=null,anim=null,turnShots=[],turnStart=null,notes=[];
+ const status=()=>{const g=st.groups.me;hint.textContent=st.over?(st.over==='me'?'Jij wint! 🎱':st.opp+' wint 🎱'):st.turn==='me'?'Jij'+(g?' ('+g+')':'')+': sleep naar achteren om te mikken, loslaten = stoot':st.opp+' is aan de beurt'};
+ const render=()=>drawPool(cx,st,phase==='aim'&&aim?aim:null);
+ function toCanvas(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*PT.W,(e.clientY-r.top)/r.height*PT.H]}
+ function animate(shot,done){anim={B:cloneB(st.balls),ev:{pocketed:[],first:null}};shoot(anim.B,shot);phase='anim';const vis={...st,balls:anim.B};
+  const tick=()=>{for(let k=0;k<SUB;k++)poolStep(anim.B,PDT,anim.ev);drawPool(cx,vis,null);if(moving(anim.B))raf=requestAnimationFrame(tick);else{for(const b of anim.B)b.vx=b.vy=0;const a=anim;anim=null;done(a)}};raf=requestAnimationFrame(tick)}
+ function myShot(shot){if(!turnStart)turnStart=cloneB(st.balls);turnShots.push(shot);
+  animate(shot,({B,ev})=>{const res=judge(st,B,ev,'me');notes.push(res.note);render();status();
+   if(st.turn==='me'&&!st.over){phase='aim';if(res.pk.length)toast(res.note+' · nog een keer!');return}
+   phase='idle';const cap=st.over?(st.over==='me'?'Jij wint! 🎱':st.opp+' wint 🎱 ('+res.note+')'):'Jij: '+notes.join(', ')+' · '+st.opp+' is aan zet';
+   const payload={shots:turnShots,start:turnStart,end:cloneB(st.balls)};turnShots=[];turnStart=null;notes=[];
+   setTimeout(()=>{closeOv();addMsg({who:'me',kind:'card',game:'pool',gid,snap:payload.end,cap,anim:true,payload});if(!st.over)botTurnLater(gid)},900)})}
+ function replay(done){const R=st.replay;st.replay=null;const saveEnd=R.end;st.balls=cloneB(R.start);render();hint.textContent=st.opp+' speelt…';let i=0;
+  const nextShot=()=>{if(i>=R.shots.length){st.balls=cloneB(saveEnd);render();done();return}const s=R.shots[i++];animate(s,({B})=>{st.balls=B;render();setTimeout(nextShot,450)})};setTimeout(nextShot,500)}
+ return{mount(el){const pap=document.createElement('div');pap.className='paper';cv=document.createElement('canvas');cv.id='poolc';cv.width=PT.W;cv.height=PT.H;pap.append(cv);cx=cv.getContext('2d');hint=document.createElement('p');hint.className='hint';el.append(pap,hint);
+   cv.addEventListener('pointerdown',e=>{if(phase!=='aim')return;e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch{}drag=toCanvas(e);aim=null});
+   cv.addEventListener('pointermove',e=>{if(!drag||phase!=='aim')return;const [x,y]=toCanvas(e);let dx=drag[0]-x,dy=drag[1]-y;const L=Math.hypot(dx,dy);if(L<3){aim=null;render();return}aim={dx:dx/L,dy:dy/L,p:Math.min(1,L/110)};render();hint.textContent='kracht '+Math.round(aim.p*100)+'%'});
+   const up=()=>{if(!drag)return;drag=null;if(phase==='aim'&&aim&&aim.p>.04){const s={dx:+aim.dx.toFixed(4),dy:+aim.dy.toFixed(4),p:+aim.p.toFixed(3)};aim=null;myShot(s)}else{aim=null;render();status()}};
+   cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+   render();if(st.replay){phase='replay';replay(()=>{phase=st.turn==='me'&&!st.over?'aim':'idle';status();refreshLive(gid)})}else{phase=st.turn==='me'?'aim':'idle';status()}},
+  unmount(){cancelAnimationFrame(raf)},
+  tick12(){if(phase==='aim'||phase==='idle')render()},
+  test:{shoot:(dx,dy,p)=>{if(phase==='aim')myShot({dx,dy,p})},state:()=>({phase,turn:st.turn,over:st.over,groups:st.groups,inPlay:st.balls.filter(b=>!b.in).length})}}}
+// the friend's turn: shots until a miss; the chat gets one card with the shots + the authoritative end state
+function botTurnLater(gid){const st=POOLS[gid];setTimeout(()=>typing(st.opp,true),800);
+ setTimeout(()=>{typing(st.opp,false);if(st.turn!==st.opp||st.over)return;const start=cloneB(st.balls),shots=[],notes=[];let res;const err={Koen:.06,Bas:.08,Fre:.045}[st.opp]||.07;
+  for(let k=0;k<7;k++){const shot=botShot(st,st.opp,err);const q={dx:+shot.dx.toFixed(4),dy:+shot.dy.toFixed(4),p:+shot.p.toFixed(3)};shots.push(q);const {B,ev}=simulate(st.balls,q);res=judge(st,B,ev,st.opp);notes.push(res.note);if(st.turn!==st.opp||st.over)break}
+  st.replay={start,shots,end:cloneB(st.balls)};
+  const cap=st.over?(st.over===st.opp?st.opp+' wint 🎱':'Jij wint! '+st.opp+': '+res.note):st.opp+': '+notes.join(', ')+' · jouw beurt';
+  addMsg({who:st.opp,kind:'card',game:'pool',gid,snap:cloneB(st.balls),cap,anim:true});refreshLive(gid)},2400+Math.random()*1600)}
+
+/* ================================================================ picker, composer, seed */
+const sheet=$('#sheet'),dice=$('#dice');
+const TILES=[{k:'hop',t:'Pudding Hop',s:'race tegen de spookjes van je vrienden'},{k:'pool',t:'Biljart',s:'8-ball, om de beurt'}];
+function drawTile(cv,k){const c=cv.getContext('2d');cv.width=130;cv.height=65;drawCard({cv,m:k==='hop'?{game:'hop',gid:'tile',score:'',who:'me'}:{game:'pool',gid:'tile',snap:rack()}})}
+for(const T of TILES){const b=document.createElement('button');b.className='tile';const cv=document.createElement('canvas');b.append(cv);b.insertAdjacentHTML('beforeend','<b>'+T.t+'</b><span>'+T.s+'</span>');drawTile(cv,T.k);
+ b.onclick=()=>{sheet.hidden=true;dice.classList.remove('on');if(T.k==='hop')openOv('Pudding Hop',hopModule());else{const opp=['Koen','Bas','Fre'][Math.random()*3|0];const g=newPool(opp,'me');addMsg({who:'me',kind:'card',game:'pool',gid:g,snap:cloneB(POOLS[g].balls),cap:'Biljart tegen '+opp+' 🎱',anim:true});openOv('Biljart · tegen '+opp,poolModule(g))}};$('#tiles').append(b)}
+dice.onclick=()=>{sheet.hidden=!sheet.hidden;dice.classList.toggle('on',!sheet.hidden)};
+site.addEventListener('pointerdown',()=>{if(!sheet.hidden){sheet.hidden=true;dice.classList.remove('on')}});
+const txt=$('#txt');function sendText(){const v=txt.value.trim();if(!v)return;txt.value='';addMsg({who:'me',kind:'text',text:v,anim:true});
+ if(Math.random()<.5){const w=['Bas','Fre','Koen'][Math.random()*3|0];setTimeout(()=>typing(w,true),700);setTimeout(()=>{typing(w,false);addMsg({who:w,kind:'text',text:['haha','🔥','deal','zaterdag dan?','👀','eerst biljart'][Math.random()*6|0],anim:true})},1900)}}
+$('#sendb').onclick=sendText;txt.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendText()}});
+// the friends "played earlier": their runs are real runs on today's course, replayable as ghosts
+const seedRuns=[['Koen',96],['Bas',160],['Fre',262]].map(([n,t])=>{const r=botRun(HOPSEED,n,t);return{name:n,score:r.score,frames:r.frames}});
+addMsg({kind:'sys',text:'Vandaag'});
+addMsg({who:'Bas',kind:'text',text:'wie is er donderdag?',time:'20:38'});
+addMsg({who:'Fre',kind:'text',text:'ik!! 🍿',time:'20:39'});
+HOPG.runs.push(seedRuns[1]);addMsg({who:'Bas',kind:'card',game:'hop',gid:HOPG.gid,score:seedRuns[1].score,cap:'Bas: '+seedRuns[1].score+' 🍿 · verslaan?',time:'20:41'});
+HOPG.runs.push(seedRuns[0]);
+HOPG.runs.push(seedRuns[2]);addMsg({who:'Fre',kind:'card',game:'hop',gid:HOPG.gid,score:seedRuns[2].score,cap:'Fre: '+seedRuns[2].score+' 🍿 · sorry Bas',time:'20:44'});
+{const g=newPool('Koen','me');addMsg({who:'Koen',kind:'card',game:'pool',gid:g,snap:cloneB(POOLS[g].balls),cap:'Koen daagt je uit: biljart 🎱',time:'20:46'})}
+window.__games={HOPG,POOLS,get OV(){return OV},openGame,hopRun,hopStep,botRun,HOPSEED};
+</script></body></html>
