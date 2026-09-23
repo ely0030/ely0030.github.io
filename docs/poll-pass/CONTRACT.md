@@ -12,8 +12,16 @@ Branch `feat/poll-pass`. Design: `kits/invitations/POLL-PASS.md` (Cameo, 22 Sept
 - It identifies **one participant for one date poll on one plan**. With it you can read that poll
   (`GET`) and set **your own** availability (`PUT`). Nothing else: every other route ignores the header.
 - It is valid while **all** of these hold: the plan in the URL is the plan it was minted for, that plan's
-  *current* poll is the poll it was minted for, it is not revoked, `now < poll.closesAt + 24h`, and the
+  *current* poll is the poll it was minted for, it is not revoked, it has not expired (below), and the
   participant still has a name/avatar (is onboarded).
+- **Expiry** depends on how the poll is decided:
+  - **Manual poll** (`pick:"manual"`, the organiser picks; this is the September poll): valid **while the
+    poll is open**, then **24h read-only** after the organiser picks or closes it (`closedAt + 24h`). During
+    those 24h the GET works (shows the picked night) and the PUT returns `409 date_poll_closed`. A hard
+    ceiling is stored with the pass: `window.end + 2 days` 00:00Z (about 24h after the last night ends),
+    which is the `expiresAt` that `issue-passes`/`list-passes` report. `list-passes` compares against that
+    ceiling only, so a pass that stopped working 24h after the pick can still be listed as `active`.
+  - **Auto poll** (no `pick`, the old behaviour): unchanged, `closesAt + 24h`.
 - It is **not** a login. It never sets a cookie and never creates a session. (The design's optional
   "log that browser in after the first tap" add-on is **not built**. Default off, as designed.)
 - Resolving a pass only reads. No last-used timestamp, no counter, no rate limit, no consumption. So a
@@ -56,24 +64,26 @@ X-Filmmaand-Poll-Pass: <token>          # or: a normal session cookie, no pass h
 ```json
 {
   "pollId": "date-poll-c8262fd81de9e876e824",
-  "revision": 0,
-  "availability": {},
+  "revision": 1,
+  "availability": {"2026-09-24": false, "2026-09-25": false, "2026-09-26": true},
   "favourite": null,
   "poll": {
     "id": "date-poll-c8262fd81de9e876e824",
     "mode": "availability",
+    "pick": "manual",
     "status": "open",
-    "window": {"start": "2026-09-23", "end": "2026-09-26"},
+    "window": {"start": "2026-09-24", "end": "2026-09-26"},
     "choices": [],
-    "closesAt": "2026-09-22T21:00:00.000Z",
+    "closesAt": null,
     "ranking": [
-      {"date": "2026-09-26", "available": 1, "unavailable": 0, "favourites": 1},
-      {"date": "2026-09-23", "available": 1, "unavailable": 0, "favourites": 0},
-      {"date": "2026-09-24", "available": 0, "unavailable": 1, "favourites": 0},
-      {"date": "2026-09-25", "available": 0, "unavailable": 1, "favourites": 0}
+      {"date": "2026-09-26", "available": 2, "unavailable": 0, "favourites": 1,
+       "people": [{"name": "Noor", "avatarId": 4}, {"name": "Sam", "avatarId": 7, "self": true}]},
+      {"date": "2026-09-24", "available": 1, "unavailable": 1, "favourites": 0,
+       "people": [{"name": "Noor", "avatarId": 4}]},
+      {"date": "2026-09-25", "available": 0, "unavailable": 2, "favourites": 0, "people": []}
     ],
     "leaderDates": ["2026-09-26"],
-    "voteCount": 1,
+    "voteCount": 2,
     "people": []
   },
   "viewer": {"name": "Sam", "avatarId": 7}
@@ -82,10 +92,17 @@ X-Filmmaand-Poll-Pass: <token>          # or: a normal session cookie, no pass h
 
 - Top level (`pollId`, `revision`, `availability`, `favourite`) is **your own** answer, the same shape
   the session GET returned before. `revision` must be echoed on the next PUT.
-- `poll` is exactly the public projection the plan GET already shows everyone (`publicDatePoll`):
-  per-night counts, sorted best first. Availability mode shows **counts, not names** (`people` is
-  always `[]`); see the open question at the end. `scheduledDate` / `programmeId` appear once the poll
-  is decided.
+- `poll` is the public projection (`publicDatePoll`) **plus names**: per night, sorted best first, the
+  counts and `people` = everyone who said **yes** to that night (`name`, `avatarId`), sorted by name. The
+  viewer's own entry carries `"self": true`. Only people with a display profile (onboarded account) are
+  counted or named, exactly as for the counts. Nobody is listed for "no"; `unavailable` stays a count.
+  The top-level `poll.people` is always `[]` in availability mode (legacy field of the old single-date poll).
+- Names are only on this route (pass GET, session GET) and in organiser responses. The **public plan GET**
+  (`GET /plans/<planId>`) still shows **counts only**, no `people` per night.
+- `pick` is `"manual"` (organiser picks) or `"auto"` (deadline picks). `closesAt` is `null` for a manual
+  poll without a deadline. `scheduledDate` / `programmeId` appear once the poll is decided
+  (`status: "confirmed"`). Answers are accepted while `status` is `"open"` and, if `closesAt` is set, before
+  it. A manual poll past its `closesAt` stays `"open"` (waiting for the organiser) but refuses answers.
 - `viewer` is the pass holder's public name/avatar so the page can say "Je antwoordt als Sam".
 - The session GET (no pass header) now returns the same shape. `poll` and `viewer` were added; the
   existing fields are unchanged.
@@ -105,7 +122,7 @@ X-Filmmaand-Reset-Generation: <value from the GET response header>   # required 
 {
   "pollId": "date-poll-c8262fd81de9e876e824",
   "revision": 0,
-  "availability": {"2026-09-23": true, "2026-09-24": false, "2026-09-25": false, "2026-09-26": true},
+  "availability": {"2026-09-24": false, "2026-09-25": false, "2026-09-26": true},
   "favourite": "2026-09-26"
 }
 ```
@@ -131,14 +148,29 @@ Same URL, `POST`, JSON body with an `action`. Authenticated as organiser, exactl
 | `issue-passes` | `{"action":"issue-passes","pollId":"…","emails":["a@…","b@…"]}` (1–50) | `{"pollId","expiresAt","passes":[{"participantId","email","name","token","url"}]}` |
 | `revoke-passes` | `{"action":"revoke-passes","pollId":"…","emails":[…]}` | `{"pollId","revoked":<count>}` |
 | `list-passes` | `{"action":"list-passes","pollId":"…"}` | `{"pollId","passes":[{"participantId","email","name","createdAt","expiresAt","status":"active"\|"revoked"\|"expired"}]}` |
+| `list-availability` | `{"action":"list-availability","pollId":"…"}` | `{"datePoll":{…}}`: the `poll` object above with names per night, no `self` flags. Read-only, no `Idempotency-Key` needed. |
+
+- These four need no `Idempotency-Key` (with the organiser cookie they still need `X-Filmmaand-Reset-Generation`).
 
 - `issue-passes` is **all-or-nothing** and requires an **open availability poll** whose id equals
   `pollId`. Issuing for someone who already has an active pass for this poll **rotates** it: the old link
-  stops working immediately. `expiresAt` = poll `closesAt` + 24h.
+  stops working immediately. `expiresAt`: see *Expiry* above (manual: `window.end` + 2 days; auto:
+  `closesAt` + 24h).
 - The plaintext `token`/`url` is returned **once**, in this response only. It cannot be listed or
   recovered later. If a link is lost, issue again (rotate).
 - `list-passes` never returns tokens or hashes.
-- Other `action`s (`open`, `close`, …) keep going to the existing `manageDatePoll` unchanged.
+- Other `action`s go to the existing `manageDatePoll` (organiser auth **and** an `Idempotency-Key`, 16–100
+  chars `[A-Za-z0-9_-]`). They return `{"datePoll":{…}}` with names per night:
+
+| action | body | notes |
+|---|---|---|
+| `open` | `{"action":"open","mode":"availability","pick":"manual","window":{"start","end"},"choices":[]}` (+ optional `"closesAt"`, `"programmeId"`) | Window: 1–7 upcoming days inside the plan. **Manual**: `closesAt` optional; if given, in the future and on an Amsterdam date **≤ `window.end`**. **Auto** (no `pick` or `"auto"`): `closesAt` required and on an Amsterdam date **before `window.start`** (unchanged). |
+| `pick` | `{"action":"pick","pollId":"…","date":"YYYY-MM-DD"}` | The organiser decides. `date`: a night in the window, today or later, whatever the counts. Allowed while the poll is `open` (manual or auto) or `needs-organizer` (auto deadline found no night). Does what the deadline did for auto polls: puts the night on the programme (the linked `programmeId` night, else a new pending night `night-<pollId>`), sets `status:"confirmed"`, `scheduledDate`, `programmeId`, `closedAt`, and emits the `date-confirmed` notice (**this queues the "De datum staat vast" mail to participants**, as the auto path always did). Once only. |
+| `close` | `{"action":"close","pollId":"…"}` | Unchanged; for availability polls it now also records `closedAt` (starts the 24h pass grace for a manual poll). Schedules nothing. |
+
+- **Manual polls are never scheduled by time.** Neither the scheduled coordination job nor the read-path tick
+  touches a manual poll, however far past `closesAt` or past the window. If the organiser never picks,
+  the poll just stays open (tested up to three weeks past the window).
 
 ## Error codes
 
@@ -150,28 +182,35 @@ Same URL, `POST`, JSON body with an `action`. Authenticated as organiser, exactl
 | 400 | `request_key` | Missing or bad `Idempotency-Key`. |
 | 409 | `revision_conflict` | Your answer changed elsewhere (other device). GET again, then retry. |
 | 409 | `date_poll_changed` | `pollId` in the body isn't the current poll. |
-| 409 | `date_poll_closed` | Poll closed (past `closesAt`); GET still works during the 24h grace. |
+| 409 | `date_poll_closed` | PUT: poll decided/closed, or past `closesAt`; GET still works during the 24h grace. `pick`: already decided or closed. |
+| 400 | `date_poll_deadline` | `open`: `closesAt` breaks the rule for its mode (see `open` above). |
+| 400 | `date_poll_date` | `pick`: date outside the window or already past. |
+| 409 | `event_changed` | `pick`: the linked programme night changed since the poll opened. |
 | 409 | `key_reused` | Same Idempotency-Key with a different body. |
 | 409 | `reset_generation` | Missing/stale `X-Filmmaand-Reset-Generation` on a write. Reload. |
 | 401 / 403 / 409 | `unauthorized`, `session_required`, `organizer_required`, `organizer_changed` | Organiser actions without valid organiser auth. |
 | 404 | `recipient_unknown` | `issue`/`revoke`: an email has no account. `details.emails` lists them. Nothing minted. |
 | 409 | `recipient_not_onboarded` | An account has no name/avatar yet, so their answers would not be counted. `details.emails`. |
 | 409 | `date_poll_not_open` | `issue`: no open availability poll. |
+| 409 | `date_poll_changed` | `pollId` is not the current poll (`issue`, `pick`, `close`, `list-availability`). |
 | 503 | `pass_limit` | More than 2000 stored passes (rows >30 days past expiry are pruned on issue). |
 
-## Organiser steps (for the 23–26 September poll)
+## Organiser steps (do 24 – za 26 September, manual)
 
-1. **Open the poll** (existing route, unchanged): in Beheer, or
+`$ORIGIN` = `https://ely0030.xyz`, `$PLAN` = the plan id. With the organiser cookie instead of the bearer,
+add `X-Filmmaand-Organizer-Id` and `X-Filmmaand-Reset-Generation` as in Beheer.
+
+1. **Open the poll**, manual, no deadline (answers stay open until you pick):
 
    ```sh
    curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
-     -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H "Idempotency-Key: open-sept-poll-000001" \
+     -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H "Idempotency-Key: open-sept-manual-0001" \
      -H 'Content-Type: application/json' \
-     -d '{"action":"open","mode":"availability","window":{"start":"2026-09-23","end":"2026-09-26"},"choices":[],"closesAt":"2026-09-22T21:00:00Z"}'
+     -d '{"action":"open","mode":"availability","pick":"manual","window":{"start":"2026-09-24","end":"2026-09-26"},"choices":[]}'
    ```
 
-   Existing rule: `closesAt` must fall on an Amsterdam **date before** the first candidate night, so for
-   wo 23 Sept the poll must close by **22 Sept 23:59 Amsterdam (21:59Z)**. See the open questions.
+   Optional: add `"closesAt":"2026-09-26T16:00:00Z"` to stop answers at a time (any moment up to
+   za 26 Sept 23:59 Amsterdam). If an older poll is still open, `close` it first (`409 date_poll_open`).
    Note the returned `datePoll.id`.
 2. **Every recipient needs an onboarded account** (name + avatar). `issue-passes` names anyone who doesn't.
 3. **Mint the passes**:
@@ -184,9 +223,30 @@ Same URL, `POST`, JSON body with an `action`. Authenticated as organiser, exactl
 
    Put each `passes[i].url` into that person's own mail as `{{POLL_URL}}`. Treat the response as a
    secret (it contains working links). Don't paste it into issues/chat and don't commit it.
-4. **Rotate** one person's link: `issue-passes` with just their email. **Revoke**: `revoke-passes`.
+4. **See who can come** (names per night, best night first):
+
+   ```sh
+   curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
+     -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H 'Content-Type: application/json' \
+     -d '{"action":"list-availability","pollId":"<datePoll.id>"}'
+   ```
+
+   Or open the poll page logged in as yourself (session GET shows the same names).
+5. **Pick the night** (e.g. vr 25):
+
+   ```sh
+   curl -sS -X POST "$ORIGIN/filmmaand/api/plans/$PLAN/date-poll" \
+     -H "Authorization: Bearer $PLANNING_ADMIN_TOKEN" -H "Idempotency-Key: pick-sept-night-0001" \
+     -H 'Content-Type: application/json' \
+     -d '{"action":"pick","pollId":"<datePoll.id>","date":"2026-09-25"}'
+   ```
+
+   The night goes on the programme, the poll becomes `confirmed`, and the normal "De datum staat vast"
+   notification is queued. Retrying with the same `Idempotency-Key` returns the same result.
+6. **Rotate** one person's link: `issue-passes` with just their email. **Revoke**: `revoke-passes`.
    **Check**: `list-passes`.
-5. Nothing to clean up: passes die at `closesAt + 24h`, or when a new poll replaces this one.
+7. Nothing to clean up: passes stop working 24h after the pick (or `close`), and at the latest 28 Sept
+   00:00Z, or when a new poll replaces this one.
 
 ## Cost notes
 
@@ -198,16 +258,21 @@ Same URL, `POST`, JSON body with an `action`. Authenticated as organiser, exactl
   does not make the first reads after deploy write the state blob.
 - Writes (PUT, organiser POST) behave like existing date-poll writes (same mail/event drain path).
 
+## Decided (Chris, 23 Sept)
+
+- The organiser picks the night (`pick:"manual"`); nothing is auto-scheduled. The old auto mode stays for
+  polls opened without `pick`.
+- Manual `closesAt` is optional and may fall on or before the last night.
+- Names per night are visible to everyone in the poll (pass/session GET) and to the organiser.
+- Pass grace: valid while open, 24h read-only after the pick/close.
+
 ## Open questions for the product owner
 
-1. **Deadline today.** With the current rule (poll closes before the first candidate night), a poll that
-   includes wo 23 Sept must close by **tonight, 22 Sept 23:59**. At the deadline the existing tick
-   finalises it automatically and schedules the best night. Do we want that, or should the rule allow
-   closing on/after the first candidate night? That would be a separate change to `openAvailabilityPoll`,
-   which I did not touch.
-2. **"Everyone's answers visible."** The availability poll shows per-night counts (`2 kunnen, 1 niet`),
-   not names. Showing who can make which night means a change to `publicDatePoll` (and it would become
-   visible on the public plan GET too). Counts only, or names?
-3. **Friends without an account.** A pass needs an existing, onboarded account. Minting for a new email
+1. **Names on the public plan page.** Names are shown on the date-poll route only, not on the public plan
+   GET (which anyone with the plan URL can read). If the plan page should show them too, that is a one-line
+   change (`names:true` in the plan projection), but it makes names public to anyone with the link.
+2. **Friends without an account.** A pass needs an existing, onboarded account. Minting for a new email
    is refused, not auto-created. OK, or should minting create accounts?
-4. **Grace period** is 24h after `closesAt` (read-only, since writes stop at close). Fine?
+3. **Nobody picks.** A manual poll with no pick simply stays open, and its passes stop working at the
+   ceiling (28 Sept). No reminder is sent to the organiser. Wanted?
+4. **"Nee" names.** Only "yes" is named per night; "no" is a count. Show who said no too?
