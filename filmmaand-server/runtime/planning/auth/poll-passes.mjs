@@ -8,7 +8,7 @@ const sha=x=>createHash('sha256').update(x).digest('hex');
 const fail=(status,code,message,details)=>{throw Object.assign(Error(message),{status,code,details})};
 const normalize=e=>typeof e==='string'?e.trim().toLowerCase():'';
 export const PASS_GRACE_MS=24*3600e3;
-export const PASS_ACTIONS=['issue-passes','revoke-passes','list-passes','list-availability','nudge-list','nudge'];
+export const PASS_ACTIONS=['issue-passes','revoke-passes','list-passes','list-availability','nudge-list','nudge','invite-list','invite'];
 // Expiry. Auto poll (closes before the first night, then the tick decides): the row expires at closesAt + 24h, as before.
 // Manual poll (the organiser picks): valid while the poll is open, then 24h read-only grace after the pick/close (checked
 // against the loaded poll by passLive). Its row carries only a hard ceiling: 24h after the last candidate night ends.

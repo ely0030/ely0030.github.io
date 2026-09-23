@@ -345,8 +345,35 @@ doodle send (+20 s, +60 s, visible tab only). Nothing else is timed: an idle pag
 
 Reads are the read-only `list-availability`, `list-passes` and `nudge-list`. Every action uses Beheer's existing path:
 the confirm dialog (focus on "Terug", never on "Bevestigen"), a stored receipt with an `Idempotency-Key`, then the send.
-Tests: `filmmaand-server/beheer-poll-panel.test.mjs`. Opening a manual poll is still the curl step below (the old
-"Datumpoll openen" form in Beheer opens an *auto* poll with a deadline).
+Tests: `filmmaand-server/beheer-poll-panel.test.mjs`, `launch.test.mjs`.
+
+### The launch, all from Beheer (no curl)
+
+1. **Datumpoll openen** (section right under the panel): first/last night; **manual by default** (`pick:"manual"`),
+   the deadline is optional. "Automatisch kiezen op de sluitingstijd" (off by default) gives the old auto poll and needs
+   a deadline. Opening mails nobody.
+2. **Uitnodigen**: a textarea, one person per line `naam, e-mail` → **Links aanmaken** → confirm → `issue-passes` with
+   `people` (atomic; accounts are created for newcomers). The status line shows who got a link and whose account is new.
+   The working links in that response are **never shown or kept** in Beheer. Anyone who already has a live link is
+   **skipped**, because issuing again would rotate it and kill a link that may already be mailed. Issuing mails nobody.
+3. **Uitnodiging sturen aan N mensen** → confirm naming them → action `invite` (below).
+
+### `invite-list` / `invite` (organiser, like `nudge-list` / `nudge`)
+
+- `invite-list` (read-only): live pass holders who have **not been invited yet** for this poll and haven't answered.
+- `invite` + `Idempotency-Key`: queues **one** invitation per such person into the event outbox (type `poll-invite`).
+  **One per person per poll, ever**: the seen-ledger key has no request scope, so a replay, a second click or a new key
+  never mails anyone twice. People added later are invited by the next send. `409 date_poll_closed` once answers close.
+- **Delivery** mints that person's own extra pass inside the delivery transaction, as reminders do (only hashes stored),
+  and renders the **pluggable template** `filmmaand-server/poll-invite-template.mjs` (`subject`, `text(ctx)`,
+  `html(ctx)`; `ctx = {pollUrl, name, nights, assetBase}`; the renderer refuses a template that drops the link).
+  Images: `assetBase` = `https://ely0030.xyz/filmmaand/assets/mail/` (files in `public/filmmaand/assets/mail/`).
+  It ships with a **plain placeholder** (subject "movie deze week?", "Hoi <naam>," / "movie deze week? <avonden>" / link /
+  "Alec"); Chris's chosen design goes into that file.
+- Dropped at delivery if the poll moved on or closed (e.g. picked), if the person already answered, or if they have no
+  profile. It follows the normal recipient policy (opt-outs, suppressions, allow-list, `.test`/`example.com` never
+  mailed) and the daily/monthly caps. Nothing is sent unless event notifications are enabled with a transport; QA and
+  tests use a captured sender.
 
 ## Organiser steps (do 24 – za 26 September, manual)
 

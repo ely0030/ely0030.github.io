@@ -5,8 +5,9 @@ import {providerAcceptanceId} from './mail-diagnostics.mjs';
 import {answersOpen,responded} from './runtime/planning/date-coordination.mjs';
 import {createPollPasses} from './runtime/planning/auth/poll-passes.mjs';
 import {renderPollNudge} from './poll-nudge-mail.mjs';
+import {renderPollInvite} from './poll-invite-mail.mjs';
 const ACTIVITY=new Set(['round-opened','round-concluded']);
-const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge']);
+const TYPES=new Set(['round-opened','round-concluded','date-confirmed','date-change-proposed','date-changed','event-updated','reminder','poll-nudge','poll-invite']);
 const DAY=86400000, hash=value=>createHash('sha256').update(value).digest('hex');
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const validTime=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
@@ -77,6 +78,21 @@ export function queuePollNudges(c,{planId,poll,scope,recipients,now}){
   const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(participantId);if(!p)continue;
   ns.seen[id]={at:now,eventId:poll.id,type:'poll-nudge'};
   ns.outbox[id]={id,notice:{id:'nudge:'+id.slice(0,20),type:'poll-nudge',planId,eventId:poll.id,occurredAt:now,scheduledDate:poll.window.end,window:{...poll.window}},participantId,to:p.email.toLowerCase(),createdAt:now,status:'pending'};queued++;
+ }
+ return queued;
+}
+/** Organiser-triggered invitation (action invite): ONE per person per poll, ever. The seen ledger key has no request scope,
+ * so a replay, a second click or a new Idempotency-Key never mails anyone twice; people added later are invited by the
+ * next send. Only queues; delivery re-checks and mints the person's own link (no plaintext token is stored). */
+const inviteId=(planId,pollId,participantId)=>hash(['poll-invite',planId,pollId,participantId].join('\0'));
+export function invitedParticipants(c,planId,pollId){const ns=namespace(c.state);return holder=>!!ns.seen[inviteId(planId,pollId,holder.participantId)]}
+export function queuePollInvites(c,{planId,poll,recipients,now}){
+ const ns=namespace(c.state);let queued=0;
+ for(const {participantId} of recipients){
+  const id=inviteId(planId,poll.id,participantId);if(ns.seen[id])continue;
+  const p=c.authStore.db.prepare('SELECT id,email FROM participants WHERE id=?').get(participantId);if(!p)continue;
+  ns.seen[id]={at:now,eventId:poll.id,type:'poll-invite'};
+  ns.outbox[id]={id,notice:{id:'invite:'+id.slice(0,20),type:'poll-invite',planId,eventId:poll.id,occurredAt:now,scheduledDate:poll.window.end,window:{...poll.window}},participantId,to:p.email.toLowerCase(),createdAt:now,status:'pending'};queued++;
  }
  return queued;
 }
@@ -173,6 +189,18 @@ export function createEventNotifications(options={}){
    // Address changes, account deletion, new opt-outs and local suppression cancel queued delivery.
    if(!p||p.email.toLowerCase()!==m.to||!policyAllows(c,p,options)||(ACTIVITY.has(m.notice.type)&&c.state.accountNotifications?.accounts?.[p.id]?.importantActivityEmail===false)){delete ns.outbox[id];return null;}
    const plan=c.state.plans[m.notice.planId]?.data;
+   if(m.notice.type==='poll-invite'){
+    // Dropped if the poll moved on or no longer takes answers, or the person has no profile. (Having answered already,
+    // e.g. via a session, also drops it: the invitation has done its job.)
+    const q=plan?.datePoll,who=c.authStore.db.prepare('SELECT name,onboarded FROM participants WHERE id=?').get(p.id);
+    if(!q||q.id!==m.notice.eventId||!answersOpen(q,now())||responded(q,q.votes?.['p_'+p.id])||!who?.onboarded){delete ns.outbox[id];return null;}
+    const day=now().slice(0,10),month=day.slice(0,7);c.state.mailUsage||={};
+    if((c.state.mailUsage[day]||0)>=80||(c.state.mailUsage[month]||0)>=2000)return null;
+    const token=createPollPasses({store:c.authStore,now}).mintExtra(m.notice.planId,q,p.id,'invite');
+    const rendered=renderPollInvite({name:who.name,window:q.window,url:new URL('/filmmaand/wanneer/?pas='+token,origin).href,origin});
+    m.status='attempted';m.attemptedAt=now();c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
+    return {id:m.id,to:m.to,...rendered};
+   }
    if(m.notice.type==='poll-nudge'){
     // Dropped if the poll moved on, answers closed, or the person answered since (including "none of these nights").
     const q=plan?.datePoll,who=c.authStore.db.prepare('SELECT name,onboarded FROM participants WHERE id=?').get(p.id);

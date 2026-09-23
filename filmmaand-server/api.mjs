@@ -3,7 +3,7 @@ import {captureActivity,commitActivity,notificationRequest} from './account-noti
 import {createPasswords,admitPasswordAttempt,passwordWork} from './runtime/planning/auth/passwords.mjs';
 import {createHash} from 'node:crypto';
 import {createPollPasses,PASS_ACTIONS} from './runtime/planning/auth/poll-passes.mjs';
-import {queuePollNudges} from './event-notifications.mjs';
+import {queuePollNudges,queuePollInvites,invitedParticipants} from './event-notifications.mjs';
 import {participantActor} from './runtime/planning/auth/credentials.mjs';
 import {parseSince} from './runtime/planning/chat.mjs';
 /** Fetch adapter: canonical r17 domain/auth methods run inside a single durable-state CAS. */
@@ -159,6 +159,16 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
         const scoped=createdBy==='admin'?key:'organizer-'+createHash('sha256').update(JSON.stringify([createdBy,key])).digest('hex');
         const at=now?now():new Date().toISOString(),result=await service.nudgeDatePoll(id,adminToken,scoped,body,passes.holders(id,body.pollId));
         const poll=c.state.plans[id].data.datePoll;queuePollNudges(c,{planId:id,poll,scope:scoped,recipients:result.recipients,now:at});
+        return send(200,result);
+       }
+       // Invitations: one per person per poll, ever (the seen ledger has no request scope). invite-list is a read.
+       const notInvited=()=>{const invited=invitedParticipants(c,id,body.pollId);return passes.holders(id,body.pollId).filter(h=>!invited(h))};
+       if(body.action==='invite-list')return send(200,await service.datePollNudgeList(id,body.pollId,notInvited()));
+       if(body.action==='invite'){
+        const key=req.headers['idempotency-key'];if(!/^[A-Za-z0-9_-]{16,100}$/.test(key||''))throw error(400,'request_key','Een verzoekcode ontbreekt.');
+        const scoped=createdBy==='admin'?key:'organizer-'+createHash('sha256').update(JSON.stringify([createdBy,key])).digest('hex');
+        const at=now?now():new Date().toISOString(),result=await service.inviteDatePoll(id,adminToken,scoped,body,notInvited());
+        const poll=c.state.plans[id].data.datePoll;queuePollInvites(c,{planId:id,poll,recipients:result.recipients,now:at});
         return send(200,result);
        }
        if(body.action==='list-passes')return send(200,passes.list(id,body));
