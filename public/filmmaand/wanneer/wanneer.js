@@ -86,6 +86,8 @@ async function save(){
  try{await saveOnce()}finally{saving=false;if(again){again=false;save()}}
 }
 async function saveOnce(){
+ // Anonymous (no working link, no session): nothing to save with. Now, after they chose, say how to get in.
+ if(anon){savedSeq=seq;if(!serverVoted())voted=false;render();authNote();return}
  for(let attempt=0;attempt<2;attempt++){
   if(!pollId||!open())return;
   if(!none&&mine.size===0){savedSeq=seq;return}// nothing ticked and not "deze week niet": no answer to send
@@ -109,19 +111,32 @@ function serverVoted(){const own=data?.availability||{};return NIGHTS.some(d=>ow
 // ---- calm in-chat messages
 function note(text,link){const n=$('#note');if(!n)return;n.hidden=!text;n.textContent=text||'';
  if(link){n.append(' ');const a=document.createElement('a');a.href=link[1];a.textContent=link[0];a.style.color='inherit';n.append(a)}}
+// No working pass (none in the address and none in this tab's history.state, or a dead one) and no session.
+function authNote(){note(hadPass?'Deze link werkt niet (meer). Vraag de organisator om een nieuwe link, of':'Open de link uit je mail nog een keer, of',
+ ['log in met je account.','/filmmaand/identity/?terug=/filmmaand/wanneer/'])}
 function trouble(e,saving){
  if(e.code==='reset_generation')return false;// reset-guard reloads the page itself
  if(e.status===401){
-  // No pass in the address (e.g. a reload: the pass lives in memory only) or a dead one, and no session.
-  lock();note(hadPass?'Deze link werkt niet (meer). Vraag de organisator om een nieuwe link, of':'Open de link uit je mail nog een keer, of',
-              ['log in met je account.','/filmmaand/identity/?terug=/filmmaand/wanneer/']);
-  return false}
+  // Chris, 23 Sept: on the FIRST read, don't greet people with an error. Show the poll anonymously (from the public plan:
+  // nights and counts, no names) so the arrival and the poll play as usual; the note only comes when they press send.
+  if(!saving&&!loaded&&!anon){void anonPoll();return false}
+  if(!saving&&anon)return false;// a background re-read while anonymous: stay quiet
+  lock();authNote();return false}
  if(e.status===404||e.code==='not_found'){lock();note('Er staat nu geen vraag open.');return false}
  if(saving){if(!serverVoted())voted=false;render();note('Opslaan lukte net niet. Probeer het nog een keer.');return false}
  note('Even geen verbinding. Probeer het zo nog eens.');
  if(!loaded)lock();return false;
 }
 function lock(){if(!loaded){loaded=true;arrived()}render()}
+// The anonymous poll: the public plan's date poll (id, window, status, counts; never names), nothing to save it with.
+let anon=false;const PLAN_API='/filmmaand/api/plans/home-picker-lab';
+async function anonPoll(){
+ try{const dp=(await call('GET',null,null,PLAN_API)).datePoll;
+  if(!dp||dp.mode!=='availability'){lock();note('Er staat nu geen vraag open.');return}
+  anon=true;adopt({pollId:dp.id,revision:0,availability:{},favourite:null,viewer:null,doodles:[],invitees:[],rsvp:null,pickedAt:null,
+   chat:{open:false,messages:[],cursor:0,hidden:[]},poll:{...dp,ranking:(dp.ranking||[]).map(r=>({...r,people:[],no:[]})),declined:[]}});
+ }catch{lock();authNote()}
+}
 
 // ---- render (appje2.js, with server data)
 function setSub(){const s=['Alec',...members(),'jij'].join(', ');subText=s;if(!typingNow)$('#sub').textContent=s;

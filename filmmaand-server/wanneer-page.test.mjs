@@ -82,6 +82,17 @@ test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle 
  assert.equal(d({...base,fails:1}),6e3);assert.equal(d({...base,fails:2}),12e3);assert.equal(d({...base,fails:3}),null);
 });
 
+test('no working link: the first read shows the poll anonymously; the login note only comes after pressing send',()=>{
+ // Chris: don't greet people with an error. The anonymous poll starts only from the FIRST read's 401...
+ assert.deepEqual(js.match(/void anonPoll\(\)/g),['void anonPoll()']);assert.match(js,/if\(!saving&&!loaded&&!anon\)\{void anonPoll\(\);return false\}/);
+ // ...background reads while anonymous stay quiet, and it reads the PUBLIC plan (no names), never with a pass.
+ assert.match(js,/if\(!saving&&anon\)return false;/);assert.match(js,/const PLAN_API='\/filmmaand\/api\/plans\/home-picker-lab';/);
+ assert.match(js,/ranking:\(dp\.ranking\|\|\[\]\)\.map\(r=>\(\{\.\.\.r,people:\[\],no:\[\]\}\)\)/);
+ // Pressing send while anonymous: no request, back to ticking, then the note.
+ assert.match(js,/if\(anon\)\{savedSeq=seq;if\(!serverVoted\(\)\)voted=false;render\(\);authNote\(\);return\}/);
+ assert.equal(/lives in memory only/.test(js),false,'stale comment gone: the pass survives a reload via history.state');
+});
+
 test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{
  const block=js.slice(js.indexOf("const PASS_STATE="),js.indexOf('const hadPass'));
  const drop=/function dropPass\(e\)\{[^\n]*\}/.exec(js)[0];
