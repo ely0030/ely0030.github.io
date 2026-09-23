@@ -236,7 +236,7 @@ export function createEventNotifications(options={}){
     const day=now().slice(0,10),month=day.slice(0,7);c.state.mailUsage||={};
     if((c.state.mailUsage[day]||0)>=80||(c.state.mailUsage[month]||0)>=2000)return null;
     const token=createPollPasses({store:c.authStore,now}).mintExtra(m.notice.planId,q,p.id,'nudge');
-    const rendered=renderPollNudge({name:who.name,window:q.window,url:new URL('/filmmaand/wanneer/?pas='+token,origin).href});
+    const rendered=renderPollNudge({name:who.name,window:q.window,url:new URL('/filmmaand/wanneer/?pas='+token,origin).href,origin});
     m.status='attempted';m.attemptedAt=now();c.state.mailUsage[day]=(c.state.mailUsage[day]||0)+1;c.state.mailUsage[month]=(c.state.mailUsage[month]||0)+1;
     return {id:m.id,to:m.to,...rendered};
    }
