@@ -8,7 +8,13 @@ const sha=x=>createHash('sha256').update(x).digest('hex');
 const fail=(status,code,message,details)=>{throw Object.assign(Error(message),{status,code,details})};
 const normalize=e=>typeof e==='string'?e.trim().toLowerCase():'';
 export const PASS_GRACE_MS=24*3600e3;
-export const PASS_ACTIONS=['issue-passes','revoke-passes','list-passes'];
+export const PASS_ACTIONS=['issue-passes','revoke-passes','list-passes','list-availability'];
+// Expiry. Auto poll (closes before the first night, then the tick decides): the row expires at closesAt + 24h, as before.
+// Manual poll (the organiser picks): valid while the poll is open, then 24h read-only grace after the pick/close (checked
+// against the loaded poll by passLive). Its row carries only a hard ceiling: 24h after the last candidate night ends.
+const DAY=86400e3;
+export const passExpiry=poll=>new Date(poll.pick==='manual'?Date.parse(poll.window.end)+2*DAY:Date.parse(poll.closesAt)+PASS_GRACE_MS).toISOString();
+export const passLive=(poll,now)=>poll.pick!=='manual'||poll.status==='open'||(!!poll.closedAt&&Date.parse(now)<Date.parse(poll.closedAt)+PASS_GRACE_MS);
 export const isPassToken=t=>typeof t==='string'&&/^[A-Za-z0-9_-]{43}$/.test(t);
 // One message for malformed, unknown, revoked, expired, wrong plan and wrong poll: the caller learns nothing about existence.
 export const passInvalid=()=>fail(401,'pass_invalid','Deze link werkt niet (meer). Vraag de organisator om een nieuwe link.');
@@ -36,7 +42,7 @@ export function createPollPasses({store,now=()=>new Date().toISOString()}){
    openPoll(poll,body);const people=recipients(body);
    q('DELETE FROM poll_passes WHERE expires_at<?').run(new Date(at()-30*86400000).toISOString());
    if(q('SELECT count(*) n FROM poll_passes').get().n+people.length>2000)fail(503,'pass_limit','Er zijn te veel links opgeslagen.');
-   const expiresAt=new Date(Date.parse(poll.closesAt)+PASS_GRACE_MS).toISOString();
+   const expiresAt=passExpiry(poll);
    return store.transaction(()=>({pollId:poll.id,expiresAt,passes:people.map(p=>{
     q('UPDATE poll_passes SET revoked_at=? WHERE plan_id=? AND poll_id=? AND participant_id=? AND revoked_at IS NULL').run(now(),planId,poll.id,p.participantId);
     const token=randomBytes(32).toString('base64url');

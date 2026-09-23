@@ -3,22 +3,24 @@ import {createApi} from './api.mjs';import {openState,emptyState} from './state.
 // The real target: wo 23 – za 26 september 2026, poll closes the evening before the first candidate night.
 const ORIGIN='https://example.test',NIGHTS=['2026-09-23','2026-09-24','2026-09-25','2026-09-26'],CLOSES='2026-09-22T21:00:00.000Z';
 const sha=x=>createHash('sha256').update(x).digest('hex');
-async function fixture(){
+// manual:true is the real target after Chris's 23 Sept decision: today wo 23, nights do 24 – za 26, the organiser picks, no deadline.
+const MANUAL_NIGHTS=NIGHTS.slice(1);
+async function fixture({manual=false}={}){
  const c=openState(emptyState()),s=createPlanningService({store:c.plans,adminToken:'secret'});
  for(const id of ['proof','other'])await s.seed({id,title:id,window:{start:'2026-09-01',end:'2026-09-30'},options:['a','b','c'].map(x=>({id:x,title:x}))});
  let writes=0;const store={data:c.export(),etag:1,async getWithMetadata(){return {data:structuredClone(this.data),etag:String(this.etag)}},async setJSON(k,v,{onlyIfMatch}){if(onlyIfMatch!==String(this.etag))return {modified:false};writes++;this.data=structuredClone(v);this.etag++;return {modified:true}}};c.close();
- const clock={now:'2026-09-22T10:00:00.000Z'},ids=[];let code;
+ const clock={now:manual?'2026-09-23T10:00:00.000Z':'2026-09-22T10:00:00.000Z'},ids=[];let code;
  const api=createApi({store,blobs:{},adminToken:'secret',organizerIds:ids,origin:ORIGIN,queueMail:async(c,m)=>{code=m.code},now:()=>clock.now});
  async function request(path,method='GET',body,headers={}){const r=await api(new Request(ORIGIN+'/filmmaand/api/'+path,{method,headers:{Origin:ORIGIN,...headers},...(body?{body:JSON.stringify(body)}:{})}),{ip:'fixture'});return {status:r.status,body:await r.json(),headers:r.headers}}
  async function account(email,name,avatarId,onboard=true){const ch=await request('auth/code','POST',{email}),login=await request('auth/verify','POST',{challengeId:ch.body.challengeId,code});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie').split(';')[0],id=login.body.participant.id;if(onboard)assert.equal((await request('auth/profile','PUT',{expectedRevision:0,name,animal:'otter',avatarId},{Cookie:cookie,'Idempotency-Key':'profile-key-'+avatarId+'-000000'})).status,200);return {cookie,id,email,name}}
  const admin=(key,extra={})=>({Authorization:'Bearer secret','Idempotency-Key':key,...extra});
- async function openPoll(plan,key,window={start:NIGHTS[0],end:NIGHTS[3]},closesAt=CLOSES){const r=await request('plans/'+plan+'/date-poll','POST',{action:'open',mode:'availability',window,choices:[],closesAt},admin(key));assert.equal(r.status,200,JSON.stringify(r.body));return r.body.datePoll.id}
+ async function openPoll(plan,key,window=manual?{start:MANUAL_NIGHTS[0],end:MANUAL_NIGHTS[2]}:{start:NIGHTS[0],end:NIGHTS[3]},closesAt=manual?undefined:CLOSES){const r=await request('plans/'+plan+'/date-poll','POST',{action:'open',mode:'availability',window,choices:[],...(closesAt?{closesAt}:{}),...(manual?{pick:'manual'}:{})},admin(key));assert.equal(r.status,200,JSON.stringify(r.body));return r.body.datePoll.id}
  const noor=await account('noor@example.test','Noor',4),sam=await account('sam@example.test','Sam',7),joep=await account('joep@example.test','Joep',9),nieuw=await account('nieuw@example.test','',11,false);
  const pollId=await openPoll('proof','open-poll-proof-0001'),otherPollId=await openPoll('other','open-poll-other-0001');
  async function issue(emails,plan='proof',poll=pollId){const r=await request('plans/'+plan+'/date-poll','POST',{action:'issue-passes',pollId:poll,emails},admin('unused-key-000000001'));assert.equal(r.status,200,JSON.stringify(r.body));return Object.fromEntries(r.body.passes.map(p=>[p.email,p]))}
  const minted=await issue([noor.email,sam.email,joep.email]);
  const pass=(who,extra={})=>({'X-Filmmaand-Poll-Pass':typeof who==='string'?who:minted[who.email].token,...extra});
- const answer=(revision,yes,favourite=null)=>({pollId,revision,availability:Object.fromEntries(NIGHTS.map(d=>[d,yes.includes(d)])),favourite});
+ const answer=(revision,yes,favourite=null)=>({pollId,revision,availability:Object.fromEntries((manual?MANUAL_NIGHTS:NIGHTS).map(d=>[d,yes.includes(d)])),favourite});
  return {store,clock,ids,request,admin,openPoll,issue,minted,pass,answer,pollId,otherPollId,noor,sam,joep,nieuw,writes:()=>writes};
 }
 const snapshot=f=>JSON.stringify(f.store.data)+'#'+f.store.etag;
@@ -152,4 +154,108 @@ test('state from before this feature (no poll_passes key) is not rewritten by re
  assert.equal((await f.request('plans/proof/date-poll','GET',null,{Cookie:f.sam.cookie})).status,200);
  assert.equal((await f.request('plans/proof')).status,200);
  assert.equal(snapshot(f),before);assert.equal(f.writes(),writes);assert.equal('poll_passes' in f.store.data.auth,false);
+});
+
+// ---- Manual mode (Chris, 23 Sept): the organiser picks the night; everyone sees who can come, WhatsApp-style. ----
+const [DO,VR,ZA]=MANUAL_NIGHTS;
+const pickBody=(f,date)=>({action:'pick',pollId:f.pollId,date});
+const nightOf=(r,date)=>r.body.poll.ranking.find(x=>x.date===date);
+
+test('manual poll for do 24 – za 26 opens without a deadline; passes expire 24h after the last night at the latest',async()=>{
+ const f=await fixture({manual:true});const q=f.store.data.plans.proof.data.datePoll;
+ assert.equal(q.pick,'manual');assert.equal(q.closesAt,null);assert.deepEqual(q.window,{start:DO,end:ZA});
+ const again=await f.request('plans/proof/date-poll','POST',{action:'issue-passes',pollId:f.pollId,emails:[f.noor.email]},f.admin('unused-key-000000009'));
+ assert.equal(again.body.expiresAt,'2026-09-28T00:00:00.000Z');
+ // The auto rule is untouched on the API too: an auto poll closing on its first night is refused.
+ assert.equal((await f.request('plans/other/date-poll','POST',{action:'close',pollId:f.otherPollId},f.admin('close-other-poll-001'))).status,200);
+ const auto=await f.request('plans/other/date-poll','POST',{action:'open',mode:'availability',window:{start:DO,end:ZA},choices:[],closesAt:'2026-09-24T17:00:00.000Z'},f.admin('open-auto-late-00001'));
+ assert.equal(auto.body.error.code,'date_poll_deadline');
+ const manual=await f.request('plans/other/date-poll','POST',{action:'open',mode:'availability',pick:'manual',window:{start:DO,end:ZA},choices:[],closesAt:'2026-09-26T16:00:00.000Z'},f.admin('open-manual-late-001'));
+ assert.equal(manual.status,200,JSON.stringify(manual.body));assert.equal(manual.body.datePoll.pick,'manual');
+});
+
+test('manual poll: GET shows per night who can come (name + avatar, self marked), only people with a profile',async()=>{
+ const f=await fixture({manual:true});f.ids.push(f.joep.id);
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[DO,ZA],ZA),f.pass(f.noor,{'Idempotency-Key':'noor-manual-key-0001'}))).status,200);
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[ZA]),{Cookie:f.sam.cookie,'Sec-Fetch-Site':'same-origin','Idempotency-Key':'sam-manual-key-00001'})).status,200);
+ // Answers from actors without a display profile (a not-onboarded account, a legacy anonymous key) are not counted or named.
+ const votes=f.store.data.plans.proof.data.datePoll.votes,ghost={revision:1,availability:{[DO]:true,[ZA]:true},favourite:null,updatedAt:f.clock.now};
+ votes['p_'+f.nieuw.id]=ghost;votes['a'.repeat(64)]=ghost;
+ const noor=await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor));assert.equal(noor.status,200);
+ assert.deepEqual(nightOf(noor,ZA),{date:ZA,available:2,unavailable:0,favourites:1,people:[{name:'Noor',avatarId:4,self:true},{name:'Sam',avatarId:7}]});
+ assert.deepEqual(nightOf(noor,DO),{date:DO,available:1,unavailable:1,favourites:0,people:[{name:'Noor',avatarId:4,self:true}]});
+ assert.deepEqual(nightOf(noor,VR).people,[]);assert.equal(noor.body.poll.voteCount,2);assert.equal(noor.body.poll.pick,'manual');
+ const sam=await f.request('plans/proof/date-poll','GET',null,{Cookie:f.sam.cookie});
+ assert.deepEqual(nightOf(sam,ZA).people,[{name:'Noor',avatarId:4},{name:'Sam',avatarId:7,self:true}]);
+ // Organiser (Joep, allow-listed, cookie) and the operator bearer get the same names, without a self flag.
+ const org=await f.request('plans/proof/date-poll','POST',{action:'list-availability',pollId:f.pollId},{Cookie:f.joep.cookie,'X-Filmmaand-Organizer-Id':f.joep.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin'});
+ assert.equal(org.status,200,JSON.stringify(org.body));
+ const bearer=await f.request('plans/proof/date-poll','POST',{action:'list-availability',pollId:f.pollId},f.admin('unused-key-000000010'));
+ assert.deepEqual(bearer.body,org.body);assert.deepEqual(org.body.datePoll.ranking.find(x=>x.date===ZA).people,[{name:'Noor',avatarId:4},{name:'Sam',avatarId:7}]);
+ assert.equal((await f.request('plans/proof/date-poll','POST',{action:'list-availability',pollId:'stale'},f.admin('unused-key-000000011'))).body.error.code,'date_poll_changed');
+ const ghostless=JSON.stringify([noor.body,sam.body,org.body]);assert.equal(ghostless.includes(f.nieuw.id),false);assert.equal(ghostless.includes('a'.repeat(64)),false);
+ // The public plan GET keeps counts only: names stay behind the date-poll route.
+ const plan=await f.request('plans/proof');assert.equal(plan.status,200);assert.equal(JSON.stringify(plan.body.datePoll).includes('Noor'),false);
+ assert.equal(plan.body.datePoll.ranking.find(x=>x.date===ZA).available,2);
+ // Listing availability is organiser-only; a pass or a normal session cannot.
+ assert.equal((await f.request('plans/proof/date-poll','POST',{action:'list-availability',pollId:f.pollId},f.pass(f.noor))).status,401);
+ assert.equal((await f.request('plans/proof/date-poll','POST',{action:'list-availability',pollId:f.pollId},{Cookie:f.sam.cookie,'X-Filmmaand-Organizer-Id':f.sam.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin'})).status,403);
+});
+
+test('manual poll: the scheduled job never schedules, even long past any deadline; reads and ticks leave it open',async()=>{
+ const {runCoordinationTick}=await import('./date-coordination-tick.mjs');
+ const f=await fixture({manual:true});
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[VR]),f.pass(f.noor,{'Idempotency-Key':'noor-manual-key-0002'}))).status,200);
+ // The other plan gets a manual poll with a deadline that passes.
+ await f.request('plans/other/date-poll','POST',{action:'close',pollId:f.otherPollId},f.admin('close-other-poll-002'));
+ const other=await f.request('plans/other/date-poll','POST',{action:'open',mode:'availability',pick:'manual',window:{start:DO,end:ZA},choices:[],closesAt:'2026-09-24T12:00:00.000Z'},f.admin('open-manual-other-01'));assert.equal(other.status,200);
+ await f.request('plans/other/date-poll','PUT',{pollId:other.body.datePoll.id,revision:0,availability:{[DO]:true},favourite:DO},{Cookie:f.sam.cookie,'Sec-Fetch-Site':'same-origin','Idempotency-Key':'sam-other-key-000001'});
+ const decided=()=>['proof','other'].map(id=>{const p=f.store.data.plans[id].data;return [p.datePoll.status,p.programme?.length||0,(p.coordinationEvents||[]).length]});
+ for(const at of ['2026-09-24T12:00:00.000Z','2026-09-25T20:00:00.000Z','2026-09-26T23:00:00.000Z','2026-10-15T00:00:00.000Z']){
+  f.clock.now=at;assert.deepEqual(await runCoordinationTick({store:f.store,now:()=>at}),{changed:0,work:{events:false,mail:false,tonight:false}});
+  await f.request('plans/proof');await f.request('plans/other');// the read path runs the same tick
+  assert.deepEqual(decided(),[['open',0,0],['open',0,0]]);
+ }
+});
+
+test('manual poll: the organiser picks, the night goes on the programme; pass holders keep read-only access for 24h',async()=>{
+ const f=await fixture({manual:true});f.ids.push(f.joep.id);
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[DO,VR]),f.pass(f.noor,{'Idempotency-Key':'noor-manual-key-0003'}))).status,200);
+ // Answers still come in on the first night itself; there is no deadline.
+ f.clock.now='2026-09-24T15:00:00.000Z';
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(0,[VR]),f.pass(f.sam,{'Idempotency-Key':'sam-manual-key-00002'}))).status,200);
+ // Only the organiser can pick: not a pass, not a plain session, not a bad bearer.
+ assert.equal((await f.request('plans/proof/date-poll','POST',pickBody(f,VR),f.pass(f.noor,{'Idempotency-Key':'pick-by-pass-000001'}))).status,405);
+ assert.equal((await f.request('plans/proof/date-poll','POST',pickBody(f,VR),{Cookie:f.sam.cookie,'X-Filmmaand-Organizer-Id':f.sam.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin','Idempotency-Key':'pick-by-sam-0000001'})).status,403);
+ assert.equal((await f.request('plans/proof/date-poll','POST',pickBody(f,VR),{Authorization:'Bearer wrong','Idempotency-Key':'pick-bad-bearer-001'})).status,401);
+ assert.equal(f.store.data.plans.proof.data.datePoll.status,'open');
+ assert.equal((await f.request('plans/proof/date-poll','POST',pickBody(f,'2026-09-27'),f.admin('pick-out-window-001'))).body.error.code,'date_poll_date');
+ const pick=await f.request('plans/proof/date-poll','POST',pickBody(f,VR),{Cookie:f.joep.cookie,'X-Filmmaand-Organizer-Id':f.joep.id,'X-Filmmaand-Reset-Generation':'0','Sec-Fetch-Site':'same-origin','Idempotency-Key':'pick-by-joep-000001'});
+ assert.equal(pick.status,200,JSON.stringify(pick.body));
+ assert.equal(pick.body.datePoll.status,'confirmed');assert.equal(pick.body.datePoll.scheduledDate,VR);
+ assert.deepEqual(pick.body.datePoll.ranking.find(x=>x.date===VR).people,[{name:'Noor',avatarId:4},{name:'Sam',avatarId:7}]);
+ const p=f.store.data.plans.proof.data,night=p.programme.find(n=>n.id===p.datePoll.programmeId);
+ assert.equal(night.scheduledDate,VR);assert.equal(night.selection,'pending');
+ assert.deepEqual(p.coordinationEvents.map(e=>[e.type,e.scheduledDate]),[['date-confirmed',VR]]);
+ assert.equal((await f.request('plans/proof')).body.programme.some(n=>n.id===night.id),true);
+ assert.equal((await f.request('plans/proof/date-poll','POST',pickBody(f,ZA),f.admin('pick-again-0000001'))).body.error.code,'date_poll_closed');
+ // After the pick: 24h read-only grace for pass holders, then the link stops working.
+ f.clock.now='2026-09-25T14:59:00.000Z';
+ const late=await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor));assert.equal(late.status,200);assert.equal(late.body.poll.scheduledDate,VR);
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(1,[ZA]),f.pass(f.noor,{'Idempotency-Key':'noor-after-pick-001'}))).body.error.code,'date_poll_closed');
+ f.clock.now='2026-09-25T15:00:00.000Z';
+ const gone=await f.request('plans/proof/date-poll','GET',null,f.pass(f.noor));assert.equal(gone.status,401);assert.equal(gone.body.error.code,'pass_invalid');
+ assert.equal((await f.request('plans/proof/date-poll','PUT',f.answer(1,[ZA]),f.pass(f.joep,{'Idempotency-Key':'joep-after-pick-001'}))).body.error.code,'pass_invalid');
+ // The session path is not limited by the pass grace.
+ assert.equal((await f.request('plans/proof/date-poll','GET',null,{Cookie:f.noor.cookie})).status,200);
+});
+
+test('manual poll: a close by the organiser also starts the 24h grace; the pass still reaches nothing else',async()=>{
+ const f=await fixture({manual:true});
+ assert.equal((await f.request('plans/proof/date-poll','POST',{action:'close',pollId:f.pollId},f.admin('close-manual-00001'))).status,200);
+ assert.equal(f.store.data.plans.proof.data.datePoll.closedAt,f.clock.now);
+ assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(f.sam))).status,200);
+ for(const [path,method,body] of [['plans/proof/response','GET'],['plans/proof/coordination','PUT',{}],['auth/profile','GET']])assert.equal((await f.request(path,method,body,f.pass(f.sam,{'Idempotency-Key':'other-route-key-0002'}))).status,401,path);
+ f.clock.now='2026-09-24T10:00:00.000Z';
+ assert.equal((await f.request('plans/proof/date-poll','GET',null,f.pass(f.sam))).body.error.code,'pass_invalid');
 });

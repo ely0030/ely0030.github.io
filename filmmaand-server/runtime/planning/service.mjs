@@ -4,7 +4,7 @@ import {ownDatePoll,publicDatePoll,setDatePoll,writeDatePoll} from './date-poll.
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {rankingEligibility,eligibleContribution,roundLifecycle,rankedSelection,guardRoundWrite,changeRound,freezeNextSelection} from './round-lifecycle.mjs';
 import {isSessionToken,isAnonymousBearer,isParticipantActor} from './auth/credentials.mjs';
-import {passInvalid} from './auth/poll-passes.mjs';
+import {passInvalid,passLive} from './auth/poll-passes.mjs';
 // Warm entries resolve without any provider call, so a warm instance still enriches the whole
 // plan inside this budget. A cold one stops early and serves what it has instead of blocking a
 // public poll on one MDBList/TMDB round trip per film; the next poll continues where it left off.
@@ -27,7 +27,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  function guard(p,a){if(claimedTo(p,a))fail(410,'claimed','Deze browsersleutel is overgezet naar je account. Log in om verder te gaan.',{clear:true})}
  // Public display identity: account profile for participants (follows profile edits), the per-plan snapshot for anonymous actors.
  const datePollDisplay=(p,a)=>isParticipantActor(a)?identity?.publicProfile?.(a)||null:null;
- const datePollView=(p,a)=>({...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay),viewer:datePollDisplay(p,a)});
+ const datePollView=(p,a)=>({...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a)});
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
  const responseDates=r=>Array.isArray(r.dates)?r.dates:r.start&&r.end?days(r.start,r.end):[];
@@ -112,13 +112,15 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
   async getDatePoll(id,token){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return datePollView((await loadFor(id,a)).data,a);},
   // Poll-pass identity (PUT returns exactly the receipted own answer, like voteDatePoll, so a replay is byte-exact): the api layer resolved the pass to exactly one participant actor and the poll it was minted for.
   // The pass works only while that poll is the plan's current poll; otherwise it is indistinguishable from an unknown pass.
-  async getDatePollAs(id,a,pollId){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId)passInvalid();return datePollView(p,a);},
-  async voteDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();const own=await mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>{if(p.datePoll?.id!==pollId)passInvalid();return writeDatePoll(p,a,b,now())});return own;},
+  async getDatePollAs(id,a,pollId){if(!isParticipantActor(a))passInvalid();const p=(await loadFor(id,a)).data;if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return datePollView(p,a);},
+  async voteDatePollAs(id,a,pollId,key,b){if(!isParticipantActor(a))passInvalid();const own=await mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>{if(p.datePoll?.id!==pollId||!passLive(p.datePoll,now()))passInvalid();return writeDatePoll(p,a,b,now())});return own;},
   // Organiser pass minting needs the current poll's identity and deadline; nothing personal.
-  async datePollInfo(id){const q=(await load(id)).data.datePoll;return q?{id:q.id,mode:q.mode||null,status:q.status,closesAt:q.closesAt||null}:null;},
+  async datePollInfo(id){const q=(await load(id)).data.datePoll;return q?{id:q.id,mode:q.mode||null,pick:q.pick||'auto',status:q.status,window:q.window?{...q.window}:null,closesAt:q.closesAt||null}:null;},
   assertAdmin(token){admin(token);},
   async voteDatePoll(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-poll-vote',body:b},p=>writeDatePoll(p,a,b,now()));},
-  async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now()});return {datePoll:publicDatePoll(p,null,datePollDisplay)};});},
+  async manageDatePoll(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-poll-manage',body:b},p=>{setDatePoll(p,b,{id:'date-poll-'+hash(id+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)});return {datePoll:publicDatePoll(p,null,datePollDisplay,{names:true})};});},
+  // Organiser read (admin bearer or organiser cookie, checked by the api layer): the poll with names per night.
+  async datePollOrganizerView(id,pollId){const p=(await load(id)).data;if(!p.datePoll||p.datePoll.id!==pollId)fail(409,'date_poll_changed','Deze datumpoll is veranderd.');return {datePoll:publicDatePoll(p,null,datePollDisplay,{names:true})};},
   async coordination(id,token){const a=token?actor(token):null;const p=(await load(id)).data;return coordinationView(p,a,x=>datePollDisplay(p,x));},
   async coordinate(id,token,key,b){const a=actor(token);if(!isParticipantActor(a))fail(401,'session_required','Log in met je account.');return mutate(id,a,key,{operation:'date-coordination',body:b},p=>changeDate(p,a,b,{id:'change-'+hash(a+':'+key).slice(0,20),now:now(),eligible:x=>!!datePollDisplay(p,x)}));},
   async manageCoordination(id,token,key,b){admin(token);return mutate(id,'admin',key,{operation:'date-coordination-manage',body:b},p=>changeDate(p,'admin',b,{id:'change-'+hash(id+':'+key).slice(0,20),now:now(),admin:true,eligible:x=>!!datePollDisplay(p,x)}));},

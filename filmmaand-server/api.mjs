@@ -127,6 +127,7 @@ export function createApi({store,blobs,movieCatalogue=null,programmeMovies={},ad
        else service.assertAdmin(token);
        if(body.action==='list-passes')return send(200,passes.list(id,body));
        if(body.action==='revoke-passes')return send(200,passes.revoke(id,body));
+       if(body.action==='list-availability')return send(200,await service.datePollOrganizerView(id,body.pollId));
        return send(200,passes.issue(id,await service.datePollInfo(id),body,createdBy,origin));
       }
       // A poll pass is an alternative identity for this route only. When sent it wins over any session, and an
