@@ -275,11 +275,17 @@ function adoptChat(body){// a new poll or another viewer (pass dropped → sessi
  const who=(body.pollId||'')+'|'+(body.viewer?.name||'');
  if(chatFor!==null&&chatFor!==who){chatFor=who;chatMsgs=[];chatCursor=0;announceChat();void load();return}
  chatFor=who;mergeChat(body.chat)}
-async function chatPost(msg,retried=false){
+// opts: true (legacy 'retried') or {key|idempotencyKey, retried}. A caller-supplied key (Capsule: one stable key per message,
+// reused on every retry) must look like any Idempotency-Key; otherwise a fresh one is made.
+const KEY_RE=/^[A-Za-z0-9_-]{16,100}$/;
+async function chatPost(msg,opts=false){
+ const o=typeof opts==='object'&&opts?opts:{retried:!!opts},given=o.key??o.idempotencyKey,retried=!!o.retried;
+ if(given!==undefined&&!KEY_RE.test(given))throw Object.assign(new Error('Ongeldige verzoekcode.'),{code:'request_key'});
+ const key=given??newKey();
   if(!pollId||!chatOpenNow())throw Object.assign(new Error('De chat is gesloten.'),{code:'date_poll_closed'});
   let r;
-  try{r=await call('POST',{pollId,...msg},newKey(),CHAT_API+'?since='+chatCursor)}
-  catch(e){if(!retried&&dropPass(e)&&await load())return chatPost(msg,true);throw e}// chat_rate → e.details.retryAfter (seconds)
+  try{r=await call('POST',{pollId,...msg},key,CHAT_API+'?since='+chatCursor)}
+  catch(e){if(!retried&&dropPass(e)&&await load())return chatPost(msg,{...o,retried:true});throw e}// chat_rate → e.details.retryAfter (seconds)
   // An exact replay returns only the receipt {message:{id,seq,at}}: then one GET (the cursor brings it in).
   if(r.chat)mergeChat(r.chat);else await load();
   rereadSoon();
@@ -288,9 +294,10 @@ async function chatPost(msg,retried=false){
 window.filmmaandChat={
  list:chatList,
  subscribe(cb){chatSubs.add(cb);try{cb(chatList())}catch{}return ()=>chatSubs.delete(cb)},
- async send(text,retried=false){return chatPost({text},retried)},
+ acceptsKey:true,// send(text,{key}) / sendDoodle(strokes,{key}): the same key on every retry of one message
+ async send(text,opts=false){return chatPost({text},opts)},
  // A drawing as a chat message (Chris, 23 Sept): the same stream, several per person; the doodle rate applies.
- async sendDoodle(strokes,retried=false){return chatPost({kind:'doodle',s:strokes},retried)}
+ async sendDoodle(strokes,opts=false){return chatPost({kind:'doodle',s:strokes},opts)}
 };
 
 // ---- cadence (kits/…/eggs/CHAT-CADENCE.md, Chris: "B"): GET on open; on tab visible / window focus at most once per 15s;

@@ -48,6 +48,9 @@ test('the page keeps the pass in memory only and sends it as the header, never i
  assert.match(js,/const since=chatCursor;/);assert.match(js,/chatCursor=Math\.max\(chatCursor,c\.cursor\|\|0\)/);
  assert.deepEqual(js.match(/,DOODLE_API\)/g),[',DOODLE_API)']);assert.deepEqual(js.match(/CHAT_API\+'\?since='\+chatCursor\)/g),["CHAT_API+'?since='+chatCursor)"]);
  assert.equal((js.match(/call\('POST'/g)||[]).length,1);// the chat send
+ // A caller-supplied Idempotency-Key (Capsule: one stable key per message, reused on retries) is validated like any key.
+ assert.match(js,/const KEY_RE=\/\^\[A-Za-z0-9_-\]\{16,100\}\$\/;/);assert.match(js,/acceptsKey:true/);
+ assert.match(js,/if\(given!==undefined&&!KEY_RE\.test\(given\)\)throw/);assert.match(js,/const key=given\?\?newKey\(\);/);
  // ?antwoord= only pre-selects: sendRsvp (the only RSVP write) is reached from the two buttons alone.
  assert.deepEqual(js.match(/sendRsvp\(a\)|sendRsvp\(answer,true\)/g),['sendRsvp(answer,true)','sendRsvp(a)']);assert.equal(/preselect[^;\n]*sendRsvp/.test(js),false);
  // Nothing writes on load: the only PUT is inside saveOnce, reached from a tap (Klaar / a night / the quick buttons).
