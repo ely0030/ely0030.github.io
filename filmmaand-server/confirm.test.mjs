@@ -49,7 +49,8 @@ test('the pick queues exactly one plain confirmation per poll participant, with 
  assert.equal(JSON.stringify(f.store.data).includes(token),false,'no plaintext token stored');
  // The mailed link works for GET + RSVP after the pick.
  const view=await f.request(POLL+'?antwoord=ja','GET',null,{'X-Filmmaand-Poll-Pass':token});
- assert.equal(view.status,200);assert.deepEqual(view.body.rsvp,{answer:null,at:null,open:true});// ?antwoord= never saves
+ assert.equal(view.status,200);assert.equal(view.body.pickedAt,'2026-09-23T10:00:00.000Z');// the eggs anchor after-pick items on this
+ assert.deepEqual(view.body.rsvp,{answer:null,at:null,open:true});// ?antwoord= never saves
  await f.events.drain({limit:20});assert.equal(f.sent.length,3);
 });
 

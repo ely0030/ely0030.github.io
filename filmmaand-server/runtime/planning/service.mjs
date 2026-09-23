@@ -35,7 +35,7 @@ export function createPlanningService({store,adminToken,movieCatalogue=null,imag
  // Pass holders who have not answered yet. Anyone who answered, including "none of these nights", is left out.
  const unanswered=(q,holders)=>holders.filter(h=>!responded(q,q.votes?.['p_'+h.participantId]));
  const ownOnly=r=>({doodle:r.doodle});
- const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},rsvp:av?ownRsvp(p.datePoll,a,now()):{answer:null,at:null,open:false}}};
+ const datePollView=(p,a,since=0)=>{const av=p.datePoll?.mode==='availability';return {...ownDatePoll(p,a),poll:publicDatePoll(p,a,datePollDisplay,{names:true}),viewer:datePollDisplay(p,a),doodles:av?publicDoodles(p,a,datePollDisplay):[],chat:av?chatView(p,a,datePollDisplay,since,now()):{open:false,messages:[],cursor:0,hidden:[]},rsvp:av?ownRsvp(p.datePoll,a,now()):{answer:null,at:null,open:false},pickedAt:av&&p.datePoll.status==='confirmed'?p.datePoll.closedAt||null:null}};
  const display=(p,a)=>identity?.publicProfile?.(a)??p.displayProfiles?.[a]?.recommender??null;
  function admin(token){if(!adminToken||!token||!timingSafeEqual(Buffer.from(hash(token)),Buffer.from(hash(adminToken))))fail(401,'unauthorized','Beheerderstoegang vereist.')}
  const responseDates=r=>Array.isArray(r.dates)?r.dates:r.start&&r.end?days(r.start,r.end):[];

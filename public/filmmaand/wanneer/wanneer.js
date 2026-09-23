@@ -218,7 +218,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){pop.hi
 const doodleSubs=new Set();
 const asItem=d=>({id:d.id,at:d.at,t:d.t,strokes:d.s});
 function doodleList(){const all=data?.doodles||[],own=all.find(d=>d.self);
- return {canSave:!!data?.viewer&&open(),mine:own?asItem(own):null,
+ return {canSave:!!data?.viewer&&open(),pickedAt:data?.pickedAt||null,mine:own?asItem(own):null,
          others:all.filter(d=>!d.self).map(d=>({...asItem(d),name:d.name,avatarId:d.avatarId,avatar:avatar(d.avatarId)}))}}
 function announceDoodles(){const l=doodleList();for(const cb of doodleSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-doodles',{detail:l}))}
 let after=[];// the two bounded re-GETs after a send (+20s, +60s), restarted by the next send (doodle or chat)
@@ -244,7 +244,8 @@ let chatMsgs=[],chatCursor=0,chatFor=null;const chatSubs=new Set();
 const chatItem=m=>({id:m.id,seq:m.seq,name:m.name,avatarId:m.avatarId,avatar:avatar(m.avatarId),at:m.at,t:m.t,text:m.text,...(m.self?{self:true}:{})});
 // The chat outlives the vote: after the pick it stays open until the end of the picked night (server says chat.open).
 const chatOpenNow=()=>!!data?.viewer&&(data?.chat?.open??open());
-function chatList(){return {canSend:chatOpenNow(),messages:chatMsgs.map(chatItem)}}
+// pickedAt (ISO or null): the eggs place items sent after the pick below the pick block (#rsvp, right after the notice).
+function chatList(){return {canSend:chatOpenNow(),pickedAt:data?.pickedAt||null,messages:chatMsgs.map(chatItem)}}
 function announceChat(){const l=chatList();for(const cb of chatSubs){try{cb(l)}catch{}}window.dispatchEvent(new CustomEvent('filmmaand-chat',{detail:l}))}
 function mergeChat(c){if(!c)return;const hidden=new Set(c.hidden||[]),byId=new Map(chatMsgs.map(m=>[m.id,m]));for(const m of c.messages||[])byId.set(m.id,m);
  chatMsgs=[...byId.values()].filter(m=>!hidden.has(m.id)).sort((a,b)=>a.seq-b.seq);chatCursor=Math.max(chatCursor,c.cursor||0);announceChat()}

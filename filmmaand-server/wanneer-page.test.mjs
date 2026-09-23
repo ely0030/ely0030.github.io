@@ -26,6 +26,9 @@ test('the shipped page is the generated kit page, without sample people or kit s
  assert.match(page,/<meta name="referrer" content="no-referrer">/);
  assert.ok(page.includes('#rsvp button[data-pre=true]:not([aria-pressed=true]){border:1.5px dashed #00a884;background:#f0fbf7}'));assert.ok(page.includes('@media (prefers-color-scheme:dark){#rsvp button[data-pre=true]:not([aria-pressed=true]){background:#103529}}'));
  assert.match(js,/Klopt dit\? Tik op je antwoord om het door te geven\./);
+ // Voters see the RSVP buttons too: the kit's body.voted rule hides .quick/.sub, the page overrides it for #rsvp.
+ assert.ok(page.includes('body.voted #rsvp .quick{display:flex}body.voted #rsvp .sub{display:block}'));
+ assert.match(js,/pickedAt:data\?\.pickedAt\|\|null,mine/);assert.match(js,/canSend:chatOpenNow\(\),pickedAt:data\?\.pickedAt\|\|null/);
  for(const id of ['poll','nights','go','all','none','sys','note','tally','sub','prev','m1','typing','rsvp','rsvp-ja','rsvp-nee','rsvp-sub'])assert.ok(page.includes(`id="${id}"`),id);
  for(const src of page.matchAll(/src="(\/filmmaand\/assets\/[^"]+)"/g))assert.ok(src[1].startsWith('/filmmaand/assets/wanneer-pudding-'));
 });
