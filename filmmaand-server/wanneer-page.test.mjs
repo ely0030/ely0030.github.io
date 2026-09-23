@@ -60,16 +60,16 @@ test('cadence B: no polling loop; re-GETs only on open, visible/focus (15s), and
  assert.equal(intervals.length,1);assert.match(intervals[0],/wiggle/);assert.equal(/load\(|call\(|fetch\(/.test(intervals[0]),false);
  // Timed reads: exactly the +20s/+60s pair after a doodle send, only for a visible tab.
  assert.match(js,/\[20e3,60e3\]\.map\(ms=>setTimeout\(\(\)=>\{if\(document\.visibilityState==='visible'/);
- assert.equal((js.match(/setTimeout\([^;]*load\(\)/g)||[]).length,1);
+ // Exactly one bounded timed read outside hot mode: the +20 s / +60 s pair after a send.
+ assert.equal((js.match(/setTimeout\(\(\)=>\{if\(document\.visibilityState==='visible'&&!dirty\(\)&&!saving\)load\(\)\}/g)||[]).length,1);
  assert.match(js,/Date\.now\(\)-lastRead<15e3\)return;load\(\)/);
  assert.match(js,/addEventListener\('visibilitychange',fresh\);window\.addEventListener\('focus',fresh\)/);
- // Hot mode (Chris; Cameo's guardrails): the only other timed read, a LITE read, one timer at most, re-armed only while
- // hotDelay() says so; paused on hidden and on blur; the server clock (Date header) decides freshness.
- assert.match(js,/hotTimer=setTimeout\(async\(\)=>\{hotTimer=0;if\(dirty\(\)\|\|saving\)\{hotLoop\(\);return\}const ok=await liteLoad\(\);hotFails=ok\?0:hotFails\+1;hotLoop\(\)\},ms\)/);
- assert.match(js,/function hotLoop\(\)\{clearTimeout\(hotTimer\);hotTimer=0;const st=hotState\(\),ms=hotDelay\(st\);/);
+ // Hot mode (Chris; Cameo's guardrails): the only other timed read. It is a LITE read, wired through createHot() (tested
+ // behaviourally below); hidden/blur pause it; the server clock (Date header) decides freshness.
  assert.match(js,/API\+'\?since='\+chatCursor\+'&lite=1'/);assert.match(js,/skew=served-Date\.now\(\)/);
- assert.match(js,/if\(document\.visibilityState==='visible'\)hotLoop\(\);else hotPause\(\)/);assert.match(js,/window\.addEventListener\('blur',hotPause\)/);
- assert.equal((js.match(/await liteLoad\(\)/g)||[]).length,1);
+ assert.match(js,/if\(document\.visibilityState==='visible'\)hot\.loop\(\);else hot\.pause\(\)/);assert.match(js,/window\.addEventListener\('blur',\(\)=>hot\.pause\(\)\)/);
+ assert.match(js,/read:\(\)=>dirty\(\)\|\|saving\?Promise\.resolve\(null\):liteLoad\(\)/);
+ assert.equal((js.match(/liteLoad\(\)(?!\{)/g)||[]).length,1);// one call site (plus its definition)assert.equal((js.match(/setTimeout\(f,ms\)/g)||[]).length,1);
 });
 
 test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle cap, backoff 6 s / 12 s then off',()=>{
@@ -80,7 +80,7 @@ test('hot-mode scheduler (unit): visible + focused + open + recent, 20-min idle 
  for(const [k,v] of [['voted',false],['visible',false],['focused',false],['chatOpen',false],['newestAge',120e3],['newestAge',Infinity],['newestAge',NaN],['sinceActive',20*60e3+1]])assert.equal(d({...base,[k]:v}),null,k+'='+v);
  assert.equal(d({...base,newestAge:119e3}),3e3);assert.equal(d({...base,sinceActive:20*60e3}),3e3);
  // Alec's opening sticker never counts as fresh; the state passes the page's own vote flag.
- assert.match(js,/if\(!chatMsgs\[i\]\.alec\)return Date\.now\(\)\+skew-Date\.parse\(chatMsgs\[i\]\.at\)/);assert.match(js,/const hotState=\(\)=>\(\{voted,/);
+ assert.match(js,/if\(!chatMsgs\[i\]\.alec\)return Date\.now\(\)\+skew-Date\.parse\(chatMsgs\[i\]\.at\)/);assert.match(js,/state:\(\)=>\(\{voted,visible:document\.visibilityState==='visible'/);
  assert.equal(d({...base,fails:1}),6e3);assert.equal(d({...base,fails:2}),12e3);assert.equal(d({...base,fails:3}),null);
 });
 
@@ -95,6 +95,35 @@ test('no working link: the first read shows the poll anonymously; the login note
  assert.equal(/lives in memory only/.test(js),false,'stale comment gone: the pass survives a reload via history.state');
  // ...and from the first tick (not only on Klaar) the note is shown inline under the poll.
  assert.match(js,/if\(anon&&\(mine\.size\|\|none\)\)authNote\(\);/);
+});
+
+test('hot mode, behaviourally with a fake clock: the 20-min no-input cap, resume on input, backoff, voters only',async()=>{
+ const code=js.match(/const HOT_MS=[^\n]*/)[0]+'\n'+/(function hotDelay[\s\S]*?\n\})/.exec(js)[1]+'\n'+/(function createHot[\s\S]*?\n\}\n)/.exec(js)[1];
+ function sim({voted=true,visible=true,readResult=()=>true}={}){
+  let clock=0,timer=null,reads=0,lastMsg=0;const box={};
+  vm.runInNewContext(code+';this.createHot=createHot',box);
+  const hot=box.createHot({now:()=>clock,setT:(f,ms)=>{timer={f,at:clock+ms};return 1},clearT:()=>{timer=null},
+   state:()=>({voted,visible,focused:true,chatOpen:true,newestAge:clock-lastMsg}),read:async()=>{reads++;return readResult(reads)}});
+  // Someone keeps chatting: a new message every 60 s, so the chat stays "fresh" the whole time.
+  async function run(ms){const end=clock+ms;while(true){const next=Math.min(timer?timer.at:Infinity,Math.ceil((clock+1)/60e3)*60e3);if(next>end){clock=end;break}
+   clock=next;if(clock%60e3===0)lastMsg=clock;if(timer&&timer.at===clock){const f=timer.f;timer=null;await f()}}}
+  return {hot,run,reads:()=>reads,armed:()=>hot.armed,now:()=>clock,set:v=>{visible=v}};
+ }
+ // 1) No input at all: 3 s reads for 20 minutes, then nothing, although messages keep coming.
+ const a=sim();a.hot.loop();await a.run(20*60e3);const at20=a.reads();assert.ok(at20>=395&&at20<=401,'reads in 20 min: '+at20);
+ // The cap is checked on each tick, so it stops within a tick or two of 20:00, and then stays off.
+ await a.run(60e3);const at21=a.reads();assert.ok(at21-at20<=2,'after 20:00: '+(at21-at20));
+ await a.run(9*60e3);assert.equal(a.reads(),at21,'no reads from minute 21 to 30');assert.equal(a.armed(),false);
+ // 2) A tap or key resumes it at once, with a fresh 20-minute window.
+ a.hot.input();assert.equal(a.armed(),true);const r=a.reads();await a.run(60e3);assert.ok(a.reads()-r>=19,'resumed: '+(a.reads()-r));
+ // 3) Input every 5 minutes keeps it going past 20 minutes.
+ const b=sim();b.hot.loop();for(let i=0;i<8;i++){await b.run(5*60e3);b.hot.input()}assert.ok(b.reads()>=790,'with input: '+b.reads());
+ // 4) Errors back off 6 s, then 12 s, then stop (cadence B takes over).
+ const c=sim({readResult:()=>false});c.hot.loop();await c.run(3e3);assert.equal(c.reads(),1);await c.run(6e3);assert.equal(c.reads(),2);
+ await c.run(12e3);assert.equal(c.reads(),3);await c.run(60e3);assert.equal(c.reads(),3);assert.equal(c.armed(),false);
+ // 5) Not voted (the chat isn't on screen) or a hidden tab: never a single read.
+ const d=sim({voted:false});d.hot.loop();await d.run(5*60e3);assert.equal(d.reads(),0);
+ const h=sim({visible:false});h.hot.loop();await h.run(5*60e3);assert.equal(h.reads(),0);
 });
 
 test('the pass survives a reload via history.state only; never URL, cookie or web storage; cleared when it stops working',()=>{

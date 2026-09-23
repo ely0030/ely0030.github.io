@@ -63,7 +63,7 @@ async function load(){
  let body;lastRead=Date.now();const since=chatCursor;
  try{body=await call('GET',null,null,since?API+'?since='+since:API)}
  catch(e){if(dropPass(e))return load();return trouble(e)}
- hotFails=0;adopt(body);return true;
+ hot.resetFails();adopt(body);return true;
 }
 function adopt(body){
  data=body;pollId=body.pollId||poll()?.id||null;revision=body.revision??0;
@@ -313,12 +313,20 @@ function hotDelay({voted,visible,focused,chatOpen,newestAge,sinceActive,fails}){
  if(!voted||!visible||!focused||!chatOpen||!(newestAge<HOT_MS)||sinceActive>HOT_IDLE_CAP||fails>=3)return null;
  return fails===1?6e3:fails===2?12e3:HOT_EVERY;
 }
-let hotTimer=0,hotStarted=0,lastInput=0,hotFails=0;
+// The scheduler around hotDelay(): one timer at most, the 20-min no-input window, the error backoff. Environment-injected
+// (clock, timers, page state, the read) so it is tested behaviourally with a fake clock.
+function createHot({now,setT,clearT,state,read}){
+ let timer=0,started=0,lastInput=0,fails=0;
+ function loop(){clearT(timer);timer=0;const st={...state(),sinceActive:started?now()-Math.max(started,lastInput):0,fails},ms=hotDelay(st);
+  if(ms===null){if(!(st.newestAge<HOT_MS)||!st.chatOpen)started=0;return}// cooled down: the next hot spell starts a fresh idle window
+  if(!started)started=now();
+  timer=setT(async()=>{timer=0;const ok=await read();if(ok!==null)fails=ok?0:fails+1;loop()},ms)}
+ return {loop,pause(){clearT(timer);timer=0},resetFails(){fails=0},get armed(){return timer!==0},
+  input(){const capped=timer===0&&started&&now()-Math.max(started,lastInput)>HOT_IDLE_CAP;lastInput=now();if(capped)loop()}};
+}
 // Freshness counts people's messages only: Alec's opening sticker (posted by the server when the poll opens) never makes the
 // first two minutes of a new poll 'hot'.
 const newestAge=()=>{for(let i=chatMsgs.length-1;i>=0;i--)if(!chatMsgs[i].alec)return Date.now()+skew-Date.parse(chatMsgs[i].at);return Infinity};
-const hotState=()=>({voted,visible:document.visibilityState==='visible',focused:document.hasFocus(),chatOpen:chatOpenNow(),newestAge:newestAge(),
- sinceActive:hotStarted?Date.now()-Math.max(hotStarted,lastInput):0,fails:hotFails});
 async function liteLoad(){
  try{const b=await call('GET',null,null,API+'?since='+chatCursor+'&lite=1');lastRead=Date.now();
   const stamp=d=>(d||[]).length+':'+((d||[]).length?d[d.length-1].at:'');
@@ -326,14 +334,13 @@ async function liteLoad(){
   mergeChat(b.chat);return true}
  catch(e){if(dropPass(e))return await load();return false}
 }
-function hotLoop(){clearTimeout(hotTimer);hotTimer=0;const st=hotState(),ms=hotDelay(st);
- if(ms===null){if(!(st.newestAge<HOT_MS)||!st.chatOpen)hotStarted=0;return}// cooled down: the next hot spell starts a fresh idle window
- if(!hotStarted)hotStarted=Date.now();
- hotTimer=setTimeout(async()=>{hotTimer=0;if(dirty()||saving){hotLoop();return}const ok=await liteLoad();hotFails=ok?0:hotFails+1;hotLoop()},ms)}
-const hotPause=()=>{clearTimeout(hotTimer);hotTimer=0};
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')hotLoop();else hotPause()});
-window.addEventListener('blur',hotPause);window.addEventListener('focus',()=>hotLoop());
-for(const ev of ['pointerdown','keydown'])window.addEventListener(ev,()=>{const capped=hotTimer===0&&hotStarted&&Date.now()-Math.max(hotStarted,lastInput)>HOT_IDLE_CAP;lastInput=Date.now();if(capped)hotLoop()},{passive:true});
+const hot=createHot({now:()=>Date.now(),setT:(f,ms)=>setTimeout(f,ms),clearT:x=>clearTimeout(x),
+ state:()=>({voted,visible:document.visibilityState==='visible',focused:document.hasFocus(),chatOpen:chatOpenNow(),newestAge:newestAge()}),
+ read:()=>dirty()||saving?Promise.resolve(null):liteLoad()});// null: skipped (an unsaved tap), not an error
+function hotLoop(){hot.loop()}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')hot.loop();else hot.pause()});
+window.addEventListener('blur',()=>hot.pause());window.addEventListener('focus',()=>hot.loop());
+for(const ev of ['pointerdown','keydown'])window.addEventListener(ev,()=>hot.input(),{passive:true});
 
 render();load();
 })();
