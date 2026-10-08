@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "bash run-dev.sh",
-    "build": "node scripts/prepare-filmmaand.mjs && npm --prefix filmmaand-server ci --omit=dev --no-audit --no-fund && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "test:filmmaand": "node --test filmmaand-server/*.test.mjs filmmaand-server/operator/*.test.mjs",
