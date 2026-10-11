@@ -4482,12 +4482,12 @@ window.CARVER_BAKES = {"3b6477af4f62a580": {"key": "3b6477af4f62a580", "sr": 240
 </script>
 <script>(() => {   // the short's own small player: tap to start; film time from the audio clock; at the end, the last frame holds; tap again to play again
   const cv = document.getElementById('c'), M = cv.getContext('2d'), hint = document.getElementById('hint'), F = window.FILM;
-  let ac = null, t0 = 0, lastF = -1, playing = false, h = null;
+  let ac = null, t0 = 0, lastF = -1, playing = false, h = null, live = false;
   const draw = t => { t = Math.max(F.start, Math.min(F.end - .001, t)); const f = Math.floor(t * F.fps); if (f === lastF) return; lastF = f; try { F.frame(M, Math.max(F.start, f / F.fps)); } catch (e) { console.warn('frame', e); } };   // clamped to the film, as the Player does; a bad frame never stops the film
   draw(F.poster);
-  const loop = () => { const t = ac.currentTime - t0; if (t >= F.end) { lastF = -1; draw(F.end - .001); playing = false; hint.textContent = '↺'; hint.style.opacity = .7; return; } draw(t); requestAnimationFrame(loop); };
-  const start = async () => { if (playing) return; playing = true; hint.textContent = '…';
+  const loop = () => { const t = ac.currentTime - t0; if (t >= F.end) { lastF = -1; draw(F.end - .001); playing = false; live = false; hint.textContent = '↺'; hint.style.opacity = .7; return; } draw(t); requestAnimationFrame(loop); };
+  const start = async () => { if (playing) { if (live) { if (ac.state === 'running') { ac.suspend(); hint.textContent = '▶'; hint.style.opacity = .7; } else { ac.resume(); hint.style.opacity = 0; } } return; } playing = true; hint.textContent = '…';
     ac = ac || new (window.AudioContext || window.webkitAudioContext)(); await ac.resume(); await window.TELAAT_FILM.READY;
-    if (h) h.stop(); hint.style.opacity = 0; lastF = -1; t0 = ac.currentTime + .15 - F.start; h = F.score.schedule(ac, ac.destination, t0, F.start); loop(); };
+    if (h) h.stop(); hint.style.opacity = 0; lastF = -1; t0 = ac.currentTime + .15 - F.start; h = F.score.schedule(ac, ac.destination, t0, F.start); live = true; loop(); };
   cv.addEventListener('click', start); hint.addEventListener('click', start); addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); start(); } });
 })();</script></body></html>
