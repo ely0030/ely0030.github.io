@@ -28,15 +28,7 @@ const postsByCategory = posts.reduce((acc, post) => {
 if (!postsByCategory['downloads']) {
   postsByCategory['downloads'] = [];
 }
-postsByCategory['downloads'].push({
-  id: 'handy-plus',
-  data: {
-    title: 'Handy+',
-    pubDate: new Date('2014-02-19'),
-    category: 'downloads'
-  },
-  isArchived: true
-});
+// Handy+ is off the index (the page itself still exists at /handy-plus/).
 postsByCategory['downloads'].push({
   id: 'music',
   data: {
