@@ -10,9 +10,148 @@
   directory = "netlify/functions"
 
 # Filmmaand has been sunset: /filmmaand/ plays the short film "Te laat" and nothing else.
-# Every old route (programme, votes, date poll, admin, API, films) lands there.
+# Every old section lands there (explicit paths, forced: a catch-all /filmmaand/* would also match /filmmaand/ itself).
 [[redirects]]
-  from = "/filmmaand/*"
+  from = "/filmmaand/programma"
   to = "/filmmaand/"
   status = 302
-  force = false
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/programma/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/agenda"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/agenda/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/program"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/program/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/stemmen"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/stemmen/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/wanneer"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/wanneer/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/beheer"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/beheer/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/films"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/films/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/identity"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/identity/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/vanavond"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/vanavond/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/picker"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/picker/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/spelletjes"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/spelletjes/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/api"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/filmmaand/api/*"
+  to = "/filmmaand/"
+  status = 302
+  force = true
+
