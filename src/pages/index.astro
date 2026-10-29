@@ -56,12 +56,6 @@ postsByCategory['projects'] = [...(postsByCategory['projects'] || []), {
   isArchived: false
 }];
 
-// Placeholder article in the screenshot-inspired essay layout.
-postsByCategory['writing'] = [...(postsByCategory['writing'] || []), {
-  id: 'article-placeholder',
-  data: { title: 'On Looking Longer', pubDate: new Date('2026-10-29'), category: 'writing' },
-  isArchived: false
-}];
 
 // Sort categories alphabetically
 const sortedCategories = Object.keys(postsByCategory).sort();
@@ -87,7 +81,7 @@ const sortedCategories = Object.keys(postsByCategory).sort();
 					{sortedCategories.map((category) => {
 						const categoryPosts = postsByCategory[category];
 						return (
-							<div class="category-section" id={category === 'writing' ? 'writing' : undefined}>
+							<div class="category-section">
 								<h2>{category}</h2>
 								<ul>
 									{categoryPosts.map((post) => (
