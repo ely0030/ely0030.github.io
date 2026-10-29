@@ -2,6 +2,7 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import IndexWeather from '../components/IndexWeather.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import { getCollection } from 'astro:content';
 
@@ -55,6 +56,13 @@ postsByCategory['projects'] = [...(postsByCategory['projects'] || []), {
   isArchived: false
 }];
 
+// Placeholder article in the screenshot-inspired essay layout.
+postsByCategory['writing'] = [...(postsByCategory['writing'] || []), {
+  id: 'article-placeholder',
+  data: { title: 'On Looking Longer', pubDate: new Date('2026-10-29'), category: 'writing' },
+  isArchived: false
+}];
+
 // Sort categories alphabetically
 const sortedCategories = Object.keys(postsByCategory).sort();
 
@@ -66,6 +74,7 @@ const sortedCategories = Object.keys(postsByCategory).sort();
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
 	<body class="literature2">
+		<IndexWeather />
 		<div class="layout-wrapper">
 			<aside class="sidebar">
 				<Header />
@@ -78,7 +87,7 @@ const sortedCategories = Object.keys(postsByCategory).sort();
 					{sortedCategories.map((category) => {
 						const categoryPosts = postsByCategory[category];
 						return (
-							<div class="category-section">
+							<div class="category-section" id={category === 'writing' ? 'writing' : undefined}>
 								<h2>{category}</h2>
 								<ul>
 									{categoryPosts.map((post) => (

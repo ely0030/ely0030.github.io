@@ -1,0 +1,57 @@
+<div class="index-weather" data-index-weather hidden>
+  <canvas aria-hidden="true"></canvas>
+  <div class="weather-controls" aria-label="Decorative weather">
+    <select data-weather-season aria-label="Season">
+      <option value="auto">auto</option>
+      <option value="winter">winter</option>
+      <option value="spring">spring</option>
+      <option value="summer">summer</option>
+      <option value="autumn">autumn</option>
+    </select>
+    <span data-weather-label></span>
+    <button type="button" data-weather-next title="Try the next weather">[change]</button>
+    <button type="button" data-weather-pause aria-pressed="false">[pause]</button>
+  </div>
+</div>
+<script is:inline type="module" src="/scripts/index-weather.js"></script>
+<style is:global>
+  .index-weather[hidden] { display: none; }
+  .index-weather canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .index-weather .weather-controls {
+    position: fixed;
+    bottom: 12px;
+    right: 16px;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 4px 6px;
+    background: rgba(255,255,255,.94);
+    color: #62696d;
+    font: 11px/1.5 monospace;
+  }
+  .index-weather .weather-controls button,
+  .index-weather .weather-controls select {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 2px 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .index-weather .weather-controls button:hover { color: #000; text-decoration: underline; }
+  .index-weather .weather-controls select:focus-visible,
+  .index-weather .weather-controls button:focus-visible { outline: 1px dotted currentColor; outline-offset: 3px; }
+  @media print { .index-weather { display: none; } }
+</style>
